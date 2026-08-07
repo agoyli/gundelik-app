@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/theme.ts","./src/types.ts","./src/api/mockapi.ts","./src/components/aihelper.tsx","./src/components/icons.tsx","./src/components/ui.tsx","./src/hooks/useschedule.ts","./src/screens/gundelikscreen.tsx","./src/screens/lessonscreen.tsx","./src/screens/otherscreens.tsx","./src/screens/roadmapscreen.tsx"],"version":"5.9.3"}
