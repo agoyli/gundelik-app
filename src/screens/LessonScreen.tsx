@@ -4,12 +4,14 @@ import type { ReactNode } from 'react';
 import { AiChatSheet, AiFab } from '../components/AiHelper';
 import type { AiSuggestion } from '../components/AiHelper';
 import { CheckIcon, ChevronIcon, QuizIcon } from '../components/Icons';
+import { PaidFeatureSheet } from '../components/Paywall';
 import { DoneBadge, PillHeader } from '../components/Ui';
+import { usePrefs } from '../state/prefs';
 import { tokens } from '../theme';
 
 export type LessonKind = 'text' | 'video' | 'interactive' | 'test';
 
-type Meta = { label: string; color: string; tint: string; icon: (size: number) => ReactNode };
+type Meta = { label: string; color: string; ink: string; tint: string; icon: (size: number) => ReactNode };
 type LessonLite = { id: string; title: string; kind: LessonKind; extent: string; done: boolean };
 
 /* ---------------- Content ---------------- */
@@ -84,6 +86,9 @@ const TEST = [
   { q: 'x² − 5x + 6 = 0 deňlemäniň kökleri haýsylar?', options: ['x = 1; 6', 'x = 2; 3', 'x = −2; −3', 'Kök ýok'], correct: 1 },
 ];
 
+/* The roadmap advertises this count, so the two can never drift apart */
+export const TEST_LENGTH = TEST.length;
+
 /* AI prompts per lesson kind */
 const AI_FALLBACK = 'Gowy sorag! Gysgaça: diskriminant deňlemäniň köklerini öňünden kesgitlemäge kömek edýär. Has anyk jogap üçin ýokardaky taýýar soraglary hem synap bilersiň.';
 
@@ -139,7 +144,7 @@ const aiForTest = (score: number): AiSuggestion[] => [
   },
   {
     label: 'Haýsy temany gaýtalamaly?',
-    reply: 'Saňa «Diskriminant we kökler» temasyny gaýtalamak peýdaly bolar — ýol kartasynda şol sapagy açyp, «Gaýtadan gör» düwmesine bas.',
+    reply: 'Saňa «Diskriminant we kökler» temasyny gaýtalamak peýdaly bolar — Gollanmalarda şol sapagy açyp, «Gaýtadan gör» düwmesine bas.',
   },
 ];
 
@@ -149,9 +154,9 @@ function AnswerRow({ label, state, onClick }: {
 }) {
   const palette = {
     idle: { bg: '#fff', border: 'transparent', color: tokens.ink },
-    selected: { bg: tokens.blueTint, border: tokens.blue, color: tokens.blue },
-    correct: { bg: tokens.greenTint, border: tokens.greenDeep, color: tokens.greenDeep },
-    wrong: { bg: tokens.redTint, border: tokens.red, color: tokens.red },
+    selected: { bg: tokens.blueTint, border: tokens.blue, color: tokens.blueText },
+    correct: { bg: tokens.greenTint, border: tokens.greenDeep, color: tokens.greenText },
+    wrong: { bg: tokens.redTint, border: tokens.red, color: tokens.redText },
   }[state];
   return (
     <ButtonBase
@@ -211,10 +216,10 @@ function ParabolaLab({ color, onAllDone }: { color: string; onAllDone: (done: bo
   }, [a, b, c]);
 
   const dChip = D > 0
-    ? { bg: tokens.greenTint, color: tokens.greenDeep, label: '2 kök' }
+    ? { bg: tokens.greenTint, color: tokens.greenText, label: '2 kök' }
     : D === 0
-      ? { bg: tokens.orangeTint, color: tokens.orange, label: '1 kök' }
-      : { bg: tokens.redTint, color: tokens.red, label: 'kök ýok' };
+      ? { bg: tokens.orangeTint, color: tokens.orangeText, label: '1 kök' }
+      : { bg: tokens.redTint, color: tokens.redText, label: 'kök ýok' };
 
   const sliderSx = {
     color, py: '10px',
@@ -259,7 +264,7 @@ function ParabolaLab({ color, onAllDone }: { color: string; onAllDone: (done: bo
         </Box>
         <Typography noWrap sx={{
           height: 20, fontSize: 13.5, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
-          color: roots.length > 0 ? tokens.greenDeep : tokens.inkMuted,
+          color: roots.length > 0 ? tokens.greenText : tokens.inkMuted,
         }}>
           {roots.length === 2
             ? `x₁ = ${roots[0].toFixed(1)},  x₂ = ${roots[1].toFixed(1)}`
@@ -304,7 +309,7 @@ function ParabolaLab({ color, onAllDone }: { color: string; onAllDone: (done: bo
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{
                 fontSize: 14, fontWeight: 600, lineHeight: 1.4,
-                color: ach[m.id] ? tokens.greenDeep : tokens.ink,
+                color: ach[m.id] ? tokens.greenText : tokens.ink,
               }}>{m.label}</Typography>
               {m.hint && (
                 <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, opacity: ach[m.id] ? .5 : 1 }}>
@@ -316,7 +321,7 @@ function ParabolaLab({ color, onAllDone }: { color: string; onAllDone: (done: bo
         ))}
         <Typography sx={{
           height: 20, fontSize: 14, fontWeight: 700,
-          color: allDone ? tokens.greenDeep : tokens.inkMuted,
+          color: allDone ? tokens.greenText : tokens.inkMuted,
         }}>
           {allDone
             ? 'Ähli meseleler çözüldi! 🎉'
@@ -328,10 +333,13 @@ function ParabolaLab({ color, onAllDone }: { color: string; onAllDone: (done: bo
 }
 
 /* ---------------- Screen ---------------- */
-export function LessonScreen({ lesson, meta, onClose, onComplete }: {
-  lesson: LessonLite; meta: Meta; onClose: () => void; onComplete: () => void;
+export function LessonScreen({ lesson, meta, onClose, onComplete, onUpgrade }: {
+  lesson: LessonLite; meta: Meta; onClose: () => void; onComplete: () => void; onUpgrade: () => void;
 }) {
+  const { premium } = usePrefs();
   const [playing, setPlaying] = useState(false);
+  /* a video lesson can't be "completed" before it has been started */
+  const [started, setStarted] = useState(false);
   const [labDone, setLabDone] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   /* self-check accordions in text lessons */
@@ -343,7 +351,8 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
   const testScore = TEST.filter((t, i) => answers[i] === t.correct).length;
   const canComplete = lesson.kind === 'interactive' ? labDone
     : lesson.kind === 'test' ? stage === 'result'
-      : true;
+      : lesson.kind === 'video' ? started || lesson.done
+        : true;
 
   const inQuestions = lesson.kind === 'test' && typeof stage === 'number';
   const aiSuggestions = lesson.kind === 'test'
@@ -372,7 +381,7 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
             }}>{meta.icon(28)}</Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="h2">{lesson.title}</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 600, color: meta.color, mt: '2px' }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 600, color: meta.ink, mt: '2px' }}>
                 {meta.label} · {lesson.extent}
               </Typography>
             </Box>
@@ -386,7 +395,7 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
                 display: 'grid', placeItems: 'center', position: 'relative', overflow: 'hidden',
               }}>
                 <ButtonBase
-                  onClick={() => setPlaying(!playing)}
+                  onClick={() => { setPlaying(!playing); setStarted(true); }}
                   aria-label={playing ? 'Sakla' : 'Oýnat'}
                   sx={{
                     width: 64, height: 64, borderRadius: '50%', bgcolor: '#fff', color: tokens.ink,
@@ -431,7 +440,7 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
               </Typography>
 
               <Box sx={{ bgcolor: tokens.blueTint, borderRadius: `${tokens.rCard}px`, p: '15px 16px' }}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: tokens.blue, mb: '5px' }}>Gysgaça</Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: tokens.blueText, mb: '5px' }}>Gysgaça</Typography>
                 <Typography variant="body2" sx={{ lineHeight: 1.6 }}>{TEXT_CONTENT.summary}</Typography>
               </Box>
 
@@ -440,7 +449,7 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
                   <Box key={s.slice(0, 18)} sx={{ display: 'flex', gap: '11px', alignItems: 'flex-start' }}>
                     <Box aria-hidden sx={{
                       width: 24, height: 24, borderRadius: '50%', flex: 'none', mt: '1px',
-                      bgcolor: tokens.blueSoft, color: tokens.blue, fontSize: 13, fontWeight: 700,
+                      bgcolor: tokens.blueSoft, color: tokens.blueText, fontSize: 13, fontWeight: 700,
                       display: 'grid', placeItems: 'center',
                     }}>{i + 1}</Box>
                     <Typography variant="body2" sx={{ lineHeight: 1.6, fontVariantNumeric: 'tabular-nums' }}>{s}</Typography>
@@ -461,7 +470,7 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
                 {TEXT_CONTENT.formulas.map((f) => (
                   <Box key={f.slice(0, 18)} sx={{
                     bgcolor: '#fff', borderRadius: `${tokens.rRow}px`, p: '11px 13px',
-                    fontSize: 14.5, fontWeight: 600, color: tokens.blue, fontVariantNumeric: 'tabular-nums',
+                    fontSize: 14.5, fontWeight: 600, color: tokens.blueText, fontVariantNumeric: 'tabular-nums',
                     lineHeight: 1.5,
                   }}>{f}</Box>
                 ))}
@@ -475,10 +484,10 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
                 ))}
               </SectionCard>
 
-              <SectionCard title="Hökman bilmeli" accent={tokens.orange}>
+              <SectionCard title="Hökman bilmeli" accent={tokens.orangeText}>
                 {TEXT_CONTENT.must_know.map((m) => (
                   <Box key={m.slice(0, 18)} sx={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                    <Box aria-hidden sx={{ color: tokens.orange, display: 'flex', mt: '3px', flex: 'none' }}>
+                    <Box aria-hidden sx={{ color: tokens.orangeText, display: 'flex', mt: '3px', flex: 'none' }}>
                       <CheckIcon size={13} />
                     </Box>
                     <Typography variant="body2" sx={{ lineHeight: 1.6, fontVariantNumeric: 'tabular-nums' }}>{m}</Typography>
@@ -505,7 +514,7 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
                       }}><ChevronIcon size={10} /></Box>
                     </ButtonBase>
                     {revealed[i] && (
-                      <Typography variant="body2" sx={{ p: '0 14px 12px', color: tokens.greenDeep, fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ p: '0 14px 12px', color: tokens.greenText, fontWeight: 600 }}>
                         {q.jogap}
                       </Typography>
                     )}
@@ -598,7 +607,7 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
                   onClick={() => { setAnswers({}); setStage('start'); }}
                   sx={{
                     height: 32, px: '14px', borderRadius: `${tokens.rPill}px`,
-                    bgcolor: tokens.blueTint, color: tokens.blue, fontSize: 13.5, fontWeight: 600,
+                    bgcolor: tokens.blueTint, color: tokens.blueText, fontSize: 13.5, fontWeight: 600,
                   }}>Täzeden çöz</ButtonBase>
               </Box>
               {TEST.map((t, qi) => (
@@ -615,10 +624,10 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
             </>
           )}
 
-          {lesson.done && (
+          {lesson.done && !inQuestions && (
             <Box sx={{
               display: 'flex', alignItems: 'center', gap: '8px', px: '4px',
-              color: tokens.greenDeep, fontSize: 14, fontWeight: 600,
+              color: tokens.greenText, fontSize: 14, fontWeight: 600,
             }}>
               <CheckIcon size={15} />Bu sapagy öň tamamladyňyz
             </Box>
@@ -634,19 +643,37 @@ export function LessonScreen({ lesson, meta, onClose, onComplete }: {
           borderTop: `1px solid ${tokens.divider}`, bgcolor: '#fff',
         }}>
           <Button fullWidth variant="contained" disableElevation disabled={!canComplete} onClick={onComplete}>
-            {lesson.kind === 'test' ? `Testi tabşyr (${testScore}/${TEST.length})` : 'Tamamla ✓'}
+            {lesson.kind === 'test'
+              ? `Testi tabşyr (${testScore}/${TEST.length})`
+              : lesson.done ? 'Ýap' : 'Tamamla ✓'}
           </Button>
         </Box>
       )}
 
-      {/* AI helper: floating button + chat sheet, on every lesson page */}
+      {/* AI helper: floating button + chat sheet, on every lesson page.
+          For the free tier the same button explains the feature instead. */}
       <AiFab lift={lesson.kind !== 'test' || stage === 'result'} onClick={() => setAiOpen(true)} />
-      <AiChatSheet
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        suggestions={aiSuggestions}
-        fallback={AI_FALLBACK}
-      />
+      {premium ? (
+        <AiChatSheet
+          open={aiOpen}
+          onClose={() => setAiOpen(false)}
+          suggestions={aiSuggestions}
+          fallback={AI_FALLBACK}
+        />
+      ) : (
+        <PaidFeatureSheet
+          open={aiOpen}
+          onClose={() => setAiOpen(false)}
+          title="Akylly mugallym 24/7"
+          note="Sapak boýunça islendik soragyňa jogap berýän kömekçi — Premium abunada."
+          bullets={[
+            'Temany ýönekeý dilde düşündirýär',
+            'Ýalňyşyňy tapyp, ädimme-ädim alyp barýar',
+            'Test we öý işi üçin tabşyryk berýär',
+          ]}
+          onUpgrade={onUpgrade}
+        />
+      )}
     </Box>
   );
 }

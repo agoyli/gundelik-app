@@ -36,4 +36,7 @@ export interface DaySchedule {
   lessons: Lesson[];
 }
 
-export type TabId = 'cagam' | 'gundelik' | 'analitika' | 'gollanmalar' | 'yetisik';
+export type TabId = 'gundelik' | 'analitika' | 'gollanmalar' | 'yetisik';
+
+/* tab order — also the left-to-right swipe order */
+export const TAB_ORDER: TabId[] = ['gundelik', 'analitika', 'gollanmalar', 'yetisik'];

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as api from '../api/mockApi';
+import { TODAY } from '../lib/date';
 import type { DayInfo, DaySchedule } from '../types';
 
-export function useSchedule(initialKey = 'd2') {
+export function useSchedule(initialKey = TODAY) {
   const [days, setDays] = useState<DayInfo[]>([]);
   const [dateKey, setDateKey] = useState(initialKey);
   const [day, setDay] = useState<DaySchedule | null>(null);

@@ -1,31 +1,44 @@
 import { createTheme } from '@mui/material/styles';
 
 /* Design tokens extracted from the source mock */
+/*
+ * Accent colors come in two grades:
+ *   `x`      — fills, icons, borders, charts (WCAG needs only 3:1 for these)
+ *   `xText`  — the same accent when it carries *words* at caption/body size
+ *              (>=4.5:1 on white, on `surface`, and on its own tint)
+ * Never set a caption in the plain accent; use the Text grade.
+ */
 export const tokens = {
-  blue: '#3F7CF2',
-  bluePress: '#2F66D6',
+  blue: '#3570DF',
+  bluePress: '#2758B8',
+  blueText: '#2A5BC4',
   blueSoft: '#DCE9FD',
   blueTint: '#EFF5FF',
   surface: '#F7F7F7',
   surfacePress: '#EFEFEF',
   ink: '#111213',
   ink2: '#5A5E6F',
-  ink3: '#6F7488',
-  inkMuted: '#898D95',
+  ink3: '#646979',
+  inkMuted: '#6B7080',
   inkDisabled: '#C4C6CA',
   divider: '#E4E5E6',
   dividerSoft: '#EDEDF1',
   red: '#EA5455',
   redDeep: '#D22630',
+  redText: '#BC2C32',
   redTint: '#FDE8E8',
   green: '#2DD579',
   greenDeep: '#22A06B',
+  greenText: '#17734D',
   greenTint: '#E3F7ED',
   orange: '#F59B1B',
+  orangeText: '#965600',
   orangeTint: '#FDEFDC',
   purple: '#A78BE0',
+  purpleText: '#7050B5',
   purpleTint: '#EDE6F9',
   teal: '#1FA58C',
+  tealText: '#10705F',
   tealTint: '#DFF3EF',
   gold: '#F2C94C',
   silver: '#C8CDD4',
@@ -77,7 +90,7 @@ export const theme = createTheme({
     subtitle1: { fontSize: 17, fontWeight: 600, letterSpacing: '-0.2px' }, // row label
     body1: { fontSize: 15 },
     body2: { fontSize: 14, lineHeight: 1.5 },
-    caption: { fontSize: 13, color: tokens.inkMuted },
+    caption: { fontSize: 13, color: tokens.ink3 },
     button: { textTransform: 'none', fontWeight: 600, fontSize: 15 },
   },
   components: {

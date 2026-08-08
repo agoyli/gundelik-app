@@ -7,12 +7,14 @@ import { tokens } from '../theme';
 type Msg = { role: 'user' | 'ai'; text: string };
 export type AiSuggestion = { label: string; reply: string };
 
-/* Floating entry point — one sparkle button on every lesson page */
+/* Floating entry point — one sparkle button on every lesson page.
+   Free users still see it: the button is the ad, and tapping it explains the
+   feature rather than doing nothing. */
 export function AiFab({ onClick, lift }: { onClick: () => void; lift?: boolean }) {
   return (
     <ButtonBase
       onClick={onClick}
-      aria-label="AI kömekçi"
+      aria-label="Akylly mugallym"
       aria-haspopup="dialog"
       sx={{
         position: 'absolute', right: 16, zIndex: 15,
@@ -85,7 +87,7 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
           bgcolor: tokens.blueSoft, color: tokens.blue, display: 'grid', placeItems: 'center',
         }}><SparkleIcon size={22} /></Box>
         <Box>
-          <Typography variant="h2" component="h2" sx={{ fontSize: 18 }}>AI kömekçi</Typography>
+          <Typography variant="h2" component="h2" sx={{ fontSize: 18 }}>Akylly mugallym</Typography>
           <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted }}>Sapak boýunça islendik zat soraň</Typography>
         </Box>
       </Box>
@@ -130,7 +132,7 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
           sx={{ flex: 1, fontSize: 14 }}
-          inputProps={{ 'aria-label': 'AI kömekçä sorag' }}
+          inputProps={{ 'aria-label': 'Akylly mugallyma sorag' }}
         />
         <ButtonBase onClick={send} disabled={!draft.trim()} aria-label="Ugrat"
           sx={{

@@ -1,24 +1,27 @@
 import { Box, Button, ButtonBase, InputBase, Typography } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BookmarkFilledIcon, BookmarkIcon, BooksIcon, CheckIcon, ChevronIcon,
-  GameIcon, LockIcon, QuizIcon, SearchIcon, TrendUpIcon, VideoIcon,
+  BooksIcon, CheckIcon, ChevronIcon, GameIcon, LockIcon, QuizIcon, SearchIcon,
+  SparkleIcon, TrendUpIcon, VideoIcon,
 } from '../components/Icons';
-import { DoneBadge, HeaderIconButton, PillHeader, SheetDrawer, SheetSection } from '../components/Ui';
+import { BookmarkButton, DoneBadge, PillHeader, SheetDrawer, SheetSection } from '../components/Ui';
+import { usePrefs } from '../state/prefs';
 import { LessonScreen } from './LessonScreen';
+import { TEST_LENGTH } from './LessonScreen';
 import type { LessonKind } from './LessonScreen';
 import { tokens } from '../theme';
 
 /* ---------------- Activity kinds ---------------- */
 type Kind = LessonKind;
 
+/* `color` fills tiles and icons; `ink` is the same accent at text contrast */
 const KIND_META: Record<Kind, {
-  label: string; color: string; tint: string; icon: (size: number) => React.ReactNode;
+  label: string; color: string; ink: string; tint: string; icon: (size: number) => React.ReactNode;
 }> = {
-  text: { label: 'Tekst', color: tokens.blue, tint: tokens.blueTint, icon: (s) => <BooksIcon size={s} /> },
-  video: { label: 'Wideo', color: tokens.purple, tint: tokens.purpleTint, icon: (s) => <VideoIcon size={s} /> },
-  interactive: { label: 'Interaktiw', color: tokens.teal, tint: tokens.tealTint, icon: (s) => <GameIcon size={s} /> },
-  test: { label: 'Test', color: tokens.orange, tint: tokens.orangeTint, icon: (s) => <QuizIcon size={s} /> },
+  text: { label: 'Tekst', color: tokens.blue, ink: tokens.blueText, tint: tokens.blueTint, icon: (s) => <BooksIcon size={s} /> },
+  video: { label: 'Wideo', color: tokens.purple, ink: tokens.purpleText, tint: tokens.purpleTint, icon: (s) => <VideoIcon size={s} /> },
+  interactive: { label: 'Interaktiw', color: tokens.teal, ink: tokens.tealText, tint: tokens.tealTint, icon: (s) => <GameIcon size={s} /> },
+  test: { label: 'Test', color: tokens.orange, ink: tokens.orangeText, tint: tokens.orangeTint, icon: (s) => <QuizIcon size={s} /> },
 };
 const KINDS = Object.keys(KIND_META) as Kind[];
 
@@ -48,7 +51,8 @@ const GRADES: GradeSection[] = Array.from({ length: 12 }, (_, gi) => {
         title: TITLES[(i + grade) % TITLES.length],
         done: grade < USER_GRADE || (grade === USER_GRADE && i < 5),
         kind,
-        extent: kind === 'test' ? `${8 + ((i + grade) % 3) * 2} sorag` : `${4 + ((i * 3 + grade) % 8)} min`,
+        /* tests advertise the count the test page actually asks (TEST_LENGTH) */
+        extent: kind === 'test' ? `${TEST_LENGTH} sorag` : `${4 + ((i * 3 + grade) % 8)} min`,
       };
     }),
   };
@@ -139,7 +143,7 @@ function PathSection({ lessons, currentId, onPick }: {
               {current && (
                 <Box sx={{
                   position: 'absolute', top: -26, left: '50%', transform: 'translateX(-50%)',
-                  bgcolor: meta.color, color: '#fff', fontSize: 11, fontWeight: 700,
+                  bgcolor: meta.ink, color: '#fff', fontSize: 11, fontWeight: 700,
                   letterSpacing: '.8px', px: '9px', height: 20, lineHeight: '20px',
                   borderRadius: `${tokens.rPill}px`, whiteSpace: 'nowrap',
                   animation: 'roadBob 1.4s ease-in-out infinite',
@@ -161,7 +165,7 @@ function PathSection({ lessons, currentId, onPick }: {
                 fontSize: 15, fontWeight: 600, lineHeight: 1.25,
                 color: locked ? tokens.ink3 : tokens.ink,
               }}>{l.title}</Typography>
-              <Typography sx={{ fontSize: 12.5, mt: '3px', color: locked ? tokens.inkMuted : meta.color, fontWeight: 600 }}>
+              <Typography sx={{ fontSize: 12.5, mt: '3px', color: locked ? tokens.inkMuted : meta.ink, fontWeight: 600 }}>
                 {meta.label} · {l.extent}
               </Typography>
             </Box>
@@ -172,14 +176,20 @@ function PathSection({ lessons, currentId, onPick }: {
   );
 }
 
+/* the grade the free tier gets in full — enough to finish a real topic before
+   being asked for anything */
+const FREE_GRADE = 1;
+
 /* ---------------- Screen ---------------- */
-export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m: string) => void }) {
+export function RoadmapScreen({ onBack, toast, onUpgrade }: {
+  onBack: () => void; toast: (m: string) => void; onUpgrade: () => void;
+}) {
+  const { premium } = usePrefs();
   const [query, setQuery] = useState('');
   const [kindFilter, setKindFilter] = useState<Kind | null>(null);
   const [activeGrade, setActiveGrade] = useState(USER_GRADE);
   const [sheet, setSheet] = useState<RoadLesson | null>(null);
   const [lessonOpen, setLessonOpen] = useState<RoadLesson | null>(null);
-  const [saved, setSaved] = useState(false);
   /* lessons completed in this session — the path advances live */
   const [doneIds, setDoneIds] = useState<string[]>([]);
   /* fully-completed grades collapse to summary rows; user can expand them */
@@ -259,6 +269,9 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
 
   const sheetMeta = sheet ? KIND_META[sheet.kind] : null;
   const sheetLocked = !!sheet && !sheet.done && sheet.id !== currentId;
+  /* free users own the first grade outright; beyond it the path is a preview */
+  const sheetGrade = sheet ? Number(sheet.id.slice(1).split('-')[0]) : 0;
+  const sheetPaid = !premium && sheetGrade > FREE_GRADE;
 
   return (
     <Box sx={{ position: 'absolute', inset: 0, bgcolor: '#fff' }}>
@@ -270,15 +283,10 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
         <PillHeader
           title="Algebra"
           onBack={onBack}
-          action={(
-            <HeaderIconButton
-              label="Bellik et"
-              pressed={saved}
-              onClick={() => { setSaved(!saved); toast(saved ? 'Bellik aýryldy' : 'Belliklere goşuldy'); }}
-            >
-              {saved ? <BookmarkFilledIcon size={20} /> : <BookmarkIcon size={20} />}
-            </HeaderIconButton>
-          )}
+          /* the shared bookmark, not a second private one: this page used to
+             keep its own `saved` flag, which meant the star here and the
+             collection under Gollanmalar knew nothing about each other */
+          action={<BookmarkButton item={{ kind: 'tema', id: 'algebra', title: 'Algebra', sub: 'Matematika · 1–12 synp' }} />}
         />
 
         <Box sx={{ px: tokens.gutter, pt: '2px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -321,7 +329,7 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
                   sx={{
                     height: 32, px: '12px', borderRadius: `${tokens.rPill}px`, flex: 'none',
                     display: 'inline-flex', gap: '6px', fontSize: 13.5, fontWeight: 600,
-                    bgcolor: on ? m.color : m.tint, color: on ? '#fff' : m.color,
+                    bgcolor: on ? m.ink : m.tint, color: on ? '#fff' : m.ink,
                     transition: 'background .15s ease,color .15s ease',
                   }}>
                   {m.icon(15)}{m.label}
@@ -337,7 +345,7 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
             aria-label={currentLesson ? `Indiki sapak: ${currentLesson.title}` : undefined}
             sx={{
               display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '14px',
-              background: `linear-gradient(155deg, #5B93F5 0%, ${tokens.blue} 62%)`,
+              background: `linear-gradient(155deg, ${tokens.blue} 0%, ${tokens.bluePress} 100%)`,
               borderRadius: `${tokens.rCard}px`, color: '#fff',
               p: '16px 18px', textAlign: 'left',
               boxShadow: '0 10px 24px rgba(63,124,242,.28)',
@@ -408,11 +416,15 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
           const complete = doneN === total;
           const toggleable = complete && !filterActive;
           const collapsed = toggleable && !expandedDone[g.grade];
+          /* Free tier keeps the first grade; the rest say so in the band
+             rather than only when a lesson sheet opens. */
+          const paidGrade = !premium && g.grade > FREE_GRADE;
           const caption = filterActive
             ? `${g.lessons.length} sapak tapyldy`
-            : complete ? `${total} sapak tamamlandy`
-              : doneN > 0 ? `${doneN}/${total} tamamlandy`
-                : `gulply · ${total} sapak`;
+            : paidGrade ? `Premium · ${total} sapak`
+              : complete ? `${total} sapak tamamlandy`
+                : doneN > 0 ? `${doneN}/${total} tamamlandy`
+                  : `gulply · ${total} sapak`;
           const toggle = () => {
             setExpandedDone((s) => ({ ...s, [g.grade]: collapsed }));
             /* collapsing shrinks the page — keep the band in view */
@@ -438,12 +450,12 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
                   {complete && <DoneBadge />}
-                  <Typography variant="h2" component="span" sx={{ color: tokens.blue }}>
+                  <Typography variant="h2" component="span" sx={{ color: tokens.blueText }}>
                     {gradeLabel(g.grade)}
                   </Typography>
                   {toggleable && (
                     <Box sx={{
-                      color: tokens.blue, display: 'flex', opacity: .55,
+                      color: tokens.blueText, display: 'flex', opacity: .7,
                       transform: collapsed ? 'rotate(90deg)' : 'rotate(-90deg)',
                       transition: 'transform .18s ease',
                     }}>
@@ -451,7 +463,7 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
                     </Box>
                   )}
                 </Box>
-                <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: tokens.blue, opacity: .65 }}>
+                <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: tokens.blueText }}>
                   {caption}
                 </Typography>
               </Box>
@@ -472,7 +484,7 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
               display: 'flex', flexDirection: 'column', gap: '2px',
               width: 54, height: 70, borderRadius: `${tokens.rRow}px`,
               bgcolor: tokens.blurBgSoft, backdropFilter: tokens.blur,
-              border: `2px solid ${tokens.greenDeep}`, color: tokens.greenDeep,
+              border: `2px solid ${tokens.greenText}`, color: tokens.greenText,
               fontSize: 17, fontWeight: 700, boxShadow: tokens.shadowFloat,
               zIndex: 5,
             }}
@@ -491,18 +503,22 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
             <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <Box sx={{
                 width: 56, height: 56, borderRadius: `${tokens.rRow}px`, flex: 'none',
-                bgcolor: sheetMeta.tint, color: sheetMeta.color, display: 'grid', placeItems: 'center',
+                bgcolor: sheetMeta.tint, color: sheetMeta.ink, display: 'grid', placeItems: 'center',
               }}>{sheetMeta.icon(28)}</Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h2">{sheet.title}</Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 600, color: sheetMeta.color, mt: '2px' }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 600, color: sheetMeta.ink, mt: '2px' }}>
                   {sheetMeta.label} · {sheet.extent}
                 </Typography>
               </Box>
             </Box>
             <SheetSection>
-              {sheet.done ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: tokens.greenDeep, fontSize: 14, fontWeight: 600 }}>
+              {sheetPaid ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: tokens.blueText, fontSize: 14, fontWeight: 600 }}>
+                  <SparkleIcon size={16} />{gradeLabel(FREE_GRADE)} mugt — galan synplar Premium bilen
+                </Box>
+              ) : sheet.done ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: tokens.greenText, fontSize: 14, fontWeight: 600 }}>
                   <CheckIcon size={15} />Tamamlandy — gaýtadan geçip bilersiňiz
                 </Box>
               ) : sheetLocked ? (
@@ -517,9 +533,16 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
               <Button fullWidth onClick={() => setSheet(null)} sx={{ bgcolor: tokens.surface, color: tokens.ink }}>
                 Ýap
               </Button>
-              <Button fullWidth variant="contained" disableElevation disabled={sheetLocked}
-                onClick={() => sheet && openLesson(sheet)}>
-                {sheet.done ? 'Gaýtadan gör' : sheetLocked ? 'Gulply' : 'Başla'}
+              <Button
+                fullWidth variant="contained" disableElevation
+                disabled={sheetLocked && !sheetPaid}
+                onClick={() => {
+                  if (!sheet) return;
+                  if (sheetPaid) { setSheet(null); onUpgrade(); return; }
+                  openLesson(sheet);
+                }}
+              >
+                {sheetPaid ? 'Premium al' : sheet.done ? 'Gaýtadan gör' : sheetLocked ? 'Gulply' : 'Başla'}
               </Button>
             </Box>
           </>
@@ -533,6 +556,7 @@ export function RoadmapScreen({ onBack, toast }: { onBack: () => void; toast: (m
           meta={KIND_META[lessonOpen.kind]}
           onClose={() => setLessonOpen(null)}
           onComplete={completeLesson}
+          onUpgrade={() => { setLessonOpen(null); onUpgrade(); }}
         />
       )}
     </Box>

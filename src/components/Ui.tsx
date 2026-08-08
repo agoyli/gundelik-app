@@ -1,11 +1,16 @@
-import { Box, ButtonBase, Divider, SwipeableDrawer, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, SwipeableDrawer, Typography } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { isToday } from '../lib/date';
+import { toggleBookmark, useIsBookmarked } from '../state/bookmarks';
+import type { Bookmark } from '../state/bookmarks';
 import { tokens } from '../theme';
 import type { DayInfo, Grade, Lesson, TabId } from '../types';
+import { useSwipeLock } from './SwipeLock';
 import {
-  BackIcon, CheckIcon, ClockIcon, CoinIcon, HouseEventIcon, HwIcon, MedalIcon,
-  NavChevronIcon, PenEventIcon, PeopleIcon, TabBookIcon, TabChartIcon, TabFaceIcon,
-  TabGridIcon, TabPersonIcon, TemaIcon, TrendUpIcon,
+  BackIcon, BookmarkFilledIcon, BookmarkIcon, CheckIcon, ChevronIcon, CoinIcon,
+  HouseEventIcon, HwIcon, MedalIcon, NavChevronIcon, PenEventIcon, QuestionOutlineIcon,
+  TabBookIcon, TabChartIcon, TabGridIcon, TabPersonIcon, TrendUpIcon,
 } from './Icons';
 
 /* ---------------- GradeBadge (geometry matched to mock: 46.5×28, r14, slash) ---------------- */
@@ -17,7 +22,7 @@ export function GradeBadge({ grade }: { grade: Grade }) {
       sx={{
         position: 'relative', display: 'inline-flex', alignItems: 'center',
         width: 46.5, height: 28, borderRadius: '14px', overflow: 'hidden', flex: 'none',
-        bgcolor: grade.color === 'blue' ? tokens.blue : tokens.green,
+        bgcolor: grade.color === 'blue' ? tokens.blue : tokens.greenText,
         color: '#fff', fontSize: 15, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
         '&::after': {
           content: '""', position: 'absolute', left: '50%', top: -5, bottom: -5,
@@ -47,19 +52,23 @@ export function DateStrip({ days, selected, onSelect }: {
     >
       {days.map((d) => {
         const active = d.key === selected;
+        /* Today keeps a ring when it is not the selected day, so a reader who
+           has browsed backwards can see where "now" is without counting. */
+        const today = isToday(d.key);
         return (
           <ButtonBase
             key={d.key}
             disabled={d.disabled}
             onClick={() => onSelect(d.key)}
             aria-pressed={active}
-            aria-label={`${d.d} ${d.full}`}
+            aria-label={`${d.d} ${d.full}${today ? ', şu gün' : ''}`}
             data-datecell={active ? 'active' : undefined}
             sx={{
               position: 'relative', flex: '0 0 54px', height: 70,
               borderRadius: `${tokens.rCell}px`,
               bgcolor: active ? tokens.blue : tokens.surface,
               color: active ? '#fff' : d.disabled ? tokens.inkDisabled : tokens.ink,
+              boxShadow: today && !active ? `inset 0 0 0 1.5px ${tokens.blue}` : 'none',
               display: 'flex', flexDirection: 'column', gap: '6px',
               transition: 'background .18s ease,color .18s ease',
             }}
@@ -90,8 +99,9 @@ export function DateStrip({ days, selected, onSelect }: {
 }
 
 /* ---------------- SurfaceRow (quick rows, list rows) ---------------- */
-export function SurfaceRow({ icon, label, sub, end, onClick }: {
-  icon?: ReactNode; label: ReactNode; sub?: ReactNode; end?: ReactNode; onClick?: () => void;
+export function SurfaceRow({ icon, label, labelSx, sub, end, onClick }: {
+  icon?: ReactNode; label: ReactNode; labelSx?: object;
+  sub?: ReactNode; end?: ReactNode; onClick?: () => void;
 }) {
   return (
     <ButtonBase
@@ -108,7 +118,7 @@ export function SurfaceRow({ icon, label, sub, end, onClick }: {
     >
       {icon}
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="subtitle1" noWrap>{label}</Typography>
+        <Typography variant="subtitle1" noWrap sx={labelSx}>{label}</Typography>
         {sub && <Typography sx={{ fontSize: 12, color: tokens.inkMuted, mt: '2px' }}>{sub}</Typography>}
       </Box>
       {end}
@@ -116,15 +126,28 @@ export function SurfaceRow({ icon, label, sub, end, onClick }: {
   );
 }
 
-export const CountPill = ({ n }: { n: number }) => (
-  <Box role="img" aria-label={`${n} täze`} sx={{
-    minWidth: 23, height: 20, px: '7px', borderRadius: '10px', bgcolor: tokens.red,
-    color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: '20px', textAlign: 'center',
+/* Red is the app's "unread" colour and nothing else. A count that is merely a
+   quantity — how many notes a day holds — takes the quiet tone, so two stacked
+   rows never both shout. */
+export const CountPill = ({ n, tone = 'alert', label }: {
+  n: number; tone?: 'alert' | 'quiet'; label?: string;
+}) => (
+  <Box role="img" aria-label={label ?? `${n} täze`} sx={{
+    minWidth: 23, height: 20, px: '7px', borderRadius: '10px',
+    bgcolor: tone === 'alert' ? tokens.redText : tokens.surfacePress,
+    color: tone === 'alert' ? '#fff' : tokens.ink2,
+    fontSize: 13, fontWeight: 600, lineHeight: '20px', textAlign: 'center',
   }}>{n}</Box>
 );
 
 /* ---------------- LessonCard ---------------- */
-export function LessonCard({ lesson, onOpen }: { lesson: Lesson; onOpen: (l: Lesson) => void }) {
+export function LessonCard({ lesson, marks, onOpen }: {
+  /* `marks` is the teacher-badge signal. It sits in the meta row, in the slot
+     the classmate count used to hold — one quiet mark before the grade, rather
+     than a labelled chip strip that turned every card into two stacked cards. */
+  lesson: Lesson; marks?: ReactNode; onOpen: (l: Lesson) => void;
+}) {
+  const [start, end] = lesson.time.split('–').map((t) => t.trim());
   return (
     <ButtonBase
       onClick={() => onOpen(lesson)}
@@ -133,53 +156,67 @@ export function LessonCard({ lesson, onOpen }: { lesson: Lesson; onOpen: (l: Les
         + (lesson.grade ? `, baha ${lesson.grade.a}/${lesson.grade.b}` : '')
         + (lesson.unread > 0 ? `, ${lesson.unread} täze` : '')}
       sx={{
-        display: 'flex', flexDirection: 'column', alignItems: 'stretch', width: '100%',
-        bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, minHeight: 108,
-        pl: tokens.padCard, pr: '16px', textAlign: 'left',
+        display: 'flex', alignItems: 'flex-start', gap: '13px', width: '100%',
+        bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
+        p: `13px ${tokens.padCard}`, textAlign: 'left',
         transition: 'background .15s ease',
         '&:active': { bgcolor: tokens.surfacePress },
       }}
     >
-      <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-        <Typography variant="h3" noWrap>{lesson.subject}</Typography>
-        <Box sx={{
-          display: 'inline-flex', alignItems: 'center', gap: '7px', flex: 'none',
-          color: tokens.inkMuted, fontSize: 15, fontVariantNumeric: 'tabular-nums',
-        }}>
-          <ClockIcon />{lesson.time}
-        </Box>
+      {/* The time as a left rail: it is what you scan a timetable by, and one
+          column of aligned digits reads faster than a clock icon on every row. */}
+      <Box sx={{
+        flex: 'none', width: 42, pt: '2px',
+        fontVariantNumeric: 'tabular-nums', textAlign: 'left',
+      }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.15 }}>{start}</Typography>
+        <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, lineHeight: 1.3 }}>{end}</Typography>
       </Box>
-      <Divider sx={{ borderColor: tokens.divider }} />
-      <Box sx={{ flex: 1, minHeight: 57, display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: tokens.ink2, fontSize: 13, fontWeight: 500 }}>
-          <TemaIcon />Tema
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Typography variant="h3" noWrap sx={{ flex: 1, minWidth: 0 }}>{lesson.subject}</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 'none' }}>
+            {/* Unread and badges are different facts — an unread note is a
+                thing to open, a badge is a thing that happened — so a lesson
+                that has both shows both rather than hiding one behind the
+                other. */}
+            {lesson.unread > 0 && (
+              <Box role="img" aria-label={`${lesson.unread} täze`} sx={{
+                width: 24, height: 24, borderRadius: '50%', bgcolor: tokens.redDeep, flex: 'none',
+                color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: '24px', textAlign: 'center',
+              }}>{lesson.unread}</Box>
+            )}
+            {marks}
+            {lesson.grade && <GradeBadge grade={lesson.grade} />}
+          </Box>
         </Box>
-        <Box sx={{ width: '1px', height: 18.5, bgcolor: tokens.dividerSoft, mx: '17px' }} />
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: tokens.ink2, fontSize: 13, fontWeight: 500 }}>
-          <HwIcon />Öý işi
-        </Box>
-        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
-          {lesson.unread > 0 ? (
-            <Box role="img" aria-label={`${lesson.unread} täze`} sx={{
-              width: 26, height: 26, borderRadius: '50%', bgcolor: tokens.redDeep,
-              color: '#fff', fontSize: 14, fontWeight: 600, lineHeight: '26px', textAlign: 'center',
-            }}>{lesson.unread}</Box>
-          ) : (
-            <>
-              {lesson.people > 0 && (
-                <>
-                  <PeopleIcon />
-                  <Box component="span" sx={{ mx: '10px 0', ml: '5px', mr: '10px', fontSize: 13, color: tokens.inkMuted }}>
-                    +{lesson.people}
-                  </Box>
-                </>
-              )}
-              {lesson.grade
-                ? <GradeBadge grade={lesson.grade} />
-                : lesson.hwDone && <Box sx={{ color: tokens.green, display: 'flex' }}><CheckIcon size={18} /></Box>}
-            </>
-          )}
-        </Box>
+
+        {/* The topic, not the word "Tema". A label that is identical on every
+            card looks like data and carries none. */}
+        {lesson.tema && (
+          <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px', lineHeight: 1.4 }} noWrap>
+            {lesson.tema}
+          </Typography>
+        )}
+
+        {/* Homework appears only when there is homework, and says its state */}
+        {lesson.hw && (
+          <Box sx={{
+            display: 'inline-flex', alignItems: 'center', gap: '7px', mt: '9px',
+            px: '9px', height: 26, borderRadius: `${tokens.rPill}px`,
+            width: 'fit-content', maxWidth: '100%',
+            bgcolor: lesson.hwDone ? tokens.greenTint : tokens.orangeTint,
+            color: lesson.hwDone ? tokens.greenText : tokens.orangeText,
+          }}>
+            <Box aria-hidden sx={{ display: 'flex', flex: 'none' }}>
+              {lesson.hwDone ? <CheckIcon size={13} /> : <HwIcon size={14} />}
+            </Box>
+            <Typography sx={{ fontSize: 12, fontWeight: 600, minWidth: 0 }} noWrap>
+              {lesson.hwDone ? 'Öý işi taýýar' : lesson.hw}
+            </Typography>
+          </Box>
+        )}
       </Box>
     </ButtonBase>
   );
@@ -187,7 +224,6 @@ export function LessonCard({ lesson, onOpen }: { lesson: Lesson; onOpen: (l: Les
 
 /* ---------------- TabBar ---------------- */
 const TABS: { id: TabId; label: string; icon: (active: boolean) => ReactNode }[] = [
-  { id: 'cagam', label: 'Çagam', icon: () => <TabFaceIcon /> },
   { id: 'gundelik', label: 'Gündelik', icon: () => <TabBookIcon /> },
   { id: 'analitika', label: 'Analitika', icon: () => <TabChartIcon /> },
   { id: 'gollanmalar', label: 'Gollanmalar', icon: () => <TabGridIcon /> },
@@ -202,7 +238,7 @@ export function TabBar({ value, onChange }: { value: TabId; onChange: (t: TabId)
       borderTop: `1px solid ${tokens.dividerSoft}`,
     }}>
       <Box component="nav" role="tablist" aria-label="Esasy nawigasiýa"
-        sx={{ display: 'flex', justifyContent: 'space-between', px: '25.7px', pt: '9px' }}>
+        sx={{ display: 'flex', justifyContent: 'space-around', px: '12px', pt: '9px' }}>
         {TABS.map((t) => {
           const active = t.id === value;
           return (
@@ -213,7 +249,7 @@ export function TabBar({ value, onChange }: { value: TabId; onChange: (t: TabId)
               onClick={() => onChange(t.id)}
               sx={{
                 display: 'flex', flexDirection: 'column', gap: '5px', minWidth: 52,
-                color: active ? tokens.blue : tokens.ink3, fontSize: 11, fontWeight: 500,
+                color: active ? tokens.blueText : tokens.ink3, fontSize: 11, fontWeight: 500,
                 borderRadius: `${tokens.rTile}px`,
               }}
             >
@@ -275,6 +311,14 @@ export function SheetDrawer({ open, onClose, children }: {
 export function PillHeader({ title, onBack, action }: {
   title: string; onBack?: () => void; action?: ReactNode;
 }) {
+  /*
+   * The capsule header IS the definition of "inner page", so the swipe lock
+   * lives here rather than being re-declared by each page that happens to
+   * remember. That also gives the shell one reliable signal for hiding the tab
+   * bar: a page with a back button owns the screen, and a bottom nav under it
+   * offers a second, competing way out of somewhere you got to by drilling in.
+   */
+  useSwipeLock();
   return (
     <Box sx={{
       position: 'sticky', top: 0, zIndex: 10,
@@ -312,21 +356,64 @@ export function PillHeader({ title, onBack, action }: {
 }
 
 /* Raised white 44px header button — pair with PillHeader `action` */
-export function HeaderIconButton({ label, onClick, pressed, children }: {
-  label: string; onClick: () => void; pressed?: boolean; children: ReactNode;
+/*
+ * The one "save this" control, in the header of every resource's detail page.
+ *
+ * It lives on the *detail* page rather than on list rows because saving is a
+ * decision, and the detail page is where the reader has enough to make it — a
+ * bookmark on every row of six lists is six ways to save something you have
+ * not read yet. Filled means saved: a stateful control has to look different
+ * in its two states, not just change a tooltip.
+ */
+export function BookmarkButton({ item }: { item: Bookmark }) {
+  const on = useIsBookmarked(item.kind, item.id);
+  return (
+    <ButtonBase
+      onClick={() => toggleBookmark(item)}
+      role="switch"
+      aria-checked={on}
+      aria-label={on ? `${item.title} — bellikden aýyr` : `${item.title} — bellige goş`}
+      sx={{
+        width: 44, height: 44, borderRadius: `${tokens.rRow}px`, bgcolor: '#fff',
+        display: 'grid', placeItems: 'center', flex: 'none',
+        color: on ? tokens.blue : tokens.ink2,
+        boxShadow: tokens.shadowCtl,
+        transition: 'color .15s ease',
+      }}
+    >
+      {on ? <BookmarkFilledIcon size={20} /> : <BookmarkIcon size={20} />}
+    </ButtonBase>
+  );
+}
+
+export function HeaderIconButton({ label, onClick, pressed, count, children }: {
+  label: string; onClick: () => void; pressed?: boolean; count?: number; children: ReactNode;
 }) {
   return (
     <ButtonBase
       onClick={onClick}
-      aria-label={label}
+      aria-label={count ? `${label}, ${count} täze` : label}
       {...(pressed !== undefined ? { 'aria-pressed': pressed } : {})}
       sx={{
         width: 44, height: 44, borderRadius: `${tokens.rRow}px`, bgcolor: '#fff',
-        display: 'grid', placeItems: 'center',
+        display: 'grid', placeItems: 'center', position: 'relative', flex: 'none',
         color: pressed ? tokens.blue : tokens.ink,
         boxShadow: tokens.shadowCtl,
       }}
-    >{children}</ButtonBase>
+    >
+      {children}
+      {/* unread rides the button rather than taking a row of its own.
+          It clings to the corner: pulled outside the button box so it clips the
+          glyph's corner instead of sitting on top of it. */}
+      {!!count && (
+        <Box aria-hidden sx={{
+          position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, px: '4px',
+          borderRadius: '9px', bgcolor: tokens.redText, color: '#fff',
+          fontSize: 11, fontWeight: 700, lineHeight: '18px', textAlign: 'center',
+          border: '2px solid #fff', boxSizing: 'content-box',
+        }}>{count > 99 ? '99+' : count}</Box>
+      )}
+    </ButtonBase>
   );
 }
 
@@ -356,11 +443,13 @@ export function IconBadge({ children, bg = tokens.blueSoft, color = tokens.blue,
 }
 
 /* White grid tile — icon badge + label (original: Gollanmalar grid) */
-export function GridTile({ icon, label, onClick }: { icon: ReactNode; label: string; onClick?: () => void }) {
+export function GridTile({ icon, label, sub, onClick }: {
+  icon: ReactNode; label: string; sub?: string; onClick?: () => void;
+}) {
   return (
     <ButtonBase
       onClick={onClick}
-      aria-label={label}
+      aria-label={sub ? `${label}, ${sub}` : label}
       sx={{
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '18px',
         bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '18px 16px 20px',
@@ -369,7 +458,10 @@ export function GridTile({ icon, label, onClick }: { icon: ReactNode; label: str
       }}
     >
       <IconBadge>{icon}</IconBadge>
-      <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px' }}>{label}</Typography>
+      <Box sx={{ minWidth: 0, width: '100%' }}>
+        <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px' }} noWrap>{label}</Typography>
+        {sub && <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '3px' }} noWrap>{sub}</Typography>}
+      </Box>
     </ButtonBase>
   );
 }
@@ -385,7 +477,7 @@ export function TagPill({ label, icon, onClick }: {
       sx={{
         display: 'inline-flex', alignItems: 'center', gap: '6px',
         height: 32, px: '12px', borderRadius: `${tokens.rPill}px`,
-        bgcolor: tokens.blueTint, color: tokens.blue, fontSize: 13.5, fontWeight: 600,
+        bgcolor: tokens.blueTint, color: tokens.blueText, fontSize: 13.5, fontWeight: 600,
         transition: 'background .15s ease',
         '&:active': { bgcolor: tokens.blueSoft },
       }}
@@ -414,7 +506,7 @@ export function PointsPill({ value, unit }: { value: number; unit?: string }) {
       px: '13px', borderRadius: `${tokens.rPill}px`, bgcolor: tokens.orangeTint,
       color: tokens.ink, fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
     }}>
-      <Box sx={{ color: tokens.orange, display: 'flex' }} aria-hidden><CoinIcon size={18} /></Box>
+      <Box sx={{ color: tokens.orangeText, display: 'flex' }} aria-hidden><CoinIcon size={18} /></Box>
       {value}{unit ? ` ${unit}` : ''}
     </Box>
   );
@@ -422,19 +514,30 @@ export function PointsPill({ value, unit }: { value: number; unit?: string }) {
 
 /* Leaderboard row — medal, name, school, points (original: Reýting) */
 const MEDAL = [tokens.gold, tokens.silver, tokens.bronze];
-export function RankRow({ rank, name, sub, points }: {
-  rank: number; name: string; sub: string; points: number;
+export function RankRow({ rank, name, sub, points, self }: {
+  rank: number; name: string; sub: string; points: number; self?: boolean;
 }) {
   return (
     <Box sx={{
       display: 'flex', alignItems: 'center', gap: '13px', minHeight: 64,
-      bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, px: '13px',
+      bgcolor: self ? tokens.blueTint : tokens.surface,
+      border: `1.5px solid ${self ? tokens.blue : 'transparent'}`,
+      borderRadius: `${tokens.rRow}px`, px: '13px',
     }}>
       <Box sx={{ color: MEDAL[rank - 1] ?? tokens.inkDisabled, display: 'flex' }} aria-label={`${rank}-nji orun`}>
         <MedalIcon n={rank} size={30} />
       </Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.2px' }} noWrap>{name}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.2px' }} noWrap>{name}</Typography>
+          {self && (
+            <Box sx={{
+              flex: 'none', px: '7px', height: 19, borderRadius: `${tokens.rPill}px`,
+              bgcolor: tokens.blue, color: '#fff', fontSize: 11, fontWeight: 700,
+              display: 'grid', placeItems: 'center',
+            }}>Siz</Box>
+          )}
+        </Box>
         <Typography sx={{ fontSize: 13, color: tokens.inkMuted, mt: '1px' }} noWrap>{sub}</Typography>
       </Box>
       <PointsPill value={points} />
@@ -457,7 +560,7 @@ export function DeltaLine({ children }: { children: ReactNode }) {
   return (
     <Box sx={{
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-      color: tokens.greenDeep, fontSize: 14, fontWeight: 500, mt: '8px',
+      color: tokens.greenText, fontSize: 14, fontWeight: 500, mt: '8px',
     }}>
       <TrendUpIcon size={14} />{children}
     </Box>
@@ -473,7 +576,7 @@ export function PeriodNav({ label, onPrev, onNext }: {
       onClick={fn}
       disabled={!fn}
       aria-label={dir === 'left' ? 'Öňki' : 'Indiki'}
-      sx={{ width: 40, height: 40, borderRadius: '50%', color: fn ? tokens.inkMuted : tokens.inkDisabled }}
+      sx={{ width: 44, height: 44, borderRadius: '50%', color: fn ? tokens.inkMuted : tokens.inkDisabled }}
     >
       <NavChevronIcon dir={dir} size={13} />
     </ButtonBase>
@@ -483,6 +586,262 @@ export function PeriodNav({ label, onPrev, onNext }: {
       {arrow('left', onPrev)}
       <Typography sx={{ fontSize: 17, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{label}</Typography>
       {arrow('right', onNext)}
+    </Box>
+  );
+}
+
+/* ---------------- Sub-page frame ----------------
+   Every page reached by a back button has the same three parts: the capsule
+   header, a swipe lock (a sideways swipe inside must not slide to another tab)
+   and a gutter-padded column. Owning them in one place keeps the back-stack
+   behaviour identical on all ~20 sub-pages. */
+export function SubPage({ title, onBack, action, help, children }: {
+  title: string; onBack: () => void; action?: ReactNode;
+  /* An explanatory sentence is worth having and not worth a permanent line at
+     the top of the page: everyone reads it once, then scrolls past it forever.
+     Pass it as `help` and it becomes a "?" in the header, on demand. */
+  help?: string;
+  children: ReactNode;
+}) {
+  const [helpOpen, setHelpOpen] = useState(false);
+  /* A sub-page swaps its content into the tab's own scroller, so without this
+     it opens at whatever offset the previous page was left at — the header
+     says one thing and the body starts mid-page. */
+  const top = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let el = top.current?.parentElement;
+    while (el) {
+      if (el.scrollHeight > el.clientHeight + 4) { el.scrollTop = 0; break; }
+      el = el.parentElement;
+    }
+  }, []);
+  return (
+    <>
+      <Box ref={top} aria-hidden sx={{ display: 'none' }} />
+      <PillHeader
+        title={title}
+        onBack={onBack}
+        action={action ?? (help ? (
+          <ButtonBase
+            onClick={() => setHelpOpen(true)}
+            aria-label="Bu sahypa barada"
+            sx={{
+              width: 40, height: 40, borderRadius: '50%', bgcolor: '#fff',
+              color: tokens.ink2, display: 'grid', placeItems: 'center', boxShadow: tokens.shadowCtl,
+            }}
+          >
+            <QuestionOutlineIcon size={20} />
+          </ButtonBase>
+        ) : undefined)}
+      />
+      <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>{children}</Box>
+      {help && (
+        <SheetDrawer open={helpOpen} onClose={() => setHelpOpen(false)}>
+          <Typography variant="h2">{title}</Typography>
+          <Typography sx={{ fontSize: 14.5, color: tokens.ink2, lineHeight: 1.55, mt: '10px' }}>
+            {help}
+          </Typography>
+          <Button
+            fullWidth disableElevation onClick={() => setHelpOpen(false)}
+            sx={{ mt: '18px', bgcolor: tokens.surface, color: tokens.ink }}
+          >
+            Düşnükli
+          </Button>
+        </SheetDrawer>
+      )}
+    </>
+  );
+}
+
+/* Uppercase group label above a list of rows */
+export const SectionLabel = ({ children }: { children: string }) => (
+  <Typography sx={{
+    fontSize: 13, fontWeight: 600, color: tokens.inkMuted, textTransform: 'uppercase',
+    letterSpacing: '.6px', px: '6px', pt: '20px', pb: '8px',
+  }}>{children}</Typography>
+);
+
+/* One sentence under a page header on what the page is for */
+export const Lede = ({ children }: { children: string }) => (
+  <Typography sx={{ fontSize: 13.5, color: tokens.ink3, lineHeight: 1.5, px: '6px', pt: '10px' }}>
+    {children}
+  </Typography>
+);
+
+/* Trailing "this row opens something" chevron */
+export const RowChevron = () => (
+  <Box aria-hidden sx={{ color: tokens.inkDisabled, display: 'flex', flex: 'none' }}><ChevronIcon /></Box>
+);
+
+/*
+ * Trailing value + chevron. A row's **second line is for a value it cannot show
+ * any other way — never to explain what the row does**; the label already does
+ * that. Putting the value here instead keeps list rows single-line, so a menu
+ * reads as a list of destinations rather than a wall of prose.
+ */
+export const RowEnd = ({ value }: { value?: string }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 'none', minWidth: 0 }}>
+    {value && (
+      <Typography noWrap sx={{ fontSize: 14, color: tokens.inkMuted, maxWidth: 150 }}>{value}</Typography>
+    )}
+    <RowChevron />
+  </Box>
+);
+
+/* The one switch visual. Purely presentational — the parent row carries
+   role="switch"/aria-checked, so the knob is never a second tab stop. */
+export function ToggleSwitch({ on, disabled }: { on: boolean; disabled?: boolean }) {
+  return (
+    <Box component="span" aria-hidden sx={{
+      width: 42, height: 25, borderRadius: `${tokens.rPill}px`, p: '3px', flex: 'none',
+      bgcolor: on ? tokens.blue : tokens.inkDisabled,
+      opacity: disabled ? 0.45 : 1,
+      transition: 'background .18s ease,opacity .18s ease',
+    }}>
+      <Box sx={{
+        width: 19, height: 19, borderRadius: '50%', bgcolor: '#fff',
+        transform: on ? 'translateX(17px)' : 'none',
+        transition: 'transform .18s ease', boxShadow: '0 1px 2px rgba(17,18,19,.2)',
+      }} />
+    </Box>
+  );
+}
+
+/* Row whose whole surface toggles a switch */
+export function SwitchRow({ icon, label, sub, on, disabled, onToggle }: {
+  icon?: ReactNode; label: string; sub?: string;
+  on: boolean; disabled?: boolean; onToggle: () => void;
+}) {
+  return (
+    <ButtonBase
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      sx={{
+        display: 'flex', alignItems: 'center', gap: '16px', width: '100%', minHeight: 48,
+        bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`,
+        px: '15px', pr: '12px', textAlign: 'left', justifyContent: 'flex-start',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'background .15s ease,opacity .18s ease',
+        '&:active': { bgcolor: tokens.surfacePress },
+      }}
+    >
+      {icon}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 500 }} noWrap>{label}</Typography>
+        {sub && <Typography sx={{ fontSize: 12, color: tokens.inkMuted, mt: '2px' }}>{sub}</Typography>}
+      </Box>
+      <ToggleSwitch on={on} disabled={disabled} />
+    </ButtonBase>
+  );
+}
+
+/* Small figure + label tile (Çagam stats, Profil identity strip, detail pages) */
+export const StatTile = ({ value, label, color = tokens.ink }: {
+  value: string; label: string; color?: string;
+}) => (
+  <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, p: '14px 10px', textAlign: 'center' }}>
+    <Typography sx={{
+      fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', color,
+      fontVariantNumeric: 'tabular-nums',
+    }}>{value}</Typography>
+    <Typography sx={{ fontSize: 11, color: tokens.inkMuted }}>{label}</Typography>
+  </Box>
+);
+
+/* Segmented switch — 2–3 mutually exclusive options on one track.
+   Use when the options must stay visible; a cycling pill hides them. */
+export function Segmented<T extends string>({ value, options, onChange, label }: {
+  value: T; options: { id: T; label: string }[]; onChange: (id: T) => void; label: string;
+}) {
+  return (
+    /* the track is a shade darker than `surface` so it still reads as a track
+       when the control sits on a surface card */
+    <Box role="group" aria-label={label} sx={{
+      display: 'flex', gap: '3px', p: '3px', bgcolor: tokens.surfacePress,
+      borderRadius: `${tokens.rPill}px`,
+    }}>
+      {options.map((o) => {
+        const on = o.id === value;
+        return (
+          <ButtonBase
+            key={o.id}
+            onClick={() => onChange(o.id)}
+            aria-pressed={on}
+            sx={{
+              flex: 1, height: 32, px: '12px', borderRadius: `${tokens.rPill}px`,
+              fontSize: 13.5, fontWeight: 600,
+              bgcolor: on ? '#fff' : 'transparent',
+              color: on ? tokens.ink : tokens.ink3,
+              boxShadow: on ? tokens.shadowCtl : 'none',
+              transition: 'background .15s ease,color .15s ease',
+            }}
+          >{o.label}</ButtonBase>
+        );
+      })}
+    </Box>
+  );
+}
+
+/* Labelled text input — rTile is the input radius in the token set.
+   `note` explains a read-only field instead of leaving it mysteriously dead. */
+export function Field({ label, value, onChange, placeholder, note, type = 'text' }: {
+  label: string; value: string; onChange?: (v: string) => void;
+  placeholder?: string; note?: string; type?: string;
+}) {
+  const readOnly = !onChange;
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <Typography component="label" sx={{ fontSize: 13, fontWeight: 600, color: tokens.ink2, px: '4px' }}>
+        {label}
+      </Typography>
+      <Box
+        component="input"
+        type={type}
+        value={value}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        aria-label={label}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange?.(e.target.value)}
+        sx={{
+          height: 48, px: '15px', width: '100%', boxSizing: 'border-box',
+          border: `1.5px solid ${tokens.dividerSoft}`, borderRadius: `${tokens.rTile}px`,
+          bgcolor: readOnly ? tokens.surface : '#fff',
+          color: readOnly ? tokens.ink3 : tokens.ink,
+          font: 'inherit', fontSize: 15,
+          '&:focus': { outline: 'none', borderColor: tokens.blue, bgcolor: '#fff' },
+          '&::placeholder': { color: tokens.inkDisabled },
+        }}
+      />
+      {note && <Typography sx={{ fontSize: 12, color: tokens.ink3, px: '4px' }}>{note}</Typography>}
+    </Box>
+  );
+}
+
+/* Sticky footer for a page whose primary action must always be reachable */
+export function StickyFooter({ children }: { children: ReactNode }) {
+  return (
+    <Box sx={{
+      position: 'sticky', bottom: 0, zIndex: 5, mx: `-${tokens.gutter}`,
+      px: tokens.gutter, pt: '12px', pb: 'calc(12px + env(safe-area-inset-bottom))',
+      bgcolor: tokens.blurBg, backdropFilter: tokens.blur,
+      borderTop: `1px solid ${tokens.dividerSoft}`,
+    }}>{children}</Box>
+  );
+}
+
+/* Empty / "nothing here yet" state — one shape for every list that can run dry */
+export function EmptyState({ icon, title, note }: { icon: ReactNode; title: string; note: string }) {
+  return (
+    <Box sx={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+      py: '40px', px: '24px', textAlign: 'center',
+    }}>
+      <IconBadge bg={tokens.surface} color={tokens.inkMuted} size={56} radius={28}>{icon}</IconBadge>
+      <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{title}</Typography>
+      <Typography sx={{ fontSize: 13.5, color: tokens.ink3, lineHeight: 1.5 }}>{note}</Typography>
     </Box>
   );
 }
