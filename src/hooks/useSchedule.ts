@@ -41,18 +41,20 @@ export function useSchedule(initialKey = TODAY) {
     setDay(updated);
   }, [dateKey]);
 
+  /* Signing is per-day: `signed` is a fact about the selected date, not a
+     global "last refreshed" stamp, so switching days switches the answer. */
   const [checking, setChecking] = useState(false);
-  const runCheck = useCallback(async () => {
+  const signDay = useCallback(async () => {
     setChecking(true);
     try {
-      const stamp = await api.runSyncCheck();
-      setLastChecked(stamp);
+      setDays(await api.signDay(dateKey));
       setNeedsCheck(false);
-      await loadDay(dateKey);
     } finally {
       setChecking(false);
     }
-  }, [dateKey, loadDay]);
+  }, [dateKey]);
+
+  const signed = days.some((d) => d.key === dateKey && d.checked);
 
   const hwStats = day
     ? {
@@ -62,7 +64,7 @@ export function useSchedule(initialKey = TODAY) {
     : { done: 0, total: 0 };
 
   return {
-    days, dateKey, day, loading, lastChecked, needsCheck, checking, hwStats,
-    selectDate, markHwDone, runCheck,
+    days, dateKey, day, loading, lastChecked, needsCheck, checking, hwStats, signed,
+    selectDate, markHwDone, signDay,
   };
 }

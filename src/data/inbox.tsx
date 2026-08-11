@@ -28,6 +28,10 @@ import { tokens } from '../theme';
 
 export type NotifKind = 'mekdep' | 'okuw' | 'çäre' | 'duýduryş';
 
+/* An attachment is the same object wherever it appears — a message, an
+   announcement — so it is declared once, above both. */
+export type ChatFile = { name: string; size: string; kind: 'pdf' | 'img' | 'doc' };
+
 export const NOTIF_META: Record<NotifKind, { label: string; tint: string; ink: string }> = {
   mekdep: { label: 'Mekdep', tint: tokens.blueTint, ink: tokens.blueText },
   okuw: { label: 'Okuw', tint: tokens.tealTint, ink: tokens.tealText },
@@ -42,32 +46,41 @@ export type Notif = {
   from: string;
   at: string;
   unread: boolean;
+  /** an announcement often *is* the attachment: a timetable, a form, a photo */
+  files?: ChatFile[];
 };
 
 export const NOTIFS: Notif[] = [
   {
     id: 'n1', kind: 'duýduryş',
     title: 'Rasporýaniýe üýtgedi',
-    body: 'Anna güni 3-nji sapak Fizika bilen çalşyryldy. Täze rasporýaniýe gündelikde görünýär.',
+    body: 'Anna güni 3-nji sapak Fizika bilen çalşyryldy. Täze rasporýaniýe gündelikde görünýär we şu günden başlap güýje girýär.\n\nSebäbi: Himiýa mugallymy H. Amanowa okuw maslahatyna gidýär. Onuň sapaklary indiki hepdäniň duşenbe gününden öňki tertipde dowam eder.\n\nÇalşylan sapaklar boýunça öý işi öňki tabşyryga görä galýar. Sorag ýüze çyksa, synp ýolbaşçysyna ýüz tutuň.',
     from: 'Okuw bölümi', at: '2026-02-12T08:10', unread: true,
+    files: [{ name: 'Rasporýaniýe-13.02.pdf', size: '180 KB', kind: 'pdf' }],
   },
   {
     id: 'n2', kind: 'çäre',
     title: 'Ene-atalar ýygnagy — 19.02.2026',
-    body: 'Sagat 18:00-da 8 «B» synpynyň ene-atalar ýygnagy geçiriler. Ýer: 2-nji gat, 24-nji otag.',
+    body: 'Sagat 18:00-da 8 «B» synpynyň ene-atalar ýygnagy geçiriler. Ýer: 2-nji gat, 24-nji otag.\n\nGün tertibi: III çärýegiň netijeleri, jemleýji işleriň möhletleri, tomusky okuw meýilnamasy we synp gaznasy barada hasabat.\n\nÝygnaga gatnaşyp bilmeýän bolsaňyz, synp ýolbaşçysyna öňünden habar beriň — ýygnagyň gysgaça teswiri söhbetde paýlaşylar.',
     from: 'Mekdep müdirligi', at: '2026-02-12T07:40', unread: true,
+    files: [
+      { name: 'Ýygnagyň-meýilnamasy.pdf', size: '240 KB', kind: 'pdf' },
+      { name: 'Mekdep-shemasy.png', size: '1.2 MB', kind: 'img' },
+    ],
   },
   {
     id: 'n3', kind: 'okuw',
     title: 'III çärýegiň jemleýji seneleri',
-    body: 'Jemleýji işler 24.02.2026 – 28.02.2026 aralygynda geçiriler. Dersleriň sanawy synp ýolbaşçysynda.',
+    body: 'Jemleýji işler 24.02.2026 – 28.02.2026 aralygynda geçiriler. Dersleriň doly sanawy we günleri synp ýolbaşçysynda.\n\nHer iş sapak wagtynda, öz otagynda geçirilýär. Kesel sebäpli gatnaşmadyk okuwçylar üçin goşmaça gün 02.03.2026-da bellenildi.\n\nÇärýegiň jemi jemleýji işiň netijesi bilen bilelikde çykarylýar.',
     from: 'Okuw bölümi', at: '2026-02-11T16:20', unread: true,
+    files: [{ name: 'Jemleýji-işleriň-tertibi.docx', size: '96 KB', kind: 'doc' }],
   },
   {
     id: 'n4', kind: 'mekdep',
     title: 'Mekdep suraty düşülýär',
     body: '13.02.2026-da synp suratlary düşüriler. Ähli okuwçylar mekdep formasynda bolmaly.',
     from: 'Mekdep müdirligi', at: '2026-02-11T09:00', unread: false,
+    files: [{ name: 'Nusga-surat.jpg', size: '820 KB', kind: 'img' }],
   },
   {
     id: 'n5', kind: 'çäre',
@@ -90,8 +103,6 @@ export const NOTIFS: Notif[] = [
 ];
 
 /* ---------------- chats ---------------- */
-
-export type ChatFile = { name: string; size: string; kind: 'pdf' | 'img' | 'doc' };
 
 export type ChatMsg = {
   id: string; from: 'me' | 'them'; text?: string; at: string;

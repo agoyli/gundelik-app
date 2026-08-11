@@ -1,14 +1,14 @@
 import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
 import {
-  BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, GameIcon,
-  GearIcon, HistoryIcon, LayersIcon, LockIcon, PencilIcon, QuestionIcon, QuestionOutlineIcon,
+  BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon,
+  GearIcon, HistoryIcon, LayersIcon, LockIcon, QuestionIcon, QuestionOutlineIcon, QuizIcon,
   StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
   DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav, PillHeader,
-  PointsPill, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented, SheetDrawer,
-  StatTile, SurfaceRow, TagPill,
+  MeterTile, PointsPill, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
+  SheetDrawer, StatTile, SurfaceRow, TagPill,
 } from '../components/Ui';
 import { AdSlot, FreeLimitBar, LockedPreview, TeaserCard } from '../components/Paywall';
 import { RATING, TEST_SUBJECTS } from '../data/guides';
@@ -16,14 +16,17 @@ import { fmtRange } from '../lib/date';
 import type { TestItem, TestSubject } from '../data/guides';
 import { PLAN, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
 import { TestDetailScreen, TestSubjectScreen } from './DetailScreens';
-import { ReferralRow, ReferralScreen } from './ReferralScreen';
+import { ReferralScreen } from './ReferralScreen';
+import { CareerTestScreen, careerDreamLabel, careerRowValue } from './CareerTestScreen';
+import { SPECIALITIES } from '../data/career';
+import { useCareerResult } from '../state/career';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
 import {
-  BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, OyunlarScreen, TemalarScreen,
+  BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, TemalarScreen,
 } from './SectionScreens';
 import {
-  CardsScreen, PaySheet, PaymentsScreen, ProfileEditScreen, SettingsScreen,
+  PaySheet, PaymentsScreen, PayMethodsScreen, ProfileEditScreen, SettingsScreen,
 } from './SettingsScreens';
 import { tokens } from '../theme';
 
@@ -55,6 +58,7 @@ export const STUDENT = {
   points: 1251,
   avg: '4.6',
   rank: '2-nji',
+  hwRate: 92,
 };
 
 /* ---------------- Çagam ---------------- */
@@ -457,7 +461,6 @@ const GUIDE_TILES: { id: SectionId; label: string; sub: string; icon: React.Reac
   { id: 'kartlar', label: 'Öwrediji kartlar', sub: '12 gaýtalama', icon: <CardsIcon size={26} /> },
   { id: 'testler', label: 'Testler', sub: '1251 bal', icon: <BigCheckIcon size={26} /> },
   { id: 'basleshikler', label: 'Bäsleşikler', sub: '1 dowam edýär', icon: <TrophyIcon size={26} /> },
-  { id: 'oyunlar', label: 'Oýunlar', sub: '4 oýun', icon: <GameIcon size={26} /> },
   { id: 'kitaphana', label: 'Kitaphana', sub: '4 kitap', icon: <BooksIcon size={26} /> },
 ];
 
@@ -581,7 +584,11 @@ function TestlerFlow({ onBack, toast, onUpgrade }: {
   return <TestlerSubScreen onBack={onBack} toast={toast} onOpenSubject={setSubject} onUpgrade={onUpgrade} />;
 }
 
-type SectionId = 'temalar' | 'kartlar' | 'testler' | 'basleshikler' | 'oyunlar' | 'kitaphana';
+/* Oýunlar is not one of these any more. A game is a way of practising a
+   topic, not a sixth kind of resource, and as its own tile it sat as far from
+   the topic it drills as it is possible to get. It is reached from Temalar,
+   where the topic is. */
+type SectionId = 'temalar' | 'kartlar' | 'testler' | 'basleshikler' | 'kitaphana';
 type GuideView = 'grid' | SectionId | 'roadmap' | 'upgrade' | 'bellikler';
 
 export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
@@ -605,7 +612,6 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   }
   if (view === 'kartlar') return <KartlarScreen onBack={back} toast={toast} onUpgrade={upgrade} />;
   if (view === 'basleshikler') return <BaslesiklerScreen onBack={back} toast={toast} />;
-  if (view === 'oyunlar') return <OyunlarScreen onBack={back} toast={toast} />;
   if (view === 'kitaphana') return <KitaphanaScreen onBack={back} toast={toast} />;
   if (view === 'testler') return <TestlerFlow onBack={back} toast={toast} onUpgrade={upgrade} />;
   if (view === 'bellikler') return <BookmarksScreen onBack={back} toast={toast} onUpgrade={upgrade} />;
@@ -660,21 +666,107 @@ const heatLevel = (r: number, c: number, term: TermId) => {
 
 const TODAY_CELL = { r: 4, c: 12 };
 
+/*
+ * The heat grid, drawn once and used by both maps on the profile.
+ *
+ * A second hand-built grid for attendance would be the same 100 lines with a
+ * different palette, and the two would drift the first time a cell size or a
+ * month header changed. `colorOf` is the only thing that differs — grades use a
+ * sequential ramp (more grades, darker), attendance a categorical one (three
+ * distinct states), which is why the colour is a function rather than a scale.
+ */
+function HeatGrid({ months, colorOf, todayCell, label }: {
+  months: string[];
+  colorOf: (r: number, c: number) => string;
+  todayCell?: { r: number; c: number };
+  label: string;
+}) {
+  return (
+    <Box role="img" aria-label={label}>
+      <Box sx={{ display: 'flex', pl: '26px', mb: '6px' }}>
+        {months.map((m) => (
+          <Typography key={m} sx={{ flex: 1, fontSize: 13, color: tokens.inkMuted }}>{m}</Typography>
+        ))}
+      </Box>
+      <Box sx={{ display: 'flex', gap: '6px' }}>
+        <Box sx={{
+          width: 20, display: 'flex', flexDirection: 'column',
+          justifyContent: 'space-between', py: '2px', flex: 'none',
+        }}>
+          <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>Du</Typography>
+          <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>An</Typography>
+        </Box>
+        <Box sx={{
+          flex: 1, display: 'grid', gap: '4px',
+          gridTemplateColumns: `repeat(${HEAT_COLS}, 1fr)`,
+        }}>
+          {Array.from({ length: HEAT_ROWS }, (_, r) =>
+            Array.from({ length: HEAT_COLS }, (_, c) => {
+              const today = todayCell && r === todayCell.r && c === todayCell.c;
+              return (
+                <Box key={`${r}-${c}`} sx={{
+                  aspectRatio: '1', borderRadius: '5px',
+                  bgcolor: today ? 'transparent' : colorOf(r, c),
+                  ...(today && { border: `2px solid ${tokens.blue}` }),
+                }} />
+              );
+            }))}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+/* Passive legend — swatch + label, never styled like a control */
+const HeatLegend = ({ items, label }: { items: [string, string][]; label: string }) => (
+  <Box role="img" aria-label={label}
+    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
+    {items.map(([text, color]) => (
+      <Box key={text} sx={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+        <Box aria-hidden sx={{ width: 12, height: 12, borderRadius: '3px', flex: 'none', bgcolor: color }} />
+        <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>{text}</Typography>
+      </Box>
+    ))}
+  </Box>
+);
+
+/*
+ * Attendance, on the same grid as the grades.
+ *
+ * Attendance is categorical, not a quantity: a day is attended, late or
+ * missed, and there is no "more attended". So it gets three distinct hues
+ * rather than a ramp, and the two absent states keep the app's existing
+ * meanings — orange for something to watch, red for something wrong.
+ */
+const ATT = {
+  none: tokens.heatBase,
+  present: tokens.heat2,
+  late: tokens.orange,
+  absent: tokens.red,
+} as const;
+
+type AttState = keyof typeof ATT;
+
+const attState = (r: number, c: number, term: TermId): AttState => {
+  const t = TERMS[term];
+  if (c >= t.upto) return 'none';
+  const h = (r * 23 + c * 13 + t.seed * 5) % 37;
+  if (h === 0) return 'absent';
+  if (h === 3 || h === 17) return 'late';
+  return 'present';
+};
+
+
 const FAV_SUBJECTS = ['Matematika', 'Fizika', 'Himiýa', 'Informatika', 'Biologiýa', 'Taryh', 'Iňlis dili', 'Geografiýa'];
 
-const SPECIALITIES = [
-  { id: 'programmist', label: 'Programmist', hint: 'Informatika · Matematika' },
-  { id: 'lukman', label: 'Lukman', hint: 'Biologiýa · Himiýa' },
-  { id: 'injener', label: 'Inžener', hint: 'Fizika · Matematika' },
-  { id: 'diplomat', label: 'Diplomat', hint: 'Taryh · Daşary ýurt dilleri' },
-  { id: 'ykdysadyy', label: 'Ykdysadyýetçi', hint: 'Matematika · Jemgyýet' },
-];
-
 /* One picker sheet shape for both "favourite subject" and "dream speciality" */
-function ChoiceSheet({ open, title, note, options, value, onPick, onClose }: {
+function ChoiceSheet({ open, title, note, options, value, onPick, onClose, footer }: {
   open: boolean; title: string; note: string;
   options: { id: string; label: string; hint?: string }[];
   value: string; onPick: (id: string) => void; onClose: () => void;
+  /* an escape hatch for the reader who opened the picker precisely because
+     they cannot answer it */
+  footer?: React.ReactNode;
 }) {
   return (
     <SheetDrawer open={open} onClose={onClose}>
@@ -710,6 +802,7 @@ function ChoiceSheet({ open, title, note, options, value, onPick, onClose }: {
           );
         })}
       </Box>
+      {footer}
     </SheetDrawer>
   );
 }
@@ -727,26 +820,23 @@ const ChoiceRow = ({ icon, tint, color, label, value, onClick }: {
   />
 );
 
-type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referral' | 'upgrade';
+type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referral' | 'upgrade'
+  | 'career';
 
 export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   const { premium, tier } = usePrefs();
   const [view, setView] = useState<ProfilView>('root');
   /* Kartlar is reachable from Profil and from the payments page — remember which */
   const [cardsFrom, setCardsFrom] = useState<ProfilView>('root');
-  const [highOnly, setHighOnly] = useState(false);
+  const [map, setMap] = useState<'bahalar' | 'gatnasyk'>('bahalar');
   const [term, setTerm] = useState<TermId>('q34');
   const [fav, setFav] = useState('Matematika');
   const [dream, setDream] = useState('programmist');
   const [picker, setPicker] = useState<'fav' | 'dream' | null>(null);
+  const career = useCareerResult();
   const [pay, setPay] = useState(false);
 
   const root = () => setView('root');
-
-  const cell = (r: number, c: number) => {
-    const raw = heatLevel(r, c, term);
-    return highOnly && raw < 3 ? 0 : raw;
-  };
 
   /* the caption under the heatmap is derived from the same cells it draws,
      so the summary can never contradict the picture */
@@ -762,7 +852,24 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
     return { days, grades };
   }, [term]);
 
-  const dreamLabel = SPECIALITIES.find((s) => s.id === dream)?.label ?? '—';
+  /* the caption over the attendance map counts the same cells it draws */
+  const attendance = useMemo(() => {
+    let school = 0;
+    let late = 0;
+    let absent = 0;
+    for (let r = 0; r < HEAT_ROWS; r += 1) {
+      for (let c = 0; c < HEAT_COLS; c += 1) {
+        const st = attState(r, c, term);
+        if (st === 'none') continue;
+        school += 1;
+        if (st === 'late') late += 1;
+        if (st === 'absent') absent += 1;
+      }
+    }
+    return { pct: school ? Math.round(((school - absent) / school) * 100) : 0, late, absent };
+  }, [term]);
+
+  const dreamLabel = dream ? careerDreamLabel(dream) : '—';
 
   if (view === 'settings') {
     return <SettingsScreen onBack={root} toast={toast} onUpgrade={() => setView('upgrade')} />;
@@ -770,7 +877,16 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   if (view === 'edit') return <ProfileEditScreen onBack={root} toast={toast} />;
   if (view === 'referral') return <ReferralScreen onBack={root} toast={toast} />;
   if (view === 'upgrade') return <UpgradeScreen onBack={root} toast={toast} />;
-  if (view === 'cards') return <CardsScreen onBack={() => setView(cardsFrom)} toast={toast} />;
+  if (view === 'cards') return <PayMethodsScreen onBack={() => setView(cardsFrom)} toast={toast} />;
+  if (view === 'career') {
+    return (
+      <CareerTestScreen
+        onBack={() => setView('root')}
+        onPickDream={(id) => { setDream(id); setView('root'); }}
+        toast={toast}
+      />
+    );
+  }
   if (view === 'payments') {
     return (
       <>
@@ -796,56 +912,89 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
       />
 
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
-        {/* ---- Identity ---- */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: '10px', gap: '12px' }}>
-          <Box sx={{ position: 'relative' }}>
-            <Box aria-hidden sx={{
-              width: 108, height: 108, borderRadius: '50%',
-              background: `linear-gradient(150deg, #5B93F5 0%, ${tokens.blue} 70%)`,
-              color: '#fff', display: 'grid', placeItems: 'center', fontSize: 36, fontWeight: 700,
-            }}>{STUDENT.initials}</Box>
-            {/* the photo affordance sits on the avatar, where users look for it */}
-            <ButtonBase
-              onClick={() => setView('edit')}
-              aria-label="Profil suratyny üýtget"
-              sx={{
-                /* 44px hit area, 36px visual dot */
-                position: 'absolute', right: -6, bottom: -6, width: 44, height: 44,
-                borderRadius: '50%', display: 'grid', placeItems: 'center',
-              }}
-            >
-              <Box aria-hidden sx={{
-                width: 36, height: 36, borderRadius: '50%', bgcolor: '#fff', color: tokens.ink,
-                display: 'grid', placeItems: 'center', boxShadow: tokens.shadowFloat,
-                border: '2px solid #fff',
-              }}><PencilIcon size={16} /></Box>
-            </ButtonBase>
-          </Box>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.3px' }}>{STUDENT.name}</Typography>
-            <Typography variant="caption" sx={{ display: 'block', mt: '3px', fontSize: 15 }}>
+        {/* ---- Identity ----
+             One row, not a centred stack. The 108px avatar with a name, a
+             sub-line and an edit button under it spent about a third of the
+             first screen telling the user who they already know they are, and
+             it carried two affordances — a pencil dot and a button — for the
+             same destination. The row states the same three facts in a
+             quarter of the height, and the whole row is the one way in. */}
+        <ButtonBase
+          onClick={() => setView('edit')}
+          aria-label={`${STUDENT.name} — maglumatlary üýtget`}
+          sx={{
+            display: 'flex', alignItems: 'center', gap: '14px', width: '100%',
+            textAlign: 'left', justifyContent: 'flex-start', mt: '6px',
+            p: '8px', borderRadius: `${tokens.rCard}px`,
+            '&:active': { bgcolor: tokens.surfacePress },
+          }}
+        >
+          <Box aria-hidden sx={{
+            width: 62, height: 62, borderRadius: '50%', flex: 'none',
+            background: `linear-gradient(150deg, #5B93F5 0%, ${tokens.blue} 70%)`,
+            color: '#fff', display: 'grid', placeItems: 'center', fontSize: 22, fontWeight: 700,
+          }}>{STUDENT.initials}</Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography noWrap sx={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.3px' }}>
+              {STUDENT.name}
+            </Typography>
+            <Typography variant="caption" noWrap sx={{ display: 'block', mt: '2px', fontSize: 14 }}>
               {STUDENT.school} · {STUDENT.cls}
             </Typography>
           </Box>
-          <Button
-            disableElevation onClick={() => setView('edit')}
-            sx={{
-              height: 38, px: '20px', bgcolor: tokens.surface, color: tokens.ink,
-              '&:active': { bgcolor: tokens.surfacePress },
-            }}
-          >Maglumatlary üýtget</Button>
+          <RowChevron />
+        </ButtonBase>
+
+        {/* ---- Where the student stands right now ----
+             Three different indicators than before, chosen for what this page
+             is: the average, the points total and the class rank are all
+             *performance*, and Analitika is the performance tab — repeating
+             them here made the profile a worse copy of it. What only this page
+             answers is how the student turns up and follows through, so the
+             row is attendance, homework and the mark, each against the maximum
+             it is measured out of. */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', mt: '10px' }}>
+          {/* the same figure the attendance map counts, not a second copy of
+              it — two numbers for one fact is how a screen starts lying */}
+          <MeterTile
+            value={`${attendance.pct}%`} label="Gatnaşyk"
+            pct={attendance.pct} color={tokens.greenDeep}
+          />
+          <MeterTile
+            value={`${STUDENT.hwRate}%`} label="Öý işi"
+            pct={STUDENT.hwRate} color={tokens.blue}
+          />
+          <MeterTile
+            value={STUDENT.avg} label="Ortaça baha"
+            pct={(Number(STUDENT.avg) / 5) * 100} color={tokens.orangeText}
+          />
         </Box>
 
-        {/* ---- Where the student stands right now ---- */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', mt: '18px' }}>
-          <StatTile value={STUDENT.avg} label="Ortaça baha" color={tokens.blueText} />
-          <StatTile value={`${STUDENT.points}`} label="Bal" color={tokens.orangeText} />
-          <StatTile value={STUDENT.rank} label="Synpda orun" color={tokens.greenText} />
+        {/* ---- Goals ----
+             Up here with the identity rather than buried under the heatmap:
+             they are two facts *about the student*, and they were sitting
+             below a full screen of subscription and history that has nothing
+             to do with them. */}
+        <SectionLabel>Maksatlarym</SectionLabel>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <ChoiceRow
+            icon={<StarIcon size={22} />} tint={tokens.orangeTint} color={tokens.orangeText}
+            label="Söýgüli dersim" value={fav} onClick={() => setPicker('fav')}
+          />
+          <ChoiceRow
+            icon={<TargetIcon size={22} />} tint={tokens.purpleTint} color={tokens.purpleText}
+            label="Arzuwymdaky hünär" value={dreamLabel} onClick={() => setPicker('dream')}
+          />
+          {/* The other way to answer the row above it. A list of jobs is the
+              right control for a student who already knows and useless for one
+              who does not — the test ends by writing into that same goal. */}
+          <ChoiceRow
+            icon={<QuizIcon size={22} />} tint={tokens.blueTint} color={tokens.blueText}
+            label="Hünär synagy"
+            value={careerRowValue(career?.answers)}
+            onClick={() => setView('career')}
+          />
         </Box>
-
-        {/* ---- Earn ---- */}
-        <SectionLabel>Gazan</SectionLabel>
-        <ReferralRow onClick={() => setView('referral')} />
 
         {/* ---- Payment / subscription ----
             Free users get the offer here instead of a subscription card; the
@@ -883,7 +1032,7 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           <Box sx={{ display: 'flex', borderTop: `1px solid ${tokens.dividerSoft}` }}>
             {[
               { id: 'taryh', label: 'Taryh', icon: <HistoryIcon size={20} />, go: () => setView('payments') },
-              { id: 'kartlar', label: 'Kartlar', icon: <CardIcon size={20} />, go: () => { setCardsFrom('root'); setView('cards'); } },
+              { id: 'usullar', label: 'Töleg usuly', icon: <CardIcon size={20} />, go: () => { setCardsFrom('root'); setView('cards'); } },
               { id: 'tole', label: 'Tölemek', icon: <WalletIcon size={20} />, go: () => setPay(true) },
             ].map((a, i) => (
               <ButtonBase
@@ -905,34 +1054,40 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
         </Box>
         )}
 
-        {/* ---- Ýetişik heatmap ---- */}
+        {/* ---- The year at a glance ----
+             One card, two maps, a switch. Two stacked cards drawing the same
+             grid at the same size made the page look like it repeated itself,
+             and the second one pushed everything below it off the screen. The
+             switch also makes the pair comparable: flipping between them holds
+             the grid still, so a thin week of grades and a run of missed days
+             land on the same cells.
+
+             The term stays a Segmented (a period is a place you are in); the
+             map is a PeriodNav-free pair of tabs above it. The old "Diňe köp
+             bahaly" filter is gone — a third control on one card, for dimming
+             cells that were already the lightest thing on it. */}
         <Box sx={{
           mt: '16px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
           p: `18px ${tokens.padCard}`, display: 'flex', flexDirection: 'column', gap: '14px',
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="h2" component="h2">Ýetişik</Typography>
-              <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }}>
-                {summary.grades} baha · {summary.days} işjeň gün
-              </Typography>
-            </Box>
-            {/* a labelled chip beats the old unexplained "GM" switch */}
-            <ButtonBase
-              aria-pressed={highOnly}
-              onClick={() => setHighOnly(!highOnly)}
-              sx={{
-                flex: 'none', height: 32, px: '12px', borderRadius: `${tokens.rPill}px`,
-                fontSize: 13, fontWeight: 600,
-                bgcolor: highOnly ? tokens.blue : '#fff',
-                color: highOnly ? '#fff' : tokens.ink2,
-                border: `1px solid ${highOnly ? tokens.blue : tokens.divider}`,
-                transition: 'background .15s ease,color .15s ease',
-              }}
-            >
-              Diňe köp bahaly
-            </ButtonBase>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h2" component="h2">Ýylyň kartasy</Typography>
+            <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }}>
+              {map === 'bahalar'
+                ? `${summary.grades} baha · ${summary.days} işjeň gün`
+                : `${attendance.pct}% gatnaşyk · ${attendance.late} gijä galma · ${attendance.absent} sebäpsiz`}
+            </Typography>
           </Box>
+
+          <Segmented
+            label="Karta"
+            value={map}
+            onChange={setMap}
+            options={[
+              { id: 'bahalar', label: 'Bahalar' },
+              { id: 'gatnasyk', label: 'Gatnaşyk' },
+            ]}
+          />
 
           <Segmented
             label="Çärýek"
@@ -944,76 +1099,60 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             ]}
           />
 
-          <Box role="img" aria-label={`Bahalar kartasy, ${TERMS[term].label}: ${summary.grades} baha`}>
-            <Box sx={{ display: 'flex', pl: '26px', mb: '6px' }}>
-              {TERMS[term].months.map((m) => (
-                <Typography key={m} sx={{ flex: 1, fontSize: 13, color: tokens.inkMuted }}>{m}</Typography>
-              ))}
-            </Box>
-            <Box sx={{ display: 'flex', gap: '6px' }}>
-              <Box sx={{
-                width: 20, display: 'flex', flexDirection: 'column',
-                justifyContent: 'space-between', py: '2px', flex: 'none',
-              }}>
-                <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>Du</Typography>
-                <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>An</Typography>
-              </Box>
-              <Box sx={{
-                flex: 1, display: 'grid', gap: '4px',
-                gridTemplateColumns: `repeat(${HEAT_COLS}, 1fr)`,
-              }}>
-                {Array.from({ length: HEAT_ROWS }, (_, r) =>
-                  Array.from({ length: HEAT_COLS }, (_, c) => {
-                    const today = term === 'q34' && r === TODAY_CELL.r && c === TODAY_CELL.c;
-                    return (
-                      <Box key={`${r}-${c}`} sx={{
-                        aspectRatio: '1', borderRadius: '5px',
-                        bgcolor: today ? 'transparent' : HEAT_COLORS[cell(r, c)],
-                        ...(today && { border: `2px solid ${tokens.blue}` }),
-                      }} />
-                    );
-                  }))}
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Passive legend — swatch + label, never styled like a control */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }} role="img"
-            aria-label="Reňk açary: açyk — 1 baha, orta — 3 baha, goýy — köp baha">
-            {[['1 baha', 1], ['3 baha', 2], ['Köp', 3]].map(([label, lvl]) => (
-              <Box key={label as string} sx={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                <Box aria-hidden sx={{
-                  width: 12, height: 12, borderRadius: '3px', flex: 'none',
-                  bgcolor: HEAT_COLORS[lvl as number],
-                }} />
-                <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>{label}</Typography>
-              </Box>
-            ))}
-          </Box>
+          {map === 'bahalar' ? (
+            <>
+              <HeatGrid
+                months={TERMS[term].months}
+                colorOf={(r, c) => HEAT_COLORS[heatLevel(r, c, term)]}
+                todayCell={term === 'q34' ? TODAY_CELL : undefined}
+                label={`Bahalar kartasy, ${TERMS[term].label}: ${summary.grades} baha`}
+              />
+              <HeatLegend
+                label="Reňk açary: açyk — 1 baha, orta — 3 baha, goýy — köp baha"
+                items={[['1 baha', HEAT_COLORS[1]], ['3 baha', HEAT_COLORS[2]], ['Köp', HEAT_COLORS[3]]]}
+              />
+            </>
+          ) : (
+            <>
+              <HeatGrid
+                months={TERMS[term].months}
+                colorOf={(r, c) => ATT[attState(r, c, term)]}
+                todayCell={term === 'q34' ? TODAY_CELL : undefined}
+                label={`Gatnaşyk kartasy, ${TERMS[term].label}: ${attendance.pct}% gatnaşyk`}
+              />
+              <HeatLegend
+                label="Reňk açary: ýaşyl — geldi, mämişi — gijä galdy, gyzyl — gelmedi"
+                items={[['Geldi', ATT.present], ['Gijä galdy', ATT.late], ['Gelmedi', ATT.absent]]}
+              />
+            </>
+          )}
         </Box>
 
-        {/* ---- Goals ---- */}
-        <SectionLabel>Maksatlarym</SectionLabel>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <ChoiceRow
-            icon={<StarIcon size={22} />} tint={tokens.orangeTint} color={tokens.orangeText}
-            label="Söýgüli dersim" value={fav} onClick={() => setPicker('fav')}
-          />
-          <ChoiceRow
-            icon={<TargetIcon size={22} />} tint={tokens.purpleTint} color={tokens.purpleText}
-            label="Arzuwymdaky hünär" value={dreamLabel} onClick={() => setPicker('dream')}
-          />
-        </Box>
-
-        {/* ---- One way into the account tree; the rest lives inside it ---- */}
+        {/* ---- One way into the account tree; the rest lives inside it ----
+             Dostuňy çagyr sits here rather than in a "Gazan" section of its
+             own near the top. As a tinted offer card above the fold it was the
+             loudest thing on a page about the student, and it needed a whole
+             section heading to hold one row. Down here it is a destination
+             among destinations, in the same row shape as Sazlamalar — the
+             reward moves to the row's value slot, so the offer is still stated
+             without the row having to shout it. */}
         <SectionLabel>Hasap</SectionLabel>
-        <SurfaceRow
-          icon={<IconBadge bg={tokens.surfacePress} color={tokens.ink2} size={44}><GearIcon size={22} /></IconBadge>}
-          label="Sazlamalar"
-          labelSx={{ fontSize: 15, fontWeight: 500 }}
-          end={<RowEnd />}
-          onClick={() => setView('settings')}
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <SurfaceRow
+            icon={<IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={44}><CoinIcon size={22} /></IconBadge>}
+            label="Dostuňy çagyr"
+            labelSx={{ fontSize: 15, fontWeight: 500 }}
+            end={<RowEnd value={`+${PLAN.referralReward} TMT`} />}
+            onClick={() => setView('referral')}
+          />
+          <SurfaceRow
+            icon={<IconBadge bg={tokens.surfacePress} color={tokens.ink2} size={44}><GearIcon size={22} /></IconBadge>}
+            label="Sazlamalar"
+            labelSx={{ fontSize: 15, fontWeight: 500 }}
+            end={<RowEnd />}
+            onClick={() => setView('settings')}
+          />
+        </Box>
       </Box>
 
       <ChoiceSheet
@@ -1033,6 +1172,13 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
         value={dream}
         onPick={setDream}
         onClose={() => setPicker(null)}
+        footer={(
+          <Button
+            fullWidth variant="text"
+            onClick={() => { setPicker(null); setView('career'); }}
+            sx={{ mt: '12px', fontSize: 14, fontWeight: 700 }}
+          >Bilemok — synagdan geçeýin</Button>
+        )}
       />
       <PaySheet open={pay} onClose={() => setPay(false)} toast={toast} />
     </>

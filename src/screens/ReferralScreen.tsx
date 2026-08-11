@@ -4,7 +4,7 @@ import {
   CheckIcon, ClockIcon, CoinIcon, ShareIcon, ShopIcon, UsersIcon, WalletIcon,
 } from '../components/Icons';
 import {
-  IconBadge, SectionLabel, SheetDrawer, StatTile, SubPage, SurfaceRow,
+  IconBadge, RowChevron, SectionLabel, SheetDrawer, StatTile, SubPage, SurfaceRow,
 } from '../components/Ui';
 import { fmtDate } from '../lib/date';
 import { PLAN } from '../state/prefs';
@@ -80,61 +80,127 @@ const STEPS = [
   },
 ];
 
+/*
+ * The note's palette is the one thing in this file that does not come from
+ * `tokens`, and deliberately: it answers to the 2012 five-manat note rather
+ * than to the app. Colour is most of what identifies a denomination to someone
+ * who handles it every day, so a token green or a token tan both read as
+ * generic play money. These are the note's own inks — khaki paper, the olive
+ * field, the lime and violet bands down the right, rust ornament.
+ */
+const NOTE = {
+  paper: '#DFD9AD',
+  field: '#C9D68A',
+  lime: '#C8D14F',
+  violet: '#8A62A0',
+  rust: '#A24B33',
+  cream: '#F0E9CC',
+  ink: '#463521',
+  emblem: '#2E7A4E',
+  red: '#B8402C',
+};
+
 /* ---------------- illustration ----------------
-   Drawn rather than imported: a bitmap would not follow the token palette, and
-   this scene is the one place in the app that gets to be playful. Two circles,
-   one dashed hand-off, coins landing in a wallet — the whole offer in a glance. */
+ *
+ * The reward, drawn: a five-manat note, a second one behind it, two coins.
+ *
+ * Three things were wrong with the version before this. The note was a
+ * near-facsimile — serials, blind marks, microtext, a cameo silhouette — all
+ * rendered about 110px wide, where every one of those details collapses into a
+ * khaki smudge. Then it was simplified but left small, sharing the frame with
+ * two flat avatar circles and a dashed arc: a busy scene in which nothing was
+ * the subject. And the note itself had no *structure* — a coloured rectangle
+ * with a blob in the middle is not read as money.
+ *
+ * So: the note is the subject and it fills the frame. It is drawn the way a
+ * note is actually composed — an engraved inner frame, one big numeral with
+ * the word beneath it, a portrait oval, the emblem, the göl band and the two
+ * colour strips down the right edge. Nine elements, all of them structural,
+ * none of them smaller than the word MANAT. The palette stays the 2012 note's
+ * own rather than the app's tokens, because the ink is most of the
+ * recognition, and the numeral is `PLAN.referralReward` so the drawing cannot
+ * contradict the offer written under it.
+ */
+function Note({ id }: { id: string }) {
+  return (
+    <>
+      <defs>
+        <clipPath id={id}>
+          <rect width="150" height="76" rx="6" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${id})`}>
+        <rect width="150" height="76" fill={NOTE.paper} />
+        {/* the two colour strips down the right edge */}
+        <rect x="118" y="0" width="22" height="76" fill={NOTE.lime} />
+        <rect x="140" y="0" width="10" height="76" fill={NOTE.violet} />
+        {/* rust ornament along the top */}
+        <rect x="0" y="0" width="118" height="7" fill={NOTE.rust} />
+        {/* göller down the lime band */}
+        {[16, 38, 60].map((cy) => (
+          <path key={cy} d={`M129 ${cy - 6}L135 ${cy}L129 ${cy + 6}L123 ${cy}Z`}
+            fill={NOTE.emblem} opacity=".3" />
+        ))}
+        {/* the portrait oval — a vignette, not a face: at this size a likeness
+            is worse than the empty engraved oval a reader's eye expects */}
+        <ellipse cx="97" cy="41" rx="17" ry="24" fill={NOTE.field} opacity=".55" />
+        <ellipse cx="97" cy="41" rx="17" ry="24" fill="none" stroke={NOTE.ink} strokeWidth=".8" opacity=".3" />
+        <ellipse cx="97" cy="41" rx="13" ry="19.5" fill="none" stroke={NOTE.ink} strokeWidth=".6" opacity=".18" />
+        {/* the state emblem, as a göl */}
+        <g transform="translate(63 41)">
+          <path d="M0-12 8.5-8.5 12 0 8.5 8.5 0 12-8.5 8.5-12 0-8.5-8.5Z" fill={NOTE.emblem} />
+          <path d="M0-6.6 4.7-4.7 6.6 0 4.7 4.7 0 6.6-4.7 4.7-6.6 0-4.7-4.7Z" fill={NOTE.cream} opacity=".9" />
+          <circle r="2.8" fill={NOTE.red} />
+        </g>
+        {/* the denomination and the one word on the note */}
+        <text x="27" y="46" textAnchor="middle" fontSize="30" fontWeight="700" fill={NOTE.ink}>
+          {PLAN.referralReward}
+        </text>
+        <text x="27" y="58" textAnchor="middle" fontSize="8" fontWeight="700"
+          letterSpacing=".7" fill={NOTE.ink} opacity=".75">MANAT</text>
+        <rect x="12" y="62" width="30" height="1.4" fill={NOTE.ink} opacity=".25" />
+        {/* the engraved inner frame */}
+        <rect x="5" y="5" width="140" height="66" rx="4"
+          fill="none" stroke={NOTE.ink} strokeWidth="1" opacity=".2" />
+      </g>
+      <rect width="150" height="76" rx="6" fill="none" stroke={NOTE.ink} strokeWidth="1.2" opacity=".25" />
+    </>
+  );
+}
+
+const Coin = ({ x, y, r }: { x: number; y: number; r: number }) => (
+  <g transform={`translate(${x} ${y})`}>
+    <circle r={r} fill={tokens.orange} />
+    <circle r={r * 0.66} fill="none" stroke="#fff" strokeWidth="1.6" opacity=".85" />
+  </g>
+);
+
 function ReferralArt() {
   return (
     <Box
       component="svg"
-      viewBox="0 0 320 176"
+      viewBox="0 0 300 150"
       role="img"
       aria-label={`Dostuňy çagyr — her tölegli dost üçin ${PLAN.referralReward} manat bonus`}
-      sx={{ width: '100%', maxWidth: 340, display: 'block', mx: 'auto' }}
+      sx={{ width: '100%', maxWidth: 300, display: 'block', mx: 'auto' }}
     >
-      {/* soft ground */}
-      <ellipse cx="160" cy="150" rx="120" ry="16" fill={tokens.blueSoft} opacity=".55" />
+      <ellipse cx="150" cy="134" rx="104" ry="11" fill={tokens.blueSoft} opacity=".55" />
 
-      {/* dashed hand-off arc */}
-      <path d="M96 92 C 130 44, 190 44, 224 92" fill="none" stroke={tokens.blue}
-        strokeWidth="2.5" strokeLinecap="round" strokeDasharray="3 8" opacity=".65" />
-
-      {/* coins travelling along the arc */}
-      <g>
-        <circle cx="139" cy="60" r="11" fill={tokens.orange} />
-        <circle cx="139" cy="60" r="6.5" fill="none" stroke="#fff" strokeWidth="1.4" strokeDasharray="2 2" />
-        <circle cx="181" cy="60" r="8" fill={tokens.orange} opacity=".75" />
-        <circle cx="160" cy="47" r="6" fill={tokens.orange} opacity=".5" />
+      {/* the second note, behind — depth without another subject */}
+      <g transform="translate(96 22) rotate(-11 75 38)" opacity=".8">
+        <Note id="note-back" />
+      </g>
+      <g transform="translate(74 30) rotate(-2 75 38)">
+        <Note id="note-front" />
       </g>
 
-      {/* sender */}
-      <g>
-        <circle cx="78" cy="100" r="34" fill={tokens.blue} />
-        <circle cx="78" cy="90" r="12" fill="#fff" />
-        <path d="M58 122a20 20 0 0 1 40 0z" fill="#fff" />
-      </g>
+      <Coin x={48} y={104} r={17} />
+      <Coin x={74} y={116} r={12} />
 
-      {/* receiver */}
-      <g>
-        <circle cx="242" cy="100" r="34" fill={tokens.teal} />
-        <circle cx="242" cy="90" r="12" fill="#fff" />
-        <path d="M222 122a20 20 0 0 1 40 0z" fill="#fff" />
-      </g>
-
-      {/* the reward, landing */}
-      <g>
-        <rect x="128" y="96" width="64" height="46" rx="12" fill="#fff" stroke={tokens.divider} strokeWidth="1.5" />
-        <text x="160" y="126" textAnchor="middle" fontSize="20" fontWeight="700" fill={tokens.orangeText}>
-          {PLAN.referralReward} TMT
-        </text>
-      </g>
-
-      {/* sparkles */}
-      <path d="M40 54l2.6 6.4L49 63l-6.4 2.6L40 72l-2.6-6.4L31 63l6.4-2.6z" fill={tokens.orange} opacity=".8" />
-      <path d="M280 42l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill={tokens.teal} opacity=".7" />
-      <circle cx="292" cy="112" r="4" fill={tokens.blue} opacity=".35" />
-      <circle cx="28" cy="112" r="5" fill={tokens.teal} opacity=".3" />
+      <path d="M252 30l3 7.2 7.2 3-7.2 3-3 7.2-3-7.2-7.2-3 7.2-3z"
+        fill={tokens.orange} opacity=".7" />
+      <circle cx="40" cy="52" r="5" fill={tokens.teal} opacity=".35" />
+      <circle cx="268" cy="96" r="4" fill={tokens.blue} opacity=".3" />
     </Box>
   );
 }
@@ -186,12 +252,56 @@ export function ReferralScreen({ onBack, toast }: { onBack: () => void; toast: (
         </Typography>
       </Box>
 
-      {/* did it work */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', mt: '12px' }}>
-        <StatTile value={`${earned} TMT`} label="Bonus" color={tokens.greenText} />
-        <StatTile value={`${paid}`} label="Tölegli dost" color={tokens.blueText} />
-        <StatTile value={`${pending}`} label="Garaşylýar" color={tokens.orangeText} />
+      {/* What you have, directly under what is on offer — the page's own
+          answer to the headline above it. The balance used to sit at the foot,
+          below the friend list, with a duplicate "Bonus" figure in a stat tile
+          up here: the same number twice, and the real one last.
+
+          The balance and the two things it can become. and the two things it can become. No "withdraw": the bonus
+          is credit, and a disabled payout button with a minimum under it would
+          promise a bank transfer that is not on offer. Two real destinations
+          beat one blocked one. */}
+      <Box sx={{
+        mt: '12px', bgcolor: tokens.greenTint, borderRadius: `${tokens.rCard}px`,
+        p: `16px ${tokens.padCard}`,
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
+          <IconBadge bg="#fff" color={tokens.greenText} size={44}><WalletIcon size={22} /></IconBadge>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: 12.5, color: tokens.greenText, fontWeight: 600 }}>Bonus balansyň</Typography>
+            <Typography sx={{
+              fontSize: 22, fontWeight: 700, letterSpacing: '-.3px', fontVariantNumeric: 'tabular-nums',
+            }}>{earned} TMT</Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: 'flex', gap: '10px', mt: '14px' }}>
+          <Button
+            fullWidth disableElevation
+            disabled={earned === 0}
+            onClick={() => toast('Bonus abuna tölegine ulanyldy')}
+            sx={{
+              bgcolor: '#fff', color: tokens.greenText,
+              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,.55)', color: tokens.inkMuted },
+            }}
+          >
+            Abuna töle
+          </Button>
+          <Button
+            fullWidth disableElevation
+            disabled={earned === 0}
+            onClick={() => setShops(true)}
+            sx={{
+              bgcolor: '#fff', color: tokens.greenText,
+              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,.55)', color: tokens.inkMuted },
+            }}
+          >
+            Dükanlar
+          </Button>
+        </Box>
       </Box>
+      <Typography sx={{ fontSize: 12, color: tokens.ink3, textAlign: 'center', mt: '8px' }}>
+        Bonus nagt çykarylmaýar — abuna tölegine ýa-da hyzmatdaş dükanlarda harçlanýar
+      </Typography>
 
       {/* what to do */}
       <SectionLabel>Kodyň</SectionLabel>
@@ -254,6 +364,12 @@ export function ReferralScreen({ onBack, toast }: { onBack: () => void; toast: (
 
       {/* who came */}
       <SectionLabel>{`Çagyrylan dostlar · ${FRIENDS.length}`}</SectionLabel>
+      {/* the counts sit with the list they count, not in a strip at the top of
+          the page describing something three screens below */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', mb: '12px' }}>
+        <StatTile value={`${paid}`} label="Tölegli dost" color={tokens.blueText} />
+        <StatTile value={`${pending}`} label="Garaşylýar" color={tokens.orangeText} />
+      </Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {FRIENDS.map((f) => {
           const st = FRIEND_STATE[f.state];
@@ -277,60 +393,10 @@ export function ReferralScreen({ onBack, toast }: { onBack: () => void; toast: (
         })}
       </Box>
 
-      {/* The balance and the two things it can become. No "withdraw": the bonus
-          is credit, and a disabled payout button with a minimum under it would
-          promise a bank transfer that is not on offer. Two real destinations
-          beat one blocked one. */}
-      <Box sx={{
-        mt: '16px', bgcolor: tokens.greenTint, borderRadius: `${tokens.rCard}px`,
-        p: `16px ${tokens.padCard}`,
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
-          <IconBadge bg="#fff" color={tokens.greenText} size={44}><WalletIcon size={22} /></IconBadge>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: 12.5, color: tokens.greenText, fontWeight: 600 }}>Bonus balansyň</Typography>
-            <Typography sx={{
-              fontSize: 22, fontWeight: 700, letterSpacing: '-.3px', fontVariantNumeric: 'tabular-nums',
-            }}>{earned} TMT</Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: 'flex', gap: '10px', mt: '14px' }}>
-          <Button
-            fullWidth disableElevation
-            disabled={earned === 0}
-            onClick={() => toast('Bonus abuna tölegine ulanyldy')}
-            sx={{
-              bgcolor: '#fff', color: tokens.greenText,
-              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,.55)', color: tokens.inkMuted },
-            }}
-          >
-            Abuna töle
-          </Button>
-          <Button
-            fullWidth disableElevation
-            disabled={earned === 0}
-            onClick={() => setShops(true)}
-            sx={{
-              bgcolor: '#fff', color: tokens.greenText,
-              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,.55)', color: tokens.inkMuted },
-            }}
-          >
-            Dükanlar
-          </Button>
-        </Box>
-      </Box>
-      <Typography sx={{ fontSize: 12, color: tokens.ink3, textAlign: 'center', mt: '8px' }}>
-        Bonus nagt çykarylmaýar — abuna tölegine ýa-da hyzmatdaş dükanlarda harçlanýar
-      </Typography>
-
-      <Box sx={{ display: 'grid', placeItems: 'center', pt: '10px', pb: '6px' }}>
-        <ButtonBase
-          onClick={() => setRules(true)}
-          sx={{ height: 44, px: '14px', borderRadius: `${tokens.rPill}px`, color: tokens.blueText, fontSize: 13.5, fontWeight: 600 }}
-        >
-          Şertler bilen tanyş
-        </ButtonBase>
-      </Box>
+      <Button
+        fullWidth variant="text" onClick={() => setRules(true)}
+        sx={{ mt: '14px', mb: '4px', fontSize: 14, fontWeight: 700 }}
+      >Şertler bilen tanyş</Button>
 
       <SheetDrawer open={shops} onClose={() => setShops(false)}>
         <Typography variant="h2">Hyzmatdaş dükanlar</Typography>
@@ -402,11 +468,7 @@ export function ReferralRow({ onClick }: { onClick: () => void }) {
           Her tölegli dost üçin {PLAN.referralReward} manat bonus
         </Typography>
       </Box>
-      <Box aria-hidden sx={{
-        flex: 'none', px: '12px', height: 32, borderRadius: `${tokens.rPill}px`,
-        bgcolor: tokens.orangeText, color: '#fff', fontSize: 13, fontWeight: 700,
-        display: 'grid', placeItems: 'center',
-      }}>Çagyr</Box>
+      <RowChevron />
     </ButtonBase>
   );
 }

@@ -99,3 +99,39 @@ export const weekdayShort = (iso: string) => WEEKDAYS[parse(iso).getDay()][0];
 export const weekdayLong = (iso: string) => WEEKDAYS[parse(iso).getDay()][1];
 export const dayOfMonth = (iso: string) => Number(iso.slice(8, 10));
 export const isToday = (iso: string) => iso === TODAY;
+
+/* ---------------- months ----------------
+   Everything a month grid needs, derived from an ISO date so the picker can
+   never disagree with the strip it opens from. */
+
+const MONTHS = [
+  'Ýanwar', 'Fewral', 'Mart', 'Aprel', 'Maý', 'Iýun',
+  'Iýul', 'Awgust', 'Sentýabr', 'Oktýabr', 'Noýabr', 'Dekabr',
+] as const;
+
+/** `Fewral 2026` — the heading over a month grid. */
+export const monthLabel = (iso: string) =>
+  `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+
+export const daysInMonth = (iso: string) =>
+  new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)), 0).getDate();
+
+/** Where the 1st sits in a Monday-first grid, 0–6. The school week starts Duş. */
+export const firstWeekdayIndex = (iso: string) =>
+  (parse(`${iso.slice(0, 7)}-01`).getDay() + 6) % 7;
+
+/** The nth day of the same month, as an ISO date. */
+export const dayInMonth = (iso: string, day: number) =>
+  `${iso.slice(0, 7)}-${String(day).padStart(2, '0')}`;
+
+/** Monday-first short weekday headers for a month grid. */
+export const WEEKDAY_HEADS = ['Duş', 'Siş', 'Çar', 'Pen', 'Ann', 'Şen', 'Ýek'] as const;
+
+/** Sunday is the day off; a school calendar should say so. */
+export const isDayOff = (iso: string) => parse(iso).getDay() === 0;
+
+/** Shift a month by ±1, keeping the day at 01. */
+export const shiftMonth = (iso: string, by: number) => {
+  const d = new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1 + by, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+};

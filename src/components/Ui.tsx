@@ -1,53 +1,98 @@
 import { Box, Button, ButtonBase, SwipeableDrawer, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { isToday } from '../lib/date';
+import {
+  WEEKDAY_HEADS, dayInMonth, daysInMonth, firstWeekdayIndex, isDayOff, isToday,
+  monthLabel, shiftMonth, weekdayLong,
+} from '../lib/date';
 import { toggleBookmark, useIsBookmarked } from '../state/bookmarks';
 import type { Bookmark } from '../state/bookmarks';
 import { tokens } from '../theme';
-import type { DayInfo, Grade, Lesson, TabId } from '../types';
+import type { DayInfo, Lesson, TabId } from '../types';
 import { useSwipeLock } from './SwipeLock';
 import {
-  BackIcon, BookmarkFilledIcon, BookmarkIcon, CheckIcon, ChevronIcon, CoinIcon,
-  HouseEventIcon, HwIcon, MedalIcon, NavChevronIcon, PenEventIcon, QuestionOutlineIcon,
+  BackIcon, BookmarkFilledIcon, BookmarkIcon, CalendarIcon, CheckIcon, ChevronIcon, CoinIcon,
+  MedalIcon, NavChevronIcon, QuestionOutlineIcon,
   TabBookIcon, TabChartIcon, TabGridIcon, TabPersonIcon, TrendUpIcon,
 } from './Icons';
 
-/* ---------------- GradeBadge (geometry matched to mock: 46.5×28, r14, slash) ---------------- */
-export function GradeBadge({ grade }: { grade: Grade }) {
+/* ---------------- GradeBadge ----------------
+ *
+ * One mark, one shape, one place. The colour comes from the digit — 5 green,
+ * 4 blue, 3 orange, 2 red — and is derived rather than stored, so it can never
+ * disagree with the number it tints.
+ *
+ * `GradeSlot` is the other half of the rule and the more important one. A
+ * lesson row can carry an unread count and a badge score as well as the mark,
+ * and when the lesson had no mark those slid right and landed exactly where a
+ * mark goes: a red circle with a number in it, in the mark's position, which
+ * reads as a 2. The mark's column is now reserved on every row whether or not
+ * there is a mark in it, so nothing else can ever occupy it.
+ */
+const GRADE_TONE: Record<number, string> = {
+  5: tokens.greenText,
+  4: tokens.blue,
+  3: tokens.orangeText,
+  2: tokens.redText,
+};
+
+export function GradeBadge({ grade }: { grade: number }) {
   return (
     <Box
       role="img"
-      aria-label={`Baha ${grade.a}/${grade.b}`}
+      aria-label={`Baha ${grade}`}
       sx={{
-        position: 'relative', display: 'inline-flex', alignItems: 'center',
-        width: 46.5, height: 28, borderRadius: '14px', overflow: 'hidden', flex: 'none',
-        bgcolor: grade.color === 'blue' ? tokens.blue : tokens.greenText,
-        color: '#fff', fontSize: 15, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
-        '&::after': {
-          content: '""', position: 'absolute', left: '50%', top: -5, bottom: -5,
-          width: 2, bgcolor: '#fff', transform: 'rotate(31deg)',
-        },
+        display: 'grid', placeItems: 'center', flex: 'none',
+        width: 30, height: 28, borderRadius: '9px',
+        bgcolor: GRADE_TONE[grade] ?? tokens.ink2,
+        color: '#fff', fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
       }}
-    >
-      <Box component="span" sx={{ width: '50%', textAlign: 'center' }}>{grade.a}</Box>
-      <Box component="span" sx={{ width: '50%', textAlign: 'center' }}>{grade.b}</Box>
-    </Box>
+    >{grade}</Box>
   );
 }
 
-/* ---------------- DateStrip ---------------- */
-export function DateStrip({ days, selected, onSelect }: {
-  days: DayInfo[]; selected: string; onSelect: (key: string) => void;
+/* The mark's column, held open. Empty is a state worth drawing: "no mark yet"
+   is what most of a school day looks like. */
+export const GradeSlot = ({ grade }: { grade: number | null }) => (
+  grade ? <GradeBadge grade={grade} /> : (
+    <Box role="img" aria-label="Baha goýulmadyk" sx={{
+      display: 'grid', placeItems: 'center', flex: 'none',
+      width: 30, height: 28, borderRadius: '9px', bgcolor: tokens.surfacePress,
+    }}>
+      <Box aria-hidden sx={{ width: 9, height: 2, borderRadius: 1, bgcolor: tokens.inkDisabled }} />
+    </Box>
+  )
+);
+
+/* ---------------- DateStrip ----------------
+   `onPick` puts the calendar next to the dates it changes. It used to sit in
+   the app header between "share" and "notifications" — three unrelated icons
+   in a row, one of which only ever acts on the strip 60px below it. Pinned to
+   the end of the strip it is out of the header, still always reachable, and
+   its meaning is given by what it sits beside. */
+export function DateStrip({ days, selected, onSelect, onPick }: {
+  days: DayInfo[]; selected: string; onSelect: (key: string) => void; onPick?: () => void;
 }) {
   return (
+    <Box sx={{
+      position: 'relative',
+      display: 'flex', alignItems: 'center', gap: '7px', pt: '14px',
+      pl: tokens.gutter, pr: onPick ? '7px' : tokens.gutter,
+    }}>
     <Box
       component="nav"
       aria-label="Senäni saýlaň"
       sx={{
-        display: 'flex', gap: '7px', overflowX: 'auto', px: tokens.gutter, pt: '14px',
+        flex: 1, minWidth: 0,
+        display: 'flex', gap: '7px', overflowX: 'auto',
         scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
         scrollBehavior: 'smooth',
+        /* The strip is wider than the screen and there was nothing to say so —
+           a scrollbar it never shows, and cells that happen to end at the
+           edge. Fading the last one to white is the standard way to say "this
+           continues", and it costs no height. */
+        maskImage: 'linear-gradient(90deg,#000 calc(100% - 26px),transparent)',
+        WebkitMaskImage: 'linear-gradient(90deg,#000 calc(100% - 26px),transparent)',
       }}
     >
       {days.map((d) => {
@@ -61,7 +106,7 @@ export function DateStrip({ days, selected, onSelect }: {
             disabled={d.disabled}
             onClick={() => onSelect(d.key)}
             aria-pressed={active}
-            aria-label={`${d.d} ${d.full}${today ? ', şu gün' : ''}`}
+            aria-label={`${d.d} ${d.full}${today ? ', şu gün' : ''}${d.checked ? ', barlanan' : ''}`}
             data-datecell={active ? 'active' : undefined}
             sx={{
               position: 'relative', flex: '0 0 54px', height: 70,
@@ -75,25 +120,34 @@ export function DateStrip({ days, selected, onSelect }: {
           >
             <Box sx={{ fontSize: 18, fontWeight: 600, lineHeight: 1 }}>{d.d}</Box>
             <Box sx={{ fontSize: 14, lineHeight: 1 }}>{d.w}</Box>
-            {d.events.includes('house') && (
-              <Box sx={{ position: 'absolute', top: -4, right: -4, pointerEvents: 'none' }}>
-                <HouseEventIcon />
-              </Box>
-            )}
-            {d.events.includes('pen') && (
-              <Box sx={{ position: 'absolute', top: -5, right: -4, pointerEvents: 'none' }}>
-                <PenEventIcon />
-              </Box>
-            )}
-            {d.events.includes('dot') && (
-              <Box sx={{
-                position: 'absolute', top: 5, left: 5, width: 8, height: 8,
-                borderRadius: '50%', bgcolor: tokens.dot,
+            {/* one marker, one meaning: this day has been checked */}
+            {d.checked && (
+              <Box aria-hidden sx={{
+                position: 'absolute', top: 6, right: 6, width: 7, height: 7,
+                borderRadius: '50%', bgcolor: active ? '#fff' : tokens.dot,
+                opacity: active ? .9 : 1,
               }} />
             )}
           </ButtonBase>
         );
       })}
+    </Box>
+
+      {onPick && (
+        <ButtonBase
+          onClick={onPick}
+          aria-label="Senäni saýla"
+          sx={{
+            flex: 'none', width: 46, height: 70, mr: '4px',
+            borderRadius: `${tokens.rCell}px`,
+            bgcolor: tokens.surface, color: tokens.ink2,
+            display: 'grid', placeItems: 'center',
+            '&:active': { bgcolor: tokens.surfacePress },
+          }}
+        >
+          <CalendarIcon size={21} />
+        </ButtonBase>
+      )}
     </Box>
   );
 }
@@ -140,85 +194,112 @@ export const CountPill = ({ n, tone = 'alert', label }: {
   }}>{n}</Box>
 );
 
-/* ---------------- LessonCard ---------------- */
-export function LessonCard({ lesson, marks, onOpen }: {
+/* ---------------- LessonCard ----------------
+   The card is a Box holding two controls rather than one big button, because
+   the homework chip is now a control of its own: ticking homework off is the
+   thing a student does most on this screen, and it used to cost opening a
+   sheet and finding a button. A button inside a button is not valid, so the
+   card surface carries the press states and the two live side by side. */
+export function LessonCard({ lesson, marks, onOpen, onToggleHw }: {
   /* `marks` is the teacher-badge signal. It sits in the meta row, in the slot
      the classmate count used to hold — one quiet mark before the grade, rather
      than a labelled chip strip that turned every card into two stacked cards. */
   lesson: Lesson; marks?: ReactNode; onOpen: (l: Lesson) => void;
+  onToggleHw?: (l: Lesson) => void;
 }) {
   const [start, end] = lesson.time.split('–').map((t) => t.trim());
+  const done = lesson.hwDone;
   return (
-    <ButtonBase
-      onClick={() => onOpen(lesson)}
-      aria-haspopup="dialog"
-      aria-label={`${lesson.subject}, ${lesson.time}`
-        + (lesson.grade ? `, baha ${lesson.grade.a}/${lesson.grade.b}` : '')
-        + (lesson.unread > 0 ? `, ${lesson.unread} täze` : '')}
-      sx={{
-        display: 'flex', alignItems: 'flex-start', gap: '13px', width: '100%',
-        bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
-        p: `13px ${tokens.padCard}`, textAlign: 'left',
-        transition: 'background .15s ease',
-        '&:active': { bgcolor: tokens.surfacePress },
-      }}
-    >
-      {/* The time as a left rail: it is what you scan a timetable by, and one
-          column of aligned digits reads faster than a clock icon on every row. */}
-      <Box sx={{
-        flex: 'none', width: 42, pt: '2px',
-        fontVariantNumeric: 'tabular-nums', textAlign: 'left',
-      }}>
-        <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.15 }}>{start}</Typography>
-        <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, lineHeight: 1.3 }}>{end}</Typography>
-      </Box>
-
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Typography variant="h3" noWrap sx={{ flex: 1, minWidth: 0 }}>{lesson.subject}</Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 'none' }}>
-            {/* Unread and badges are different facts — an unread note is a
-                thing to open, a badge is a thing that happened — so a lesson
-                that has both shows both rather than hiding one behind the
-                other. */}
-            {lesson.unread > 0 && (
-              <Box role="img" aria-label={`${lesson.unread} täze`} sx={{
-                width: 24, height: 24, borderRadius: '50%', bgcolor: tokens.redDeep, flex: 'none',
-                color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: '24px', textAlign: 'center',
-              }}>{lesson.unread}</Box>
-            )}
-            {marks}
-            {lesson.grade && <GradeBadge grade={lesson.grade} />}
-          </Box>
+    <Box sx={{
+      bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
+      p: `13px ${tokens.padCard}`,
+    }}>
+      <ButtonBase
+        onClick={() => onOpen(lesson)}
+        aria-haspopup="dialog"
+        aria-label={`${lesson.subject}, ${lesson.time}`
+          + (lesson.grade ? `, baha ${lesson.grade}` : '')}
+        sx={{
+          display: 'flex', alignItems: 'flex-start', gap: '13px',
+          textAlign: 'left', borderRadius: `${tokens.rTile}px`,
+          width: 'calc(100% + 8px)', m: '-4px', p: '4px',
+          '&:active': { bgcolor: tokens.surfacePress },
+        }}
+      >
+        {/* The time as a left rail: it is what you scan a timetable by, and one
+            column of aligned digits reads faster than a clock icon on every row. */}
+        <Box sx={{
+          flex: 'none', width: 42, pt: '2px',
+          fontVariantNumeric: 'tabular-nums', textAlign: 'left',
+        }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.15 }}>{start}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, lineHeight: 1.3 }}>{end}</Typography>
         </Box>
 
-        {/* The topic, not the word "Tema". A label that is identical on every
-            card looks like data and carries none. */}
-        {lesson.tema && (
-          <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px', lineHeight: 1.4 }} noWrap>
-            {lesson.tema}
-          </Typography>
-        )}
-
-        {/* Homework appears only when there is homework, and says its state */}
-        {lesson.hw && (
-          <Box sx={{
-            display: 'inline-flex', alignItems: 'center', gap: '7px', mt: '9px',
-            px: '9px', height: 26, borderRadius: `${tokens.rPill}px`,
-            width: 'fit-content', maxWidth: '100%',
-            bgcolor: lesson.hwDone ? tokens.greenTint : tokens.orangeTint,
-            color: lesson.hwDone ? tokens.greenText : tokens.orangeText,
-          }}>
-            <Box aria-hidden sx={{ display: 'flex', flex: 'none' }}>
-              {lesson.hwDone ? <CheckIcon size={13} /> : <HwIcon size={14} />}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Typography variant="h3" noWrap sx={{ flex: 1, minWidth: 0 }}>{lesson.subject}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 'none' }}>
+              {/* A row ends with what the teacher recorded: a badge, then the
+                  mark. It used to also carry a red disc counting unread notes —
+                  a red circle with a digit in it, one slot from the mark, which
+                  every reader tried to read as a mark. The count still exists
+                  and has a better home: the day's "Bellik" tile, where it is
+                  labelled and opens the notes themselves. */}
+              {marks}
+              <GradeSlot grade={lesson.grade} />
             </Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 600, minWidth: 0 }} noWrap>
-              {lesson.hwDone ? 'Öý işi taýýar' : lesson.hw}
-            </Typography>
           </Box>
-        )}
-      </Box>
-    </ButtonBase>
+
+          {/* The topic, not the word "Tema". A label that is identical on every
+              card looks like data and carries none. */}
+          {lesson.tema && (
+            <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px', lineHeight: 1.4 }} noWrap>
+              {lesson.tema}
+            </Typography>
+          )}
+        </Box>
+      </ButtonBase>
+
+      {/* The homework, and its state.
+          Done homework used to replace the assignment with the words "Öý işi
+          taýýar" — which throws away the one thing the row is for and makes
+          the two states look like two different rows. The text never changes;
+          the tick and the colour carry the state, and the chip is the switch. */}
+      {lesson.hw && (
+        <Box sx={{ display: 'flex', pl: '55px', mt: '9px' }}>
+          <ButtonBase
+            onClick={() => onToggleHw?.(lesson)}
+            disabled={!onToggleHw}
+            role="switch"
+            aria-checked={done}
+            aria-label={`Öý işi: ${lesson.hw}`}
+            sx={{
+              display: 'inline-flex', alignItems: 'center', gap: '7px',
+              px: '9px', minHeight: 30, borderRadius: `${tokens.rPill}px`,
+              maxWidth: '100%', textAlign: 'left',
+              bgcolor: done ? tokens.greenTint : tokens.orangeTint,
+              color: done ? tokens.greenText : tokens.orangeText,
+              transition: 'background .15s ease,color .15s ease',
+              '&:active': { filter: 'brightness(.96)' },
+            }}
+          >
+            <Box aria-hidden sx={{
+              display: 'grid', placeItems: 'center', flex: 'none',
+              width: 17, height: 17, borderRadius: '50%',
+              bgcolor: done ? tokens.greenDeep : 'transparent',
+              border: done ? 'none' : `1.5px solid ${tokens.orangeText}`,
+              color: '#fff', opacity: done ? 1 : .55,
+            }}>{done && <CheckIcon size={11} />}</Box>
+            <Typography sx={{
+              fontSize: 12.5, fontWeight: 600, minWidth: 0,
+              textDecoration: done ? 'line-through' : 'none',
+              opacity: done ? .75 : 1,
+            }} noWrap>{lesson.hw}</Typography>
+          </ButtonBase>
+        </Box>
+      )}
+    </Box>
   );
 }
 
@@ -416,6 +497,18 @@ export function HeaderIconButton({ label, onClick, pressed, count, children }: {
     </ButtonBase>
   );
 }
+
+/* The one "?" in the app. It was two: a 40px circle in SubPage's header and a
+   bare 44px glyph on the diary's signature panel — the same affordance drawn
+   two ways, so neither read as a control the reader had met before. It is a
+   HeaderIconButton like every other icon button, and nothing else. */
+export const HelpButton = ({ onClick, label = 'Bu sahypa barada' }: {
+  onClick: () => void; label?: string;
+}) => (
+  <HeaderIconButton label={label} onClick={onClick}>
+    <QuestionOutlineIcon size={20} />
+  </HeaderIconButton>
+);
 
 /* One "completed" badge everywhere — dark green, white check, white ring */
 export function DoneBadge({ size = 22 }: { size?: number }) {
@@ -621,18 +714,7 @@ export function SubPage({ title, onBack, action, help, children }: {
       <PillHeader
         title={title}
         onBack={onBack}
-        action={action ?? (help ? (
-          <ButtonBase
-            onClick={() => setHelpOpen(true)}
-            aria-label="Bu sahypa barada"
-            sx={{
-              width: 40, height: 40, borderRadius: '50%', bgcolor: '#fff',
-              color: tokens.ink2, display: 'grid', placeItems: 'center', boxShadow: tokens.shadowCtl,
-            }}
-          >
-            <QuestionOutlineIcon size={20} />
-          </ButtonBase>
-        ) : undefined)}
+        action={action ?? (help ? <HelpButton onClick={() => setHelpOpen(true)} /> : undefined)}
       />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>{children}</Box>
       {help && (
@@ -751,6 +833,40 @@ export const StatTile = ({ value, label, color = tokens.ink }: {
   </Box>
 );
 
+/* ---------------- MeterTile ----------------
+   A StatTile for a figure that has a known maximum. Three bare numbers make
+   the reader supply the scale — is 92 good? out of what? — and a 4.6 next to a
+   96% next to a 1251 share nothing but a font size. A meter answers "out of
+   what" in 3px of height, and three of them read as one instrument panel. */
+export const MeterTile = ({ value, label, pct, color }: {
+  value: string; label: string; pct: number; color: string;
+}) => (
+  <Box
+    role="img"
+    aria-label={`${label}: ${value}`}
+    sx={{
+      bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, p: '13px 11px 12px',
+      display: 'flex', flexDirection: 'column', gap: '7px',
+    }}
+  >
+    <Box sx={{ textAlign: 'center' }}>
+      <Typography sx={{
+        fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', color,
+        fontVariantNumeric: 'tabular-nums', lineHeight: 1.1,
+      }}>{value}</Typography>
+      <Typography sx={{ fontSize: 11, color: tokens.inkMuted, mt: '1px' }} noWrap>{label}</Typography>
+    </Box>
+    <Box aria-hidden sx={{
+      height: 4, borderRadius: '2px', bgcolor: tokens.surfacePress, overflow: 'hidden',
+    }}>
+      <Box sx={{
+        height: '100%', width: `${Math.max(0, Math.min(100, pct))}%`,
+        borderRadius: '2px', bgcolor: color,
+      }} />
+    </Box>
+  </Box>
+);
+
 /* Segmented switch — 2–3 mutually exclusive options on one track.
    Use when the options must stay visible; a cycling pill hides them. */
 export function Segmented<T extends string>({ value, options, onChange, label }: {
@@ -861,6 +977,87 @@ export function SheetSection({ title, end, children }: {
         </Box>
       )}
       {children}
+    </Box>
+  );
+}
+
+/* ---------------- MonthCalendar ----------------
+   The date picker used to be the same six days the strip already showed,
+   listed vertically — which is not a picker, it is the strip again. A calendar
+   is the one control everybody already knows how to read, and it is the only
+   way to reach a date that is not in this week. Sundays are drawn as days off
+   rather than hidden, because a month with holes in it is harder to count
+   across than one with quiet cells. */
+export function MonthCalendar({ month, selected, marked, onSelect }: {
+  month: string;
+  selected: string;
+  marked?: (iso: string) => boolean;
+  onSelect: (iso: string) => void;
+}) {
+  const [cursor, setCursor] = useState(month);
+  const lead = firstWeekdayIndex(cursor);
+  const total = daysInMonth(cursor);
+
+  const Nav = ({ by, label }: { by: number; label: string }) => (
+    <ButtonBase
+      onClick={() => setCursor(shiftMonth(cursor, by))}
+      aria-label={label}
+      sx={{
+        width: 36, height: 36, borderRadius: '50%', flex: 'none', color: tokens.ink2,
+        display: 'grid', placeItems: 'center',
+        '&:active': { bgcolor: tokens.surfacePress },
+        transform: by < 0 ? 'rotate(180deg)' : 'none',
+      }}
+    ><NavChevronIcon /></ButtonBase>
+  );
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '10px' }}>
+        <Typography sx={{ flex: 1, fontSize: 16, fontWeight: 700 }}>{monthLabel(cursor)}</Typography>
+        <Nav by={-1} label="Öňki aý" />
+        <Nav by={1} label="Indiki aý" />
+      </Box>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+        {WEEKDAY_HEADS.map((w) => (
+          <Typography key={w} aria-hidden sx={{
+            fontSize: 11, fontWeight: 600, color: tokens.inkMuted, textAlign: 'center', pb: '2px',
+          }}>{w}</Typography>
+        ))}
+        {Array.from({ length: lead }, (_, i) => <Box key={`lead${i}`} />)}
+        {Array.from({ length: total }, (_, i) => {
+          const iso = dayInMonth(cursor, i + 1);
+          const active = iso === selected;
+          const today = isToday(iso);
+          const off = isDayOff(iso);
+          return (
+            <ButtonBase
+              key={iso}
+              onClick={() => onSelect(iso)}
+              aria-pressed={active}
+              aria-label={`${i + 1} ${weekdayLong(iso)}${today ? ', şu gün' : ''}`}
+              sx={{
+                position: 'relative', aspectRatio: '1', borderRadius: `${tokens.rCell}px`,
+                fontSize: 15, fontWeight: active || today ? 700 : 500,
+                bgcolor: active ? tokens.blue : 'transparent',
+                color: active ? '#fff' : off ? tokens.inkDisabled : tokens.ink,
+                boxShadow: today && !active ? `inset 0 0 0 1.5px ${tokens.blue}` : 'none',
+                '&:active': { bgcolor: active ? tokens.blue : tokens.surfacePress },
+              }}
+            >
+              {i + 1}
+              {marked?.(iso) && (
+                <Box aria-hidden sx={{
+                  position: 'absolute', bottom: 5, left: '50%', ml: '-2.5px',
+                  width: 5, height: 5, borderRadius: '50%',
+                  bgcolor: active ? '#fff' : tokens.dot,
+                }} />
+              )}
+            </ButtonBase>
+          );
+        })}
+      </Box>
     </Box>
   );
 }

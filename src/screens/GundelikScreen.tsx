@@ -4,10 +4,11 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  DateStrip, GradeBadge, HeaderIconButton, LessonCard, SheetDrawer, SheetSection,
+  DateStrip, GradeBadge, HeaderIconButton, HelpButton, LessonCard, MonthCalendar, SheetDrawer,
+  SheetSection,
 } from '../components/Ui';
 import {
-  BellIcon, CalendarIcon, CheckIcon, ClockIcon, HelpIcon, HwIcon, LockIcon,
+  BellIcon, CalendarIcon, CheckIcon, ClockIcon, HwIcon, LockIcon,
   NotesIcon, ShareIcon, TemaIcon, TrophyIcon,
 } from '../components/Icons';
 import { AdSlot, TeaserCard } from '../components/Paywall';
@@ -16,7 +17,7 @@ import { InboxScreen } from './InboxScreens';
 import { UpgradeScreen } from './UpgradeScreen';
 import { TONE, awardsForLesson, badgeType, toneOf } from '../data/badges';
 import type { Award } from '../data/badges';
-import { absDate, fmtDate, relDate } from '../lib/date';
+import { absDate, fmtDate } from '../lib/date';
 import { inboxUnread } from '../data/inbox';
 import { useSchedule } from '../hooks/useSchedule';
 import { tierFor, useCan, usePrefs } from '../state/prefs';
@@ -168,6 +169,14 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
     toast('Öý işi bellendi ✓');
   };
 
+  /* Ticking from the list: same call, no sheet to close, and it says what it
+     did — a chip that changes colour under the thumb is easy to miss. */
+  const toggleHw = async (lesson: Lesson) => {
+    if (lesson.hwDone) return;
+    await s.markHwDone(lesson.id);
+    toast('Öý işi bellendi ✓');
+  };
+
   if (page === 'inbox') {
     return <InboxScreen onBack={home} toast={toast} onUpgrade={() => setPage('upgrade')} />;
   }
@@ -189,23 +198,21 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1,
       }}>
         <Typography variant="h1">Gündelik</Typography>
-        {/* Three icon-only actions. Labelled pills pushed the title into two
-            lines on a 375 screen, and notifications get the header instead of a
-            full-width row of their own. */}
-        <Box sx={{ display: 'flex', gap: '8px' }}>
-          <HeaderIconButton label="Senäni saýla" onClick={() => setSheet({ type: 'picker' })}>
-            <CalendarIcon size={21} />
-          </HeaderIconButton>
-          <HeaderIconButton label="Paýlaş" onClick={() => void share()}>
-            <ShareIcon size={21} />
-          </HeaderIconButton>
-          <HeaderIconButton label="Habarlar we söhbetler" count={inboxUnread()} onClick={() => setPage('inbox')}>
-            <BellIcon size={21} />
-          </HeaderIconButton>
-        </Box>
+        {/* One action in the header now. Three icons in a row read as a
+            toolbar, and only one of them was about the whole screen: the
+            calendar belongs beside the dates it changes, and sharing the day
+            is something you do after reading it, not before. */}
+        <HeaderIconButton label="Habarlar we söhbetler" count={inboxUnread()} onClick={() => setPage('inbox')}>
+          <BellIcon size={21} />
+        </HeaderIconButton>
       </Box>
 
-      <DateStrip days={s.days} selected={s.dateKey} onSelect={s.selectDate} />
+      <DateStrip
+        days={s.days}
+        selected={s.dateKey}
+        onSelect={s.selectDate}
+        onPick={() => setSheet({ type: 'picker' })}
+      />
 
       {/* Day summary — three figures, one card.
           These were three full-width rows with four coloured icon badges
@@ -270,6 +277,7 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
                 />
               ) : undefined}
               onOpen={(lesson) => setSheet({ type: 'lesson', lesson })}
+              onToggleHw={(lesson) => void toggleHw(lesson)}
             />
           );
         })}
@@ -280,30 +288,66 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         <AdSlot onUpgrade={() => setPage('upgrade')} />
       </Box>
 
-      {/* Sync panel */}
+      {/* Parent signature.
+          Barla is the parent saying "I have seen this day" — it is a
+          signature, not a data refresh, so the panel is about the *selected*
+          day rather than a global last-synced stamp, and signing leaves a mark
+          the strip and the calendar both show. Once signed it stops asking:
+          a button that stays lit after it has been pressed teaches the reader
+          that pressing it did nothing. */}
       <Box sx={{
-        m: `12px ${tokens.gutter} 0`, bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
-        height: 77, pl: '16.5px', pr: '18px', display: 'flex', alignItems: 'center', gap: '12px',
+        m: `12px ${tokens.gutter} 0`, borderRadius: `${tokens.rCard}px`,
+        bgcolor: s.signed ? tokens.greenTint : tokens.surface,
+        minHeight: 77, pl: '16.5px', pr: '10px', py: '12px',
+        display: 'flex', alignItems: 'center', gap: '12px',
+        transition: 'background .2s ease',
       }}>
-        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '7px' }}>
-          <Typography variant="caption" sx={{ color: tokens.ink3 }}>Soňky barlanan senesi:</Typography>
-          <Typography sx={{ fontSize: 16, fontWeight: 600, letterSpacing: '.2px', fontVariantNumeric: 'tabular-nums' }}>
-            {s.lastChecked || '—'}
+        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <Typography sx={{
+            fontSize: 15, fontWeight: 700,
+            color: s.signed ? tokens.greenText : tokens.ink,
+          }}>
+            {s.signed ? 'Ene-ata gol çekdi' : 'Ene-ata gol çekmedi'}
+          </Typography>
+          <Typography variant="caption" sx={{ color: tokens.ink3 }}>
+            {fmtDate(s.dateKey)} · {s.signed ? 'bu gün barlandy' : 'bu güni barlaň'}
           </Typography>
         </Box>
+        {s.signed ? (
+          <Box aria-hidden sx={{
+            width: 45, height: 45, borderRadius: '50%', flex: 'none',
+            bgcolor: '#fff', color: tokens.greenDeep, display: 'grid', placeItems: 'center',
+          }}><CheckIcon size={22} /></Box>
+        ) : (
+          <Button
+            variant="contained"
+            disableElevation
+            disabled={s.checking}
+            onClick={() => void s.signDay().then(() => toast('Gol çekildi'))}
+            sx={{ width: 72, height: 45, borderRadius: `${tokens.rTile}px`, minWidth: 0, flex: 'none' }}
+          >
+            {s.checking ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : 'Barla'}
+          </Button>
+        )}
+        <HelpButton label="Kömek" onClick={() => setSheet({ type: 'help' })} />
+      </Box>
+
+      {/* Sharing the day is the last thing you do with it, so it sits at the
+          end of the day rather than in the header above it. */}
+      <Box sx={{ px: tokens.gutter, pt: '12px' }}>
         <Button
-          variant="contained"
+          fullWidth
           disableElevation
-          disabled={!s.needsCheck || s.checking}
-          onClick={() => void s.runCheck().then(() => toast('Maglumatlar täzelendi'))}
-          sx={{ width: 72, height: 45, borderRadius: `${tokens.rTile}px`, minWidth: 0 }}
+          onClick={() => void share()}
+          startIcon={<ShareIcon size={18} />}
+          sx={{
+            height: 46, bgcolor: tokens.surface, color: tokens.ink2, fontWeight: 600,
+            '&:hover': { bgcolor: tokens.surfacePress },
+            '&:active': { bgcolor: tokens.surfacePress },
+          }}
         >
-          {s.checking ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : 'Barla'}
+          Gündeligi paýlaş
         </Button>
-        <ButtonBase aria-label="Kömek" onClick={() => setSheet({ type: 'help' })}
-          sx={{ width: 44, height: 44, mr: '-10px', borderRadius: '50%', display: 'grid', placeItems: 'center' }}>
-          <HelpIcon />
-        </ButtonBase>
       </Box>
 
       {/* ---------------- Sheets ---------------- */}
@@ -429,32 +473,13 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
 
       <SheetDrawer open={sheet?.type === 'picker'} onClose={close}>
         <Typography variant="h2">Senäni saýlaň</Typography>
-        <Typography variant="caption">Fewral 2026</Typography>
-        <Box sx={{ mt: '10px' }}>
-          {s.days.map((d) => (
-            <ButtonBase
-              key={d.key}
-              disabled={d.disabled}
-              onClick={() => { close(); s.selectDate(d.key); }}
-              sx={{
-                display: 'flex', alignItems: 'center', gap: '14px', width: '100%', minHeight: 52,
-                px: '4px', fontSize: 16, textAlign: 'left', justifyContent: 'flex-start',
-                borderBottom: `0.5px solid ${tokens.dividerSoft}`,
-                color: d.disabled ? tokens.inkDisabled : tokens.ink,
-                '&:last-child': { borderBottom: 0 },
-              }}
-            >
-              <Box sx={{ width: 34, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{d.d}</Box>
-              <Box sx={{ flex: 1, color: d.disabled ? tokens.inkDisabled : tokens.ink2 }}>{d.full}</Box>
-              {/* the three days a reader names instead of numbering */}
-              {relDate(d.key) && (
-                <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, mr: '6px' }}>
-                  {relDate(d.key)}
-                </Typography>
-              )}
-              {d.key === s.dateKey && <Box sx={{ color: tokens.blue, display: 'flex' }}><CheckIcon /></Box>}
-            </ButtonBase>
-          ))}
+        <Box sx={{ mt: '14px' }}>
+          <MonthCalendar
+            month={s.dateKey}
+            selected={s.dateKey}
+            marked={(iso: string) => s.days.some((d) => d.key === iso && d.checked)}
+            onSelect={(iso: string) => { close(); s.selectDate(iso); }}
+          />
         </Box>
       </SheetDrawer>
 
@@ -462,8 +487,8 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         <Typography variant="h2">Kömek</Typography>
         <SheetSection>
           <Typography variant="body2">
-            «Barla» düwmesi mekdep ulgamyndan iň soňky maglumatlary alýar.
-            Senäni çalşanyňyzda düwme işjeň bolýar.
+            «Barla» — ene-atanyň goly. Ony basanyňyzda saýlanan gün
+            barlandy hasaplanýar we senede belgi galýar.
           </Typography>
         </SheetSection>
         <Box sx={{ mt: '18px' }}>

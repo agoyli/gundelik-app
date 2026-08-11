@@ -2,19 +2,22 @@ import { Box, Button, ButtonBase, InputBase, Typography } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
-  AlertIcon, BellIcon, BooksIcon, BuildingIcon, CameraIcon, CheckIcon, ClipIcon, ClockIcon,
-  DocIcon, ImageIcon, SendIcon, SparkleIcon, TrophyIcon,
+  BellIcon, CameraIcon, CheckIcon, ClipIcon, ClockIcon,
+  DocIcon, ImageIcon, LockIcon, SendIcon, SparkleIcon,
 } from '../components/Icons';
 import { AdSlot, BetaPill } from '../components/Paywall';
 import {
-  CountPill, EmptyState, IconBadge, SectionLabel, Segmented, SheetDrawer, SubPage,
+  CountPill, EmptyState, IconBadge, RowChevron, SectionLabel, Segmented, SheetDrawer, SubPage,
+  SurfaceRow,
 } from '../components/Ui';
 import {
   ARTICLES, ARTICLE_CATS, CHATS, NOTIFS, NOTIF_META, TEACHERS, catMeta, lastMsg, msgPreview,
 } from '../data/inbox';
-import type { Article, ArticleCat, Chat, ChatFile, ChatMsg, Notif, NotifKind, Teacher } from '../data/inbox';
+import type { Article, ArticleCat, Chat, ChatFile, ChatMsg, Notif, Teacher } from '../data/inbox';
 import { fmtDate, fmtWhen, fmtWhenShort, TODAY } from '../lib/date';
-import { usePrefs } from '../state/prefs';
+import { tierFor, useCan, usePrefs } from '../state/prefs';
+import { AiChatScreen } from './AiChatScreen';
+import { aiLastLine } from '../state/aiChats';
 import { tokens } from '../theme';
 
 /*
@@ -29,25 +32,37 @@ import { tokens } from '../theme';
 type Toast = (m: string) => void;
 type Tab = 'notifs' | 'chats' | 'articles';
 
-const NOTIF_ICON: Record<NotifKind, React.ReactNode> = {
-  mekdep: <BuildingIcon size={22} />,
-  okuw: <BooksIcon size={22} />,
-  'çäre': <TrophyIcon size={22} />,
-  'duýduryş': <AlertIcon size={22} />,
-};
-
 /* ---------------- announcements ---------------- */
 
-function NotifList({ items, onRead }: { items: Notif[]; onRead: (id: string) => void }) {
-  /* Grouped by the day they were published — derived from the date itself, so
-     a heading can never disagree with the rows under it. */
+const FILE_KIND: Record<string, { tint: string; ink: string; icon: (p: { size?: number }) => ReactElement }> = {
+  pdf: { tint: tokens.redTint, ink: tokens.redText, icon: DocIcon },
+  img: { tint: tokens.purpleTint, ink: tokens.purpleText, icon: ImageIcon },
+  doc: { tint: tokens.blueTint, ink: tokens.blueText, icon: DocIcon },
+};
+
+/*
+ * An announcement, read the way an announcement is read: who sent it first.
+ *
+ * The row used to lead with a 44px coloured icon per category, then with a
+ * tinted category pill. Both were a label on a list where every item is the
+ * same kind of thing — an announcement — and neither told the reader what the
+ * one in front of them says. What is needed before the headline is the sender:
+ * "Okuw bölümi" and "Mekdep müdirligi" are different authorities and change
+ * how urgently the rest is read.
+ *
+ * The list is a list: two lines of body, clipped, and the count of files if
+ * there are any. An announcement can run to three paragraphs and a timetable,
+ * and a list that shows all of it is not a list — it is the page. The rest is
+ * behind the row, on its own page.
+ */
+function NotifList({ items, onOpen }: { items: Notif[]; onOpen: (n: Notif) => void }) {
   const groups = useMemo(() => {
     const map = new Map<string, Notif[]>();
     items.forEach((n) => {
-      const key = n.at.slice(0, 10);
-      map.set(key, [...(map.get(key) ?? []), n]);
+      const day = n.at.slice(0, 10);
+      map.set(day, [...(map.get(day) ?? []), n]);
     });
-    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+    return [...map.entries()];
   }, [items]);
 
   if (items.length === 0) {
@@ -66,44 +81,47 @@ function NotifList({ items, onRead }: { items: Notif[]; onRead: (id: string) => 
         <Box key={day}>
           <SectionLabel>{fmtDate(day)}</SectionLabel>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {list.map((n) => {
-              const meta = NOTIF_META[n.kind];
-              return (
-                <ButtonBase
-                  key={n.id}
-                  onClick={() => onRead(n.id)}
-                  aria-label={`${n.title}, ${n.from}${n.unread ? ', okalmadyk' : ''}`}
-                  sx={{
-                    display: 'flex', alignItems: 'flex-start', gap: '13px', width: '100%', textAlign: 'left',
-                    bgcolor: n.unread ? tokens.blueTint : tokens.surface,
-                    borderRadius: `${tokens.rCard}px`, p: '14px 15px',
-                    transition: 'background .2s ease',
-                    '&:active': { filter: 'brightness(.97)' },
-                  }}
-                >
-                  <IconBadge bg={n.unread ? '#fff' : meta.tint} color={meta.ink} size={44}>
-                    {NOTIF_ICON[n.kind]}
-                  </IconBadge>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <Typography sx={{ fontSize: 15, fontWeight: n.unread ? 700 : 600, flex: 1, lineHeight: 1.3 }}>
-                        {n.title}
-                      </Typography>
-                      <Typography sx={{ fontSize: 12, color: tokens.inkMuted, flex: 'none' }}>
-                        {n.at.slice(11, 16)}
-                      </Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '4px', lineHeight: 1.45 }}>
-                      {n.body}
-                    </Typography>
-                    {/* an announcement always says who published it */}
-                    <Typography sx={{ fontSize: 12, color: tokens.inkMuted, mt: '7px', fontWeight: 600 }} noWrap>
-                      {n.from}
-                    </Typography>
-                  </Box>
-                </ButtonBase>
-              );
-            })}
+            {list.map((n) => (
+              <ButtonBase
+                key={n.id}
+                onClick={() => onOpen(n)}
+                aria-label={`${n.from}: ${n.title}${n.files?.length ? `, ${n.files.length} faýl` : ''}${n.unread ? ', okalmadyk' : ''}`}
+                sx={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'stretch',
+                  width: '100%', textAlign: 'left',
+                  bgcolor: n.unread ? tokens.blueTint : tokens.surface,
+                  borderRadius: `${tokens.rCard}px`, p: '13px 15px 14px',
+                  transition: 'background .2s ease',
+                  '&:active': { filter: 'brightness(.97)' },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                  <Typography noWrap sx={{
+                    flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, color: tokens.ink2,
+                  }}>{n.from}</Typography>
+                  <Typography sx={{ fontSize: 12, color: tokens.inkMuted, flex: 'none' }}>
+                    {n.at.slice(11, 16)}
+                  </Typography>
+                </Box>
+
+                <Typography sx={{
+                  fontSize: 15, fontWeight: n.unread ? 700 : 600, lineHeight: 1.3, mt: '6px',
+                }}>{n.title}</Typography>
+
+                {/* two lines, then the rest is on the page behind the row */}
+                <Typography sx={{
+                  fontSize: 13, color: tokens.ink3, mt: '4px', lineHeight: 1.45,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}>{n.body}</Typography>
+
+                {!!n.files?.length && (
+                  <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, mt: '7px', fontWeight: 600 }}>
+                    {`${n.files.length} faýl`}
+                  </Typography>
+                )}
+              </ButtonBase>
+            ))}
           </Box>
         </Box>
       ))}
@@ -111,15 +129,64 @@ function NotifList({ items, onRead }: { items: Notif[]; onRead: (id: string) => 
   );
 }
 
+/* The announcement itself: everything the row had to cut. Full text, the date
+   written out, and the files named — the row promised "3 faýl" and this is
+   where they are. The title is in the body rather than the header because an
+   announcement's title is a sentence and a header is one line. */
+function NotifDetail({ notif, onBack, toast }: {
+  notif: Notif; onBack: () => void; toast: Toast;
+}) {
+  return (
+    <SubPage title="Bildiriş" onBack={onBack}>
+      <Box sx={{ pt: '16px' }}>
+        <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted }}>
+          {`${NOTIF_META[notif.kind].label} · ${fmtDate(notif.at.slice(0, 10))}, ${notif.at.slice(11, 16)}`}
+        </Typography>
+        <Typography variant="h2" component="h2" sx={{ fontSize: 22, lineHeight: 1.25, mt: '6px' }}>
+          {notif.title}
+        </Typography>
+        <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: tokens.ink2, mt: '8px' }}>
+          {notif.from}
+        </Typography>
+      </Box>
+
+      <Box sx={{
+        mt: '16px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: tokens.padCard,
+      }}>
+        <Typography sx={{
+          fontSize: 15, color: tokens.ink2, lineHeight: 1.65, whiteSpace: 'pre-line',
+        }}>{notif.body}</Typography>
+      </Box>
+
+      {!!notif.files?.length && (
+        <>
+          <SectionLabel>{`Faýllar · ${notif.files.length}`}</SectionLabel>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {notif.files.map((f) => {
+              const c = FILE_KIND[f.kind] ?? FILE_KIND.doc;
+              const Glyph = c.icon;
+              return (
+                <SurfaceRow
+                  key={f.name}
+                  icon={<IconBadge bg={c.tint} color={c.ink} size={44}><Glyph size={20} /></IconBadge>}
+                  label={f.name}
+                  labelSx={{ fontSize: 14.5, fontWeight: 600 }}
+                  sub={f.size}
+                  onClick={() => toast(`${f.name} ýüklenýär…`)}
+                />
+              );
+            })}
+          </Box>
+        </>
+      )}
+    </SubPage>
+  );
+}
+
 /* ---------------- chat thread ---------------- */
 
 /* One entry per file kind: colour and glyph together, so a bubble and the
    attach sheet can never label the same kind two different ways. */
-const FILE_KIND: Record<string, { tint: string; ink: string; icon: (p: { size?: number }) => ReactElement }> = {
-  pdf: { tint: tokens.redTint, ink: tokens.redText, icon: DocIcon },
-  img: { tint: tokens.purpleTint, ink: tokens.purpleText, icon: ImageIcon },
-  doc: { tint: tokens.blueTint, ink: tokens.blueText, icon: DocIcon },
-};
 
 /* A file is a card, never a bubble of text: it has to show what it is and how
    big before anyone decides to open it. */
@@ -425,6 +492,10 @@ export function InboxScreen({ onBack, toast, onUpgrade }: {
   const [article, setArticle] = useState<Article | null>(null);
   const [cat, setCat] = useState<ArticleCat | 'all'>('all');
   const [pick, setPick] = useState(false);
+  const [notif, setNotif] = useState<Notif | null>(null);
+  const [ai, setAi] = useState(false);
+  const canAi = useCan('ai');
+  const aiPlan = tierFor('ai');
 
   const notifs = useMemo(
     () => NOTIFS.map((n) => (read.includes(n.id) ? { ...n, unread: false } : n)),
@@ -445,8 +516,11 @@ export function InboxScreen({ onBack, toast, onUpgrade }: {
     });
   };
 
+  if (ai) return <AiChatScreen onBack={() => setAi(false)} onUpgrade={onUpgrade} />;
   if (chat) return <ChatThread chat={chat} onBack={() => setChat(null)} toast={toast} />;
   if (article) return <ArticlePage article={article} onBack={() => setArticle(null)} toast={toast} />;
+
+  if (notif) return <NotifDetail notif={notif} onBack={() => setNotif(null)} toast={toast} />;
 
   return (
     <SubPage
@@ -478,7 +552,13 @@ export function InboxScreen({ onBack, toast, onUpgrade }: {
       </Box>
 
       {tab === 'notifs' && (
-        <NotifList items={notifs} onRead={(id) => setRead((r) => (r.includes(id) ? r : [...r, id]))} />
+        <NotifList
+          items={notifs}
+          onOpen={(n) => {
+            setRead((r) => (r.includes(n.id) ? r : [...r, n.id]));
+            setNotif(n);
+          }}
+        />
       )}
 
       {tab === 'chats' && (
@@ -491,6 +571,45 @@ export function InboxScreen({ onBack, toast, onUpgrade }: {
             >
               Mugallyma ýaz
             </Button>
+          </Box>
+
+          {/* Akylly mugallym is a chat, so it is in the chat list — not behind
+              a button on a lesson page the student would have to find first.
+              It is pinned above the teachers and tinted, because it is the one
+              correspondent that is always there and never has an unread. */}
+          <Box sx={{ pt: '14px' }}>
+            <ButtonBase
+              onClick={() => setAi(true)}
+              aria-label="Akylly mugallym 24/7"
+              sx={{
+                display: 'flex', alignItems: 'center', gap: '13px', width: '100%', textAlign: 'left',
+                bgcolor: tokens.blueTint, borderRadius: `${tokens.rCard}px`, p: '13px 15px',
+                '&:active': { filter: 'brightness(.97)' },
+              }}
+            >
+              <Box aria-hidden sx={{
+                width: 46, height: 46, borderRadius: '50%', flex: 'none',
+                bgcolor: '#fff', color: tokens.blue, display: 'grid', placeItems: 'center',
+              }}><SparkleIcon size={24} /></Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Typography sx={{ fontSize: 15, fontWeight: 700, flex: 1 }} noWrap>
+                    Akylly mugallym
+                  </Typography>
+                  {!canAi && (
+                    <Box sx={{
+                      display: 'inline-flex', alignItems: 'center', gap: '4px', flex: 'none',
+                      px: '8px', height: 21, borderRadius: `${tokens.rPill}px`,
+                      bgcolor: '#fff', color: tokens.blueText, fontSize: 11, fontWeight: 700,
+                    }}><LockIcon size={11} />{aiPlan?.name}</Box>
+                  )}
+                </Box>
+                <Typography sx={{ fontSize: 13, color: tokens.ink2, mt: '3px' }} noWrap>
+                  {canAi ? aiLastLine() : 'Islendik sapak boýunça sorag ber'}
+                </Typography>
+              </Box>
+              <RowChevron />
+            </ButtonBase>
           </Box>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', pt: '14px' }}>

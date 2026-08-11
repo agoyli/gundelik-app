@@ -295,10 +295,19 @@ export const SendIcon = (p: P) =>
   svg(p, '0 0 20 20', 20, 20,
     <path d="M2.4 9.1 17 2.6a.7.7 0 0 1 .93.93L11.4 18.1a.7.7 0 0 1-1.3-.05l-1.8-5.4a.7.7 0 0 0-.44-.44l-5.4-1.8a.7.7 0 0 1-.05-1.3z" fill="currentColor" />, 0.898);
 
+/* The old cog was hand-plotted: eight bumps of uneven width riding a circle
+   that was not concentric with the hub, which at 21px read as a flower. This
+   one is generated — six teeth on a fixed tip and root radius, flanks struck
+   between them — so every tooth is identical and the ring is true. The ink
+   spans the same extents as before, so the measured optical factor still
+   holds. */
 export const GearIcon = (p: P) =>
   svg(p, '0 0 24 24', 24, 24, <>
-    <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth={1.8} fill="none" />
-    <path d="M12 2.8l1.2 2.3a7 7 0 0 1 2.3.95l2.5-.75 1.7 3-1.85 1.8a7 7 0 0 1 0 2.4l1.85 1.8-1.7 3-2.5-.75a7 7 0 0 1-2.3.95L12 21.2l-1.2-2.3a7 7 0 0 1-2.3-.95l-2.5.75-1.7-3 1.85-1.8a7 7 0 0 1 0-2.4L4.3 8.3l1.7-3 2.5.75a7 7 0 0 1 2.3-.95L12 2.8z" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" fill="none" />
+    <path
+      d="M10.10 3.92A8.30 8.30 0 0 1 13.90 3.92L13.93 6.37A5.95 5.95 0 0 1 15.91 7.51L18.05 6.32A8.30 8.30 0 0 1 19.95 9.60L17.84 10.86A5.95 5.95 0 0 1 17.84 13.14L19.95 14.40A8.30 8.30 0 0 1 18.05 17.68L15.91 16.49A5.95 5.95 0 0 1 13.93 17.63L13.90 20.08A8.30 8.30 0 0 1 10.10 20.08L10.07 17.63A5.95 5.95 0 0 1 8.09 16.49L5.95 17.68A8.30 8.30 0 0 1 4.05 14.40L6.16 13.14A5.95 5.95 0 0 1 6.16 10.86L4.05 9.60A8.30 8.30 0 0 1 5.95 6.32L8.09 7.51A5.95 5.95 0 0 1 10.07 6.37L10.10 3.92Z"
+      stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" fill="none"
+    />
+    <circle cx="12" cy="12" r="3.1" stroke="currentColor" strokeWidth={1.8} fill="none" />
   </>, 1.024);
 
 export const SearchIcon = (p: P) =>
@@ -443,6 +452,11 @@ export const ListIcon = (p: P) =>
     <circle cx="4.8" cy="12" r="1.5" fill="currentColor" />
     <circle cx="4.8" cy="17.4" r="1.5" fill="currentColor" />
   </>, 1.135);
+
+export const PhoneIcon = (p: P) =>
+  svg(p, '0 0 24 24', 24, 24, <>
+    <path d="M8.4 4.2 10.3 8.2 8.6 10.1c.9 2 2.6 3.7 4.6 4.6l1.9-1.7 4 1.9v3.1c0 1-.8 1.8-1.8 1.7C10.5 19.2 4.8 13.5 4.2 6.1 4.1 5.1 4.9 4.2 5.9 4.2h2.5Z" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" fill="none" />
+  </>, 1.134);
 
 export const UsersIcon = (p: P) =>
   svg(p, '0 0 24 24', 24, 24, <>

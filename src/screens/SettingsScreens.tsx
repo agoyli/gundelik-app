@@ -2,8 +2,8 @@ import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  AlertIcon, BellIcon, CardIcon, CheckIcon, ChevronIcon, ComputerIcon, GlobeIcon,
-  HistoryIcon, LockIcon, LogoutIcon, PencilIcon, QuestionOutlineIcon, ShieldIcon, SoundIcon,
+  AlertIcon, BellIcon, CardIcon, CheckIcon, CoinIcon, ComputerIcon, GlobeIcon, HistoryIcon,
+  LockIcon, LogoutIcon, PencilIcon, PhoneIcon, QuestionOutlineIcon, ShieldIcon, SoundIcon,
   SparkleIcon, TrashIcon, UsersIcon, WalletIcon,
 } from '../components/Icons';
 import {
@@ -13,6 +13,16 @@ import {
 import {
   ENTRY, LANGS, PLAN, TIERS, langLabel, savePct, setPref, setTier, tierName, tierOf, usePrefs,
 } from '../state/prefs';
+import {
+  AboutScreen, APP, FaqScreen, HelpScreen, SupportScreen, UpdatesScreen,
+} from './HelpScreens';
+import {
+  BANKS, PAY_NUMBERS, addPayMethod, bankOf, mainPayMethod, methodLabel, methodNote, methodTone,
+  removePayMethod, setMainPayMethod, usePayMethods,
+} from '../state/payMethods';
+import type { BankId } from '../state/payMethods';
+import { LABEL_SX, NEUTRAL, RowGroup, rowIcon } from './settingsBits';
+import type { Toast } from './settingsBits';
 import type { TierId } from '../state/prefs';
 import { absDate } from '../lib/date';
 import type { BoolPref } from '../state/prefs';
@@ -25,27 +35,8 @@ import { tokens } from '../theme';
  * sheet rather than a silent dead end.
  */
 
-type Toast = (m: string) => void;
-
 /* Preferences, the plan and the language list all live in ../state/prefs so the
    diary, the paywall and this tree read one source of truth. */
-
-/* ---------------- shared bits ---------------- */
-
-const rowIcon = (icon: ReactNode, tint: string, color: string) => (
-  <IconBadge bg={tint} color={color} size={44}>{icon}</IconBadge>
-);
-
-/* The badge for rows with no accent of their own. It must NOT be `surface` —
-   that is the SurfaceRow's own fill, so the squircle disappears and the row
-   shows a bare floating icon next to neighbours that have a container. */
-const NEUTRAL = { tint: tokens.surfacePress, ink: tokens.ink2 };
-
-const LABEL_SX = { fontSize: 15, fontWeight: 500 };
-
-const RowGroup = ({ children }: { children: ReactNode }) => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>{children}</Box>
-);
 
 /* ---------------- Profil maglumatlary ---------------- */
 
@@ -319,6 +310,8 @@ const PAYMENTS = ['2026-02-12', '2026-01-12', '2025-12-12', '2025-11-14', '2025-
 export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
   onBack: () => void; toast: Toast; onOpenCards: () => void; onPay: () => void;
 }) {
+  const methods = usePayMethods();
+  const main = methods.find((m) => m.main) ?? methods[0];
   const [cancel, setCancel] = useState(false);
   const { tier } = usePrefs();
   const plan = tierOf(tier) ?? ENTRY;
@@ -349,12 +342,18 @@ export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
         </Box>
       </Box>
 
+      {/* the method that will actually be charged, read from the store rather
+          than printed here — a second copy is free to go stale */}
       <SectionLabel>Töleg usuly</SectionLabel>
       <SurfaceRow
-        icon={rowIcon(<CardIcon size={22} />, tokens.blueTint, tokens.blueText)}
-        label="Halkbank · 4821"
+        icon={rowIcon(
+          <CardIcon size={22} />,
+          main ? methodTone(main).tint : tokens.blueTint,
+          main ? methodTone(main).ink : tokens.blueText,
+        )}
+        label={main ? methodLabel(main) : 'Kart goşulmadyk'}
         labelSx={LABEL_SX}
-        end={<RowEnd />}
+        end={<RowEnd value={main ? methodNote(main) : undefined} />}
         onClick={onOpenCards}
       />
 
@@ -416,82 +415,82 @@ export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
   );
 }
 
-/* ---------------- Kartlarym ---------------- */
-
-const CARDS = [
-  { id: 'c1', bank: 'Halkbank', last4: '4821', exp: '09/28', main: true },
-  { id: 'c2', bank: 'Senagat bank', last4: '1096', exp: '02/27', main: false },
-];
-
-export function CardsScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
-  const [cards, setCards] = useState(CARDS);
+/* ---------------- Töleg usullary ----------------
+ *
+ * The cards this account has saved, and the page that adds one.
+ *
+ * It was "Kartlarym"; the page is now "Töleg usullary" because a card is not
+ * the only way to pay — but the other two ways are not *saved* ways, so they
+ * are not here. A gift card is a code you spend once and a phone transfer is
+ * something you do from your own phone: neither has anything worth keeping
+ * between payments, and both are offered in the pay sheet at the moment they
+ * are useful.
+ */
+export function PayMethodsScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
+  const methods = usePayMethods();
   const [add, setAdd] = useState(false);
 
-  const makeMain = (id: string) => {
-    setCards((cs) => cs.map((c) => ({ ...c, main: c.id === id })));
-    toast('Esasy kart üýtgedildi');
-  };
+  if (add) return <AddCardScreen onBack={() => setAdd(false)} toast={toast} />;
 
   return (
-    <SubPage title="Kartlarym" onBack={onBack}>
-      {cards.length === 0 ? (
+    <SubPage title="Töleg usullary" onBack={onBack}>
+      {methods.length === 0 ? (
         <EmptyState
           icon={<CardIcon size={26} />}
           title="Kart goşulmadyk"
-          note="Abunany tölemek üçin bank kartyňy goş."
+          note="Abunany kart bilen tölemek üçin karty goş. Sowgat karty we telefon geçirimi töleg wagtynda saýlanýar."
         />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px', pt: '14px' }}>
-          {cards.map((c) => (
-            <Box key={c.id} sx={{
-              bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '15px',
-              border: `1.5px solid ${c.main ? tokens.blue : 'transparent'}`,
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
-                <IconBadge bg={tokens.blueTint} color={tokens.blueText} size={44}><CardIcon size={22} /></IconBadge>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                    <Typography sx={{ fontSize: 15.5, fontWeight: 600 }} noWrap>{c.bank}</Typography>
-                    {c.main && (
-                      <Box sx={{
-                        flex: 'none', px: '7px', height: 19, borderRadius: `${tokens.rPill}px`,
-                        bgcolor: tokens.blue, color: '#fff', fontSize: 11, fontWeight: 700,
-                        display: 'grid', placeItems: 'center',
-                      }}>Esasy</Box>
-                    )}
+          {methods.map((m) => {
+            const tone = methodTone(m);
+            return (
+              <Box key={m.id} sx={{
+                bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '15px',
+                border: `1.5px solid ${m.main ? tokens.blue : 'transparent'}`,
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
+                  {rowIcon(<CardIcon size={22} />, tone.tint, tone.ink)}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                      <Typography sx={{ fontSize: 15.5, fontWeight: 600 }} noWrap>
+                        {methodLabel(m)}
+                      </Typography>
+                      {m.main && (
+                        <Typography sx={{ fontSize: 12, fontWeight: 700, color: tokens.blueText, flex: 'none' }}>
+                          Esasy
+                        </Typography>
+                      )}
+                    </Box>
+                    <Typography noWrap sx={{
+                      fontSize: 13, color: tokens.ink3, mt: '2px', fontVariantNumeric: 'tabular-nums',
+                    }}>{methodNote(m)}</Typography>
                   </Box>
-                  <Typography sx={{
-                    fontSize: 13, color: tokens.ink3, mt: '2px', fontVariantNumeric: 'tabular-nums',
-                  }}>
-                    •••• {c.last4} · {c.exp}
-                  </Typography>
+                </Box>
+                <Box sx={{
+                  display: 'flex', gap: '8px', mt: '12px', pt: '12px',
+                  borderTop: `1px solid ${tokens.dividerSoft}`,
+                }}>
+                  {!m.main && (
+                    <Button
+                      fullWidth disableElevation
+                      onClick={() => { setMainPayMethod(m.id); toast('Esasy kart üýtgedildi'); }}
+                      sx={{ height: 40, fontSize: 13.5, bgcolor: tokens.blueTint, color: tokens.blueText }}
+                    >
+                      Esasy et
+                    </Button>
+                  )}
+                  <Button
+                    fullWidth disableElevation
+                    onClick={() => { removePayMethod(m.id); toast('Kart aýryldy'); }}
+                    sx={{ height: 40, fontSize: 13.5, bgcolor: tokens.redTint, color: tokens.redText }}
+                  >
+                    Aýyr
+                  </Button>
                 </Box>
               </Box>
-              <Box sx={{
-                display: 'flex', gap: '8px', mt: '12px', pt: '12px',
-                borderTop: `1px solid ${tokens.dividerSoft}`,
-              }}>
-                {!c.main && (
-                  <Button
-                    fullWidth disableElevation onClick={() => makeMain(c.id)}
-                    sx={{ height: 40, fontSize: 13.5, bgcolor: tokens.blueTint, color: tokens.blueText }}
-                  >
-                    Esasy et
-                  </Button>
-                )}
-                <Button
-                  fullWidth disableElevation
-                  onClick={() => {
-                    setCards((cs) => cs.filter((x) => x.id !== c.id));
-                    toast('Kart aýryldy');
-                  }}
-                  sx={{ height: 40, fontSize: 13.5, bgcolor: tokens.redTint, color: tokens.redText }}
-                >
-                  Aýyr
-                </Button>
-              </Box>
-            </Box>
-          ))}
+            );
+          })}
         </Box>
       )}
 
@@ -500,127 +499,216 @@ export function CardsScreen({ onBack, toast }: { onBack: () => void; toast: Toas
           Kart goş
         </Button>
       </Box>
+
+      {/* the two ways to pay that are not saved anywhere — said here so the
+          reader does not go looking for them on this page */}
+      <Box sx={{
+        mt: '14px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: tokens.padCard,
+      }}>
+        <Typography sx={{ fontSize: 13.5, color: tokens.ink2, lineHeight: 1.55 }}>
+          Sowgat karty we telefon arkaly geçirim aýratyn saklanmaýar — olar töleg edilende
+          «Tölemek» penjiresinde saýlanýar.
+        </Typography>
+      </Box>
+
       <Typography sx={{ fontSize: 12.5, color: tokens.ink3, lineHeight: 1.5, px: '6px', pt: '12px' }}>
         Kart maglumatlaryň bank tarapyndan goralýar — programma diňe soňky dört belgini görýär.
       </Typography>
-
-      <SheetDrawer open={add} onClose={() => setAdd(false)}>
-        <Typography variant="h2">Kart goş</Typography>
-        <Typography variant="caption" sx={{ display: 'block', mt: '4px' }}>
-          Kartyň maglumatlary bank sahypasynda girizilýär.
-        </Typography>
-        <Box sx={{ mt: '18px' }}>
-          <Button
-            fullWidth variant="contained" disableElevation
-            onClick={() => { setAdd(false); toast('Bankyň sahypasy tiz wagtda açylar'); }}
-          >
-            Bank sahypasyna geç
-          </Button>
-        </Box>
-      </SheetDrawer>
     </SubPage>
   );
 }
 
-/* ---------------- Ýygy soralýan soraglar ---------------- */
+/* ---------------- Kart goş ----------------
+ *
+ * The bank first, then the digits: it decides what the card looks like and it
+ * is the thing the reader is holding. Only the bank is named — each of these
+ * issues several different cards, so a product name beside the bank would be
+ * wrong for most of the plastic in circulation.
+ *
+ * The preview above the form is the point. Card entry is the one form where
+ * people routinely mistype and cannot tell — so the digits, the expiry and the
+ * name are echoed onto a card face as they are typed, grouped the way they are
+ * printed, in the chosen bank's colour. Everything formats as you type rather
+ * than validating after submit, and the footer stays disabled until the form is
+ * complete, so the error state is "not finished yet" instead of a red message.
+ */
 
-const FAQ = [
-  {
-    q: 'Ballar nädip toplanýar?',
-    a: 'Her tamamlanan test, oýun we bäsleşik bal getirýär. Ballar reýtingi kesgitleýär we her çärýegiň başynda dowam edýär — pozulmaýar.',
-  },
-  {
-    q: 'Baham nädogry görkezilýär welin?',
-    a: 'Bahalary mugallym girizýär. Ilki sapagy açyp bahanyň senesini barla, soňra synp ýolbaşçyňa ýüz tut — düzediş 24 sagadyň dowamynda görünýär.',
-  },
-  {
-    q: 'Premium näme berýär?',
-    a: 'Ähli testlere we öwrediji kartlara doly elýeterlilik, Gollanmalardaky 1–12 synp sapaklary we Akylly mugallymyň çäksiz ulanylyşy.',
-  },
-  {
-    q: 'Ene-atam näme görýär?',
-    a: 'Ene-ataň «Çagam» bölüminde bahalaryňy, gatnaşygyňy we öý işleriňi görýär. Oýun netijeleri we Akylly mugallym ýazgylaryň görünmeýär.',
-  },
-  {
-    q: 'Internet ýok wagty işleýärmi?',
-    a: 'Açylan sapaklar we kartlar enjamda saklanýar, olary internetsiz gaýtalap bilersiň. Netijeler baglanyşyk dikelende ugradylýar.',
-  },
-];
+const digits = (v: string) => v.replace(/\D/g, '');
 
-export function FaqScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
-  const [open, setOpen] = useState<number | null>(0);
+const fmtCardNumber = (v: string) => digits(v).slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+
+const fmtExpiry = (v: string) => {
+  const d = digits(v).slice(0, 4);
+  return d.length <= 2 ? d : `${d.slice(0, 2)}/${d.slice(2)}`;
+};
+
+export function AddCardScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
+  const [bank, setBank] = useState<BankId>('halk');
+  const [number, setNumber] = useState('');
+  const [exp, setExp] = useState('');
+  const [cvv, setCvv] = useState('');
+  const [holder, setHolder] = useState('');
+  const [main, setMain] = useState(true);
+
+  const b = bankOf(bank);
+  const nDigits = digits(number);
+  const expOk = /^(0[1-9]|1[0-2])\/\d{2}$/.test(exp);
+  const ready = nDigits.length === 16 && expOk && digits(cvv).length === 3 && holder.trim().length > 2;
+
+  const save = () => {
+    addPayMethod({ type: 'card', main, bank, last4: nDigits.slice(-4), exp });
+    toast('Kart goşuldy');
+    onBack();
+  };
+
   return (
-    <SubPage title="Kömek" onBack={onBack}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', pt: '14px' }}>
-        {FAQ.map((f, i) => {
-          const on = open === i;
+    <SubPage title="Kart goş" onBack={onBack}>
+      <SectionLabel>Kartyň banky</SectionLabel>
+      <RowGroup>
+        {BANKS.map((x) => {
+          const on = x.id === bank;
           return (
-            <Box key={f.q} sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, overflow: 'hidden' }}>
-              <ButtonBase
-                onClick={() => setOpen(on ? null : i)}
-                aria-expanded={on}
-                sx={{
-                  display: 'flex', alignItems: 'center', gap: '12px', width: '100%', minHeight: 52,
-                  px: '15px', py: '12px', textAlign: 'left', justifyContent: 'flex-start',
-                }}
-              >
-                <Typography sx={{ flex: 1, fontSize: 15, fontWeight: 600 }}>{f.q}</Typography>
-                <Box aria-hidden sx={{
-                  color: tokens.inkMuted, display: 'flex', flex: 'none',
-                  transform: on ? 'rotate(-90deg)' : 'rotate(90deg)',
-                  transition: `transform .2s ${tokens.ease}`,
-                }}>
-                  <ChevronIcon size={11} />
-                </Box>
-              </ButtonBase>
-              {on && (
-                <Typography sx={{
-                  fontSize: 14, color: tokens.ink2, lineHeight: 1.55, px: '15px', pb: '15px', mt: '-2px',
-                }}>{f.a}</Typography>
-              )}
-            </Box>
+            <ButtonBase
+              key={x.id}
+              onClick={() => setBank(x.id)}
+              aria-pressed={on}
+              sx={{
+                display: 'flex', alignItems: 'center', gap: '13px', width: '100%',
+                textAlign: 'left', justifyContent: 'flex-start', minHeight: 60, px: '15px',
+                borderRadius: `${tokens.rCard}px`,
+                bgcolor: on ? tokens.blueTint : tokens.surface,
+                border: `1.5px solid ${on ? tokens.blue : 'transparent'}`,
+              }}
+            >
+              {rowIcon(<CardIcon size={22} />, x.tint, x.ink)}
+              <Typography sx={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600 }}>{x.name}</Typography>
+              {on && <Box aria-hidden sx={{ color: tokens.blue, display: 'flex' }}><CheckIcon size={15} /></Box>}
+            </ButtonBase>
           );
         })}
+      </RowGroup>
+
+      {/* what the reader is filling in, as they fill it in */}
+      <Box aria-hidden sx={{
+        mt: '16px', height: 168, borderRadius: `${tokens.rCard}px`, p: '18px',
+        background: `linear-gradient(145deg, ${b.ink}, ${tokens.ink})`,
+        color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        /* neutral lift, not the blue FAB glow — the card wears the bank's colour
+           and a blue halo around a green card reads as a bug */
+        boxShadow: tokens.shadowFloat,
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ width: 38, height: 28, borderRadius: '6px', bgcolor: 'rgba(255,255,255,.35)' }} />
+          <Typography sx={{ fontSize: 14, fontWeight: 700, opacity: .9 }}>{b.name}</Typography>
+        </Box>
+        <Typography sx={{
+          fontSize: 19, fontWeight: 600, letterSpacing: '1.5px', fontVariantNumeric: 'tabular-nums',
+          opacity: nDigits.length ? 1 : .55,
+        }}>
+          {fmtCardNumber(number) || '•••• •••• •••• ••••'}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px' }}>
+          <Typography noWrap sx={{
+            fontSize: 13, fontWeight: 600, textTransform: 'uppercase', opacity: holder ? .95 : .5,
+          }}>{holder || 'AT FAMILIÝA'}</Typography>
+          <Typography sx={{
+            fontSize: 13, fontWeight: 600, opacity: exp ? .95 : .5, fontVariantNumeric: 'tabular-nums',
+          }}>{exp || 'AA/ÝÝ'}</Typography>
+        </Box>
       </Box>
 
-      <SectionLabel>Başga sorag barmy</SectionLabel>
-      <RowGroup>
-        <SurfaceRow
-          icon={rowIcon(<QuestionOutlineIcon size={22} />, tokens.blueTint, tokens.blueText)}
-          label="Goldaw bilen habarlaş"
-          labelSx={LABEL_SX}
-          end={<RowEnd value="09:00 – 18:00" />}
-          onClick={() => toast('Goldaw söhbetdeşligi tiz wagtda')}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', pt: '20px' }}>
+        <Field
+          label="Kartyň belgisi" value={fmtCardNumber(number)} onChange={setNumber}
+          placeholder="0000 0000 0000 0000" type="tel"
         />
-        <SurfaceRow
-          icon={rowIcon(<ShieldIcon size={22} />, NEUTRAL.tint, NEUTRAL.ink)}
-          label="Ulanyş şertleri"
-          labelSx={LABEL_SX}
-          end={<RowEnd />}
-          onClick={() => toast('Resminama tiz wagtda açylar')}
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <Field label="Möhleti" value={exp} onChange={(v) => setExp(fmtExpiry(v))} placeholder="AA/ÝÝ" type="tel" />
+          <Field label="CVV" value={cvv} onChange={(v) => setCvv(digits(v).slice(0, 3))} placeholder="000" type="tel" />
+        </Box>
+        <Field label="Kartyň eýesi" value={holder} onChange={setHolder} placeholder="AT FAMILIÝA" />
+      </Box>
+
+      <Box sx={{ pt: '16px' }}>
+        <SwitchRow
+          icon={rowIcon(<CardIcon size={22} />, tokens.blueTint, tokens.blueText)}
+          label="Esasy kart edip belle"
+          on={main}
+          onToggle={() => setMain(!main)}
         />
-      </RowGroup>
+      </Box>
+
+      <StickyFooter>
+        <Button fullWidth variant="contained" disableElevation disabled={!ready} onClick={save}>
+          Karty goş
+        </Button>
+      </StickyFooter>
     </SubPage>
   );
 }
 
 /* ---------------- Töleg sheet (shared by Profil and Abuna) ---------------- */
 
+/*
+ * Paying, and the three ways it happens.
+ *
+ * A saved card is one row per card. The other two are not saved anywhere and
+ * appear here because here is where they exist: a gift card is a code spent
+ * once, and a phone transfer is something the reader does from their own phone
+ * to one of our numbers. That is why the phone option shows *our* numbers with
+ * a pay button beside each rather than asking for theirs — the app is the payee.
+ */
 export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () => void; toast: Toast }) {
   const [plan, setPlan] = useState<'month' | 'year'>('month');
-  /* renewing the plan the account is already on, at that plan's own prices */
+  const methods = usePayMethods();
+  /* `null` means "whatever the main card is" — the sheet opens on it without
+     having to copy it into state on every open */
+  const [pick, setPick] = useState<string | null>(null);
+  const [gift, setGift] = useState('');
   const { tier } = usePrefs();
   const t = tierOf(tier) ?? ENTRY;
+  const payWith = pick ?? mainPayMethod()?.id ?? 'gift';
+  const amount = plan === 'month' ? t.monthly : t.yearly;
+
   const options = [
     { id: 'month' as const, label: 'Aýlyk', price: `${t.monthly} TMT`, note: 'Islendik wagt ýatyrsa bolýar' },
     { id: 'year' as const, label: 'Ýyllyk', price: `${t.yearly} TMT`, note: `${savePct(t)}% arzan` },
   ];
+
+  const row = (id: string, tint: string, ink: string, icon: ReactNode, label: string, note: string) => {
+    const on = id === payWith;
+    return (
+      <ButtonBase
+        key={id}
+        onClick={() => setPick(id)}
+        aria-pressed={on}
+        sx={{
+          display: 'flex', alignItems: 'center', gap: '11px', width: '100%',
+          textAlign: 'left', justifyContent: 'flex-start', minHeight: 56, px: '13px',
+          borderRadius: `${tokens.rRow}px`,
+          bgcolor: on ? tokens.blueTint : tokens.surface,
+          border: `1.5px solid ${on ? tokens.blue : 'transparent'}`,
+        }}
+      >
+        <IconBadge bg={tint} color={ink} size={36} radius={10}>{icon}</IconBadge>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography noWrap sx={{ fontSize: 14, fontWeight: 600 }}>{label}</Typography>
+          <Typography noWrap sx={{ fontSize: 12.5, color: tokens.ink3 }}>{note}</Typography>
+        </Box>
+        {on && <Box aria-hidden sx={{ color: tokens.blue, display: 'flex' }}><CheckIcon size={14} /></Box>}
+      </ButtonBase>
+    );
+  };
+
+  const giftReady = gift.replace(/-/g, '').length === 12;
+
   return (
     <SheetDrawer open={open} onClose={onClose}>
       <Typography variant="h2">Abunany tölemek</Typography>
       <Typography variant="caption" sx={{ display: 'block', mt: '4px' }}>
         Häzirki möhlet: {PLAN.until}
       </Typography>
+
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px', mt: '16px' }}>
         {options.map((o) => {
           const on = o.id === plan;
@@ -651,29 +739,94 @@ export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () 
           );
         })}
       </Box>
-      <Box sx={{
-        display: 'flex', alignItems: 'center', gap: '10px', mt: '14px',
-        bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, p: '12px 15px',
-      }}>
-        <IconBadge bg="#fff" color={tokens.blueText} size={36} radius={10}><CardIcon size={18} /></IconBadge>
-        <Typography sx={{ flex: 1, fontSize: 14, fontWeight: 500 }}>Halkbank · 4821</Typography>
-        <Typography sx={{ fontSize: 13, fontWeight: 600, color: tokens.blueText }}>Çalyş</Typography>
+
+      <SectionLabel>Töleg usuly</SectionLabel>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {methods.map((m) => row(
+          m.id, methodTone(m).tint, methodTone(m).ink, <CardIcon size={18} />,
+          methodLabel(m), methodNote(m),
+        ))}
+        {row('gift', tokens.purpleTint, tokens.purpleText, <CoinIcon size={18} />,
+          'Sowgat karty', 'Kodyňy giriz')}
+        {row('phone', tokens.tealTint, tokens.tealText, <PhoneIcon size={18} />,
+          'Telefon arkaly geçirim', 'Belgimize geçirim et')}
       </Box>
-      <Box sx={{ mt: '18px' }}>
-        <Button
-          fullWidth variant="contained" disableElevation
-          onClick={() => { onClose(); toast('Bank tassyklamasy tiz wagtda'); }}
-        >
-          {plan === 'month' ? `${t.monthly} TMT tölemek` : `${t.yearly} TMT tölemek`}
-        </Button>
-      </Box>
+
+      {/* the gift code, where it is used rather than where it would be stored */}
+      {payWith === 'gift' && (
+        <Box sx={{ mt: '12px' }}>
+          <Field
+            label="Sowgat kartynyň kody"
+            value={gift}
+            onChange={(v) => setGift(
+              v.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 12)
+                .replace(/(.{4})/g, '$1-').replace(/-$/, ''),
+            )}
+            placeholder="XXXX-XXXX-XXXX"
+            note="Kod kartyň arka ýüzündäki gorag gatlagynyň astynda"
+          />
+        </Box>
+      )}
+
+      {/* our numbers, each with its own pay button — the reader transfers to
+          one of them, so the number is the content and the button is beside it */}
+      {payWith === 'phone' && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px', mt: '12px' }}>
+          {PAY_NUMBERS.map((n) => (
+            <Box key={n.id} sx={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, p: '10px 10px 10px 14px',
+            }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontSize: 14.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                  {n.number}
+                </Typography>
+                <Typography noWrap sx={{ fontSize: 12, color: tokens.ink3, mt: '1px' }}>{n.operator}</Typography>
+              </Box>
+              <Button
+                disableElevation
+                onClick={() => toast(`${n.number} — ${amount} TMT geçirim tassyklanýar`)}
+                sx={{
+                  flex: 'none', height: 38, minWidth: 0, px: '16px', fontSize: 13.5,
+                  bgcolor: tokens.tealTint, color: tokens.tealText,
+                }}
+              >
+                Töle
+              </Button>
+            </Box>
+          ))}
+          <Typography sx={{ fontSize: 12, color: tokens.ink3, lineHeight: 1.5, px: '4px', pt: '2px' }}>
+            Geçirimden soň töleg 10 minudyň dowamynda hasabyňda görünýär.
+          </Typography>
+        </Box>
+      )}
+
+      {payWith !== 'phone' && (
+        <Box sx={{ mt: '18px' }}>
+          <Button
+            fullWidth variant="contained" disableElevation
+            disabled={payWith === 'gift' && !giftReady}
+            onClick={() => {
+              const m = methods.find((x) => x.id === payWith);
+              onClose();
+              setGift('');
+              toast(m
+                ? `${methodLabel(m)} · ${amount} TMT tassyklanýar`
+                : 'Sowgat karty ulanyldy');
+            }}
+          >
+            {payWith === 'gift' ? 'Sowgat kartyny ulan' : `${amount} TMT tölemek`}
+          </Button>
+        </Box>
+      )}
     </SheetDrawer>
   );
 }
 
 /* ---------------- Sazlamalar (root) ---------------- */
 
-type View = 'root' | 'profile' | 'notifications' | 'security' | 'language' | 'payments' | 'cards' | 'faq';
+type View = 'root' | 'profile' | 'notifications' | 'security' | 'language' | 'payments' | 'cards'
+  | 'help' | 'faq' | 'support' | 'about' | 'updates';
 
 export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
   onBack: () => void; toast: Toast; initial?: View; onUpgrade?: () => void;
@@ -688,8 +841,36 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
   if (view === 'notifications') return <NotificationsScreen onBack={home} toast={toast} />;
   if (view === 'security') return <SecurityScreen onBack={home} toast={toast} />;
   if (view === 'language') return <LanguageScreen onBack={home} toast={toast} />;
-  if (view === 'cards') return <CardsScreen onBack={home} toast={toast} />;
-  if (view === 'faq') return <FaqScreen onBack={home} toast={toast} />;
+  if (view === 'cards') return <PayMethodsScreen onBack={home} toast={toast} />;
+  /* Kömek merkezi is the hub; FAQ, goldaw and täzelikler hang off it and return
+     to it, so a reader who drilled in one step does not land back in the root. */
+  if (view === 'help') {
+    return (
+      <HelpScreen
+        onBack={home}
+        onSupport={() => setView('support')}
+        onFaq={() => setView('faq')}
+      />
+    );
+  }
+  if (view === 'about') {
+    return (
+      <AboutScreen
+        onBack={home} toast={toast}
+        onUpdates={() => setView('updates')}
+      />
+    );
+  }
+  if (view === 'faq') {
+    return (
+      <FaqScreen
+        onBack={() => setView('help')} toast={toast}
+        onSupport={() => setView('support')}
+      />
+    );
+  }
+  if (view === 'support') return <SupportScreen onBack={() => setView('help')} toast={toast} />;
+  if (view === 'updates') return <UpdatesScreen onBack={() => setView('about')} />;
   if (view === 'payments') {
     return (
       <>
@@ -758,21 +939,26 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
         />
       </RowGroup>
 
+      {/* Two rows: how to use it, and what it is. Guides, questions and support
+          used to be three separate entries for one intention ("I am stuck"),
+          which made the reader choose before they knew what kind of answer they
+          needed. What the app *is* stays its own menu — it is read for a
+          different reason and at a different time. */}
       <SectionLabel>Kömek</SectionLabel>
       <RowGroup>
         <SurfaceRow
           icon={rowIcon(<QuestionOutlineIcon size={22} />, tokens.purpleTint, tokens.purpleText)}
-          label="Ýygy soralýan soraglar"
+          label="Kömek merkezi"
           labelSx={LABEL_SX}
           end={<RowEnd />}
-          onClick={() => setView('faq')}
+          onClick={() => setView('help')}
         />
         <SurfaceRow
           icon={rowIcon(<HistoryIcon size={22} />, NEUTRAL.tint, NEUTRAL.ink)}
           label="Programma barada"
           labelSx={LABEL_SX}
-          end={<RowEnd value="1.0.0" />}
-          onClick={() => toast('Gündelik · wersiýa 1.0.0')}
+          end={<RowEnd value={APP.version} />}
+          onClick={() => setView('about')}
         />
       </RowGroup>
 

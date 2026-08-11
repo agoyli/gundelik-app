@@ -1,9 +1,7 @@
 import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import {
-  BookmarkIcon, BooksIcon, CardsIcon, CheckIcon, ChevronIcon, FlameIcon, GameIcon,
-  PlayCircleIcon, StarIcon, TrophyIcon, UsersIcon,
+  BookmarkIcon, BooksIcon, CardsIcon, CheckIcon, ChevronIcon, GameIcon, UsersIcon,
 } from '../components/Icons';
 import { FreeLimitBar } from '../components/Paywall';
 import {
@@ -20,54 +18,18 @@ import {
 import { tokens } from '../theme';
 
 /*
- * The six Gollanmalar sections. Every page follows the same shape:
- * capsule SubPage header (its explanation behind the header "?"), the one
- * featured thing, then the list. Rows open their detail page in
- * `DetailScreens.tsx` where the commitment (join, read, study, play) is made.
- * Colored text always uses the *Text token grade.
+ * The five Gollanmalar sections. Every page follows the same shape: capsule
+ * SubPage header (its explanation behind the header "?"), then the list. Rows
+ * open their detail page in `DetailScreens.tsx` where the commitment (join,
+ * read, study, play) is made. Colored text always uses the *Text token grade.
+ * Oýunlar is no longer a section of its own — the games hang off Temalar,
+ * beside the topics they drill.
  */
 
 type Toast = (m: string) => void;
 
 /* ---------------- shared bits ---------------- */
 
-/* Card with a colored left accent — used for the "featured" row of each section */
-function FeatureCard({ accent, tint, icon, kicker, title, sub, cta, onClick }: {
-  accent: string; tint: string; icon: ReactNode; kicker: string;
-  /* `sub` is for a fact the title lacks (subject, score, participants).
-     Advice belongs elsewhere — a third line of filler only truncates. */
-  title: string; sub?: string; cta: string; onClick: () => void;
-}) {
-  return (
-    <ButtonBase
-      onClick={onClick}
-      aria-label={`${title} — ${cta}`}
-      sx={{
-        display: 'flex', alignItems: 'center', gap: '14px', width: '100%', textAlign: 'left',
-        bgcolor: tint, borderRadius: `${tokens.rCard}px`, p: '16px', mt: '14px',
-        transition: 'filter .15s ease', '&:active': { filter: 'brightness(.97)' },
-      }}
-    >
-      <IconBadge bg="#fff" color={accent} size={52}>{icon}</IconBadge>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '.7px', color: accent }}>
-          {kicker.toUpperCase()}
-        </Typography>
-        <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px', mt: '1px' }} noWrap>
-          {title}
-        </Typography>
-        {sub && <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '2px' }} noWrap>{sub}</Typography>}
-      </Box>
-      <Box aria-hidden sx={{
-        flex: 'none', px: '13px', height: 34, borderRadius: `${tokens.rPill}px`,
-        bgcolor: accent, color: '#fff', fontSize: 13.5, fontWeight: 600,
-        display: 'grid', placeItems: 'center',
-      }}>{cta}</Box>
-    </ButtonBase>
-  );
-}
-
-/* Thin progress bar with a caption above it */
 const ProgressLine = ({ value, left, right }: { value: number; left: string; right: string }) => (
   <Box sx={{ mt: '10px' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '6px' }}>
@@ -86,20 +48,22 @@ const ProgressLine = ({ value, left, right }: { value: number; left: string; rig
   </Box>
 );
 
+/* No section leads with a "featured" banner any more.
+   Every page opened with a tinted card repeating the first row of the list
+   under it in a louder voice — "most played", "continue", "12 cards waiting" —
+   which is a promotion, not navigation. The list is the page. */
+
 /* ---------------- Temalar ---------------- */
 
 export function TemalarScreen({ onBack, toast, onOpenSubject }: {
   onBack: () => void; toast: Toast; onOpenSubject: (id: string) => void;
 }) {
-  return (
-    <SubPage title="Temalar" onBack={onBack} help="Her dersiň temalary yzygiderli sapaklar görnüşinde — 1-nji synpdan 12-nji synpa çenli. Sapaklary geçip, indiki synpa açylýarsyň.">
+  const [game, setGame] = useState<Game | null>(null);
+  const onOpenGame = (g: Game) => setGame(g);
+  if (game) return <GameDetailScreen game={game} onBack={() => setGame(null)} toast={toast} />;
 
-      <FeatureCard
-        accent={tokens.blueText} tint={tokens.blueTint}
-        icon={<PlayCircleIcon size={26} />}
-        kicker="Dowam et" title="Funksiýanyň grafigi" sub="Matematika · 8-nji synp"
-        cta="Aç" onClick={() => onOpenSubject('matematika')}
-      />
+  return (
+    <SubPage title="Temalar" onBack={onBack} help="Her dersiň temalary yzygiderli sapaklar görnüşinde — 1-nji synpdan 12-nji synpa çenli. Sapaklary geçip, indiki synpa açylýarsyň. Her dersiň aşagynda oýun görnüşinde gaýtalama bar.">
 
       <SectionHeading title="Dersler" action={<TagPill label="Ähli" onClick={() => toast('Ähli dersler tiz wagtda')} />} />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -133,6 +97,26 @@ export function TemalarScreen({ onBack, toast, onOpenSubject }: {
             </ButtonBase>
           );
         })}
+      </Box>
+
+      {/* Interaktiw — the games, where the topics are.
+          They used to be a sixth tile on the Gollanmalar grid with a page and
+          a "most played" banner of their own, which made a two-minute drill
+          look like a section of the product. A game practises a topic, so it
+          belongs under the topics: same rows as the subjects above, labelled
+          by the subject each one drills. */}
+      <SectionHeading title="Interaktiw" />
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {GAMES.map((g) => (
+          <SurfaceRow
+            key={g.id}
+            icon={<IconBadge bg={g.tint} color={g.accent} size={44}><GameIcon size={22} /></IconBadge>}
+            label={g.label}
+            sub={`${g.sub}${g.best ? ` · iň gowy ${g.best} bal` : ''}`}
+            end={<Box aria-hidden sx={{ color: tokens.inkDisabled, display: 'flex' }}><ChevronIcon /></Box>}
+            onClick={() => onOpenGame(g)}
+          />
+        ))}
       </Box>
     </SubPage>
   );
@@ -253,17 +237,6 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
         </Box>
       )}
 
-      <FeatureCard
-        accent={tokens.orangeText} tint={tokens.orangeTint}
-        icon={<FlameIcon size={26} />}
-        kicker="Şu gün gaýtala" title="12 kart garaşýar"
-        cta="Başla"
-        onClick={() => {
-          if (blocked) { onUpgrade(); return; }
-          setOpen(DECKS[0]); spend(); setStudying(true);
-        }}
-      />
-
       <SectionHeading title="Toplumlar" />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {DECKS.map((d) => (
@@ -293,13 +266,6 @@ export function BaslesiklerScreen({ onBack, toast }: { onBack: () => void; toast
       onBack={onBack}
       action={<TagPill label="1251 bal" onClick={() => toast('Beýleki okuwçylar bilen ýaryş. Her bäsleşik ballar getirýär — ballar umumy reýtingiňi kesgitleýär.')} />}
     >
-
-      <FeatureCard
-        accent={tokens.redText} tint={tokens.redTint}
-        icon={<TrophyIcon size={26} />}
-        kicker="Häzir dowam edýär" title="Matematika olimpiadasy" sub="128 gatnaşyjy · 500 bal"
-        cta="Aç" onClick={() => setOpen(CONTESTS[0])}
-      />
 
       <SectionHeading title="Ähli bäsleşikler" />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -342,54 +308,6 @@ export function BaslesiklerScreen({ onBack, toast }: { onBack: () => void; toast
             </ButtonBase>
           );
         })}
-      </Box>
-    </SubPage>
-  );
-}
-
-/* ---------------- Oýunlar ---------------- */
-
-export function OyunlarScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
-  const [open, setOpen] = useState<Game | null>(null);
-  if (open) return <GameDetailScreen game={open} onBack={() => setOpen(null)} toast={toast} />;
-
-  return (
-    <SubPage title="Oýunlar" onBack={onBack} help="Temany oýun görnüşinde berkit. Her oýun gysga — arakesmede-de ýetişersiň.">
-
-      <FeatureCard
-        accent={tokens.tealText} tint={tokens.tealTint}
-        icon={<GameIcon size={26} />}
-        kicker="Iň köp oýnalan" title="Çalt hasap" sub="Iň gowy netijäň — 320 bal"
-        cta="Aç" onClick={() => setOpen(GAMES[0])}
-      />
-
-      <SectionHeading title="Ähli oýunlar" />
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        {GAMES.map((g) => (
-          <ButtonBase
-            key={g.id}
-            onClick={() => setOpen(g)}
-            aria-label={`${g.label}, ${g.sub}${g.best ? `, iň gowy netije ${g.best} bal` : ''}`}
-            sx={{
-              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '12px',
-              bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '16px 14px 15px',
-              textAlign: 'left', transition: 'background .15s ease',
-              '&:active': { bgcolor: tokens.surfacePress },
-            }}
-          >
-            <IconBadge bg={g.tint} color={g.accent}><GameIcon size={24} /></IconBadge>
-            <Box sx={{ width: '100%', minWidth: 0 }}>
-              <Typography sx={{ fontSize: 15.5, fontWeight: 700, letterSpacing: '-.2px' }} noWrap>{g.label}</Typography>
-              <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }} noWrap>{g.sub}</Typography>
-            </Box>
-            <Box sx={{
-              display: 'inline-flex', alignItems: 'center', gap: '5px',
-              fontSize: 12.5, fontWeight: 600, color: g.best ? tokens.ink2 : tokens.ink3,
-            }}>
-              <StarIcon size={14} />{g.best ? `${g.best} bal` : 'Entek oýnalmadyk'}
-            </Box>
-          </ButtonBase>
-        ))}
       </Box>
     </SubPage>
   );

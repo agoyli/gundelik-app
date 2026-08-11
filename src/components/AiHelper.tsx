@@ -2,6 +2,8 @@ import { Box, ButtonBase, InputBase, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { SendIcon, SparkleIcon } from './Icons';
 import { SheetDrawer } from './Ui';
+import { TODAY } from '../lib/date';
+import { addAiMsg, newAiChat } from '../state/aiChats';
 import { tokens } from '../theme';
 
 type Msg = { role: 'user' | 'ai'; text: string };
@@ -31,8 +33,19 @@ export function AiFab({ onClick, lift }: { onClick: () => void; lift?: boolean }
   );
 }
 
-/* AI chat in a bottom sheet — greeting, ready prompts, scrollable thread, pinned input.
-   Mock replies for now; swap `ask` for a real model call when the backend exists. */
+/*
+ * AI chat in a bottom sheet, for a question asked *while reading a lesson* —
+ * greeting, ready prompts, scrollable thread, pinned input.
+ *
+ * The sheet stays because the question here has context the standalone page
+ * does not: you are on the lesson, so the prompts are about the lesson. What
+ * changed is that it is no longer a separate memory. Every message is mirrored
+ * into the same store the Akylly mugallym page reads, so a question asked from
+ * a lesson is in the history with the rest. Two AI surfaces are fine; two
+ * histories would mean the answer you remember is in neither.
+ *
+ * Mock replies for now; swap `ask` for a real model call when the backend exists.
+ */
 export function AiChatSheet({ open, onClose, suggestions, fallback }: {
   open: boolean; onClose: () => void; suggestions: AiSuggestion[]; fallback: string;
 }) {
@@ -40,6 +53,17 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
   const [draft, setDraft] = useState('');
   const [thinking, setThinking] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
+  /* one stored conversation per opening of the sheet */
+  const chatId = useRef<string | null>(null);
+  const record = (m: Msg) => {
+    if (!chatId.current) chatId.current = newAiChat();
+    addAiMsg(chatId.current, { ...m, at: `${TODAY}T${new Date().toTimeString().slice(0, 5)}` });
+  };
+
+  /* a fresh visit is a fresh conversation */
+  useEffect(() => {
+    if (!open) { chatId.current = null; setMsgs([]); }
+  }, [open]);
 
   useEffect(() => {
     const el = listRef.current;
@@ -49,9 +73,11 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
   const ask = (q: string, reply: string) => {
     if (thinking) return;
     setMsgs((m) => [...m, { role: 'user', text: q }]);
+    record({ role: 'user', text: q });
     setThinking(true);
     setTimeout(() => {
       setMsgs((m) => [...m, { role: 'ai', text: reply }]);
+      record({ role: 'ai', text: reply });
       setThinking(false);
     }, 700);
   };
