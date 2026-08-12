@@ -1,5 +1,14 @@
 import { Box, CssBaseline, GlobalStyles, Snackbar, ThemeProvider } from '@mui/material';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+/*
+ * The two documentation routes are loaded on demand. They carry the logo's path
+ * data and a specimen of every component, which is ~135kB a parent should never
+ * be made to download to read a school day.
+ */
+const BrandbookScreen = lazy(() => import('./brand/BrandbookScreen')
+  .then((m) => ({ default: m.BrandbookScreen })));
+const DesignSystemScreen = lazy(() => import('./brand/DesignSystemScreen')
+  .then((m) => ({ default: m.DesignSystemScreen })));
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SwipeLockProvider, useSwipeLocked } from './components/SwipeLock';
 import { TabBar } from './components/Ui';
@@ -96,22 +105,11 @@ function Shell() {
   }, [tab]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
+      {/* the phone surface owns the document: full height, no page scroll */}
       <GlobalStyles styles={{
         'html, body, #root': { height: '100%' },
         body: { background: '#EDEEF1', overscrollBehavior: 'none' },
-        '*': { WebkitTapHighlightColor: 'transparent' },
-        ':focus-visible': { outline: `2px solid ${tokens.blue}`, outlineOffset: '2px' },
-        /* Respect the OS setting: pulses, bobbing and screen transitions collapse to a blink */
-        '@media (prefers-reduced-motion: reduce)': {
-          '*, *::before, *::after': {
-            animationDuration: '.01ms !important',
-            animationIterationCount: '1 !important',
-            transitionDuration: '.01ms !important',
-            scrollBehavior: 'auto !important',
-          },
-        },
       }} />
 
       <Box sx={{ height: '100dvh', display: 'flex', justifyContent: 'center' }}>
@@ -188,14 +186,72 @@ function Shell() {
           },
         }}
       />
-    </ThemeProvider>
+    </>
   );
 }
 
+/*
+ * Routing, such as it is.
+ *
+ * The product is one screen with four tabs, so it has never needed a router and
+ * still doesn't. What it needs is a second *destination* — the brandbook — that
+ * is not part of the phone surface: it is desktop, it scrolls the document, and
+ * no parent should ever land on it. A hash is enough to carry that, costs no
+ * dependency, and survives a reload.
+ */
+const useHash = () => {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return hash;
+};
+
 export default function App() {
+  /*
+   * Two documentation routes, and the plate anchors inside them (`#p06`) have
+   * to keep whichever page is open — an anchor is a position on a page, not a
+   * page of its own, so it resolves against the last docs route rather than
+   * dropping the reader back into the phone surface.
+   */
+  const hash = useHash();
+  const [docs, setDocs] = useState<'brand' | 'design' | null>(null);
+  useEffect(() => {
+    if (hash.startsWith('#/brand')) setDocs('brand');
+    else if (hash.startsWith('#/design')) setDocs('design');
+    else if (!/^#p\d\d$/.test(hash)) setDocs(null);
+  }, [hash]);
+
   return (
-    <SwipeLockProvider>
-      <Shell />
-    </SwipeLockProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {/* what is true on every route */}
+      <GlobalStyles styles={{
+        '*': { WebkitTapHighlightColor: 'transparent' },
+        ':focus-visible': { outline: `2px solid ${tokens.blue}`, outlineOffset: '2px' },
+        /* Respect the OS setting: pulses, bobbing and screen transitions collapse to a blink */
+        '@media (prefers-reduced-motion: reduce)': {
+          '*, *::before, *::after': {
+            animationDuration: '.01ms !important',
+            animationIterationCount: '1 !important',
+            transitionDuration: '.01ms !important',
+            scrollBehavior: 'auto !important',
+          },
+        },
+      }} />
+      {docs ? (
+        <ErrorBoundary>
+          <Suspense fallback={<Box sx={{ minHeight: '100dvh', bgcolor: tokens.surface }} />}>
+            {docs === 'brand' ? <BrandbookScreen /> : <DesignSystemScreen />}
+          </Suspense>
+        </ErrorBoundary>
+      ) : (
+        <SwipeLockProvider>
+          <Shell />
+        </SwipeLockProvider>
+      )}
+    </ThemeProvider>
   );
 }
