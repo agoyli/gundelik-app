@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onluk droblar bilen amallar — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .col2 { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 22px;
+          line-height: 1.5; background: #fff; border: 2px solid #d6e0ee; border-radius: 12px;
+          padding: 14px 18px; display: inline-block; min-width: 190px; }
+  .col2 .ln { text-align: right; white-space: pre; }
+  .col2 .op { position: relative; }
+  .col2 .op::before { content: attr(data-op); position: absolute; left: -14px; color: #e5007d; }
+  .col2 hr { border: none; border-top: 2px solid #1e2a3a; margin: 4px 0; }
+  .col2 .res { color: #2456b0; font-weight: 800; }
+  .col2 .otur { color: #e5007d; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; text-align: center; }
+  .why { background: #f7fafd; border-radius: 11px; padding: 11px 12px; font-size: 13.5px;
+         line-height: 1.7; }
+  .why b { color: #2456b0; }
+  .inp { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; }
+  .inp input { width: 108px; padding: 9px 10px; font-size: 17px; border-radius: 10px;
+               border: 2px solid #d6e0ee; text-align: center;
+               font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .inp input:focus { outline: none; border-color: #2456b0; }
+  .inp .sign { font-size: 24px; font-weight: 800; color: #e5007d; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Onluk droblar bilen dört amal</h1>
+  <div class="sub">Onluk droblary köpeltmek we bölmek · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Iki san ýaz, amaly saýla – hasaplaýyş sütünleýin görnüşde we düşündiriş
+      bilen çykar.</div>
+    <div class="inp">
+      <input id="x" value="12,65" inputmode="decimal">
+      <span class="sign" id="sg">+</span>
+      <input id="y" value="9,2" inputmode="decimal">
+    </div>
+    <div class="row tight" style="justify-content:center;margin-top:9px" id="ops"></div>
+    <div class="stage" style="margin-top:10px"><div class="col2" id="col"></div></div>
+    <div class="why" id="why" style="margin-top:9px"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>10, 100, 1000 sanlaryna köpeltmek we bölmek</h3>
+    <div class="goal">Otur näçe sifr süýşýär? Süýşürmäni gör.</div>
+    <div class="stage">
+      <div class="col2" style="min-width:auto" id="shift"></div>
+    </div>
+    <div class="row tight" style="justify-content:center;margin-top:9px" id="shbtn"></div>
+    <div class="why" id="shwhy" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kitapdaky meseleler</h3>
+    <div class="row tight" id="tasks"></div>
+    <div class="why" id="task" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §6–§10</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const P = s => parseFloat(String(s).replace(",", "."));
+const T = x => {
+  if (!isFinite(x)) return "—";
+  let s = x.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+  return s.replace(".", ",");
+};
+const dec = s => { const i = String(s).indexOf(","); return i < 0 ? 0 : String(s).length - i - 1; };
+
+/* ---------------- sütünleýin hasaplama ---------------- */
+let op = "+";
+const OPS = [["+", "goşmak"], ["−", "aýyrmak"], ["·", "köpeltmek"], [":", "bölmek"]];
+$("ops").innerHTML = OPS.map(([o, n], i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-o="${o}">${o} ${n}</button>`).join("");
+$("ops").querySelectorAll("button").forEach(b => b.onclick = () => {
+  op = b.dataset.o;
+  $("ops").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  $("sg").textContent = op;
+  calc();
+});
+
+function pad(a, b) {
+  // goşmak/aýyrmak üçin drob böleklerini nol bilen deňleýäris
+  const d = Math.max(dec(a), dec(b));
+  const f = s => {
+    let [i, r = ""] = String(s).split(",");
+    return d ? i + "," + r.padEnd(d, "0") : i;
+  };
+  return [f(a), f(b), d];
+}
+function calc() {
+  const as = $("x").value.trim(), bs = $("y").value.trim();
+  const a = P(as), b = P(bs);
+  if (isNaN(a) || isNaN(b)) {
+    $("msg").textContent = "Iki sany hem dogry ýaz, meselem 12,65.";
+    $("msg").className = "msg bad";
+    return;
+  }
+  $("msg").textContent = ""; $("msg").className = "msg";
+  let res, why, lines;
+  if (op === "+" || op === "−") {
+    const [x, y, d] = pad(as, bs);
+    res = op === "+" ? a + b : a - b;
+    const w = Math.max(x.length, y.length, T(res).length) + 1;
+    lines = `<div class="ln">${x.padStart(w)}</div>` +
+            `<div class="ln op" data-op="${op}">${y.padStart(w)}</div><hr>` +
+            `<div class="ln res">${T(res).padStart(w)}</div>`;
+    why = `Otur oturyň aşagynda durar ýaly, drob bölekler <b>${d}</b> sifre çenli nol bilen ` +
+          `deňlenildi. Soňra sanlar natural sanlar ýaly ${op === "+" ? "goşuldy" : "aýryldy"} ` +
+          `we otur öz ýerinde galdy.`;
+  } else if (op === "·") {
+    res = a * b;
+    const da = dec(as), db = dec(bs);
+    const ia = as.replace(",", ""), ib = bs.replace(",", "");
+    const whole = String(Math.round(P(ia) * P(ib)));
+    const w = Math.max(ia.length, ib.length, whole.length) + 2;
+    lines = `<div class="ln">${ia.padStart(w)}</div>` +
+            `<div class="ln op" data-op="·">${ib.padStart(w)}</div><hr>` +
+            `<div class="ln">${whole.padStart(w)}</div>` +
+            `<div class="ln res">${T(res).padStart(w)}</div>`;
+    why = `Otury äsgermän ${ia} · ${ib} = ${whole} hasaplanýar. Köpeldijilerde oturdan soň ` +
+          `jemi <b>${da} + ${db} = ${da + db}</b> sifr bar, şonuň üçin hasylda sagdan ` +
+          `<b>${da + db}</b> sifr otur bilen bölünýär: <b>${T(res)}</b>.`;
+  } else {
+    if (b === 0) {
+      $("col").innerHTML = "";
+      $("why").innerHTML = "<b>Nola bölmek bolmaýar.</b>";
+      return;
+    }
+    res = a / b;
+    const db = dec(bs);
+    const k = Math.pow(10, db);
+    const na = T(a * k), nb = T(b * k);
+    lines = `<div class="ln">${na} : ${nb}</div><hr>` +
+            `<div class="ln res">${T(res)}</div>`;
+    why = db
+      ? `Bölüji onluk drob, şonuň üçin bölünijini we bölüjini <b>${k}</b>-e köpeltdik: ` +
+        `${as} : ${bs} = ${na} : ${nb}. Paý üýtgemedi, bölüji bitin sana öwrüldi.`
+      : `Bölüji eýýäm bitin san. Bitin bölek gutaran badyna paýda otur goýulýar.`;
+  }
+  $("col").innerHTML = lines;
+  $("why").innerHTML = why + `<br>Netije: <b>${as} ${op} ${bs} = ${T(res)}</b>`;
+}
+["x", "y"].forEach(i => $(i).addEventListener("input", calc));
+
+/* ---------------- otury süýşürmek ---------------- */
+const SH = [["· 10", 10], ["· 100", 100], ["· 1000", 1000],
+            [": 10", 0.1], [": 100", 0.01], [": 1000", 0.001]];
+let sh = 0;
+$("shbtn").innerHTML = SH.map(([n], i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${n}</button>`).join("");
+$("shbtn").querySelectorAll("button").forEach(b => b.onclick = () => {
+  sh = +b.dataset.i;
+  $("shbtn").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  shift();
+});
+function shift() {
+  const [name, k] = SH[sh];
+  const base = 3.8;
+  const res = base * k;
+  const n = Math.round(Math.log10(Math.abs(k)));
+  $("shift").innerHTML =
+    `<div class="ln">3,8 ${name}</div><hr>` +
+    `<div class="ln res">${T(res)}</div>`;
+  $("shwhy").innerHTML = n > 0
+    ? `10-uň ${n}-nji derejesine köpeldilende otur <b>${n} sifr saga</b> süýşýär: ` +
+      `3,8 ${name} = <b>${T(res)}</b>.`
+    : `10-uň ${-n}-nji derejesine bölünende otur <b>${-n} sifr çepe</b> süýşýär: ` +
+      `3,8 ${name} = <b>${T(res)}</b>.`;
+}
+
+/* ---------------- kitapdaky meseleler ---------------- */
+const TASKS = [
+  ["Ýüp", "Uzynlygy 19,2 m bolan ýüpi 6 deň bölege böldüler. Her böleg näçe?",
+   "19,2 : 6 = 3,2 m"],
+  ["Kerosin", "15 l kerosiniň massasy 12,3 kg. 35 l kerosiniň massasy näçe?",
+   "1 litriň massasy 12,3 : 15 = 0,82 kg; 0,82 · 35 = 28,7 kg"],
+  ["Pomidor", "Iki gapda 18,8 kg pomidor bar, biri beýlekisinden 2 esse köp.",
+   "x + 2x = 18,8; 3x = 18,8; x ≈ 6,27 kg we 12,53 kg"],
+  ["Türkmenistan", "Türkmenistanyň 491,2 müň km² meýdanynyň 20%-ini daglar tutýar.",
+   "491,2 · 0,2 = 98,24 müň km²"],
+];
+$("tasks").innerHTML = TASKS.map((t, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${t[0]}</button>`).join("");
+$("tasks").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("tasks").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const t = TASKS[+b.dataset.i];
+  $("task").innerHTML = `${t[1]}<br>Çözülişi: <b>${t[2]}</b>`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["12,65 + 9,2 + 0,217", ["22,067", "21,067", "22,67", "20,067"], 0],
+  ["0,35 · 0,2", ["0,7", "0,07", "0,007", "7"], 1],
+  ["4,2 : 0,7", ["0,6", "60", "6", "0,06"], 2],
+  ["3,8 · 100", ["38", "380", "3800", "0,038"], 1],
+  ["19,2 : 6", ["3,02", "32", "3,2", "0,32"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]} = ?</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+calc(); shift();
+$("tasks").querySelector("button").click();
+</script>
+</body>
+</html>

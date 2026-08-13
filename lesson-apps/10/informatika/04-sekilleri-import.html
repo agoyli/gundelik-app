@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şekilleri import etmek — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .flow { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+  .pane { flex: 1; min-width: 150px; background: #f7fafd; border-radius: 12px; padding: 10px; }
+  .pane h4 { font-size: 12.5px; color: #93a2b5; margin-bottom: 7px; font-weight: 800; }
+  .pane .empty { font-size: 12.5px; color: #b8c4d4; }
+  .file { display: flex; gap: 7px; align-items: center; background: #fff; border-radius: 9px;
+          padding: 8px 9px; font-size: 13.5px; margin-bottom: 5px; cursor: pointer; }
+  .file.on { background: #e3edfd; font-weight: 700; color: #2456b0; }
+  .path { font-size: 12.5px; color: #5b6b80; background: #eef2f8; border-radius: 9px;
+          padding: 8px 10px; margin-top: 9px; line-height: 1.5; }
+  .cvs { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .cvs figure { text-align: center; }
+  .cvs canvas { border-radius: 10px; border: 2px solid #d6e0ee; background: #fff; }
+  .cvs figcaption { font-size: 12.5px; color: #93a2b5; font-weight: 700; margin-top: 5px; }
+  .fmts { display: flex; gap: 6px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Şekilleri almak we peýdalanmak</h1>
+  <div class="sub">Import, wektorlaşdyrmak we eksport · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Daşky faýly saýla we <b>import et</b>. Ol ilki kitaphana düşýär, ondan soň
+      iş meýdanyna geçirilýär.</div>
+    <div class="flow">
+      <div class="pane"><h4>DAŞKY FAÝLLAR</h4><div id="disk"></div></div>
+      <div class="pane"><h4>KITAPHANA</h4><div id="lib"><div class="empty">boş</div></div></div>
+      <div class="pane"><h4>IŞ MEÝDANY</h4><div id="stage"><div class="empty">boş</div></div></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="imp">Import etmek</button>
+      <button class="btn" id="tostage">Iş meýdanyna geçirmek</button>
+      <button class="btn ghost" id="clr">Arassala</button>
+    </div>
+    <div class="path" id="path">Faýl → Import → Kitaphana import etmek</div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Wektorlaşdyrmak</h3>
+    <div class="goal">Rastr şekili wektor görnüşine geçirmek üçin
+      <b>Modifikasiýa – Rastr şekil – Wektorlaşdyrmak</b> buýrugy berilýär.</div>
+    <div class="cvs">
+      <figure><canvas id="src" width="180" height="120"></canvas>
+        <figcaption>rastr (başdaky)</figcaption></figure>
+      <figure><canvas id="out" width="180" height="120"></canvas>
+        <figcaption>wektorlaşdyrylan</figcaption></figure>
+    </div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Reňkiň bosagasy</span>
+      <input type="range" id="th" min="1" max="500" value="100"><span class="out" id="tho">100</span></div>
+    <div class="slider"><span class="lbl">Iň kiçi meýdan</span>
+      <input type="range" id="ar" min="1" max="1000" value="8"><span class="out" id="aro">8</span></div>
+    <div class="row"><span class="badge info" id="cols"></span><span class="badge purple" id="size"></span></div>
+    <div class="note" id="vx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Roligi eksport etmek</h3>
+    <div class="goal">Faýl → Eksport → Roligi eksport etmek. Faýlyň tipini saýla.</div>
+    <div class="fmts" id="fmts"></div>
+    <div class="msg" id="ex"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Daşky faýly programma almaklyga <b>import etmek</b>, taýýar işi başga formatda saklamaklyga
+      bolsa <b>eksport etmek</b> diýilýär. Rastr şekiliň ölçegi üýtgände hili peselýär, şonuň üçin
+      ony wektor görnüşine geçirýärler.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- import akymy ---------------- */
+const DISK = [
+  ["🖼", "asman.gif"], ["🖼", "yer.jpg"], ["🖼", "ay.gif"],
+  ["🎵", "saz.mp3"], ["🎬", "wideo.avi"]
+];
+let sel = null, lib = [], stage = [];
+
+function render() {
+  $("disk").innerHTML = DISK.map(([i, n]) =>
+    `<div class="file${sel === n ? " on" : ""}" data-n="${n}">${i} ${n}</div>`).join("");
+  $("disk").querySelectorAll(".file").forEach(d =>
+    d.onclick = () => { sel = d.dataset.n; render(); });
+  $("lib").innerHTML = lib.length
+    ? lib.map(n => `<div class="file on">📦 ${n}</div>`).join("")
+    : '<div class="empty">boş</div>';
+  $("stage").innerHTML = stage.length
+    ? stage.map(n => `<div class="file on">🎬 ${n}</div>`).join("")
+    : '<div class="empty">boş</div>';
+}
+
+$("imp").onclick = () => {
+  if (!sel) { $("msg").textContent = "Ilki daşky faýllardan birini saýla."; $("msg").className = "msg bad"; return; }
+  if (lib.includes(sel)) { $("msg").textContent = sel + " eýýäm kitaphanada bar."; $("msg").className = "msg bad"; return; }
+  lib.push(sel);
+  $("path").innerHTML = "Faýl → Import → Kitaphana import etmek → <b>" + sel + "</b> → Açmak";
+  $("msg").textContent = sel + " kitaphana ýerleşdirildi. Indi ony islendik wagt ulanyp bolar.";
+  $("msg").className = "msg ok";
+  render();
+};
+$("tostage").onclick = () => {
+  if (!sel || !lib.includes(sel)) {
+    $("msg").textContent = "Iş meýdanyna diňe kitaphanadaky faýly geçirip bolýar.";
+    $("msg").className = "msg bad"; return;
+  }
+  if (!stage.includes(sel)) stage.push(sel);
+  $("msg").textContent = sel + " kitaphanadan tutup çekmek arkaly iş meýdanyna geçirildi.";
+  $("msg").className = "msg ok";
+  render();
+};
+$("clr").onclick = () => {
+  lib = []; stage = []; sel = null;
+  $("path").textContent = "Faýl → Import → Kitaphana import etmek";
+  $("msg").textContent = ""; render();
+};
+
+/* ---------------- wektorlaşdyrmak ---------------- */
+// süýşürgiç her gezek üýtgände piksellary okaýarys, şonuň üçin willReadFrequently
+const s = $("src").getContext("2d", { willReadFrequently: true }), o = $("out").getContext("2d");
+(function scene() {
+  const g = s.createLinearGradient(0, 0, 0, 120);
+  g.addColorStop(0, "#2f6ed6"); g.addColorStop(1, "#bfe0ff");
+  s.fillStyle = g; s.fillRect(0, 0, 180, 120);
+  s.fillStyle = "#ffd34d"; s.beginPath(); s.arc(140, 30, 16, 0, Math.PI * 2); s.fill();
+  s.fillStyle = "#3f7a44";
+  s.beginPath(); s.moveTo(-10, 120); s.lineTo(55, 52); s.lineTo(120, 120); s.closePath(); s.fill();
+  s.fillStyle = "#66a35c";
+  s.beginPath(); s.moveTo(70, 120); s.lineTo(130, 66); s.lineTo(190, 120); s.closePath(); s.fill();
+  s.fillStyle = "#c9a227"; s.fillRect(0, 108, 180, 12);
+})();
+
+function vector() {
+  const th = +$("th").value, ar = +$("ar").value;
+  $("tho").textContent = th; $("aro").textContent = ar;
+
+  // reňkiň bosagasy näçe uly bolsa, şonça-da golaý reňkler birigýär
+  const levels = Math.max(2, Math.round(64 / (1 + th / 12)));
+  const step = 255 / (levels - 1);
+  // iň kiçi meýdan – tapawutlandyrylýan iň kiçi bölegiň ölçegi (piksellerde)
+  const blk = Math.max(1, Math.round(Math.sqrt(ar)));
+
+  const img = s.getImageData(0, 0, 180, 120);
+  o.clearRect(0, 0, 180, 120);
+  const seen = new Set();
+  for (let y = 0; y < 120; y += blk) {
+    for (let x = 0; x < 180; x += blk) {
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let dy = 0; dy < blk && y + dy < 120; dy++)
+        for (let dx = 0; dx < blk && x + dx < 180; dx++) {
+          const i = ((y + dy) * 180 + (x + dx)) * 4;
+          r += img.data[i]; g += img.data[i + 1]; b += img.data[i + 2]; n++;
+        }
+      const q = v => Math.round(Math.round(v / n / step) * step);
+      const c = [q(r), q(g), q(b)];
+      seen.add(c.join(","));
+      o.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+      o.fillRect(x, y, blk, blk);
+    }
+  }
+  const cnt = seen.size;
+  $("cols").textContent = `Reňkleriň sany: ${cnt}`;
+  $("size").textContent = `Ölçegi ≈ ${Math.max(3, Math.round(cnt / 4))}%`;
+  $("vx").innerHTML =
+    `Reňkiň bosaga bahasy <b>${th}</b>, iň kiçi meýdan <b>${ar}</b> piksel. ` +
+    (th < 60
+      ? "Bosaga kiçi – şekil başdakyna golaý, ýöne faýl uly bolýar."
+      : "Bosaga uly – goňşy reňkler birikdi, palitra kiçeldi, faýlyň ölçegi hem kiçeldi.");
+}
+["th", "ar"].forEach(id => $(id).addEventListener("input", vector));
+
+/* ---------------- eksport ---------------- */
+const FMT = [
+  ["*.swf", "internetde görkezmek üçin flash-film"],
+  ["*.avi", "wideo faýl"],
+  ["*.mov", "wideo faýl (QuickTime)"],
+  ["*.gif", "animasiýalaşdyrylan surat"],
+  ["*.png", "ýokary hilli rastr surat"],
+  ["*.jpeg", "gysylan rastr surat"]
+];
+FMT.forEach(([f, d]) => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = f;
+  b.onclick = () => {
+    document.querySelectorAll("#fmts .btn").forEach(x => x.className = "btn");
+    b.className = "btn sel";
+    $("ex").textContent = `Rolik ${f} görnüşinde ýatda saklanar – ${d}.`;
+    $("ex").className = "msg ok";
+  };
+  $("fmts").appendChild(b);
+});
+
+render(); vector();
+</script>
+</body>
+</html>

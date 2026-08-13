@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internetiň sahypalary — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 23px; }
+  .br { background: #eef2f8; border-radius: 16px; padding: 8px; }
+  .bar { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .bar button { width: 40px; height: 40px; border-radius: 10px; background: #fff;
+                font-size: 16px; font-weight: 800; color: #2456b0; }
+  .bar .url { flex: 1; background: #fff; border-radius: 10px; padding: 9px 11px;
+              font-size: 14px; font-family: ui-monospace, Menlo, monospace;
+              display: flex; flex-wrap: wrap; gap: 2px; }
+  .bar .url span { padding: 2px 4px; border-radius: 5px; cursor: pointer; }
+  .bar .url span.on { background: #2456b0; color: #fff; }
+  .page { background: #fff; border-radius: 12px; padding: 12px; min-height: 150px; }
+  .page h4 { margin: 0 0 6px; font-size: 16px; color: #1e2a3a; }
+  .page p { font-size: 14px; color: #5b6b80; line-height: 1.6; margin-bottom: 8px; }
+  .page a { color: #2456b0; text-decoration: underline; cursor: pointer; font-weight: 700;
+            display: inline-block; padding: 6px 0; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 15.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Internetiň sahypalary</h1>
+  <div class="sub">Informatika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="goal"><b>Internetiň sahypalaryna web-sahypalar diýilýär.</b> Web-sahypalar
+      janly suratly uly kitabyň sahypalaryna meňzeýär.</div>
+    <div class="hint">Internetde web-sahypalary görmek üçin ýörite programmalar bar. Olar
+      <b>Ýolbeletler (Проводники)</b> diýip atlandyrylýarlar. Ýolbeletler <b>ýazgy we surat</b>
+      görnüşinde bolup bilerler – olara basyp, bir sahypadan beýlekisine geçýäris.</div>
+  </div>
+
+  <div class="card">
+    <div class="goal">Sahypadaky <b>gök ýazgy</b> – salgylanma. Oňa bassaň, başga sahypa
+      açylýar. Ýokardaky salgynyň bölegine hem basyp gör.</div>
+    <div class="br">
+      <div class="bar">
+        <button id="back">◀</button>
+        <div class="url" id="url"></div>
+      </div>
+      <div class="page" id="pg"></div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 2-nji synp · VII bölüm, sah. 90–93</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const PAGES = {
+  bas: {url: ["www", ".", "mekdep", ".", "tm"], title: "🏫 Biziň mekdebimiz",
+        body: "Bu mekdebiň baş sahypasy. Bu ýerde sapaklar, çäreler we habarlar barada " +
+              "maglumat bar.",
+        links: [["Sapaklar", "sap"], ["Kitaphana", "kit"]]},
+  sap: {url: ["www", ".", "mekdep", ".", "tm", "/", "sapaklar"], title: "📚 Sapaklar",
+        body: "Informatika, matematika, türkmen dili we beýleki sapaklaryň tertibi.",
+        links: [["Informatika", "inf"], ["Baş sahypa", "bas"]]},
+  kit: {url: ["www", ".", "mekdep", ".", "tm", "/", "kitaphana"], title: "📖 Kitaphana",
+        body: "Kitaphanada okamak üçin köp kitap bar. Her kitabyň öz belgisi bolýar.",
+        links: [["Baş sahypa", "bas"]]},
+  inf: {url: ["www", ".", "mekdep", ".", "tm", "/", "informatika"], title: "💻 Informatika",
+        body: "Informatika sapagynda kompýuter, maglumat we algoritm öwrenilýär.",
+        links: [["Sapaklar", "sap"], ["Baş sahypa", "bas"]]},
+};
+const MEAN = {
+  "www": "Bütindünýä toruny aňladýar.",
+  "mekdep": "Saýtyň ady – bu ýerde mekdebiň saýty.",
+  "tm": "Döwleti görkezýär: tm – Türkmenistan.",
+  "sapaklar": "Saýtyň içindäki sahypanyň ady.",
+  "kitaphana": "Saýtyň içindäki sahypanyň ady.",
+  "informatika": "Saýtyň içindäki sahypanyň ady.",
+  ".": "Salgynyň bölekleri nokat bilen aýrylýar.",
+  "/": "Kese çyzyk saýtyň içindäki sahypa geçirýär.",
+};
+let cur = "bas", hist = [];
+
+function render() {
+  const p = PAGES[cur];
+  $("url").innerHTML = p.url.map((u, i) => `<span data-i="${i}">${u}</span>`).join("");
+  $("url").querySelectorAll("span").forEach(s => s.onclick = () => {
+    $("url").querySelectorAll("span").forEach(x => x.classList.remove("on"));
+    s.classList.add("on");
+    const t = s.textContent;
+    $("msg").textContent = `«${t}» – ${MEAN[t] || "salgynyň bölegi."}`;
+    $("msg").className = "msg ok";
+  });
+  $("pg").innerHTML = `<h4>${p.title}</h4><p>${p.body}</p>` +
+    p.links.map(l => `<a data-k="${l[1]}">${l[0]}</a>`).join(" · ");
+  $("pg").querySelectorAll("a").forEach(a => a.onclick = () => {
+    hist.push(cur); cur = a.dataset.k;
+    $("msg").textContent = "Salgylanma basyldy – täze sahypa açyldy.";
+    $("msg").className = "msg ok";
+    render();
+  });
+}
+$("back").onclick = () => {
+  if (!hist.length) {
+    $("msg").textContent = "Yzda sahypa ýok – bu birinji sahypa.";
+    $("msg").className = "msg bad";
+    return;
+  }
+  cur = hist.pop();
+  $("msg").textContent = "Yza gaýtdyk – öňki sahypa açyldy.";
+  $("msg").className = "msg ok";
+  render();
+};
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Salgydaky «tm» näme aňladýar?", ["Türkmenistany", "Kitaby", "Sesi"], 0],
+  ["Salgylanma basylanda näme bolýar?",
+   ["Kompýuter öçýär", "Başga sahypa açylýar", "Surat çap edilýär"], 1],
+  ["Haýsy sahypalary açmaly?",
+   ["Islendigini", "Iň reňklisini", "Mugallymyň görkezenlerini"], 2],
+  ["Internetiň sahypalaryna näme diýilýär?", ["Blok", "Web-sahypalar", "Palitra"], 1],
+  ["Web-sahypalary görmek üçin haýsy programmalar ulanylýar?",
+   ["Ýolbeletler", "Skanerler", "Printerler"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tekst redaktory — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .ed { background: #fff; border: 2px solid #d6e0ee; border-radius: 11px; padding: 12px 13px;
+        font-size: 17px; line-height: 1.9; min-height: 74px; outline: none; cursor: text;
+        white-space: pre-wrap; word-break: break-word; }
+  .ed:focus { border-color: #2456b0; }
+  .ed .car { display: inline-block; width: 2px; height: 20px; background: #2456b0;
+             vertical-align: -4px; animation: bl 1s steps(2) infinite; margin: 0 -1px; }
+  @keyframes bl { 50% { opacity: 0; } }
+  .ed .sel { background: #cfe0ff; }
+  .keys { display: flex; flex-wrap: wrap; gap: 6px; }
+  .keys button { min-width: 60px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 6px; }
+  .doc { background: #fff; border: 2px solid #d6e0ee; border-radius: 11px; padding: 12px;
+         font-size: 15px; line-height: 1.8; }
+  .doc.narrow { max-width: 240px; }
+  .pun { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pun button { font-size: 14.5px; text-align: left; }
+  .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .part { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px; }
+  .part b { display: block; color: #2456b0; font-size: 14.5px; margin-bottom: 3px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+       font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tekst redaktory: girizmek we düzetmek</h1>
+  <div class="sub">Tekst informasiýalary bilen işlemek · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <h3>Tekstiň düzüm bölekleri</h3>
+    <div class="parts">
+      <div class="part"><b>Sahypa</b>Tekst sahypalardan durýar.</div>
+      <div class="part"><b>Abzas</b>Sahypa abzaslardan durýar. Täze abzas – Enter.</div>
+      <div class="part"><b>Setir</b>Abzas setirlerden durýar. Setir özi geçýär.</div>
+      <div class="part"><b>Söz</b>Setir sözlerden durýar. Sözler boşluk bilen bölünýär.</div>
+      <div class="part"><b>Belgi</b>Söz belgilerden – harplardan we sanlardan durýar.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Kursor bilen işle: ýalňyşy düzet</h3>
+    <div class="goal">Aşakdaky sözlemde <b>iki artykmaç harp</b> bar. Kursory ýerine eltip,
+      <b>Backspace</b> (çepdäki) ýa-da <b>Delete</b> (sagdaky) bilen olary aýyr.
+      Klawiaturadan hem ýazyp bolýar – ýazgy meýdanyna bas.</div>
+    <div class="ed" id="ed" tabindex="0"></div>
+    <div class="keys" style="margin-top:9px">
+      <button class="btn" data-k="ArrowLeft">◀ Çep</button>
+      <button class="btn" data-k="ArrowRight">Sag ▶</button>
+      <button class="btn" data-k="Home">Başy</button>
+      <button class="btn" data-k="End">Soňy</button>
+      <button class="btn warn" data-k="Backspace">Backspace</button>
+      <button class="btn warn" data-k="Delete">Delete</button>
+      <button class="btn ghost" id="rst">Başdan</button>
+    </div>
+    <div class="stats" style="margin-top:8px">
+      <span class="badge info" id="pos"></span>
+      <span class="badge purple" id="cnt"></span>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="hint">Backspace kursoryň <b>çepindäki</b>, Delete bolsa <b>sagyndaky</b>
+      belgini ýok edýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Delete ýa-da Backspace?</h3>
+    <div class="goal">Her ýagdaý üçin dogry klawişi saýla. Kursoryň ýeri <b>|</b> bilen görkezilen.</div>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Setiriň soňunda Enter basmaly däl</h3>
+    <div class="goal">Penjiräniň inini üýtget. Tekst özi indiki setire geçýär – muňa
+      <b>söz geçirmek</b> diýilýär. Eger her setiriň soňunda Enter basylsa, ini üýtgände tekst
+      döwlüp galýar.</div>
+    <div class="slider"><span class="lbl">Penjiräniň ini</span>
+      <input type="range" id="w" min="150" max="440" value="300"><span class="out" id="wo"></span></div>
+    <div class="cols">
+      <div class="col">
+        <div class="sub" style="margin:0 0 5px">Enter basylmadyk (dogry)</div>
+        <div class="doc" id="d1"></div>
+      </div>
+      <div class="col">
+        <div class="sub" style="margin:0 0 5px">Her setiriň soňunda Enter basylan (nädogry)</div>
+        <div class="doc" id="d2"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Dyngy belgileri dogry ýaz</h3>
+    <div class="goal">Dogry ýazylan warianty saýla.</div>
+    <div class="pun" id="pun"></div>
+    <div class="msg" id="pmsg"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- redaktor ---------------- */
+const START = "Kompýuterr tekst redaktory tekstii ýazmaga kömek edýär.";
+const GOAL  = "Kompýuter tekst redaktory teksti ýazmaga kömek edýär.";
+let txt = START, car = 0;
+
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+function render() {
+  $("ed").innerHTML = esc(txt.slice(0, car)) + '<span class="car"></span>' + esc(txt.slice(car));
+  $("pos").textContent = `kursor ${car}-nji belginiň yzynda`;
+  const words = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  $("cnt").textContent = `${txt.length} belgi, ${words} söz`;
+  if (txt === GOAL) {
+    $("msg").textContent = "Dogry! Iki artykmaç harp aýryldy, sözlem düzeldi.";
+    $("msg").className = "msg ok";
+  } else if (txt.length < GOAL.length) {
+    $("msg").textContent = "Köp belgi aýryldy. «Başdan» düwmesine basyp gaýtadan synanyş.";
+    $("msg").className = "msg bad";
+  } else { $("msg").textContent = ""; $("msg").className = "msg"; }
+}
+function key(k) {
+  if (k === "ArrowLeft") car = Math.max(0, car - 1);
+  else if (k === "ArrowRight") car = Math.min(txt.length, car + 1);
+  else if (k === "Home") car = 0;
+  else if (k === "End") car = txt.length;
+  else if (k === "Backspace") { if (car > 0) { txt = txt.slice(0, car - 1) + txt.slice(car); car--; } }
+  else if (k === "Delete") { txt = txt.slice(0, car) + txt.slice(car + 1); }
+  else if (k.length === 1) { txt = txt.slice(0, car) + k + txt.slice(car); car++; }
+  render();
+}
+document.querySelectorAll(".keys [data-k]").forEach(b =>
+  b.onclick = () => { key(b.dataset.k); $("ed").focus(); });
+$("rst").onclick = () => { txt = START; car = 0; render(); };
+$("ed").addEventListener("keydown", e => {
+  if (e.key === "Tab") return;
+  e.preventDefault();
+  key(e.key);
+});
+$("ed").addEventListener("click", () => $("ed").focus());
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["kompýute|rr – artykmaç «r» kursoryň sagynda", "Delete"],
+  ["mekdepp| – artykmaç «p» kursoryň çepinde", "Backspace"],
+  ["salam  |dünýä – artykmaç boşluk kursoryň çepinde", "Backspace"],
+  ["|Ssalam – artykmaç «S» kursoryň sagynda", "Delete"],
+  ["synpp| – soňky artykmaç harp", "Backspace"]
+];
+let done = 0, right = 0;
+function quiz() {
+  $("q").innerHTML = Q.map((q, i) =>
+    `<div class="qa"><div class="mono" style="font-size:14.5px">${q[0]}</div>
+      <div class="row tight" style="margin-top:6px">
+        <button class="btn" data-i="${i}" data-a="Delete">Delete</button>
+        <button class="btn" data-i="${i}" data-a="Backspace">Backspace</button>
+        <span class="expl" id="e${i}"></span></div></div>`).join("");
+  $("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if ($("e" + i).textContent) return;
+    const good = b.dataset.a === Q[i][1];
+    b.classList.add("sel");
+    $("e" + i).innerHTML = good
+      ? '<span class="badge ok">dogry</span>'
+      : `<span class="badge bad">nädogry – ${Q[i][1]}</span>`;
+    done++; if (good) right++;
+    $("sc").textContent = `${right} / ${done}` + (done === Q.length ? " – tamam" : "");
+  });
+}
+quiz();
+
+/* ---------------- söz geçirmek ---------------- */
+const P = "Tekst redaktory teksti girizmäge, saklamaga, redaktirlemäge we çap etmäge mümkinçilik berýär.";
+function wrap() {
+  const w = +$("w").value;
+  $("wo").textContent = w + " px";
+  $("d1").style.maxWidth = w + "px";
+  $("d2").style.maxWidth = w + "px";
+  $("d1").textContent = P;
+  $("d2").innerHTML = "Tekst redaktory teksti girizmäge,<br>saklamaga, redaktirlemäge<br>we çap etmäge mümkinçilik berýär.";
+}
+$("w").addEventListener("input", wrap);
+
+/* ---------------- dyngy belgiler ---------------- */
+const PUN = [
+  ["Salam, dostum!", "Salam , dostum !"],
+  ["Kompýuter, printer we skaner.", "Kompýuter ,printer we skaner ."],
+  ["Bu näme?", "Bu näme ?"]
+];
+$("pun").innerHTML = PUN.map((p, i) => {
+  const flip = i % 2 === 1;
+  const a = flip ? p[1] : p[0], b = flip ? p[0] : p[1];
+  return `<div style="width:100%"><div class="row tight">
+    <button class="btn" data-i="${i}" data-ok="${!flip}">${a}</button>
+    <button class="btn" data-i="${i}" data-ok="${flip}">${b}</button></div></div>`;
+}).join("");
+$("pun").querySelectorAll("button").forEach(b => b.onclick = () => {
+  b.classList.add("sel");
+  const good = b.dataset.ok === "true";
+  $("pmsg").textContent = good
+    ? "Dogry: dyngy belgi sözden soň boşluksyz ýazylýar, ondan soň bolsa boşluk goýulýar."
+    : "Nädogry: dyngy belgiden öň boşluk goýulmaýar.";
+  $("pmsg").className = good ? "msg ok" : "msg bad";
+});
+
+render(); wrap();
+</script>
+</body>
+</html>

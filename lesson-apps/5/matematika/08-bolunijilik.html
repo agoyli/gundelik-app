@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bölünijilik nyşanlary — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .grid100 { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+  .n {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; font-size: 13px; font-weight: 700; background: #f4f7fb; color: #5b6b80;
+    cursor: pointer;
+  }
+  .n.hit { background: #ffe6a8; color: #7a4d00; }
+  .n.prime { background: #cfe6d3; color: #1d7a3d; }
+  .n.one { background: #efe9fb; color: #6a4bb8; }
+  .n.sel { outline: 3px solid #2456b0; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filters .btn { padding: 9px 12px; font-size: 14px; }
+  .detail { font-size: 15px; line-height: 1.7; }
+  .detail b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bölünijilik nyşanlary</h1>
+  <div class="sub">10-a, 5-e, 2-ä bölünijilik · ýönekeý sanlar · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <h3>Nyşany saýla</h3>
+    <div class="filters" id="filters"></div>
+    <div class="note" id="ruleNote"></div>
+  </div>
+
+  <div class="card">
+    <div class="grid100" id="grid"></div>
+    <div class="note">Islendik sana bas — barlagyny görkezerin.</div>
+  </div>
+
+  <div class="card">
+    <h3 id="dTitle">Sany saýla</h3>
+    <div class="detail" id="detail">Tablisadan bir sana bas.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, II kitap (2017)</div>
+</div>
+
+<script>
+const FILTERS = [
+  { k: "2", label: "2-ä bölünýär", rule: "Ýazgysy jübüt sifr bilen gutarýan san 2-ä bölünýär. Olara jübüt sanlar diýilýär." },
+  { k: "5", label: "5-e bölünýär", rule: "Ýazgysy 0 ýa-da 5 bilen gutarýan san 5-e bölünýär." },
+  { k: "10", label: "10-a bölünýär", rule: "Ýazgysy 0 sifr bilen gutarýan san 10-a bölünýär." },
+  { k: "3", label: "3-e bölünýär", rule: "Eger sanyň sifrleriniň jemi 3-e bölünýän bolsa, onda ol san 3-e bölünýär." },
+  { k: "9", label: "9-a bölünýär", rule: "Eger sanyň sifrleriniň jemi 9-a bölünýän bolsa, onda ol san 9-a bölünýär." },
+  { k: "p", label: "Ýönekeý sanlar", rule: "Diňe 1-e we özüne bölünýän 1-den başga sana ýönekeý san diýilýär. 1 san ýönekeý sanlara-da, düzme sanlara-da goşulmaýar." }
+];
+let active = "2", selected = null;
+
+function isPrime(n) {
+  if (n < 2) return false;
+  for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+  return true;
+}
+function digitSum(n) { return String(n).split("").reduce((s, d) => s + +d, 0); }
+function factorize(n) {
+  const f = [];
+  let x = n;
+  for (let p = 2; p * p <= x; p++) while (x % p === 0) { f.push(p); x /= p; }
+  if (x > 1) f.push(x);
+  return f;
+}
+function powers(f) {
+  const m = {};
+  f.forEach(p => m[p] = (m[p] || 0) + 1);
+  const sup = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+  return Object.keys(m).map(p => m[p] > 1 ? p + sup[m[p]] : p).join(" · ");
+}
+
+function hit(n) {
+  if (active === "p") return isPrime(n);
+  if (active === "3" || active === "9") return digitSum(n) % +active === 0;
+  return n % +active === 0;
+}
+
+function renderFilters() {
+  const box = document.getElementById("filters");
+  box.innerHTML = "";
+  FILTERS.forEach(f => {
+    const b = document.createElement("button");
+    b.className = "btn" + (f.k === active ? " sel" : "");
+    b.textContent = f.label;
+    b.onclick = () => { active = f.k; renderFilters(); renderGrid(); };
+    box.appendChild(b);
+  });
+  document.getElementById("ruleNote").textContent = FILTERS.find(f => f.k === active).rule;
+}
+
+function renderGrid() {
+  const g = document.getElementById("grid");
+  g.innerHTML = "";
+  for (let n = 1; n <= 100; n++) {
+    const d = document.createElement("div");
+    let cls = "n";
+    if (active === "p") {
+      if (n === 1) cls += " one";
+      else if (isPrime(n)) cls += " prime";
+    } else if (hit(n)) cls += " hit";
+    if (n === selected) cls += " sel";
+    d.className = cls;
+    d.textContent = n;
+    d.onclick = () => { selected = n; renderGrid(); renderDetail(n); };
+    g.appendChild(d);
+  }
+}
+
+function renderDetail(n) {
+  document.getElementById("dTitle").textContent = `${n} sanynyň barlagy`;
+  const last = n % 10, ds = digitSum(n);
+  const f = factorize(n);
+  let html = "";
+  html += `Soňky sifri — <b>${last}</b>. `;
+  html += `Sifrleriniň jemi: ${String(n).split("").join(" + ")} = <b>${ds}</b>.<br>`;
+  const rows = [
+    ["2-ä", n % 2 === 0, `soňky sifri ${last} — ${last % 2 === 0 ? "jübüt" : "täk"}`],
+    ["5-e", n % 5 === 0, `soňky sifri ${last}`],
+    ["10-a", n % 10 === 0, `soňky sifri ${last}`],
+    ["3-e", ds % 3 === 0, `sifrleriniň jemi ${ds}`],
+    ["9-a", ds % 9 === 0, `sifrleriniň jemi ${ds}`]
+  ];
+  rows.forEach(([name, ok, why]) => {
+    html += `${name} ${ok ? "bölünýär ✓" : "bölünmeýär ✗"} — ${why}.<br>`;
+  });
+  if (n === 1) html += `<br><b>1</b> san ýönekeý sanlara-da, düzme sanlara-da goşulmaýar.`;
+  else if (isPrime(n)) html += `<br><b>${n} — ýönekeý san</b>: diňe 1-e we özüne bölünýär.`;
+  else html += `<br><b>${n} — düzme san.</b> Ýönekeý köpeldijilere dagadýarys: ${n} = ${f.join(" · ")} = ${powers(f)}`;
+  document.getElementById("detail").innerHTML = html;
+}
+
+renderFilters();
+renderGrid();
+</script>
+</body>
+</html>

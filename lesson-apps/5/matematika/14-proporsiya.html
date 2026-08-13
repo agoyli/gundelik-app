@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proporsiýa — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 11px 6px; border-radius: 12px; font-size: 14px; font-weight: 700; background: #e8eef7; color: #5b6b80; }
+  .tab.active { background: #2456b0; color: #fff; }
+  .steps { font-size: 15.5px; line-height: 1.9; }
+  .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+  .key { padding: 13px 0; border-radius: 12px; font-size: 19px; font-weight: 800; background: #e3edfd; color: #2456b0; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 13.5px; font-weight: 700; margin-top: 4px; }
+  .legend .g { color: #b25b12; } .legend .o { color: #1d7a3d; }
+  td.hl { background: #fff3d6; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Proporsiýa</h1>
+  <div class="sub">Iki paýyň deňligi · göni we ters proporsional baglylyk · Matematika · 5-nji synp</div>
+
+  <div class="tabs">
+    <button class="tab active" data-t="solve">Näbelli agza</button>
+    <button class="tab" data-t="link">Baglylyk</button>
+  </div>
+
+  <div id="paneSolve">
+    <div class="card">
+      <svg id="board" viewBox="0 0 400 170"></svg>
+      <div class="legend"><span class="g">gyraky agzalar</span><span class="o">ortaky agzalar</span></div>
+      <div class="msg" id="msg"></div>
+    </div>
+    <div class="card">
+      <h3>x näçe?</h3>
+      <div style="text-align:center; font-size:26px; font-weight:800; min-height:34px" id="ans">_</div>
+      <div class="keys" id="keys"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="checkBtn">Barla</button>
+        <button class="btn ghost" id="clearBtn">Poz</button>
+        <button class="btn" id="newBtn">Täze</button>
+      </div>
+      <div class="score" id="score"></div>
+    </div>
+    <div class="card">
+      <h3>Çözülişi</h3>
+      <div class="steps" id="steps"></div>
+      <div class="note">Proporsiýanyň esasy häsiýeti: <b>gyraky agzalaryň köpeltmek hasyly ortaky agzalaryň köpeltmek hasylyna deňdir (a · d = b · c)</b>.</div>
+    </div>
+  </div>
+
+  <div id="paneLink" style="display:none">
+    <div class="card">
+      <div class="row">
+        <button class="btn sel" id="bDirect">Göni proporsional</button>
+        <button class="btn" id="bInverse">Ters proporsional</button>
+      </div>
+      <div class="goal" id="linkGoal" style="margin-top:10px"></div>
+      <table id="linkTable"></table>
+      <div class="slider" style="margin-top:10px">
+        <span class="lbl" id="linkLbl"></span>
+        <input type="range" id="linkRange" min="1" max="8" value="3">
+        <span class="out" id="linkOut">3</span>
+      </div>
+      <div class="hint" id="linkHint"></div>
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, II kitap (2017)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const SVG = document.getElementById("board");
+let A, B, C, D, unknownPos, typed = "", right = 0, done = 0;
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+function txt(x, y, s, o = {}) { const t = el("text", Object.assign({ x, y, "font-size": 30, "font-weight": 800, fill: "#1e2a3a", "text-anchor": "middle" }, o)); t.textContent = s; return t; }
+function rnd(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+
+function newTask() {
+  const k = rnd(2, 6), m = rnd(2, 9), n = rnd(2, 9);
+  A = m; B = n; C = m * k; D = n * k;
+  unknownPos = rnd(0, 3);
+  typed = "";
+  document.getElementById("msg").textContent = "";
+  document.getElementById("steps").textContent = "";
+  render();
+}
+
+function vals() { return [A, B, C, D]; }
+function answer() { return vals()[unknownPos]; }
+
+function render() {
+  SVG.innerHTML = "";
+  const v = vals().map((x, i) => i === unknownPos ? "x" : x);
+  const xs = [60, 150, 250, 340], y = 70;
+  SVG.appendChild(txt(xs[0], y, v[0], { fill: "#b25b12" }));
+  SVG.appendChild(txt(105, y, ":", { "font-size": 24, fill: "#5b6b80" }));
+  SVG.appendChild(txt(xs[1], y, v[1], { fill: "#1d7a3d" }));
+  SVG.appendChild(txt(200, y, "=", { "font-size": 26, fill: "#5b6b80" }));
+  SVG.appendChild(txt(xs[2], y, v[2], { fill: "#1d7a3d" }));
+  SVG.appendChild(txt(295, y, ":", { "font-size": 24, fill: "#5b6b80" }));
+  SVG.appendChild(txt(xs[3], y, v[3], { fill: "#b25b12" }));
+  // arcs: extremes (a,d) below, means (b,c) above
+  SVG.appendChild(el("path", { d: `M ${xs[0]} ${y + 14} Q 200 150 ${xs[3]} ${y + 14}`, fill: "none", stroke: "#b25b12", "stroke-width": 2.5, "stroke-dasharray": "5 4" }));
+  SVG.appendChild(el("path", { d: `M ${xs[1]} ${y - 34} Q 200 5 ${xs[2]} ${y - 34}`, fill: "none", stroke: "#1d7a3d", "stroke-width": 2.5, "stroke-dasharray": "5 4" }));
+  document.getElementById("ans").textContent = typed || "_";
+}
+
+function check() {
+  if (!typed) return;
+  done++;
+  const ok = +typed === answer();
+  if (ok) right++;
+  const m = document.getElementById("msg");
+  m.textContent = ok ? `Berekella! 🎉 x = ${answer()}` : `x = ${answer()} bolmaly. Çözülişine seret.`;
+  m.className = "msg " + (ok ? "ok" : "bad");
+  document.getElementById("score").textContent = `Dogry: ${right} / ${done}`;
+  const names = ["gyraky", "ortaky", "ortaky", "gyraky"];
+  document.getElementById("steps").innerHTML =
+    `1. Esasy häsiýet: ${A === answer() ? "x" : A} · ${D === answer() && unknownPos === 3 ? "x" : D} = ${unknownPos === 1 ? "x" : B} · ${unknownPos === 2 ? "x" : C}<br>` +
+    `2. Sanlary goýýarys: gyraky agzalar — ${A} we ${D}; ortaky agzalar — ${B} we ${C}.<br>` +
+    `3. ${A} · ${D} = ${A * D}, &nbsp; ${B} · ${C} = ${B * C}. Deň ✓<br>` +
+    `4. Näbelli <b>${names[unknownPos]}</b> agza: x = <b>${answer()}</b>.`;
+}
+
+const keys = document.getElementById("keys");
+for (let d = 0; d <= 9; d++) {
+  const k = document.createElement("button");
+  k.className = "key"; k.textContent = d;
+  k.onclick = () => { if (typed.length < 4) { typed += d; render(); } };
+  keys.appendChild(k);
+}
+document.getElementById("checkBtn").onclick = check;
+document.getElementById("clearBtn").onclick = () => { typed = ""; render(); };
+document.getElementById("newBtn").onclick = newTask;
+
+// ---- baglylyk pane ----
+let linkMode = "direct";
+function renderLink() {
+  const n = +document.getElementById("linkRange").value;
+  document.getElementById("linkOut").textContent = n;
+  const T = document.getElementById("linkTable");
+  if (linkMode === "direct") {
+    document.getElementById("linkGoal").innerHTML =
+      "1 metr matanyň bahasy <b>10 manat</b>. Mata näçe köp bolsa, baha şonça köp — bular <b>göni proporsional</b> ululyklar.";
+    document.getElementById("linkLbl").textContent = "Mata (m)";
+    let rows = "<tr><th>Mata (m)</th><th>Bahasy (manat)</th></tr>";
+    for (let i = 1; i <= 8; i++)
+      rows += `<tr class="${i === n ? "hl" : ""}"><td class="${i === n ? "hl" : ""}">${i}</td><td class="${i === n ? "hl" : ""}">${i * 10}</td></tr>`;
+    T.innerHTML = rows;
+    document.getElementById("linkHint").innerHTML =
+      `Mata ${n} esse artdy → baha hem ${n} esse artdy: ${n} · 10 = <b>${n * 10} manat</b>. Paý hemişe birmeňzeş: ${n * 10} : ${n} = 10.`;
+  } else {
+    document.getElementById("linkGoal").innerHTML =
+      "Ýoluň uzynlygy <b>120 km</b>. Tizlik näçe uly bolsa, wagt şonça az — bular <b>ters proporsional</b> ululyklar.";
+    document.getElementById("linkLbl").textContent = "Tizlik ×";
+    let rows = "<tr><th>Tizlik (km/sag)</th><th>Wagt (sag)</th></tr>";
+    const speeds = [10, 15, 20, 24, 30, 40, 60, 120];
+    speeds.forEach((s, i) => {
+      const hl = (i + 1) === n;
+      rows += `<tr><td class="${hl ? "hl" : ""}">${s}</td><td class="${hl ? "hl" : ""}">${120 / s}</td></tr>`;
+    });
+    T.innerHTML = rows;
+    const s = speeds[n - 1];
+    document.getElementById("linkHint").innerHTML =
+      `Tizlik ${s} km/sag bolanda wagt: 120 : ${s} = <b>${120 / s} sag</b>. Köpeltmek hasyly hemişe birmeňzeş: ${s} · ${120 / s} = 120.`;
+  }
+}
+document.getElementById("linkRange").oninput = renderLink;
+document.getElementById("bDirect").onclick = () => {
+  linkMode = "direct";
+  document.getElementById("bDirect").classList.add("sel");
+  document.getElementById("bInverse").classList.remove("sel");
+  renderLink();
+};
+document.getElementById("bInverse").onclick = () => {
+  linkMode = "inverse";
+  document.getElementById("bInverse").classList.add("sel");
+  document.getElementById("bDirect").classList.remove("sel");
+  renderLink();
+};
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(o => o.classList.remove("active"));
+  t.classList.add("active");
+  const solve = t.dataset.t === "solve";
+  document.getElementById("paneSolve").style.display = solve ? "" : "none";
+  document.getElementById("paneLink").style.display = solve ? "none" : "";
+  if (!solve) renderLink();
+});
+
+newTask();
+</script>
+</body>
+</html>

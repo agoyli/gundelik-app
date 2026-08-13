@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modeller — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 11px 6px; border-radius: 12px; font-size: 14px; font-weight: 700; background: #e8eef7; color: #5b6b80; }
+  .tab.active { background: #2456b0; color: #fff; }
+  .pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pcol { display: flex; flex-direction: column; gap: 8px; }
+  .pitem {
+    padding: 12px 10px; border-radius: 12px; font-size: 14.5px; font-weight: 700; text-align: center;
+    background: #f4f7fb; cursor: pointer; line-height: 1.35;
+  }
+  .pitem.real { background: #cfe6d3; color: #1d7a3d; }
+  .pitem.model { background: #dfe9fb; color: #2456b0; }
+  .pitem.sel { outline: 3px solid #ffb340; }
+  .pitem.done { opacity: .35; pointer-events: none; }
+  .colhead { text-align: center; font-size: 13px; font-weight: 800; color: #5b6b80; margin-bottom: 4px; }
+  .simbox { text-align: center; }
+  .cloud { font-size: 44px; }
+  .weather { font-size: 17px; font-weight: 800; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Modeller</h1>
+  <div class="sub">Modelleriň döredilişi. Tebigat hadysalaryny modelleşdirmek · Informatika · 5-nji synp</div>
+
+  <div class="tabs">
+    <button class="tab active" data-t="pair">Obýekt we modeli</button>
+    <button class="tab" data-t="why">Näme üçin model?</button>
+    <button class="tab" data-t="sim">Howa modeli</button>
+  </div>
+
+  <div id="paneWhy" style="display:none">
+    <div class="card">
+      <h3>Model haçan döredilýär?</h3>
+      <div class="goal">Kitap bäş ýagdaýy sanaýar. Her setire bas – mysalyny gör.</div>
+      <div id="why"></div>
+    </div>
+    <div class="card">
+      <h3>Modelleri toparlaşdyrmak</h3>
+      <div class="goal">Kitap: «Obýektiň häsiýetlerine baglylykda modeller matematiki,
+        fiziki, biologik toparlara bölünýärler.» Her modeli öz toparyna goý.</div>
+      <div id="pool" class="pcol"></div>
+      <div class="pairs" style="margin-top:10px">
+        <div class="pitem model" data-g="mat">📐 Matematiki</div>
+        <div class="pitem real" data-g="fiz">🔧 Fiziki</div>
+        <div class="pitem model" data-g="bio">🌿 Biologik</div>
+      </div>
+      <div class="msg" id="gmsg"></div>
+      <div class="score" id="gsc"></div>
+      <button class="btn ghost" id="gr" style="margin-top:8px">Täzeden</button>
+    </div>
+    <div class="card">
+      <div class="note">
+        Modeller <b>iki tapgyrda</b> döredilýär. Birinji tapgyrda söz arkaly beýan
+        etmek bilen obýektleriň tablisa, shema görnüşinde <b>deslapky modeli</b>
+        gurulýar – bu tapgyrda kompýuter ulanylmaýar. Soňra deslapky model esasynda
+        programma düzülip, kompýuterde ýerine ýetirilýär – bu <b>gutarnykly modeldir</b>.
+      </div>
+    </div>
+  </div>
+
+  <div id="panePair">
+    <div class="card">
+      <div class="goal">Çep tarapda — <b>hakyky obýekt</b>, sag tarapda — onuň <b>modeli</b>. Jübütleri tap: ilki çepden, soň sagdan bas.</div>
+      <div class="pairs">
+        <div class="pcol"><div class="colhead">Hakyky obýekt</div><div id="colL"></div></div>
+        <div class="pcol"><div class="colhead">Modeli</div><div id="colR"></div></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="score" id="score"></div>
+    </div>
+    <div class="card">
+      <div class="note">
+        <b>Model</b> — hakyky obýektiň öwrenmek üçin döredilen ýönekeýleşdirilen meňzetmesi.
+        Model obýektiň ähli aýratynlyklaryny däl-de, öwrenilýän möhüm aýratynlyklaryny görkezýär.
+        Meselem, globus Ýeriň şekilini görkezýär, emma hakyky ululygyny görkezmeýär.
+      </div>
+    </div>
+  </div>
+
+  <div id="paneSim" style="display:none">
+    <div class="card">
+      <div class="goal">Bu — tebigat hadysasynyň ýönekeý <b>kompýuter modeli</b>. Görkezijileri üýtget — model howany çaklaýar.</div>
+      <div class="simbox">
+        <div class="cloud" id="cloud">☁️</div>
+        <div class="weather" id="weather"></div>
+      </div>
+      <div class="slider"><span class="lbl">Temperatura</span><input type="range" id="rT" min="-10" max="40" value="22"><span class="out" id="oT">22°</span></div>
+      <div class="slider"><span class="lbl">Çyglylyk</span><input type="range" id="rH" min="0" max="100" value="40"><span class="out" id="oH">40%</span></div>
+      <div class="slider"><span class="lbl">Ýel (m/s)</span><input type="range" id="rW" min="0" max="25" value="4"><span class="out" id="oW">4</span></div>
+      <div class="hint" id="simHint"></div>
+    </div>
+    <div class="card">
+      <div class="note">
+        Kitap: «Tebigy hadysalary (suw joşguny, Ýer titremegi, ýangyn, harasatlar)
+        modelleşdirmek üçin <b>super kompýuterler</b> döredildi.» Ýer planetasynyň
+        seýsmik zolagynyň kompýuter modeli Ýer sarsgynlarynyň güýjüni
+        <b>10 ballyk şkalada</b> kesgitleýär. Jaý gurlanda hem ýeliň, ýerasty suwlaryň
+        we seýsmik yrgyldylaryň täsirine durnuklylyk kompýuterde modelleşdirilýär.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const PAIRS = [
+  { r: "Ýer togalagy", m: "Globus" },
+  { r: "Şäher", m: "Kartadaky shema" },
+  { r: "Uçar", m: "Uçaryň maketi" },
+  { r: "Synp okuwçylary", m: "Okuwçylaryň sanawy (tablisa)" },
+  { r: "Howa ýagdaýy", m: "Howa çaklamasynyň kompýuter modeli" },
+  { r: "Bina", m: "Binanyň çyzgysy" }
+];
+let selL = null, matched = [], mistakes = 0;
+
+function shuffle(a) { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[b[i], b[j]] = [b[j], b[i]]; } return b; }
+let leftOrder = shuffle(PAIRS.map((_, i) => i));
+let rightOrder = shuffle(PAIRS.map((_, i) => i));
+
+function msg(t, cls) { const m = document.getElementById("msg"); m.textContent = t; m.className = "msg" + (cls ? " " + cls : ""); }
+
+function renderPairs() {
+  const L = document.getElementById("colL"), R = document.getElementById("colR");
+  L.innerHTML = ""; R.innerHTML = "";
+  leftOrder.forEach(i => {
+    const d = document.createElement("div");
+    d.className = "pitem real" + (selL === i ? " sel" : "") + (matched.includes(i) ? " done" : "");
+    d.textContent = PAIRS[i].r;
+    d.onclick = () => { selL = selL === i ? null : i; renderPairs(); };
+    L.appendChild(d);
+  });
+  rightOrder.forEach(i => {
+    const d = document.createElement("div");
+    d.className = "pitem model" + (matched.includes(i) ? " done" : "");
+    d.textContent = PAIRS[i].m;
+    d.onclick = () => pick(i);
+    R.appendChild(d);
+  });
+  document.getElementById("score").textContent = `Tapylan jübüt: ${matched.length} / ${PAIRS.length}`;
+}
+
+function pick(i) {
+  if (selL === null) { msg("Ilki çep tarapdan hakyky obýekti saýla.", "bad"); return; }
+  if (i === selL) {
+    matched.push(i);
+    msg(`Dogry! «${PAIRS[i].m}» — «${PAIRS[i].r}» obýektiniň modeli.`, "ok");
+    selL = null;
+    if (matched.length === PAIRS.length) msg("Ähli jübütler tapyldy! 🎉", "ok");
+  } else {
+    mistakes++;
+    msg("Bu jübüt däl. Ýene bir gezek pikirlen.", "bad");
+  }
+  renderPairs();
+}
+
+// ---- näme üçin model döredilýär (kitap, sah. 56) ----
+const WHY = [
+  ["öwrenilýän obýekt örän uly ýa-da örän kiçi bolanda",
+   "Gün ulgamynyň modeli · atomyň modeli"],
+  ["iş (proses) örän çalt ýa-da haýal bolup geçende",
+   "içinden ýandyrylan hereketlendirijiniň modeli · geologik model"],
+  ["obýekti derňemek daş-töwerek üçin howply bolanda", "atom partlaýşynyň modeli"],
+  ["özüniň weýran bolmagyna getirip biljek ýagdaýda", "uçaryň modeli"],
+  ["hakyky obýekti döretmek örän gymmat düşende", "uly desgalaryň maketi"],
+];
+document.getElementById("why").innerHTML = WHY.map((w, i) =>
+  `<div class="pitem real" data-w="${i}" style="text-align:left">${i + 1}. ${w[0]}
+   <div class="expl" id="we${i}"></div></div>`).join("");
+document.querySelectorAll("[data-w]").forEach(d => d.onclick = () => {
+  const i = +d.dataset.w;
+  document.getElementById("we" + i).textContent = "Mysal: " + WHY[i][1];
+});
+
+// ---- modelleri toparlaşdyrmak (kitap, 43-nji surat) ----
+const GRP = [
+  ["P = 2 (a + b)", "mat"], ["V = abc", "mat"], ["x + 2 = 5", "mat"],
+  ["Dikuçaryň modeli", "fiz"], ["Ýük maşynynyň oýunjagy", "fiz"],
+  ["Zawodyň maketi", "fiz"],
+  ["Aryň gurluşynyň şekili", "bio"], ["Pişigiň modeli", "bio"],
+  ["Miweleriň sanawy", "bio"],
+];
+const GNAME = {mat: "matematiki", fiz: "fiziki", bio: "biologik"};
+let gleft = [], gpick = null, gdone = 0, gright = 0;
+function gpool() {
+  document.getElementById("pool").innerHTML = gleft.map(i =>
+    `<div class="pitem${gpick === i ? " sel" : ""}" data-p="${i}">${GRP[i][0]}</div>`)
+    .join("") || "<div class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</div>";
+  document.querySelectorAll("[data-p]").forEach(d => d.onclick = () => {
+    gpick = +d.dataset.p; gpool();
+    const m = document.getElementById("gmsg");
+    m.textContent = "Indi aşakdaky toparlaryň birine bas."; m.className = "msg";
+  });
+  document.getElementById("gsc").textContent = `${gright} / ${gdone}`;
+}
+function greset() { gleft = GRP.map((_, i) => i); gpick = null; gdone = 0; gright = 0;
+  document.getElementById("gmsg").textContent = ""; gpool(); }
+document.querySelectorAll("[data-g]").forEach(el => el.onclick = () => {
+  const m = document.getElementById("gmsg");
+  if (gpick === null) { m.textContent = "Ilki ýokardaky modele bas."; m.className = "msg bad"; return; }
+  const [txt, kind] = GRP[gpick];
+  const good = el.dataset.g === kind;
+  gdone++; if (good) gright++;
+  gleft = gleft.filter(x => x !== gpick); gpick = null;
+  m.textContent = good ? `Dogry! «${txt}» – ${GNAME[kind]} model.`
+                       : `Beýle däl. «${txt}» – ${GNAME[kind]} model.`;
+  m.className = "msg " + (good ? "ok" : "bad");
+  gpool();
+});
+document.getElementById("gr").onclick = greset;
+greset();
+
+// ---- weather model ----
+function sim() {
+  const T = +document.getElementById("rT").value;
+  const H = +document.getElementById("rH").value;
+  const W = +document.getElementById("rW").value;
+  document.getElementById("oT").textContent = T + "°";
+  document.getElementById("oH").textContent = H + "%";
+  document.getElementById("oW").textContent = W;
+
+  let ico = "☀️", text = "Aýdyň howa", why = "Çyglylyk az — bulut emele gelmeýär.";
+  if (H >= 75 && T <= 0) { ico = "❄️"; text = "Gar ýagar"; why = "Çyglylyk ýokary, temperatura 0°-dan pes — ygal gar bolup ýagýar."; }
+  else if (H >= 75) { ico = "🌧"; text = "Ýagyş ýagar"; why = "Çyglylyk ýokary — bulutlar ygal berýär."; }
+  else if (H >= 50) { ico = "☁️"; text = "Bulutly"; why = "Orta çyglylykda bulutlar emele gelýär, ýöne ygal ýok."; }
+  if (W >= 18) { ico = "🌬"; text += " — güýçli ýel"; why += " Ýeliň tizligi 18 m/s-dan ýokary."; }
+
+  document.getElementById("cloud").textContent = ico;
+  document.getElementById("weather").textContent = `${text} · ${T}°`;
+  document.getElementById("simHint").innerHTML =
+    `<b>Modeliň netijesi:</b> ${why}<br>Bu model diňe üç görkezijini alýar — hakyky howa has çylşyrymly. Model hemişe <b>ýönekeýleşdirilen</b> bolýar.`;
+}
+["rT", "rH", "rW"].forEach(id => document.getElementById(id).oninput = sim);
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(o => o.classList.remove("active"));
+  t.classList.add("active");
+  const k = t.dataset.t;
+  document.getElementById("panePair").style.display = k === "pair" ? "" : "none";
+  document.getElementById("paneWhy").style.display = k === "why" ? "" : "none";
+  document.getElementById("paneSim").style.display = k === "sim" ? "" : "none";
+  if (k === "sim") sim();
+});
+
+renderPairs();
+sim();
+</script>
+</body>
+</html>

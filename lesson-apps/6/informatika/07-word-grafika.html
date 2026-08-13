@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word: tekst we grafika — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .kb { background: #eef2f8; border-radius: 12px; padding: 9px; overflow-x: auto; }
+  .kb .r { display: flex; gap: 4px; margin-bottom: 4px; justify-content: center; min-width: 520px; }
+  .kb button { min-width: 34px; height: 40px; border-radius: 8px; border: 2px solid #d6e0ee;
+               background: #fff; font-size: 13px; font-weight: 700; color: #1e2a3a; cursor: pointer;
+               padding: 0 6px; }
+  .kb button.wide { min-width: 62px; }
+  .kb button.space { min-width: 180px; }
+  .kb button.home { box-shadow: inset 0 -3px 0 #2456b0; }
+  .kb button.mark { position: relative; }
+  .kb button.mark::after { content: "•"; position: absolute; bottom: 1px; left: 0; right: 0;
+                           font-size: 15px; color: #2456b0; }
+  .kb button.f0 { background: #e3edfd; } .kb button.f1 { background: #e0f5e6; }
+  .kb button.f2 { background: #fdeee0; } .kb button.f3 { background: #efe9fb; }
+  .kb button.f4 { background: #fbe3e3; }
+  .kb button.hit { outline: 3px solid #2456b0; }
+  .fkey { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: #5b6b80; margin-top: 6px; }
+  .fkey span b { display: inline-block; width: 13px; height: 12px; border-radius: 3px; vertical-align: -1px; }
+  .doc { background: #fff; border: 2px solid #d6e0ee; border-radius: 10px; padding: 14px;
+         font-size: 14px; line-height: 1.75; text-align: justify; }
+  .doc p { margin: 0 0 9px; }
+  .doc .pic { width: 96px; height: 70px; border-radius: 6px; background: #cfe3f7;
+              border: 2px solid #2456b0; display: grid; place-items: center; font-size: 26px; }
+  .doc.wrap-in .pic { display: block; float: left; margin: 2px 12px 4px 0; }
+  .doc.wrap-line .pic { margin: 6px auto; }
+  .doc.wrap-behind { position: relative; }
+  .doc.wrap-behind .pic { position: absolute; left: 40px; top: 34px; opacity: .35; margin: 0; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Teksti ýygmak we grafika bilen işlemek</h1>
+  <div class="sub">Word tekst redaktory · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">«Görmezden onbarmak» usulynda her barmagyň öz klawişleri bar. Klawişe bas –
+      ony haýsy barmagyň basmalydygy görkeziler.</div>
+    <div class="kb" id="kb"></div>
+    <div class="fkey">
+      <span><b style="background:#fbe3e3"></b> külbike</span>
+      <span><b style="background:#efe9fb"></b> ogulhajat</span>
+      <span><b style="background:#fdeee0"></b> orta</span>
+      <span><b style="background:#e0f5e6"></b> süýem</span>
+      <span><b style="background:#e3edfd"></b> başam</span>
+    </div>
+    <div class="note" id="kx">Aşagy gök çyzykly klawişler – <b>esasy hatar</b>. F we J
+      klawişlerdäki nokatjyk elleriňi ekrana seretmän ýerleşdirmäge kömek edýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy barmak?</h3>
+    <div class="row" style="margin-bottom:8px"><span class="badge purple" id="task"></span></div>
+    <div class="goal">Ýokardaky klawiaturada dogry klawişe bas.</div>
+    <div class="msg" id="qmsg"></div>
+    <div class="row"><span class="score" id="qsc"></span>
+      <button class="btn ghost" id="qr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Boşluk we dyngy belgileri</h3>
+    <div class="goal">Haýsy setir dogry ýygylan? Boşluk dyngy belgisiniň <b>soňundan</b> goýulýar.</div>
+    <div class="row tight" id="sp"></div>
+    <div class="msg" id="spmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Abzas we suratyň ýerleşişi</h3>
+    <div class="row tight" style="margin-bottom:8px">
+      <button class="btn sel" data-w="in">В тексте (tekstiň içinde)</button>
+      <button class="btn" data-w="line">Ýokardan we aşakdan</button>
+      <button class="btn" data-w="behind">За текстом (tekstiň aňyrsynda)</button>
+    </div>
+    <div class="slider"><span class="lbl">Abzasyň içerigi</span>
+      <input type="range" id="ind" min="0" max="24" value="12"><span class="out" id="indo">12</span></div>
+    <div class="doc" id="doc"></div>
+    <div class="note" id="wx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Figuralardan surat düzmek</h3>
+    <div class="goal">Вставка – Фигуры bölegindäki figuralary birin-birin goş. Ähli figuralar
+      goýlandan soň olary bir topara birikdirmek bolýar.</div>
+    <div class="stage"><svg id="house" width="260" height="200" viewBox="0 0 260 200"></svg></div>
+    <div class="figs" style="margin-top:8px" id="figs"></div>
+    <div class="msg" id="hmsg"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Klawiaturanyň harply <b>üç hataryndan ikinjisi</b> esasy hatar hasaplanýar: çep eliň
+      barmaklary <b>ASDF</b>, sag eliňki bolsa <b>JKL;</b> klawişlerde goýulýar. Täze abzasa
+      geçmek üçin <b>Enter</b>, soňra <b>Tab</b> klawişe basylýar. Surat
+      <b>Goýmak (Вставка)</b> menýusy arkaly goýulýar, onuň tekstdäki ýerleşişi bolsa
+      <b>Format – Tekstde ýerleşdirmek (Обтекание текстом)</b> bilen sazlanýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- klawiatura ---------------- */
+const FING = ["başam", "süýem", "orta", "ogulhajat", "külbike"];
+const ROWS = [
+  [["`", 4, 0], ["1", 4, 0], ["2", 4, 0], ["3", 3, 0], ["4", 2, 0], ["5", 1, 0], ["6", 1, 0],
+   ["7", 1, 1], ["8", 1, 1], ["9", 2, 1], ["0", 3, 1], ["-", 4, 1], ["=", 4, 1]],
+  [["Tab", 4, 0, "wide"], ["Q", 4, 0], ["W", 3, 0], ["E", 2, 0], ["R", 1, 0], ["T", 1, 0],
+   ["Y", 1, 1], ["U", 1, 1], ["I", 2, 1], ["O", 3, 1], ["P", 4, 1], ["[", 4, 1], ["]", 4, 1]],
+  [["Caps", 4, 0, "wide"], ["A", 4, 0, "home"], ["S", 3, 0, "home"], ["D", 2, 0, "home"],
+   ["F", 1, 0, "home mark"], ["G", 1, 0], ["H", 1, 1], ["J", 1, 1, "home mark"],
+   ["K", 2, 1, "home"], ["L", 3, 1, "home"], [";", 4, 1, "home"], ["'", 4, 1]],
+  [["Shift", 4, 0, "wide"], ["Z", 4, 0], ["X", 3, 0], ["C", 2, 0], ["V", 1, 0], ["B", 1, 0],
+   ["N", 1, 1], ["M", 1, 1], [",", 2, 1], [".", 3, 1], ["/", 4, 1], ["Shift ", 4, 1, "wide"]],
+  [["Boşluk", 0, 0, "space"]]
+];
+function kb() {
+  $("kb").innerHTML = ROWS.map(r => `<div class="r">` + r.map(([k, f, h, cls]) =>
+    `<button class="f${f} ${cls || ""}" data-k="${k}" data-f="${f}" data-h="${h}">${k}</button>`
+  ).join("") + `</div>`).join("");
+  $("kb").querySelectorAll("button").forEach(b => b.onclick = () => key(b));
+}
+function key(b) {
+  $("kb").querySelectorAll("button").forEach(x => x.classList.remove("hit"));
+  b.classList.add("hit");
+  const f = +b.dataset.f, hand = +b.dataset.h ? "sag" : "çep";
+  $("kx").innerHTML = f === 0
+    ? `<b>Boşluk</b> klawişi iki eliň hem <b>başam</b> barmagy bilen basylýar.`
+    : `<b>${b.dataset.k}</b> klawişi – ${hand} eliň <b>${FING[f]}</b> barmagy.`;
+  check(b);
+}
+
+/* ---------------- haýsy barmak ---------------- */
+// jogap hemişe şol barmagyň ESASY HATARDAKY klawişi – şonuň üçin ol ýeke-täkdir
+const HOME = {}; // "hand-finger" -> klawiş
+ROWS.flat().forEach(([k, f, h, cls]) => {
+  if (cls && cls.includes("home")) HOME[`${h}-${f}`] = k;
+});
+const Q = [];
+Object.entries(HOME).forEach(([hf, k]) => {
+  const [h, f] = hf.split("-");
+  Q.push({t: `${+h ? "Sag" : "Çep"} eliň <b>${FING[f]}</b> barmagy esasy hatarda haýsy klawişe basýar?`, k});
+});
+ROWS.flat().forEach(([k, f, h, cls]) => {
+  if (f === 0 || (cls && (cls.includes("home") || cls.includes("wide")))) return;
+  if (!/^[A-Z]$/.test(k)) return;
+  Q.push({t: `«${k}» harpyny haýsy barmak basýar? Şol barmagyň <b>esasy hatardaky</b> klawişine bas.`,
+          k: HOME[`${h}-${f}`]});
+});
+let qi = 0, qok = 0, qord = [];
+function qnext() {
+  if (!qord.length) qord = Q.map((_, i) => i).sort(() => Math.random() - 0.5).slice(0, 8);
+  if (qi >= qord.length) {
+    $("task").textContent = "Tamamlandy";
+    $("qmsg").textContent = `Netije: ${qok} / ${qord.length}`;
+    $("qmsg").className = "msg ok";
+    return;
+  }
+  $("task").innerHTML = Q[qord[qi]].t;
+  $("qsc").textContent = `${qi} / ${qord.length}`;
+}
+function check(b) {
+  if (qi >= qord.length) return;
+  const good = b.dataset.k === Q[qord[qi]].k;
+  if (good) qok++;
+  $("qmsg").textContent = good ? "Dogry klawiş." : `Ýalňyş. Gerek klawiş – ${Q[qord[qi]].k}.`;
+  $("qmsg").className = good ? "msg ok" : "msg bad";
+  qi++; qnext();
+}
+$("qr").onclick = () => { qi = 0; qok = 0; qord = []; $("qmsg").textContent = ""; qnext(); };
+
+/* ---------------- boşluk ---------------- */
+const SP = [
+  ["Kitaby okadym , ol gyzykly eken .", 0, "Boşluk dyngy belgisiniň öňünden goýulmaýar."],
+  ["Kitaby okadym, ol gyzykly eken.", 1, "Dogry: boşluk diňe dyngy belgisiniň soňundan goýulýar."],
+  ["Kitaby okadym ,ol gyzykly eken.", 0, "Boşluk nädogry tarapda – dyngy belgisiniň soňundan goýulmaly."],
+  ["Kitaby okadym,ol gyzykly eken.", 0, "Dyngy belgisinden soň boşluk goýulmandyr."]
+];
+function sp() {
+  $("sp").innerHTML = SP.map((s, i) =>
+    `<button class="btn" data-sp="${i}" style="text-align:left">${s[0]}</button>`).join("");
+  $("sp").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const s = SP[+b.dataset.sp];
+    $("spmsg").textContent = s[2];
+    $("spmsg").className = s[1] ? "msg ok" : "msg bad";
+    $("sp").querySelectorAll("button").forEach(x => x.className = "btn");
+    b.className = "btn sel";
+  });
+}
+
+/* ---------------- abzas we surat ---------------- */
+let wrap = "in";
+const TXT = "Häzirki döwürde kompýuter maglumatlary işlemegiň esasy guralydyr. Maglumat " +
+  "kompýutere dürli gurluşlaryň kömegi bilen girizilýär. Şol gurluşlaryň biri hem klawiaturadyr. " +
+  "Tekst kompýuterde köplenç sözlemler görnüşinde girizilýär.";
+function doc() {
+  const ind = +$("ind").value;
+  $("indo").textContent = ind;
+  $("doc").className = "doc wrap-" + wrap;
+  $("doc").innerHTML =
+    `<p style="text-indent:${ind}px"><span class="pic">🏞</span>${TXT}</p>` +
+    `<p style="text-indent:${ind}px">Abzas tekstiň aýratyn manyly bölegi bolup, onuň birinji ` +
+    `setiriniň öňünde boş ýer goýulýar.</p>`;
+  $("wx").innerHTML = {
+    in: "<b>В тексте</b>: surat tekstiň içinde ýerleşýär, tekst onuň daşyndan aýlanýar.",
+    line: "Surat aýratyn setirde durýar, tekst onuň ýokarsyndan we aşagyndan geçýär.",
+    behind: "<b>За текстом</b>: surat tekstiň aňyrsynda galýar, harplar onuň üstünden ýazylýar."
+  }[wrap] + ` Abzasyň içerigi häzir <b>${ind} px</b>.`;
+  document.querySelectorAll("[data-w]").forEach(b =>
+    b.className = "btn" + (b.dataset.w === wrap ? " sel" : ""));
+}
+document.querySelectorAll("[data-w]").forEach(b =>
+  b.onclick = () => { wrap = b.dataset.w; doc(); });
+$("ind").addEventListener("input", doc);
+
+/* ---------------- jaý ---------------- */
+const FIG = [
+  ["Gönüburçluk", `<rect x="60" y="90" width="140" height="90" fill="#f0a0a0" stroke="#b02424" stroke-width="2"/>`],
+  ["Üçburçluk", `<polygon points="130,34 210,92 50,92" fill="#f7c6c6" stroke="#7a2ea8" stroke-width="2"/>`],
+  ["Ýyldyzjyk", `<polygon points="130,48 136,64 153,64 139,74 145,90 130,80 115,90 121,74 107,64 124,64"
+                  fill="#d81f26"/>`],
+  ["Penjire", `<rect x="150" y="118" width="34" height="34" fill="#ffd400" stroke="#8a6d00" stroke-width="2"/>
+               <path d="M167,118 V152 M150,135 H184" stroke="#8a6d00" stroke-width="2"/>`]
+];
+let on = [];
+function house() {
+  $("house").innerHTML = FIG.filter((_, i) => on.includes(i)).map(f => f[1]).join("");
+  $("figs").innerHTML = FIG.map(([n], i) =>
+    `<button class="btn${on.includes(i) ? " sel" : ""}" data-f="${i}">${on.includes(i) ? "✓ " : "+ "}${n}</button>`).join("");
+  $("figs").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.f;
+    on.includes(i) ? on.splice(on.indexOf(i), 1) : on.push(i);
+    house();
+  });
+  $("hmsg").textContent = on.length === FIG.length
+    ? "Ähli 4 figura goýuldy. Indi olary tapawutlandyryp, bir topara birikdirmek bolýar."
+    : `${on.length} / ${FIG.length} figura goýuldy.`;
+  $("hmsg").className = on.length === FIG.length ? "msg ok" : "msg";
+}
+
+kb(); qnext(); sp(); doc(); house();
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forumlar, çatlar, bloglar, sosial torlar — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .crumb { font-size: 13px; color: #93a2b5; margin-bottom: 8px; font-weight: 700; }
+  .crumb span { color: #2456b0; cursor: pointer; }
+  .list div.it { background: #f7fafd; border-radius: 11px; padding: 10px 11px; font-size: 14px;
+                 margin-bottom: 5px; cursor: pointer; display: flex; gap: 9px; align-items: center; }
+  .list .ic { flex: 0 0 30px; height: 30px; border-radius: 9px; background: #e3edfd; color: #2456b0;
+              text-align: center; line-height: 30px; font-size: 15px; }
+  .list small { display: block; font-size: 12.5px; color: #93a2b5; margin-top: 2px; }
+  .post { background: #fff; border: 2px solid #e6edf6; border-radius: 12px; padding: 11px;
+          margin-bottom: 6px; font-size: 14px; line-height: 1.55; }
+  .post .hd { font-size: 12px; color: #93a2b5; font-weight: 700; margin-bottom: 4px; }
+  .fld { display: flex; align-items: center; border-bottom: 1px solid #eef2f8; }
+  .fld label { width: 104px; flex: 0 0 auto; font-size: 13px; font-weight: 700; color: #5b6b80;
+               padding: 0 8px; }
+  .fld input, .fld select { flex: 1; border: none; padding: 11px 8px; font-size: 15px;
+                            font-family: inherit; min-width: 0; background: none; }
+  .fld input:focus { outline: none; background: #f7fafd; }
+  .fld.bad { background: #fdf0f0; }
+  .form { border: 2px solid #d6e0ee; border-radius: 12px; overflow: hidden; }
+  .rules { display: flex; flex-direction: column; gap: 5px; }
+  .r { font-size: 13.5px; color: #93a2b5; line-height: 1.45; }
+  .r.on { color: #1d7a3d; font-weight: 700; }
+  .cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .cmp div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px; }
+  .cmp b { color: #2456b0; display: block; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Forumlar, çatlar, bloglar we sosial torlar</h1>
+  <div class="sub">Internet torunda arabaglanyşyk · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Forumyň gurluşy: <b>bölümler → temalar → habarlar</b>. Aşakdan basyp,
+      içine gir.</div>
+    <div class="crumb" id="crumb"></div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <div class="card">
+    <h3>Deňeşdirme</h3>
+    <div class="cmp">
+      <div><b>Forum</b>Temalar boýunça ara alyp maslahatlaşmak. Habarlar uzak saklanýar.</div>
+      <div><b>Çat</b>Hakyky wagt kadasynda gürleşmek. Habarlar uzak saklanmaýar.</div>
+      <div><b>Blog</b>Tor gündeligi. Ýazgylar tersine tertipde durýar.</div>
+      <div><b>Mikroblog</b>140 simwola çenli gysga bellikler.</div>
+      <div><b>Internet-peýjer</b>Iş meselesinde çalt habarlaşmak üçin amatly.</div>
+      <div><b>Sosial tor</b>Adamlary umumy häsiýetnamalar boýunça birleşdirýär.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Saýtda hasaba durmak</h3>
+    <div class="goal">Meýdançalary doldur. Programma her kadany barlar.</div>
+    <div class="form">
+      <div class="fld" id="fAd"><label>Ady</label><input id="ad" placeholder="Ahmet"></div>
+      <div class="fld" id="fFam"><label>Familiýasy</label><input id="fam" placeholder="Garýagdyýew"></div>
+      <div class="fld" id="fLog"><label>Login</label><input id="log" placeholder="Sanjar12" spellcheck="false"></div>
+      <div class="fld" id="fPar"><label>Parol</label><input id="par" placeholder="6–12 belgi" spellcheck="false"></div>
+      <div class="fld" id="fPar2"><label>Paroly gaýtala</label><input id="par2" spellcheck="false"></div>
+      <div class="fld" id="fSor"><label>Kontrol sorag</label>
+        <select id="sor">
+          <option>Söýgüli mugallymyň ady?</option>
+          <option>Ilkinji kitabyň ady?</option>
+          <option>Doglan şäheriň?</option>
+        </select></div>
+      <div class="fld" id="fJog"><label>Jogap</label><input id="jog"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="reg">Зарегистрироваться</button>
+      <button class="btn" id="fill">Nusgany doldur</button>
+    </div>
+    <div class="msg" id="rx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barlag</h3>
+    <div class="rules" id="rules"></div>
+  </div>
+
+  <div class="card">
+    <h3>Tordaky edep kadalary</h3>
+    <div class="goal">Ýagdaýy oka we dogry hereketi saýla.</div>
+    <div class="post" id="sit"></div>
+    <div class="row" id="opts"></div>
+    <div class="msg" id="ex"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- forum ---------------- */
+const FORUM = [
+  { n: "Informatika", d: "Programmalaşdyrmak we kompýuter tehnologiýalary", t: [
+    { n: "Pascal-da setirler bilen işlemek", d: "6 habar", p: [
+      ["Merdan", "02.11.2021 17:44", "Setiri tersine öwürmek üçin haýsy usul has amatly?"],
+      ["Aýjemal", "02.11.2021 18:10", "Gaýtalanmany Length(s)-den 1-e çenli downto bilen ýöret."],
+      ["Mugallym", "02.11.2021 19:02", "Dogry. Copy funksiýany hem ulanyp bolýar, ýöne haýal bolýar."]
+    ] },
+    { n: "Elektron tablisada absolýut salgylanma", d: "4 habar", p: [
+      ["Selbi", "05.11.2021 09:20", "$ belgisi nirede goýulmaly?"],
+      ["Agahan", "05.11.2021 09:41", "Üýtgemeli däl bölegiň öňünde: $A1, A$1 ýa-da $A$1."]
+    ] }
+  ] },
+  { n: "Matematika", d: "Deňlemeler, funksiýalar we geometriýa", t: [
+    { n: "Geronyň formulasy", d: "3 habar", p: [
+      ["Ýsmaýyl", "12.11.2021 14:05", "Taraplary 12, 14 we 5 bolan üçburçlugyň meýdany näçe?"],
+      ["Medine", "12.11.2021 14:22", "p = 15,5, onda S ≈ 29 m²."]
+    ] }
+  ] },
+  { n: "Mekdep durmuşy", d: "Bäsleşikler, agşamlar we habarlar", t: [
+    { n: "Informatika agşamy", d: "2 habar", p: [
+      ["Nazar", "20.11.2021 11:00", "Agşam 12-nji dekabrda sagat 15:30-da geçiriler."]
+    ] }
+  ] }
+];
+let path = [];
+
+function forum() {
+  const C = $("crumb"), L = $("list");
+  const names = ["Forum"].concat(path.map((i, k) =>
+    k === 0 ? FORUM[path[0]].n : FORUM[path[0]].t[path[1]].n));
+  C.innerHTML = names.map((n, i) =>
+    i < names.length - 1 ? `<span data-k="${i}">${n}</span> › ` : n).join("");
+  C.querySelectorAll("span").forEach(s => s.onclick = () => { path = path.slice(0, +s.dataset.k); forum(); });
+
+  if (path.length === 0) {
+    L.innerHTML = FORUM.map((b, i) =>
+      `<div class="it" data-i="${i}"><span class="ic">📁</span><span>${b.n}<small>${b.d} · ${b.t.length} tema</small></span></div>`).join("");
+    L.querySelectorAll(".it").forEach(d => d.onclick = () => { path = [+d.dataset.i]; forum(); });
+  } else if (path.length === 1) {
+    L.innerHTML = FORUM[path[0]].t.map((t, i) =>
+      `<div class="it" data-i="${i}"><span class="ic">💬</span><span>${t.n}<small>${t.d}</small></span></div>`).join("");
+    L.querySelectorAll(".it").forEach(d => d.onclick = () => { path = [path[0], +d.dataset.i]; forum(); });
+  } else {
+    L.innerHTML = FORUM[path[0]].t[path[1]].p.map(([a, w, m]) =>
+      `<div class="post"><div class="hd">awtor: ${a} · ${w}</div>${m}</div>`).join("") +
+      `<div class="note">Habaryň sözbaşysynda <b>awtor, tema, mazmun we sene/wagt</b> saklanýar.</div>`;
+  }
+}
+
+/* ---------------- hasaba durmak ---------------- */
+const RULES = [
+  { t: "Ady we familiýasy doldurylan",
+    f: () => $("ad").value.trim().length >= 2 && $("fam").value.trim().length >= 2 },
+  { t: "Login saýlanan we ol iň gysga hem düşnükli",
+    f: () => /^[A-Za-z][A-Za-z0-9_]{2,15}$/.test($("log").value.trim()) },
+  { t: "Parol latyn harplaryndan we sifrlerden düzülen",
+    f: () => /^[A-Za-z0-9]+$/.test($("par").value) && /[A-Za-z]/.test($("par").value) && /\d/.test($("par").value) },
+  { t: "Parolyň uzynlygy 6–12 belgä çenli",
+    f: () => $("par").value.length >= 6 && $("par").value.length <= 12 },
+  { t: "Parol gaýtalanyp dogry ýazylan",
+    f: () => $("par").value.length > 0 && $("par").value === $("par2").value },
+  { t: "Parol logine meňzeş däl",
+    f: () => $("par").value.length > 0 &&
+             $("par").value.toLowerCase() !== $("log").value.trim().toLowerCase() },
+  { t: "Kontrol soraga jogap ýazylan",
+    f: () => $("jog").value.trim().length >= 2 }
+];
+function check() {
+  let ok = 0;
+  $("rules").innerHTML = "";
+  RULES.forEach(r => {
+    const p = r.f(); if (p) ok++;
+    const d = document.createElement("div");
+    d.className = "r" + (p ? " on" : "");
+    d.textContent = (p ? "✅ " : "○ ") + r.t;
+    $("rules").appendChild(d);
+  });
+  $("fPar").className = "fld" + (!$("par").value || (RULES[2].f() && RULES[3].f()) ? "" : " bad");
+  $("fPar2").className = "fld" + (!$("par2").value || RULES[4].f() ? "" : " bad");
+  $("fLog").className = "fld" + (!$("log").value || RULES[1].f() ? "" : " bad");
+  return ok;
+}
+$("reg").onclick = () => {
+  const ok = check();
+  if (ok < RULES.length) {
+    $("rx").textContent = `Hasaba alynmady: ${RULES.length - ok} sany kada berjaý edilmedik.`;
+    $("rx").className = "msg bad"; return;
+  }
+  $("rx").innerHTML = "✅ Hasaba alyndy. Indi telefona iberilen kod bilen «Активировать» " +
+    "buýrugy berilýär. Poçtaňyň parolyny bu ýerde gaýtalamak maslahat berilmeýär.";
+  $("rx").className = "msg ok";
+};
+$("fill").onclick = () => {
+  $("ad").value = "Ahmet"; $("fam").value = "Garýagdyýew";
+  $("log").value = "Sanjar12"; $("par").value = "Aman2021"; $("par2").value = "Aman2021";
+  $("jog").value = "Aýgül";
+  check();
+  $("rx").textContent = "Nusga doldurylan. Barlagyň ählisiniň ýaşyldygyny gör.";
+  $("rx").className = "msg ok";
+};
+["ad", "fam", "log", "par", "par2", "jog"].forEach(id => $(id).addEventListener("input", check));
+
+/* ---------------- edep kadalary ---------------- */
+const SITS = [
+  { s: "Çatda nätanyş adam seniň telefon belgiňi we öý salgyňy soraýar.",
+    o: ["Bermeýärin", "Berýärin"], a: 0,
+    x: "Dogry. Çatda, blogda we forumda täze gürrüňdeşiňe telefon belgiňi we öý salgyňy bermäge howlukmaly däl." },
+  { s: "Gürrüňdeşiň seni özi islemeýän arabaglanyşyga mejbur edýär.",
+    o: ["Dowam edýärin", "Elýeterliligini ýapýaryn"], a: 1,
+    x: "Dogry. Şeýle ýagdaýda gürrüňdeşiň saňa elýeterliligini ýapmaly." },
+  { s: "Forumda gürrüňdeşiňe gödek jogap ýazasyň gelýär.",
+    o: ["Edepli ýazýaryn", "Gödek ýazýaryn"], a: 0,
+    x: "Dogry. Gürrüňdeşlikde edepli bolmaly – tordaky kadalar hakyky durmuşdakylara meňzeşdir." },
+  { s: "Sosial saýtda 8 Mb möçberli surat goýmakçy bolýarsyň.",
+    o: ["Möçberini kiçeldýärin", "Şol durşuna goýýaryn"], a: 0,
+    x: "Dogry. Suratyň möçberi 5 Mb-den geçmeli däldir." }
+];
+let si = 0;
+function sit() {
+  const s = SITS[si];
+  $("sit").innerHTML = `<div class="hd">${si + 1} / ${SITS.length}</div>${s.s}`;
+  $("opts").innerHTML = s.o.map((o, i) => `<button class="btn" data-o="${i}">${o}</button>`).join("");
+  $("opts").querySelectorAll("button").forEach(b => b.onclick = () => {
+    if (+b.dataset.o === s.a) {
+      $("ex").textContent = s.x; $("ex").className = "msg ok";
+      si = (si + 1) % SITS.length;
+      setTimeout(sit, 900);
+    } else {
+      $("ex").textContent = "Beýle etmek dogry däl. Ýene bir gezek pikirlen.";
+      $("ex").className = "msg bad";
+    }
+  });
+}
+
+forum(); check(); sit();
+</script>
+</body>
+</html>

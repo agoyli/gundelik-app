@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reňk shemasy we ülňüler — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .deck { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .slide { flex: 0 0 168px; height: 108px; border-radius: 10px; padding: 10px;
+           display: flex; flex-direction: column; justify-content: center; cursor: pointer;
+           border: 3px solid transparent; }
+  .slide.on { border-color: #2456b0; }
+  .slide .st { font-weight: 800; font-size: 13px; line-height: 1.25; }
+  .slide .sb { font-size: 10.5px; margin-top: 4px; opacity: .85; }
+  .big { border-radius: 14px; padding: 22px; min-height: 190px;
+         display: flex; flex-direction: column; justify-content: center; }
+  .big .st { font-weight: 800; font-size: 24px; line-height: 1.2; }
+  .big .sb { font-size: 15px; margin-top: 10px; line-height: 1.5; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 8px; }
+  .opt { border-radius: 12px; padding: 9px; cursor: pointer; border: 3px solid transparent;
+         font-size: 12.5px; font-weight: 700; text-align: center; }
+  .opt.on { border-color: #2456b0; }
+  .chips { display: flex; gap: 5px; justify-content: center; margin-top: 6px; }
+  .chip { width: 17px; height: 17px; border-radius: 50%; }
+  .ratio { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Reňk shemasy we ülňüler</h1>
+  <div class="sub">Дизайн → Темы, Дизайн → Цвета · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Ülňi (tema) slaýdyň bezegini, reňk shemasy bolsa ondaky reňkleriň
+      utgaşmasyny berýär. Saýla we üýtgeşmäni gör.</div>
+    <div class="big" id="big">
+      <div class="st" id="bt">Türkmenistanyň daglary</div>
+      <div class="sb" id="bs">Köpetdag, Köýtendag we Uly Balkan – ýurdumyzyň esasy dag ulgamlarydyr.</div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="badge" id="verdict"></span>
+      <span class="score ratio" id="cr"></span>
+    </div>
+    <div class="note" id="tip"></div>
+  </div>
+
+  <div class="card">
+    <h3>Bezegiň ülňüleri (Темы)</h3>
+    <div class="opts" id="themes"></div>
+  </div>
+
+  <div class="card">
+    <h3>Reňk shemasy (Цвета)</h3>
+    <div class="opts" id="schemes"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="applyAll">Ähli slaýdlara ulan</button>
+      <span class="score" id="applied"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Prezentasiýanyň slaýdlary</h3>
+    <div class="deck" id="deck"></div>
+    <div class="note">Ülňi diňe bir slaýda däl, <b>ähli slaýdlara</b> ulanylanda prezentasiýa
+      bitewi görünýär.</div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Ýazgylaryň ýerleşişi, ölçegi, şrifti we reňki ýaly parametrler boýunça saýlanyp alnan
+      elementleriň toplumyna <b>bezegiň ülňüleri</b> diýilýär. Her ülňi üçin birnäçe reňkleriň
+      utgaşmasy bar – oňa <b>reňk shemasy</b> diýilýär. Tekst düşegiň üstünde aňsat okalmalydyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const THEMES = {
+  "Ýönekeý":  { bg: "#ffffff", font: "system-ui, sans-serif" },
+  "Gök tolkun": { bg: "linear-gradient(135deg,#123a6b,#2456b0)", font: "system-ui, sans-serif" },
+  "Çäge":     { bg: "linear-gradient(135deg,#f7e2bd,#e8c88a)", font: "Georgia, serif" },
+  "Gije":     { bg: "linear-gradient(135deg,#101826,#243449)", font: "system-ui, sans-serif" },
+  "Ýaşyl meýdan": { bg: "linear-gradient(135deg,#dff2e2,#a9dcb6)", font: "Georgia, serif" }
+};
+const SCHEMES = {
+  "Klassyky": { t: "#1e2a3a", s: "#3d4f66", chips: ["#1e2a3a", "#3d4f66", "#2456b0"] },
+  "Ak":       { t: "#ffffff", s: "#e8eef7", chips: ["#ffffff", "#e8eef7", "#c9d8ee"] },
+  "Gyzyl":    { t: "#8e1f1f", s: "#b02424", chips: ["#8e1f1f", "#b02424", "#e2574c"] },
+  "Ýaşyl":    { t: "#12522a", s: "#1d7a3d", chips: ["#12522a", "#1d7a3d", "#3da865"] },
+  "Sary":     { t: "#f0d060", s: "#f7e6a0", chips: ["#f0d060", "#f7e6a0", "#fff4c9"] }
+};
+let theme = "Gök tolkun", scheme = "Ak", allSlides = false;
+const SLIDES = [
+  ["Türkmenistanyň daglary", "Köpetdag, Köýtendag we Uly Balkan"],
+  ["Köpetdag", "Ýurduň günorta serhedi boýunça uzalyp gidýär"],
+  ["Köýtendag", "Türkmenistanyň iň beýik nokady şu ýerde"],
+  ["Netije", "Daglar ýurdumyzyň tebigy baýlygydyr"]
+];
+
+// relative luminance → contrast ratio (WCAG), so the "okalýarmy?" verdict is real
+function lum(hex) {
+  const c = hex.replace("#", "");
+  const v = [0, 2, 4].map(i => {
+    const s = parseInt(c.substr(i, 2), 16) / 255;
+    return s <= .03928 ? s / 12.92 : Math.pow((s + .055) / 1.055, 2.4);
+  });
+  return .2126 * v[0] + .7152 * v[1] + .0722 * v[2];
+}
+function contrast(a, b) {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + .05) / (y + .05);
+}
+// approximate the gradient background by its first colour stop
+function bgColor(t) { const m = THEMES[t].bg.match(/#[0-9a-f]{6}/i); return m ? m[0] : "#ffffff"; }
+
+function build(box, obj, cur, cb, chips) {
+  box.innerHTML = "";
+  Object.keys(obj).forEach(k => {
+    const d = document.createElement("div");
+    d.className = "opt" + (k === cur ? " on" : "");
+    if (chips) {
+      d.style.background = "#f7fafd";
+      d.innerHTML = k + '<div class="chips">' +
+        obj[k].chips.map(c => `<span class="chip" style="background:${c}"></span>`).join("") + "</div>";
+    } else {
+      d.style.background = obj[k].bg;
+      d.style.color = lum(bgColor(k)) > .5 ? "#1e2a3a" : "#fff";
+      d.textContent = k;
+    }
+    d.onclick = () => { cb(k); render(); };
+    box.appendChild(d);
+  });
+}
+
+function render() {
+  const th = THEMES[theme], sc = SCHEMES[scheme];
+  const B = $("big");
+  B.style.background = th.bg; B.style.fontFamily = th.font;
+  $("bt").style.color = sc.t; $("bs").style.color = sc.s;
+
+  const ratio = contrast(bgColor(theme), sc.t);
+  const ok = ratio >= 4.5, mid = ratio >= 3;
+  $("verdict").className = "badge " + (ok ? "ok" : mid ? "warn" : "bad");
+  $("verdict").textContent = ok ? "Tekst gowy okalýar" : mid ? "Okamak kynrak" : "Tekst okalmaýar";
+  $("cr").textContent = `Tapawut: ${ratio.toFixed(1)} : 1`;
+  $("tip").innerHTML = ok
+    ? "Sözbaşynyň reňki düşegiň reňkinden ýeterlik tapawutlanýar – diňleýjiler arkadan hem okap bilerler."
+    : "Reňkleri saýlanyňda tekstiň düşegiň üstünde okalyşyna üns ber. Açyk düşege goýy tekst, goýy düşege açyk tekst gerek.";
+
+  build($("themes"), THEMES, theme, k => theme = k, false);
+  build($("schemes"), SCHEMES, scheme, k => scheme = k, true);
+
+  const D = $("deck"); D.innerHTML = "";
+  SLIDES.forEach(([t, s], i) => {
+    const d = document.createElement("div");
+    const applied = allSlides || i === 0;
+    d.className = "slide" + (i === 0 ? " on" : "");
+    d.style.background = applied ? th.bg : "#fff";
+    d.style.fontFamily = applied ? th.font : "system-ui, sans-serif";
+    d.innerHTML = `<div class="st" style="color:${applied ? sc.t : "#1e2a3a"}">${t}</div>
+                   <div class="sb" style="color:${applied ? sc.s : "#5b6b80"}">${s}</div>`;
+    D.appendChild(d);
+  });
+  $("applied").textContent = allSlides
+    ? `Ülňi ${SLIDES.length} slaýdyň ählisine ulanyldy`
+    : "Ülňi häzir diňe 1-nji slaýda ulanylan";
+}
+
+$("applyAll").onclick = () => { allSlides = true; render(); };
+render();
+</script>
+</body>
+</html>

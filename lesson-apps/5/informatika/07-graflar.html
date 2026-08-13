@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graflar — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  svg { touch-action: none; background: #f7fafd; border-radius: 12px; }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .stat { background: #eaf1fb; border-radius: 10px; padding: 8px 11px; font-size: 13.5px; font-weight: 700; color: #2456b0; }
+  .modes { display: flex; gap: 8px; }
+  .modes .btn { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Graf gur</h1>
+  <div class="sub">Depeler, gapyrgalar, dugalar we marşrutlar · Informatika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal" id="goal"></div>
+    <svg id="board" viewBox="0 0 420 280"></svg>
+    <div class="stats" id="stats"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Iş görnüşi</h3>
+    <div class="modes">
+      <button class="btn sel" id="mBuild">Gur</button>
+      <button class="btn" id="mRoute">Marşrut</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="dirBtn">Gapyrga (ugry kesgitlenmedik)</button>
+      <button class="btn ghost" id="clearBtn">Arassala</button>
+      <button class="btn ghost" id="demoBtn">Kitapdaky mysal</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Grafyň nokatlaryna <b>depeleri</b>, çyzyklaryna <b>gapyrgalary</b> diýilýär. Ugur görkezijili çyzyklara <b>dugalar</b> diýilýär.
+      Depeden çykyp, özüne birigýän çyzyga <b>petle</b> diýilýär.
+      Depeleriň we gapyrgalaryň yzygiderligine <b>marşrut</b>, gapyrgalarynyň mukdaryna onuň <b>uzynlygy</b> diýilýär.
+      Hemme depeleri dürli bolan marşruta <b>ýönekeý zynjyr</b>, başky we ahyrky depesi gabat gelýän zynjyra <b>gaýtalanma (sikl)</b> diýilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const SVG = document.getElementById("board");
+const NAMES = "ABÇDEFGH".split("");
+let nodes = [], edges = [], directed = false, mode = "build";
+let pending = null, route = [];
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+function msg(t, cls) { const m = document.getElementById("msg"); m.innerHTML = t; m.className = "msg" + (cls ? " " + cls : ""); }
+
+function hasEdge(i, j) {
+  return edges.some(e => (e.a === i && e.b === j) || (!e.dir && e.a === j && e.b === i));
+}
+
+function render() {
+  SVG.innerHTML = "";
+  const defs = el("defs", {});
+  const mk = el("marker", { id: "arw", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse" });
+  mk.appendChild(el("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#5b6b80" }));
+  defs.appendChild(mk); SVG.appendChild(defs);
+
+  edges.forEach((e, k) => {
+    const A = nodes[e.a], B = nodes[e.b];
+    const inRoute = routeHasEdge(e.a, e.b);
+    const col = inRoute ? "#e2574c" : "#5b6b80";
+    if (e.a === e.b) {   // petle
+      SVG.appendChild(el("path", {
+        d: `M ${A.x - 12} ${A.y - 16} a 22 22 0 1 1 24 0`,
+        fill: "none", stroke: col, "stroke-width": inRoute ? 4 : 3
+      }));
+    } else {
+      SVG.appendChild(el("line", {
+        x1: A.x, y1: A.y, x2: B.x, y2: B.y, stroke: col,
+        "stroke-width": inRoute ? 5 : 3,
+        "marker-end": e.dir ? "url(#arw)" : null
+      }));
+    }
+  });
+
+  nodes.forEach((n, i) => {
+    const inR = route.includes(i);
+    const g = el("g", { class: "node", "data-i": i, style: "cursor:pointer" });
+    g.appendChild(el("circle", {
+      cx: n.x, cy: n.y, r: 20,
+      fill: pending === i ? "#ffb340" : inR ? "#fbe2c9" : "#fff",
+      stroke: inR ? "#e2574c" : "#2456b0", "stroke-width": 3
+    }));
+    const t = el("text", { x: n.x, y: n.y + 6, "text-anchor": "middle", "font-size": 16, "font-weight": 800, fill: "#1e2a3a" });
+    t.textContent = NAMES[i];
+    g.appendChild(t);
+    SVG.appendChild(g);
+  });
+
+  renderStats();
+  document.getElementById("goal").innerHTML = mode === "build"
+    ? "Boş ýere bas — <b>depe</b> goşulýar. Iki depä yzly-yzyna bas — <b>gapyrga</b> çyzylýar. Bir depä iki gezek bas — <b>petle</b>."
+    : "Depelere yzygiderli bas — <b>marşrut</b> gurulýar. Diňe birikdirilen depelere geçip bolýar.";
+}
+
+function routeHasEdge(a, b) {
+  for (let i = 0; i + 1 < route.length; i++)
+    if ((route[i] === a && route[i + 1] === b) || (route[i] === b && route[i + 1] === a)) return true;
+  return false;
+}
+
+function renderStats() {
+  const loops = edges.filter(e => e.a === e.b).length;
+  const anyDir = edges.some(e => e.dir);
+  const s = document.getElementById("stats");
+  s.innerHTML = "";
+  const add = t => { const d = document.createElement("span"); d.className = "stat"; d.textContent = t; s.appendChild(d); };
+  add(`Depe: ${nodes.length}`);
+  add(`${anyDir ? "Duga" : "Gapyrga"}: ${edges.length}`);
+  if (loops) add(`Petle: ${loops}`);
+  add(anyDir ? "Ugry kesgitlenen graf" : "Ugry kesgitlenmedik graf");
+  if (route.length > 1) {
+    const len = route.length - 1;
+    const uniq = new Set(route).size === route.length;
+    const cycle = route.length > 2 && route[0] === route[route.length - 1] &&
+      new Set(route.slice(0, -1)).size === route.length - 1;
+    add(`Marşrut: ${route.map(i => NAMES[i]).join(" – ")}`);
+    add(`Uzynlygy: ${len}`);
+    if (cycle) add("Gaýtalanma (sikl)");
+    else if (uniq) add("Ýönekeý zynjyr");
+  }
+}
+
+SVG.addEventListener("click", e => {
+  const r = SVG.getBoundingClientRect();
+  const x = (e.clientX - r.left) * (420 / r.width);
+  const y = (e.clientY - r.top) * (280 / r.height);
+  const hitIdx = nodes.findIndex(n => Math.hypot(n.x - x, n.y - y) < 24);
+
+  if (mode === "route") {
+    if (hitIdx < 0) return;
+    if (route.length === 0) { route = [hitIdx]; msg(`Marşrut ${NAMES[hitIdx]} depesinden başlandy.`, "ok"); }
+    else {
+      const last = route[route.length - 1];
+      if (!hasEdge(last, hitIdx) && !hasEdge(hitIdx, last)) {
+        msg(`${NAMES[last]} bilen ${NAMES[hitIdx]} depeleriniň arasynda gapyrga ýok.`, "bad");
+        render(); return;
+      }
+      route.push(hitIdx);
+      msg("");
+    }
+    render();
+    return;
+  }
+
+  if (hitIdx < 0) {
+    if (nodes.length >= 8) { msg("8 depeden köp goşup bolmaýar.", "bad"); return; }
+    nodes.push({ x, y });
+    pending = null;
+    msg(`${NAMES[nodes.length - 1]} depesi goşuldy.`, "ok");
+  } else if (pending === null) {
+    pending = hitIdx;
+    msg(`${NAMES[hitIdx]} saýlandy. Indi ikinji depä bas.`, "");
+  } else {
+    if (hasEdge(pending, hitIdx)) msg("Bu depeler eýýäm birikdirilen.", "bad");
+    else {
+      edges.push({ a: pending, b: hitIdx, dir: directed });
+      msg(pending === hitIdx ? "Petle döredildi!" :
+        `${NAMES[pending]} – ${NAMES[hitIdx]} ${directed ? "dugasy" : "gapyrgasy"} çyzyldy.`, "ok");
+    }
+    pending = null;
+  }
+  render();
+});
+
+document.getElementById("dirBtn").onclick = () => {
+  directed = !directed;
+  document.getElementById("dirBtn").textContent = directed
+    ? "Duga (ugry kesgitlenen)" : "Gapyrga (ugry kesgitlenmedik)";
+  document.getElementById("dirBtn").classList.toggle("sel", directed);
+};
+document.getElementById("clearBtn").onclick = () => {
+  nodes = []; edges = []; route = []; pending = null; msg(""); render();
+};
+document.getElementById("demoBtn").onclick = () => {
+  // book example: 4 cities, 6 roads
+  nodes = [{ x: 90, y: 70 }, { x: 320, y: 70 }, { x: 90, y: 210 }, { x: 320, y: 210 }];
+  edges = [{ a: 0, b: 1 }, { a: 0, b: 2 }, { a: 0, b: 3 }, { a: 1, b: 2 }, { a: 1, b: 3 }, { a: 2, b: 3 }]
+    .map(e => ({ ...e, dir: false }));
+  route = []; pending = null;
+  msg("Dört şäher, alty ýol — kitapdaky mysal. Şäherler — depeler, ýollar — gapyrgalar.", "ok");
+  render();
+};
+document.getElementById("mBuild").onclick = () => {
+  mode = "build"; route = [];
+  document.getElementById("mBuild").classList.add("sel");
+  document.getElementById("mRoute").classList.remove("sel");
+  msg(""); render();
+};
+document.getElementById("mRoute").onclick = () => {
+  mode = "route"; route = []; pending = null;
+  document.getElementById("mRoute").classList.add("sel");
+  document.getElementById("mBuild").classList.remove("sel");
+  msg(""); render();
+};
+
+document.getElementById("demoBtn").click();
+</script>
+</body>
+</html>

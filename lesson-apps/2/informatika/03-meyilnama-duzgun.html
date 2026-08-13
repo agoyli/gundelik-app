@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meýilnama we düzgün — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 23px; }
+  .pool { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pool button { min-height: 60px; font-size: 14.5px; line-height: 1.35; }
+  .plan { background: #f7fafd; border-radius: 14px; padding: 10px; min-height: 60px;
+          counter-reset: p; }
+  .plan span { display: block; background: #fff; border-radius: 10px; padding: 8px 10px;
+               font-size: 14.5px; margin-bottom: 5px; counter-increment: p; }
+  .plan span::before { content: counter(p) ". "; color: #2456b0; font-weight: 800; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+  .bin { background: #f7fafd; border-radius: 14px; padding: 10px; min-height: 84px; }
+  .bin h4 { margin: 0 0 6px; font-size: 14.5px; }
+  .bin span { display: block; background: #fff; border-radius: 10px; padding: 6px 9px;
+              font-size: 13.5px; margin-bottom: 5px; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 15.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Meýilnama we düzgün</h1>
+  <div class="sub">Informatika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="goal"><b>Meýilnama</b> hereketiň <b>tertip boýunça yzygiderli ýerine
+      ýetirilmegidir.</b> Dogry düzülen meýilnama islendik işi ýerine ýetirmegiň esasy
+      şertidir.</div>
+    <div class="hint">Gün tertibiniň meýilnamalaşdyrylyşy <b>wagtyňy tygşytlaýar</b>.
+      Jikme-jik, dürs we anyk berlen meýilnama <b>algoritm</b> diýip bolar:
+      <b>algoritm – netije gazanmak üçin ýerine ýetirilmegi zerur bolan hereketleriň
+      yzygiderligi</b>.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ertirlik meýilnamasyny düz</h3>
+    <div class="goal">Işleri dogry tertipde saýla – birinjiden başlap.</div>
+    <div class="pool" id="pool"></div>
+    <div class="sub" style="margin:10px 0 5px">Meýilnamaň:</div>
+    <div class="plan" id="plan"></div>
+    <div class="msg" id="msg"></div>
+    <button class="btn ghost" id="rs" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Meýilnamamy ýa-da düzgün?</h3>
+    <div class="goal">Ýazga bas – ol öz sütünine geçsin.</div>
+    <div class="pool" id="pool2"></div>
+    <div class="bins">
+      <div class="bin"><h4 style="color:#2456b0">📋 Meýilnama</h4><div id="bp"></div></div>
+      <div class="bin"><h4 style="color:#6a4bb8">📏 Düzgün</h4><div id="bd"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 2-nji synp · III bölüm, sah. 29–31</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- tertip ---------------- */
+const STEPS = [
+  "Ir oýanmak", "Ýuwunmak", "Düşegi tertiplemek", "Ertirlik iýmek",
+  "Mekdep eşigini geýmek", "Portfeli almak", "Öýden çykmak",
+];
+let bank = [], chosen = [];
+function order() {
+  bank = STEPS.map((s, i) => i).sort(() => Math.random() - 0.5);
+  chosen = [];
+  $("msg").textContent = ""; $("msg").className = "msg";
+  renderO();
+}
+function renderO() {
+  $("pool").innerHTML = bank.map(i =>
+    `<button class="btn" data-i="${i}">${STEPS[i]}</button>`).join("") ||
+    "<span class='hint' style='margin:0'>Ählisi saýlanyldy 🎉</span>";
+  $("plan").innerHTML = chosen.map(i => `<span>${STEPS[i]}</span>`).join("") ||
+    "<span style='background:none;color:#93a2b5'>heniz boş</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (i !== chosen.length) {
+      $("msg").textContent = `❌ Bu heniz däl. Ilki «${STEPS[chosen.length]}» gelmeli.`;
+      $("msg").className = "msg bad";
+      return;
+    }
+    chosen.push(i);
+    bank = bank.filter(x => x !== i);
+    $("msg").textContent = bank.length
+      ? `✅ Dogry! Ýene ${bank.length} iş galdy.`
+      : "🎉 Meýilnama doly we dogry düzüldi!";
+    $("msg").className = "msg ok";
+    renderO();
+  });
+}
+$("rs").onclick = order;
+
+/* ---------------- meýilnama / düzgün ---------------- */
+const ITEMS = [
+  ["Sapak tertibi", "p"],
+  ["Ertirlik meýilnamasy", "p"],
+  ["Baýramçylyk çäresiniň sanawy", "p"],
+  ["Ýoly ýaşyl çyrada geçmeli", "d"],
+  ["Otagda ylgamaly däl", "d"],
+  ["Simlere el degirmeli däl", "d"],
+];
+let left = [];
+function bins() {
+  left = ITEMS.map((_, i) => i);
+  $("bp").innerHTML = ""; $("bd").innerHTML = "";
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  pool2();
+}
+function pool2() {
+  $("pool2").innerHTML = left.map(i =>
+    `<button class="btn" data-i="${i}">${ITEMS[i][0]}</button>`).join("") ||
+    "<span class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</span>";
+  $("pool2").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [txt, kind] = ITEMS[i];
+    $(kind === "p" ? "bp" : "bd").innerHTML += `<span>${txt}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").textContent = kind === "p"
+      ? "✅ Bu meýilnama – ol işleriň tertibini görkezýär."
+      : "✅ Bu düzgün – ol nämäni etmelidigini aýdýar.";
+    $("bmsg").className = "msg ok";
+    pool2();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Meýilnama näme görkezýär?", ["Işleriň tertibini", "Enjamyň bahasyny", "Otagyň ölçegini"], 0],
+  ["Aşakdakylaryň haýsysy düzgün?",
+   ["Sapak tertibi", "Ýoly ýaşyl çyrada geçmeli", "Depderiň sany"], 1],
+  ["Meýilnama näme üçin gerek?",
+   ["Oýnamak üçin", "Ýatmak üçin", "Işleri wagtynda etmek üçin"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+order(); bins();
+</script>
+</body>
+</html>

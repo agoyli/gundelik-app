@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antiwirus programmalar — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .disk { display: flex; flex-direction: column; gap: 6px; }
+  .f { display: flex; align-items: center; gap: 9px; background: #f7fafd; border-radius: 11px;
+       padding: 10px 12px; font-size: 14px; transition: background .25s; }
+  .f.scan { background: #e3edfd; }
+  .f.clean { background: #e0f5e6; }
+  .f.bad { background: #fbe3e3; }
+  .f .nm { flex: 1; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
+  .f .st { font-size: 12.5px; font-weight: 700; color: #93a2b5; }
+  .f.clean .st { color: #1d7a3d; } .f.bad .st { color: #b02424; }
+  .sig { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+         background: #1e2a3a; color: #9be08a; border-radius: 8px; padding: 3px 7px; }
+  .db { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .bar { height: 10px; border-radius: 999px; background: #e8eef7; overflow: hidden; margin: 10px 0; }
+  .bar i { display: block; height: 100%; background: #2456b0; width: 0; transition: width .12s linear; }
+  .choice { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
+  .old { background: #fdeee0; color: #7a3f0c; border-radius: 12px; padding: 11px 13px;
+         font-size: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Antiwirus programmalar</h1>
+  <div class="sub">Skaner, signatura, bazalary täzelemek · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Antiwirus wirusy <b>signatura</b> boýunça tanaýar. Diski barla –
+      programma her faýlyň alamatlaryny bazadaky signaturalar bilen deňeşdirer.</div>
+    <div class="disk" id="disk"></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="row">
+      <button class="btn primary" id="scan">🔍 Skaneri işe goýber</button>
+      <button class="btn ghost" id="reset">Täzeden</button>
+      <span class="score" id="score"></span>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="choice" id="choice"></div>
+  </div>
+
+  <div class="card">
+    <h3>Antiwirus bazasy</h3>
+    <div class="goal">Bazada näçe signatura bar bolsa, şonça-da wirus tanalýar.</div>
+    <div class="db" id="db"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="update">⬇ Bazalary täzele</button>
+      <span class="score" id="ver"></span>
+    </div>
+    <div class="old" id="old" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Antiwirusyň iki işi</h3>
+    <table><tbody>
+      <tr><td style="font-weight:700;width:44%">Hemişelik gorag</td>
+          <td>Programma elmydama ýatdaky prosesleri barlap durýar.</td></tr>
+      <tr><td style="font-weight:700">Antiwirus skaneri</td>
+          <td>Ulanyjynyň buýrugy boýunça operatiw ýady we diskleri barlaýar.</td></tr>
+    </tbody></table>
+    <div class="note">Giň ýaýran antiwirus programmalar: <b>Kaspersky</b>, <b>Dr. Web</b>, <b>NOD32</b>.
+      Bir kompýuterde birnäçe toplumlaýyn antiwirus programmany bile ulanmak maslahat berilmeýär.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+// each file carries an "alamat" (signature-like marker); infected ones match a base entry
+const FILES = [
+  { n: "hasabat.docx",   sig: "—",       bad: false },
+  { n: "oyun.exe",       sig: "A17-F3",  bad: true, since: 1 },
+  { n: "surat.bmp",      sig: "—",       bad: false },
+  { n: "autorun.inf",    sig: "B02-C9",  bad: true, since: 1 },
+  { n: "birinji.pas",    sig: "—",       bad: false },
+  { n: "hat.docm",       sig: "M44-E1",  bad: true, since: 2 },
+  { n: "sazlama.txt",    sig: "—",       bad: false },
+  { n: "taze.scr",       sig: "Z91-K7",  bad: true, since: 3 }
+];
+const BASES = [
+  { v: 1, sigs: ["A17-F3", "B02-C9"] },
+  { v: 2, sigs: ["A17-F3", "B02-C9", "M44-E1"] },
+  { v: 3, sigs: ["A17-F3", "B02-C9", "M44-E1", "Z91-K7"] }
+];
+let base = 0, state = FILES.map(() => ""), scanning = false, found = [];
+
+function msg(t, cls) { $("msg").textContent = t; $("msg").className = "msg" + (cls ? " " + cls : ""); }
+
+function render() {
+  const D = $("disk"); D.innerHTML = "";
+  FILES.forEach((f, i) => {
+    const d = document.createElement("div");
+    d.className = "f " + state[i];
+    const st = state[i] === "clean" ? "arassa" : state[i] === "bad" ? "⚠ zäherlenen"
+             : state[i] === "scan" ? "barlanýar…" : "barlanmadyk";
+    d.innerHTML = `<span>${state[i] === "bad" ? "🦠" : "📄"}</span>
+                   <span class="nm">${f.n}</span>
+                   <span class="st">${st}</span>`;
+    D.appendChild(d);
+  });
+  const B = $("db"); B.innerHTML = "";
+  BASES[base].sigs.forEach(s => B.innerHTML += `<span class="sig">${s}</span>`);
+  $("ver").textContent = `Baza görnüşi: ${BASES[base].v} · ${BASES[base].sigs.length} signatura`;
+
+  const miss = FILES.filter(f => f.bad && !BASES[base].sigs.includes(f.sig)).length;
+  $("old").innerHTML = miss
+    ? `⚠️ Bazada ýok signaturaly <b>${miss}</b> sany zyýanly faýl bar – köne baza olary tanap
+       bilmeýär. Şonuň üçin antiwirus bazalary hemişe täzelenmäge mätäçdir.`
+    : "✅ Baza doly – häzirki diskdäki ähli zyýanly faýllary tanap bilýär.";
+}
+
+$("scan").onclick = () => {
+  if (scanning) return;
+  scanning = true; found = [];
+  state = FILES.map(() => ""); render();
+  msg("Skaner işleýär: operatiw ýat we gaty disk barlanýar…", "ok");
+  $("choice").innerHTML = "";
+  let i = 0;
+  const step = () => {
+    if (i > 0) {
+      const f = FILES[i - 1];
+      const known = BASES[base].sigs.includes(f.sig);
+      state[i - 1] = f.bad && known ? "bad" : "clean";
+      if (f.bad && known) found.push(i - 1);
+    }
+    if (i < FILES.length) state[i] = "scan";
+    $("prog").style.width = (i / FILES.length * 100) + "%";
+    render();
+    if (i++ < FILES.length) setTimeout(step, 420);
+    else finish();
+  };
+  step();
+};
+
+function finish() {
+  scanning = false;
+  $("prog").style.width = "100%";
+  $("score").textContent = `Tapyldy: ${found.length} sany şübheli obýekt`;
+  if (!found.length) { msg("Barlag tamamlandy. Şübheli obýekt tapylmady.", "ok"); return; }
+  msg(`Barlag tamamlandy. ${found.length} sany zyýanly obýekt tapyldy. Näme etmeli?`, "bad");
+  const C = $("choice"); C.innerHTML = "";
+  [["Dikeltmek (bejermek)", "Faýl bejerildi we ýerinde galdy."],
+   ["Ýok etmek", "Zäherlenen faýl diskden aýryldy."],
+   ["Arasyna ýerleşdirmek", "Faýl karantine geçirildi – ol indi işläp bilmeýär."]].forEach(([l, w]) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = l;
+    b.onclick = () => {
+      found.forEach(i => state[i] = "clean");
+      found = []; render();
+      msg(w + " Disk arassalandy. ✅", "ok");
+      C.innerHTML = "";
+      $("score").textContent = "Disk arassa";
+    };
+    C.appendChild(b);
+  });
+}
+
+$("update").onclick = () => {
+  if (base >= BASES.length - 1) { msg("Baza eýýäm iň täze görnüşde.", "ok"); return; }
+  base++;
+  msg(`Bazalar täzelendi. Indi ${BASES[base].sigs.length} signatura bar – täze wiruslar hem tanalar.`, "ok");
+  render();
+};
+
+$("reset").onclick = () => {
+  base = 0; state = FILES.map(() => ""); found = [];
+  $("prog").style.width = "0"; $("choice").innerHTML = "";
+  $("score").textContent = ""; msg(""); render();
+};
+
+render();
+</script>
+</body>
+</html>

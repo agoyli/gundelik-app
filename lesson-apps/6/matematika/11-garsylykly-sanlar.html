@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garşylykly sanlar — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px 6px; overflow-x: auto; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .pairs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sets { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+  .set { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13px;
+         line-height: 1.6; }
+  .set b { color: #2456b0; display: block; margin-bottom: 3px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Garşylykly sanlar. Bitin sanlar</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Bir-birinden diňe <b>alamaty</b> bilen tapawutlanýan iki sana
+      <b>garşylykly sanlar</b> diýilýär. Olar noldan deň uzaklykda, dürli taraplarda durýar.</div>
+    <div class="stage" id="ax"></div>
+    <div class="slider"><span class="lbl">a sany</span>
+      <input type="range" id="a" min="-70" max="70" value="40"><span class="out" id="ao"></span></div>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="card">
+    <h3>−(−a) = a</h3>
+    <div class="goal">Alamaty iki gezek üýtgetseň, san öz ýerine dolanýar. Düwmä basyp gör.</div>
+    <div style="text-align:center;font-family:ui-monospace,Menlo,monospace;font-size:26px;
+                font-weight:800;color:#2456b0;margin:10px 0" id="chain"></div>
+    <div class="row" style="justify-content:center">
+      <button class="btn primary" id="flip">Alamaty üýtget</button>
+      <button class="btn ghost" id="reset">Başdan</button>
+    </div>
+    <div class="msg" id="fmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Garşylykly jübütleri tap</h3>
+    <div class="goal">Iki sana yzly-yzyna bas – olar garşylykly bolsa, jübüt aýrylýar.</div>
+    <div class="pairs" id="pool"></div>
+    <div class="msg" id="pmsg"></div>
+    <button class="btn ghost" id="pr">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Sanlaryň toparlary</h3>
+    <div class="sets">
+      <div class="set"><b>Natural sanlar</b>1; 2; 3; 4; … – sanamak üçin ulanylýan sanlar.</div>
+      <div class="set"><b>Olara garşylykly sanlar</b>−1; −2; −3; −4; …</div>
+      <div class="set"><b>Nol</b>0 – öz-özüne garşylykly ýeke-täk san.</div>
+      <div class="set"><b>Bitin sanlar</b>Şu üç toparyň hemmesi bilelikde bitin sanlardyr.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §21</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+
+/* ---------------- aýna ---------------- */
+const LO = -8, HI = 8, W = 620, PAD = 34;
+const px = v => PAD + ((v - LO) / (HI - LO)) * (W - 2 * PAD);
+function axis() {
+  const a = +$("a").value / 10;
+  $("ao").textContent = N(a);
+  const y = 66;
+  let ticks = "";
+  for (let v = LO; v <= HI; v++) {
+    const x = px(v), big = v === 0;
+    ticks += `<line x1="${x}" y1="${y - (big ? 12 : 7)}" x2="${x}" y2="${y + (big ? 12 : 7)}"
+                stroke="${big ? "#1e2a3a" : "#93a2b5"}" stroke-width="${big ? 2.5 : 1.5}"/>
+              <text x="${x}" y="${y + 30}" text-anchor="middle" font-size="12"
+                fill="#5b6b80">${v}</text>`;
+  }
+  const arc = (from, to, color) => {
+    const x1 = px(from), x2 = px(to), mid = (x1 + x2) / 2;
+    return `<path d="M${x1} ${y - 14} Q${mid} ${y - 44} ${x2} ${y - 14}" fill="none"
+              stroke="${color}" stroke-width="2" stroke-dasharray="4 3"/>`;
+  };
+  $("ax").innerHTML = `
+    <svg viewBox="0 0 ${W} 104" width="${W}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      <line x1="${PAD - 20}" y1="${y}" x2="${W - PAD + 8}" y2="${y}" stroke="#5b6b80"
+        stroke-width="2"/>
+      ${ticks}
+      ${a !== 0 ? arc(0, a, "#e5007d") + arc(0, -a, "#1d7a3d") : ""}
+      <circle cx="${px(a)}" cy="${y}" r="7" fill="#e5007d"/>
+      <circle cx="${px(-a)}" cy="${y}" r="7" fill="#1d7a3d"/>
+      <text x="${px(a)}" y="${y - 20}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="#e5007d">a = ${N(a)}</text>
+      <text x="${px(-a)}" y="${y - 20}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="#1d7a3d">−a = ${N(-a)}</text>
+    </svg>`;
+  $("calc").innerHTML = a === 0
+    ? `a = 0 bolsa −a = 0. <b>Nol öz-özüne garşylykly</b> ýeke-täk sandyr.`
+    : `a = <b>${N(a)}</b>, oňa garşylykly san −a = <b>${N(-a)}</b><br>` +
+      `iki nokat hem noldan <b>${N(Math.abs(a))}</b> birlik kesim uzaklykda, ` +
+      `ýöne dürli taraplarda ýerleşýär<br>` +
+      (a > 0 ? `a položitel, şonuň üçin −a otrisatel` : `a otrisatel, şonuň üçin −a položitel`);
+}
+$("a").addEventListener("input", axis);
+
+/* ---------------- −(−a) ---------------- */
+const BASE = 7;
+let depth = 0;
+function chain() {
+  const val = depth % 2 === 0 ? BASE : -BASE;
+  const expr = "−".repeat(depth) + (depth ? "(".repeat(depth ? depth - 1 : 0) : "") ;
+  let s = String(BASE);
+  for (let i = 0; i < depth; i++) s = i === 0 ? "−" + s : "−(" + s + ")";
+  $("chain").textContent = `${s} = ${N(val)}`;
+  $("fmsg").textContent = depth === 0
+    ? "Başlangyç san 7."
+    : depth % 2 === 0
+      ? `Alamat ${depth} gezek üýtgedi – jübüt sany, şonuň üçin san öz başlangyç bahasyna dolandy.`
+      : `Alamat ${depth} gezek üýtgedi – täk sany, şonuň üçin san garşylyklysyna öwrüldi.`;
+  $("fmsg").className = "msg " + (depth % 2 === 0 ? "ok" : "");
+}
+$("flip").onclick = () => { if (depth < 4) depth++; chain(); };
+$("reset").onclick = () => { depth = 0; chain(); };
+
+/* ---------------- jübütleri tap ---------------- */
+const VALS = [23, -23, 0.4, -0.4, 15.15, -15.15, 100, -100];
+let pool = [], first = null, leftPairs = 4;
+function pairs() {
+  pool = VALS.slice().sort(() => Math.random() - 0.5);
+  first = null; leftPairs = 4;
+  $("pmsg").textContent = ""; $("pmsg").className = "msg";
+  render();
+}
+function render() {
+  $("pool").innerHTML = pool.map((v, i) =>
+    v === null ? "" : `<button class="btn ${first === i ? "sel" : ""}" data-i="${i}">${N(v)}</button>`
+  ).join("");
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (first === null) { first = i; render(); return; }
+    if (first === i) { first = null; render(); return; }
+    if (pool[first] === -pool[i]) {
+      pool[first] = null; pool[i] = null; first = null; leftPairs--;
+      $("pmsg").textContent = leftPairs
+        ? `Dogry jübüt! Ýene ${leftPairs} jübüt galdy.`
+        : "Ähli jübütler tapyldy. Her sana garşylykly diňe bir san bardyr.";
+      $("pmsg").className = "msg ok";
+    } else {
+      $("pmsg").textContent =
+        `${N(pool[first])} we ${N(pool[i])} garşylykly däl – olar diňe alamaty bilen ` +
+        `tapawutlanmaly.`;
+      $("pmsg").className = "msg bad";
+      first = null;
+    }
+    render();
+  });
+}
+$("pr").onclick = pairs;
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["−14 sana garşylykly san", ["−14", "14", "0", "1/14"], 1],
+  ["−(−40) näçä deň?", ["−40", "40", "0", "−4"], 1],
+  ["Haýsy san öz-özüne garşylykly?", ["1", "−1", "0", "Beýle san ýok"], 2],
+  ["Aşakdakylaryň haýsysy bitin san däl?", ["−7", "0", "12", "2,5"], 3],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+axis(); chain(); pairs();
+</script>
+</body>
+</html>

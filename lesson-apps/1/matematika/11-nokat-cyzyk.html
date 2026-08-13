@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nokat. Göni we egri çyzyklar — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .pad { background: #f7fafd; border-radius: 13px; padding: 8px; touch-action: manipulation; }
+  svg { display: block; width: 100%; height: auto; background: #fff; border-radius: 10px; }
+  .lines { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .lines button { min-height: 74px; padding: 6px; }
+  .lines svg { height: 54px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Nokat. Göni we egri çyzyklar</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def"><b>Nokat</b> – iň kiçijik geometrik şekil. Iki nokady birleşdirmegiň
+      iň gysga ýoly – <b>göni çyzyk</b>. Ol çyzgyç bilen çyzylýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Iki nokady birleşdir</h3>
+    <div class="goal">Kagyza iki gezek bas – nokat goýlar. Soň birleşdirmek düwmesine bas.</div>
+    <div class="pad"><svg id="pad" viewBox="0 0 300 150"></svg></div>
+    <div class="row">
+      <button class="btn primary" id="straight">Göni çyzyk</button>
+      <button class="btn" id="curve">Egri çyzyk</button>
+      <button class="btn ghost" id="clear">Arassala</button>
+    </div>
+    <div class="msg" id="dmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Göni çyzygy tap</h3>
+    <div class="goal" id="lgoal">Göni çyzyga bas.</div>
+    <div class="lines" id="lines"></div>
+    <div class="msg" id="lmsg"></div>
+    <div class="row"><button class="btn ghost" id="lnew">Täze çyzyklar</button></div>
+    <div class="score" id="lsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, I kitap · 35–36-njy sahypalar</div>
+</div>
+
+<script>
+var pad = document.getElementById("pad"), pts = [];
+function render(kind) {
+  var s = "";
+  if (pts.length === 2 && kind) {
+    var a = pts[0], b = pts[1];
+    if (kind === "s") s += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="#2456b0" stroke-width="3"/>';
+    else {
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2 - 55;
+      s += '<path d="M' + a[0] + ' ' + a[1] + ' Q' + mx + ' ' + my + ' ' + b[0] + ' ' + b[1] + '" stroke="#c1622a" stroke-width="3" fill="none"/>';
+    }
+  }
+  for (var i = 0; i < pts.length; i++) s += '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="5" fill="#1e2a3a"/>';
+  pad.innerHTML = s;
+}
+pad.addEventListener("click", function (e) {
+  var r = pad.getBoundingClientRect();
+  var x = Math.round((e.clientX - r.left) / r.width * 300);
+  var y = Math.round((e.clientY - r.top) / r.height * 150);
+  if (!isFinite(x) || !isFinite(y)) { x = 60 + pts.length * 140; y = 75; }
+  x = Math.max(10, Math.min(290, x)); y = Math.max(10, Math.min(140, y));
+  if (pts.length >= 2) pts = [];
+  pts.push([x, y]);
+  render(null);
+  var m = document.getElementById("dmsg");
+  m.className = "msg";
+  m.textContent = pts.length === 1 ? "Birinji nokat goýuldy." : "Iki nokat taýýar – indi birleşdir.";
+});
+document.getElementById("straight").onclick = function () {
+  var m = document.getElementById("dmsg");
+  if (pts.length < 2) { m.className = "msg bad"; m.textContent = "Ilki iki nokat goý."; return; }
+  render("s"); m.className = "msg ok"; m.textContent = "Bu – göni çyzyk. Ol iň gysga ýoldur.";
+};
+document.getElementById("curve").onclick = function () {
+  var m = document.getElementById("dmsg");
+  if (pts.length < 2) { m.className = "msg bad"; m.textContent = "Ilki iki nokat goý."; return; }
+  render("c"); m.className = "msg"; m.textContent = "Bu – egri çyzyk. Ol göni çyzykdan uzyn.";
+};
+document.getElementById("clear").onclick = function () {
+  pts = []; render(null);
+  document.getElementById("dmsg").className = "msg";
+  document.getElementById("dmsg").textContent = "";
+};
+render(null);
+
+var SH = [
+  ['<line x1="8" y1="40" x2="112" y2="12" stroke="#2456b0" stroke-width="3"/>', 1],
+  ['<path d="M8 40 Q60 -10 112 40" stroke="#c1622a" stroke-width="3" fill="none"/>', 0],
+  ['<path d="M8 12 Q40 60 70 12 T112 30" stroke="#c1622a" stroke-width="3" fill="none"/>', 0],
+  ['<line x1="8" y1="14" x2="112" y2="14" stroke="#2456b0" stroke-width="3"/>', 1]
+];
+var li = 0, ld = 0, lok = 0, llock = 0;
+function drawL() {
+  var h = "";
+  var order = li === 0 ? [0, 1, 2, 3] : [2, 3, 0, 1];
+  for (var k = 0; k < order.length; k++) {
+    var i = order[k];
+    h += '<button class="btn" data-i="' + i + '"><svg viewBox="0 0 120 52">' + SH[i][0] + "</svg></button>";
+  }
+  document.getElementById("lines").innerHTML = h;
+  var bs = document.getElementById("lines").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = lclick;
+  document.getElementById("lmsg").className = "msg";
+  document.getElementById("lmsg").textContent = "";
+  llock = 0;
+}
+function lclick() {
+  if (llock) return;
+  llock = 1; ld++;
+  var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("lmsg");
+  if (SH[i][1]) { lok++; m.className = "msg ok"; m.textContent = "Dogry! Bu göni çyzyk."; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu egri çyzyk."; }
+  document.getElementById("lsc").textContent = "Netije: " + lok + " / " + ld;
+}
+document.getElementById("lnew").onclick = function () { li = li ? 0 : 1; drawL(); };
+drawL();
+
+var Q = [
+  ["Iň kiçi geometrik şekil haýsy?", ["Nokat", "Göni çyzyk", "Kwadrat"], 0],
+  ["Göni çyzyk näme bilen çyzylýar?", ["Çyzgyç bilen", "Elde erkin", "Pergel bilen"], 0],
+  ["Ýoluň öwrümi nähili çyzyga meňzeýär?", ["Egri çyzyga", "Göni çyzyga", "Nokada"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

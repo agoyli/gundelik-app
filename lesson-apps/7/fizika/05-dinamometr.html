@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dinamometr — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dinamometr</h1>
+  <div class="sub">Fizika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Güýji ölçemek üçin niýetlenen, purženiň maýyşgaklyk güýjüniň ýüküň massasyna baglylygyna esaslanýan abzala dinamometr diýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Purženi çek</h3>
+    <div class="goal">Ýüküň massasyny süýşür – purženiň uzalyşyna we peýkamyň ýerine seret.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="0" max="500" step="10" value="100">
+    <div class="info" id="siro1"></div>
+    <div class="note">100 g ýük asylanda peýkam 1 sanyň deňinde durýar, ýagny 1 N.</div>
+  </div>
+
+  <div class="card">
+    <h3>Dinamometriň bölekleri</h3>
+    <div class="goal">Bölege degip, wezipesini gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 190"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 7 · 5-nji tema</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { 
+        var y = 34 + v / 500 * 104;
+        var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+        s += '<rect x="118" y="18" width="84" height="150" rx="8" fill="#eef5fb" stroke="#4a6b39" stroke-width="2"/>';
+        for (var i = 0; i <= 5; i++) {
+          var ty = 34 + i * 20.8;
+          s += '<line x1="126" y1="' + ty + '" x2="146" y2="' + ty + '" stroke="#4a6b39" stroke-width="1.5"/>';
+          s += '<text x="152" y="' + (ty + 4) + '" font-size="10" fill="#23381a">' + i + ' N</text>';
+        }
+        var yy = 22;
+        for (var k = 0; k < 8; k++) {
+          var y1 = 22 + (y - 22) * k / 8, y2 = 22 + (y - 22) * (k + 1) / 8;
+          s += '<line x1="' + (k % 2 ? 84 : 104) + '" y1="' + y1.toFixed(1) + '" x2="' +
+               (k % 2 ? 104 : 84) + '" y2="' + y2.toFixed(1) + '" stroke="#7d8f6c" stroke-width="2.5"/>';
+        }
+        s += '<line x1="94" y1="' + y.toFixed(1) + '" x2="140" y2="' + y.toFixed(1) +
+             '" stroke="#c0392b" stroke-width="3"/>';
+        s += '<rect x="76" y="' + (y + 4).toFixed(1) + '" width="36" height="22" fill="#cdebd6" stroke="#4a6b39" stroke-width="2"/>';
+        s += '<text x="94" y="' + (y + 19).toFixed(1) + '" font-size="9.5" fill="#23381a" text-anchor="middle">' + v + ' g</text>';
+        return s;
+       }
+  function readout(v) { 
+        return '<b>m = ' + (v / 1000) + ' kg → F ≈ ' + (v / 100).toFixed(1) + ' N</b><br>' +
+               'Deňagramlylykda purženiň maýyşgaklyk güýji agyrlyk güýjüne deňdir.';
+       }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Ýüküň massasy" + ": " + String(v).replace(".", ",") + " " + "g";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var SP = [["korpus", "M110 16 H210 V172 H110 Z", 160, 26, "Ähli bölekleri saklaýan daşky gap."], ["puržin", "M126 34 H164 V118 H126 Z", 145, 78, "Maýyşgaklyk güýji ýüküň agramyna baglylykda uzalýar."], ["şkala", "M166 34 H204 V118 H166 Z", 185, 78, "Bölüm bahasy = (uly – kiçi) : bölekleriň sany."], ["peýkam", "M126 120 H204 V136 H126 Z", 165, 131, "Purženiň ujuna berkidilip, şkalada güýji görkezýär."], ["ilgenek", "M146 138 H176 V166 H146 Z", 161, 155, "Ölçenilýän ýük şoňa asylýar."]], SW = 320, SH = 190;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["100 g ýük asylanda peýkam näçäni görkezýär?", ["1 N", "10 N", "0,1 N"], 0], ["Dinamometr näme ölçeýär?", ["Güýji", "Wagty", "Temperaturany"], 0], ["1 kN näçe N?", ["1000 N", "100 N", "10 N"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýönekeý suratlar we olary boýamak — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .tool { background: #f7fafd; border-radius: 12px; padding: 8px 4px; font-size: 11.5px;
+          font-weight: 700; line-height: 1.25; min-height: 66px; }
+  .tool.on { background: #dbe7ff; box-shadow: 0 0 0 3px #2456b0; }
+  .tool .em { display: block; font-size: 22px; }
+  .pal { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
+  .pal button { width: 44px; height: 44px; border-radius: 11px; }
+  .pal button.on { box-shadow: 0 0 0 3px #1e2a3a; }
+  #cv { display: block; width: 100%; max-width: 320px; margin: 9px auto 0; background: #fff;
+        border-radius: 12px; touch-action: none; }
+  .say { background: #f7fafd; border-radius: 13px; padding: 11px; font-size: 15px;
+         line-height: 1.55; min-height: 44px; }
+  .stage svg { display: block; margin: 0 auto; background: #cfe8ff; border-radius: 12px;
+               max-width: 100%; height: auto; }
+  .parts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 9px; }
+  .parts .btn.done { opacity: .45; }
+  .shape { text-align: center; }
+  .shape svg { background: #fff; border-radius: 12px; }
+  .stmt { background: #f2edfd; border-radius: 13px; padding: 12px; font-size: 17px;
+          text-align: center; line-height: 1.5; }
+  .tf { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 9px; }
+  .rule { background: #f7fafd; border-radius: 12px; padding: 10px 12px; font-size: 15.5px;
+          line-height: 1.55; margin-bottom: 6px; }
+  .rule b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 16px; line-height: 1.6; }
+  .qa .btn { font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ýönekeý suratlar we olary boýamak</h1>
+  <div class="sub">Informatika · 1-nji synp</div>
+
+  <div class="card">
+    <h3>Boýamak gurallary</h3>
+    <div class="goal">Ilki <b>gerekli reňke</b> bas, soň guraly saýlap, öýjükleriň üstünden
+      barmagyňy ýa-da syçany süýşür.</div>
+    <div class="tools" id="tl"></div>
+    <div class="pal" id="pl"></div>
+    <svg id="cv" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="info"></span>
+      <button class="btn ghost" id="clr">🧹 Ählisini arassala</button>
+    </div>
+    <div class="say" id="say" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Bölekleri birleşdirip, bir bitin surat döret</h3>
+    <div class="goal">Bölege bas – ol suratdaky öz ýerine baryp goşulýar.</div>
+    <div class="stage" id="st"></div>
+    <div class="parts" id="pt"></div>
+    <div class="msg" id="msg"></div>
+    <button class="btn ghost" id="rs" style="margin-top:8px">Başdan</button>
+  </div>
+
+  <div class="card">
+    <h3>Çynmy ýa-da ýalan?</h3>
+    <div class="rule"><b>Çyn</b> pikir ýöretme hakykata laýyk gelýär.
+      <b>Ýalan</b> pikir ýöretme bolsa hakykata laýyk gelmeýär.</div>
+    <div class="rule">Sözlemde <b>WE</b> kömekçisi bar bolsa, sözlemiň <b>iki bölegi hem</b>
+      dogry bolmaly.</div>
+    <div class="rule">Sözlemde <b>ÝA-DA</b> kömekçisi bar bolsa, <b>iň bolmanda bir bölegi</b>
+      dogry bolsa ýeterlik.</div>
+    <div class="shape" id="sh" style="margin-top:9px"></div>
+    <div class="stmt" id="stm" style="margin-top:10px"></div>
+    <div class="tf">
+      <button class="btn primary" data-v="1">✅ Çyn</button>
+      <button class="btn warn" data-v="0">❌ Ýalan</button>
+    </div>
+    <div class="msg" id="tmsg"></div>
+    <div class="score" id="tsc"></div>
+    <button class="btn ghost" id="next" style="margin-top:8px">Indiki</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 1-nji synp · V–VI bölüm, sah. 51–69</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- boýamak (sah. 51) ---------------- */
+const CELL = 20, COLS = 16, ROWS = 12;
+const TOOLS = [
+  ["galam", "✏️", "Galam", "Galam (Карандаш) inçe çyzyk çekýär – bir öýjük."],
+  ["cotga", "🖌", "Çotga", "Çotga (Кисть) giň çyzyk çekýär – bir gezekde 4 öýjük."],
+  ["bozguc", "🧽", "Bozguç", "Bozguç (Ластик) ýalňyş boýalan ýeri aýyrýar."],
+  ["boyamak", "🪣", "Boýamak", "Boýamak (Заливка) guraly bedrejige meňzeýär – ol tutuş " +
+   "meýdany bir reňke boýaýar."],
+];
+const PALETTE = ["#2456b0", "#e5007d", "#1d7a3d", "#f0a500", "#6a4bb8", "#1e2a3a"];
+let grid = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+let tool = "galam", color = PALETTE[0], drawing = false;
+
+function draw() {
+  let cells = "";
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      cells += `<rect x="${c * CELL}" y="${r * CELL}" width="${CELL}" height="${CELL}"
+        fill="${grid[r][c] || "#fff"}" stroke="#eef2f8" stroke-width="1"/>`;
+  $("cv").innerHTML = cells;
+  $("info").textContent = `${grid.flat().filter(Boolean).length} öýjük boýaldy`;
+}
+function paint(r, c) {
+  if (r < 0 || c < 0 || r >= ROWS || c >= COLS) return;
+  if (tool === "galam") grid[r][c] = color;
+  else if (tool === "bozguc") grid[r][c] = null;
+  else if (tool === "cotga") {
+    for (const [dr, dc] of [[0, 0], [0, 1], [1, 0], [1, 1]])
+      if (r + dr < ROWS && c + dc < COLS) grid[r + dr][c + dc] = color;
+  } else {
+    // Boýamak – goňşy öýjüklere ýaýrap, tutuş meýdany doldurýar
+    const start = grid[r][c], stack = [[r, c]];
+    if (start === color) return;
+    while (stack.length) {
+      const [y, x] = stack.pop();
+      if (y < 0 || x < 0 || y >= ROWS || x >= COLS) continue;
+      if (grid[y][x] !== start) continue;
+      grid[y][x] = color;
+      stack.push([y + 1, x], [y - 1, x], [y, x + 1], [y, x - 1]);
+    }
+  }
+  draw();
+}
+function cellFrom(e) {
+  const r = $("cv").getBoundingClientRect();
+  const k = 320 / r.width;
+  const p = e.touches ? e.touches[0] : e;
+  return [Math.floor((p.clientY - r.top) * k / CELL), Math.floor((p.clientX - r.left) * k / CELL)];
+}
+$("cv").addEventListener("pointerdown", e => { drawing = true; const [r, c] = cellFrom(e); paint(r, c); });
+$("cv").addEventListener("pointermove", e => {
+  if (!drawing || tool === "boyamak") return;
+  e.preventDefault();
+  const [r, c] = cellFrom(e); paint(r, c);
+});
+["pointerup", "pointerleave", "pointercancel"].forEach(ev =>
+  $("cv").addEventListener(ev, () => drawing = false));
+
+$("tl").innerHTML = TOOLS.map((t, i) =>
+  `<button class="tool ${i ? "" : "on"}" data-k="${t[0]}"><span class="em">${t[1]}</span>${t[2]}</button>`
+).join("");
+$("tl").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("tl").querySelectorAll("button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  tool = b.dataset.k;
+  $("say").innerHTML = TOOLS.find(t => t[0] === tool)[3];
+});
+$("pl").innerHTML = PALETTE.map((c, i) =>
+  `<button class="${i ? "" : "on"}" data-c="${c}" style="background:${c}"
+     aria-label="reňk"></button>`).join("");
+$("pl").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("pl").querySelectorAll("button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  color = b.dataset.c;
+  $("say").textContent = "Reňk saýlandy. Boýamazdan öň hemişe ilki reňke basmaly.";
+});
+$("clr").onclick = () => {
+  grid = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+  draw(); $("say").textContent = "Sahypa arassalandy.";
+};
+$("say").innerHTML = TOOLS[0][3];
+
+/* ---------------- surat ýygnamak (sah. 53) ---------------- */
+const PARTS = [
+  ["Üçek", `<polygon points="150,34 56,104 244,104" fill="#e5007d"/>`],
+  ["Diwar", `<rect x="76" y="104" width="148" height="106" fill="#2456b0"/>`],
+  ["Gapy", `<rect x="132" y="150" width="36" height="60" rx="4" fill="#fff"/>`],
+  ["Penjire", `<rect x="92" y="122" width="30" height="30" fill="#ffe27a"/>`],
+  ["Gün", `<circle cx="262" cy="42" r="20" fill="#f0a500"/>`],
+  ["Ot", `<rect x="20" y="204" width="260" height="12" rx="6" fill="#1d7a3d"/>`],
+];
+let placed = [];
+function drawPic() {
+  $("st").innerHTML = `<svg viewBox="0 0 300 226" width="300"
+    xmlns="http://www.w3.org/2000/svg">${placed.map(i => PARTS[i][1]).join("")}</svg>`;
+  $("pt").innerHTML = PARTS.map((p, i) =>
+    `<button class="btn ${placed.includes(i) ? "done" : ""}" data-i="${i}">${p[0]}</button>`
+  ).join("");
+  $("pt").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (placed.includes(i)) return;
+    placed.push(i);
+    $("msg").textContent = placed.length === PARTS.length
+      ? "🎉 Bölekler birleşdirilip, bir bitin surat döredildi!"
+      : `Goşuldy. Ýene ${PARTS.length - placed.length} bölek galdy.`;
+    $("msg").className = "msg ok";
+    drawPic();
+  });
+}
+$("rs").onclick = () => {
+  placed = []; $("msg").textContent = ""; $("msg").className = "msg"; drawPic();
+};
+
+/* ---------------- çyn / ýalan, WE / ÝA-DA (sah. 58-63) ---------------- */
+const SH = [
+  {svg: `<circle cx="60" cy="60" r="46" fill="#e5007d"/>`, form: "tegelek", col: "gyzyl"},
+  {svg: `<rect x="16" y="16" width="88" height="88" fill="#2456b0"/>`,
+   form: "kwadrat", col: "gök"},
+  {svg: `<polygon points="60,12 108,106 12,106" fill="#1d7a3d"/>`,
+   form: "üçburçluk", col: "ýaşyl"},
+  {svg: `<circle cx="60" cy="60" r="46" fill="#f0a500"/>`, form: "tegelek", col: "sary"},
+];
+const MAKE = [
+  s => [`Bu şekil ${s.form}.`, true, ""],
+  s => [`Bu şekil ${s.col} reňkli.`, true, ""],
+  s => [`Bu şekil ${s.form === "tegelek" ? "kwadrat" : "tegelek"}.`, false, ""],
+  s => [`Bu şekil ${s.form} <b>we</b> ${s.col}.`, true,
+        "WE kömekçisi bar – iki bölek hem dogry, şonuň üçin sözlem çyn."],
+  s => [`Bu şekil ${s.form} <b>we</b> ${s.col === "gyzyl" ? "gök" : "gyzyl"}.`, false,
+        "WE kömekçisi bar, ýöne ikinji bölek dogry däl – şonuň üçin sözlem ýalan."],
+  s => [`Bu şekil ${s.form} <b>ýa-da</b> gara.`, true,
+        "ÝA-DA kömekçisi bar – bir bölegiň dogry bolmagy ýeterlik."],
+  s => [`Bu şekil üçburçluk <b>ýa-da</b> gara.`, false,
+        "ÝA-DA kömekçisi bar, ýöne iki bölek hem dogry däl – şonuň üçin sözlem ýalan."],
+];
+let si = 0, mi = 0, tdone = 0, tright = 0, tanswered = false;
+function shape() {
+  const s = SH[si % SH.length];
+  let [txt, val, why] = MAKE[mi % MAKE.length](s);
+  // «üçburçluk ýa-da gara» şekiliň özi üçburçluk bolanda ýalan bolmaýar
+  if (mi % MAKE.length === 6 && s.form === "üçburçluk") {
+    txt = `Bu şekil kwadrat <b>ýa-da</b> gara.`;
+  }
+  $("sh").innerHTML = `<svg viewBox="0 0 120 120" width="120"
+    xmlns="http://www.w3.org/2000/svg">${s.svg}</svg>`;
+  $("stm").innerHTML = `«${txt}»`;
+  $("stm").dataset.v = val ? "1" : "0";
+  $("stm").dataset.w = why;
+  tanswered = false;
+  $("tmsg").textContent = ""; $("tmsg").className = "msg";
+  document.querySelectorAll(".tf button").forEach(b => b.classList.remove("sel"));
+}
+document.querySelectorAll(".tf button").forEach(b => b.onclick = () => {
+  if (tanswered) return;
+  tanswered = true;
+  b.classList.add("sel");
+  const good = b.dataset.v === $("stm").dataset.v;
+  tdone++; if (good) tright++;
+  const why = $("stm").dataset.w ? " " + $("stm").dataset.w : "";
+  $("tmsg").textContent = (good ? "✅ Dogry!" :
+    `❌ Beýle däl. Bu pikir ${$("stm").dataset.v === "1" ? "çyn" : "ýalan"}.`) + why;
+  $("tmsg").className = good ? "msg ok" : "msg bad";
+  $("tsc").textContent = `${tright} / ${tdone}`;
+});
+$("next").onclick = () => { si++; mi++; shape(); };
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Şekiliň içini reňklemek üçin haýsy gural ulanylýar?", ["Bozguç", "Boýamak", "Galam"], 1],
+  ["«Top agaçda bitýär» – bu nähili pikir ýöretme?", ["Çyn", "Ýalan", "Sorag"], 1],
+  ["WE kömekçisi bolan sözlemde näçe bölek dogry bolmaly?",
+   ["Diňe biri", "Iki bölegi hem", "Hiç biri"], 1],
+  ["ÝA-DA kömekçisi bolan sözlemde näçe bölek dogry bolmaly?",
+   ["Iki bölegi hem", "Hiç biri", "Iň bolmanda bir bölegi"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+draw(); drawPic(); shape();
+</script>
+</body>
+</html>

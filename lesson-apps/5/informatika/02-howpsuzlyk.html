@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Howpsuzlyk tehnikasy — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .situation {
+    background: #f4f7fb; border-radius: 14px; padding: 18px 14px; text-align: center;
+    font-size: 17px; font-weight: 700; line-height: 1.5; min-height: 96px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .situation .ico { font-size: 34px; }
+  .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .ch { padding: 16px 8px; border-radius: 14px; font-size: 17px; font-weight: 800; }
+  .ch.yes { background: #e0f5e6; color: #1d7a3d; }
+  .ch.no { background: #fbe3e3; color: #b02424; }
+  .ch:disabled { opacity: .5; }
+  .why { font-size: 15px; line-height: 1.6; margin-top: 10px; }
+  .lives { font-size: 18px; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Howpsuzlyk tehnikasy</h1>
+  <div class="sub">Kompýuter otagynda özüňi nähili alyp barmaly? · Informatika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Kompýuter otagyndaky enjamlar ýokary elektrik naprýaženiýesinde işleýär. Aşakdaky hereket dogrumy?</div>
+    <div class="situation" id="sit"></div>
+    <div class="choice">
+      <button class="ch yes" id="bYes">✓ Bolýar</button>
+      <button class="ch no" id="bNo">✕ Bolanok</button>
+    </div>
+    <div class="why" id="why"></div>
+    <div class="row" style="margin-top:10px">
+      <span class="score" id="score"></span>
+      <span class="lives" id="lives"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Esasy düzgünler</h3>
+    <div class="expl">
+      Birikdiriji simleri we tokly geçirijileri ellemeli däl.<br>
+      Ekrana, monitoryň we klawiaturanyň arka tarapyna el degirmeli däl.<br>
+      Öl elleriň bilen işlemeli däl.<br>
+      Ýanyk ys çykanda işi togtatmaly, mugallyma habar bermeli.<br>
+      Mugallymyň görkezmesi bolmasa, enjamlary birikdirmek ýa-da öçürmek bolmaýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const CASES = [
+  { ico: "🔌", t: "Birikdiriji simleri elläp görmek", ok: false, why: "Simleri we tokly geçirijileri ellemeli däl — bu howply." },
+  { ico: "🖥", t: "Monitoryň arka tarapyna el degirmek", ok: false, why: "Ekrana we monitoryň arka tarapyna el degirmeli däl." },
+  { ico: "💧", t: "Öl elleriň bilen klawiaturada işlemek", ok: false, why: "Öl el bilen işlemek elektrik toguna sebäp bolup biler." },
+  { ico: "👃", t: "Ýanyk ys çykanda mugallyma habar bermek", ok: true, why: "Dogry: işi togtatmaly, mugallyma habar bermeli we enjamlary öçürmeli." },
+  { ico: "👀", t: "Işe başlamazdan öň iş ýeriňde näsazlyk barmy diýip barlamak", ok: true, why: "Dogry: işe başlamazdan öň näsazlygyň ýokdugyna göz ýetirmeli." },
+  { ico: "⌨️", t: "Klawiaturanyň klawişlerine güýçli urmak", ok: false, why: "Klawişlere güýçli urmaly däl — enjam zaýalanýar." },
+  { ico: "🧑‍🏫", t: "Mugallymdan soraman kompýuteri öçürmek", ok: false, why: "Mugallymyň görkezmesi bolmasa, enjamlary öçürmek bolmaýar." },
+  { ico: "📴", t: "Iş gutarandan soň ähli programmalary ýapmak", ok: true, why: "Dogry: iş gutaranda ähli programmalary ýapmaly." },
+  { ico: "🎯", t: "Nazaryňy ekranyň merkezine ugrukdyrmak", ok: true, why: "Dogry: nazar ekranyň merkezine ugrukdyrylmaly." },
+  { ico: "🔊", t: "Adaty bolmadyk ses eşidilende işi dowam etdirmek", ok: false, why: "Adaty bolmadyk ses eşidilende mugallymy habarly etmeli." }
+];
+let order = [], idx = 0, right = 0, lives = 3;
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function start() { order = shuffle([...CASES]); idx = 0; right = 0; lives = 3; render(); }
+
+function render() {
+  const s = document.getElementById("sit");
+  document.getElementById("why").textContent = "";
+  setBtns(false);
+  if (lives <= 0 || idx >= order.length) {
+    s.innerHTML = `<div class="ico">${lives > 0 ? "🏅" : "😅"}</div>
+      <div>${lives > 0 ? "Ähli ýagdaýlary geçdiň!" : "Janlar gutardy."} Dogry jogap: ${right} / ${idx}</div>`;
+    document.getElementById("bYes").textContent = "↻ Täzeden";
+    document.getElementById("bNo").style.display = "none";
+    document.getElementById("bYes").onclick = () => { document.getElementById("bNo").style.display = ""; document.getElementById("bYes").textContent = "✓ Bolýar"; bind(); start(); };
+    updateBar();
+    return;
+  }
+  const c = order[idx];
+  s.innerHTML = `<div class="ico">${c.ico}</div><div>${c.t}</div>`;
+  updateBar();
+}
+
+function updateBar() {
+  document.getElementById("score").textContent = `Dogry: ${right} / ${idx}`;
+  document.getElementById("lives").textContent = "❤️".repeat(Math.max(0, lives)) + "🖤".repeat(Math.max(0, 3 - lives));
+}
+
+function setBtns(dis) {
+  document.getElementById("bYes").disabled = dis;
+  document.getElementById("bNo").disabled = dis;
+}
+
+function answer(val) {
+  const c = order[idx];
+  const ok = val === c.ok;
+  if (ok) right++; else lives--;
+  const w = document.getElementById("why");
+  w.innerHTML = (ok ? "✅ " : "❌ ") + c.why;
+  w.style.color = ok ? "#1d7a3d" : "#b02424";
+  setBtns(true);
+  idx++;
+  updateBar();
+  setTimeout(render, 1500);
+}
+
+function bind() {
+  document.getElementById("bYes").onclick = () => answer(true);
+  document.getElementById("bNo").onclick = () => answer(false);
+}
+bind();
+start();
+</script>
+</body>
+</html>

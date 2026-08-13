@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Howpsuzlyk düzgünleri — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 23px; }
+  .stage { background: #eef2f8; border-radius: 16px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 12px;
+               max-width: 100%; height: auto; }
+  .fix { background: #f7fafd; border-radius: 13px; padding: 9px 10px; margin-bottom: 7px; }
+  .fix h4 { margin: 0 0 6px; font-size: 14px; color: #2456b0; }
+  .fix .row { flex-wrap: wrap; }
+  .fix button { font-size: 13.5px; padding: 8px 10px; min-height: 44px; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cards button { min-height: 62px; font-size: 13.5px; line-height: 1.35; text-align: left;
+                  padding: 10px; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-top: 10px; }
+  .bin { background: #f7fafd; border-radius: 13px; padding: 8px; min-height: 80px; }
+  .bin h4 { margin: 0 0 6px; font-size: 13px; }
+  .bin span { display: block; background: #fff; border-radius: 9px; padding: 5px 7px;
+              font-size: 12px; margin-bottom: 4px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kompýuterde dogry oturmak</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <h3>Oturyşy düzet</h3>
+    <div class="goal">Kitapda dogry oturmagyň düzgünleri berlen. Dört ýagdaýy hem
+      dogry saýla – surat üýtgeýär.</div>
+    <div class="stage" id="st"></div>
+    <div id="fixes" style="margin-top:10px"></div>
+    <div class="msg" id="fmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Maglumat göterijiler</h3>
+    <div class="goal">Ýazga bas – ol degişli göterijiniň sütünine geçsin.</div>
+    <div class="cards" id="pool"></div>
+    <div class="bins">
+      <div class="bin"><h4>🪨 Daş</h4><div id="b0"></div></div>
+      <div class="bin"><h4>📄 Kagyz</h4><div id="b1"></div></div>
+      <div class="bin"><h4>💿 CD we DVD</h4><div id="b2"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- oturyş: kitapdaky düzgünler (sah. 8) ---------------- */
+const FIX = [
+  {
+    id: "ayak", h: "Aýaklar",
+    opts: [["Ýerde ýa-da aýak goýulýan enjamyň üstünde dogry durýar", true],
+           ["Oturgyjyň aşagynda çermelen", false],
+           ["Stoluň üstüne uzadylan", false]],
+  },
+  {
+    id: "bil", h: "Bil we boýun",
+    opts: [["Küýkerilip, boýnuňy süýndürip oturmak", false],
+           ["Göni ýa-da biraz yza çekilibräk, bili dik tutup oturmak", true],
+           ["Stoluň üstüne eglip ýatmak", false]],
+  },
+  {
+    id: "tirsek", h: "Tirsek we bilekler",
+    opts: [["Bilekleri epip, howada saklamak", false],
+           ["Tirsegi göwräňden uzaga uzatmak", false],
+           ["Tirsegi göwrä ýakyn, bilekleri direg edip goýmak", true]],
+  },
+  {
+    id: "aralyk", h: "Ekran bilen gözüň aralygy",
+    opts: [["20 santimetr", false], ["50–60 santimetr", true], ["3 metr", false]],
+  },
+];
+const st = {ayak: -1, bil: -1, tirsek: -1, aralyk: -1};
+
+function drawPose() {
+  const ok = k => FIX.find(f => f.id === k).opts[st[k]] &&
+                  FIX.find(f => f.id === k).opts[st[k]][1];
+  const G = "#1d7a3d", B = "#b4232a", N = "#93a2b5";
+  const c = k => st[k] < 0 ? N : (ok(k) ? G : B);
+  const hx = st.aralyk < 0 ? 132 : (ok("aralyk") ? 120 : (st.aralyk === 0 ? 168 : 92));
+  const lean = st.bil < 0 ? 0 : (ok("bil") ? 0 : 16);
+  $("st").innerHTML = `<svg viewBox="0 0 320 200" width="320"
+    xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">
+    <rect x="14" y="152" width="292" height="9" rx="4" fill="#93a2b5"/>
+    <rect x="212" y="60" width="76" height="56" rx="6" fill="#dbe7ff" stroke="#2456b0"
+      stroke-width="3"/>
+    <rect x="242" y="116" width="16" height="14" fill="#2456b0"/>
+    <rect x="228" y="130" width="44" height="7" rx="3" fill="#2456b0"/>
+    <rect x="160" y="136" width="52" height="8" rx="4" fill="#5b6b80"/>
+    <rect x="${hx - 46}" y="112" width="12" height="42" rx="5" fill="#8fa2ba"/>
+    <rect x="${hx - 60}" y="106" width="40" height="10" rx="5" fill="#8fa2ba"/>
+    <circle cx="${hx + lean}" cy="58" r="21" fill="#f0a500"/>
+    <line x1="${hx + lean}" y1="79" x2="${hx}" y2="134" stroke="${c('bil')}"
+      stroke-width="9" stroke-linecap="round"/>
+    <line x1="${hx + lean}" y1="98" x2="${hx + 46}" y2="126" stroke="${c('tirsek')}"
+      stroke-width="7" stroke-linecap="round"/>
+    <line x1="${hx - 4}" y1="136" x2="${hx - 26}" y2="152" stroke="${c('ayak')}"
+      stroke-width="8" stroke-linecap="round"/>
+    <line x1="${hx - 26}" y1="152" x2="${hx - 26}" y2="168" stroke="${c('ayak')}"
+      stroke-width="8" stroke-linecap="round"/>
+    <line x1="${hx + lean + 22}" y1="42" x2="212" y2="42" stroke="${c('aralyk')}"
+      stroke-width="2" stroke-dasharray="5 4"/>
+    <text x="${(hx + lean + 232) / 2}" y="34" text-anchor="middle" font-size="13"
+      font-weight="700" fill="${c('aralyk')}">${
+        st.aralyk < 0 ? "?" : FIX[3].opts[st.aralyk][0]}</text>
+  </svg>`;
+}
+
+function drawFix() {
+  $("fixes").innerHTML = FIX.map(f =>
+    `<div class="fix"><h4>${f.h}</h4><div class="row tight">` +
+    f.opts.map((o, j) =>
+      `<button class="btn${st[f.id] === j ? " sel" : ""}" data-k="${f.id}" data-j="${j}">
+        ${o[0]}</button>`).join("") + `</div></div>`).join("");
+  $("fixes").querySelectorAll("button").forEach(b => b.onclick = () => {
+    st[b.dataset.k] = +b.dataset.j;
+    drawFix(); drawPose(); check();
+  });
+}
+function check() {
+  const done = FIX.every(f => st[f.id] >= 0);
+  const good = FIX.every(f => st[f.id] >= 0 && f.opts[st[f.id]][1]);
+  const m = $("fmsg");
+  if (!done) { m.textContent = "Dört ýagdaýy hem saýla."; m.className = "msg"; return; }
+  if (good) {
+    m.innerHTML = "🎉 Berekella! Oturyşyň düzgüne laýyk – indi ýadawlyk duýmazdan " +
+                  "uzak wagtlap işläp bilersiň.";
+    m.className = "msg ok";
+  } else {
+    const bad = FIX.filter(f => !f.opts[st[f.id]][1]).map(f => f.h.toLowerCase());
+    m.innerHTML = `❌ Heniz dogry däl: <b>${bad.join(", ")}</b>. Kitapdaky düzgüni ýatla.`;
+    m.className = "msg bad";
+  }
+}
+
+/* ---------------- maglumat göterijiler (sah. 10–11) ---------------- */
+const NAMES = ["Daş", "Kagyz", "CD we DVD"];
+const PROPS = [
+  ["Uzak ömürli, ýöne agyr", 0],
+  ["Suratlary we belgileri goýmak kyn", 0],
+  ["Köp belgini saklamaga mümkinçilik bermeýär", 0],
+  ["Suratlary we belgileri goýmak aňsat, köp maglumat sygýar", 1],
+  ["Otda ýanýar we suwdan zaýalanýar", 1],
+  ["Toprakda çüýräp bilýär", 1],
+  ["Örän köp maglumaty saklaýar", 2],
+  ["Maglumaty diňe ýörite gurluş okap bilýär", 2],
+];
+let left = [];
+function bins() {
+  left = PROPS.map((_, i) => i);
+  [0, 1, 2].forEach(i => $("b" + i).innerHTML = "");
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  pool();
+}
+function pool() {
+  $("pool").innerHTML = left.map(i =>
+    `<button class="btn" data-i="${i}">${PROPS[i][0]}</button>`).join("") ||
+    "<span class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [txt, who] = PROPS[i];
+    $("b" + who).innerHTML += `<span>${txt}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").textContent = `✅ Bu ${NAMES[who]} göterijisine degişli.`;
+    $("bmsg").className = "msg ok";
+    pool();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Ekran bilen gözüň aralygy näçe bolmaly?", ["20 sm", "50–60 sm", "3 metr"], 1],
+  ["Kitap boýunça haýsysy bolanok?",
+   ["Bili dik tutmak", "Bilekleri direg etmek", "Küýkerilip oturmak"], 2],
+  ["Ýadanyňda näme etmeli?",
+   ["Ekrana ýakynlaşmaly", "Turup, göz we el maşkyny etmeli", "Sesi güýçlendirmeli"], 1],
+  ["Haýsy göteriji otda ýanýar?", ["Daş", "CD", "Kagyz"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+drawPose(); drawFix(); check(); bins();
+</script>
+</body>
+</html>

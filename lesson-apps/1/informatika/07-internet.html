@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internet bilen tanyşlyk — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 24px; }
+  .net { background: #eef2f8; border-radius: 16px; padding: 10px; }
+  .net svg { display: block; margin: 0 auto; background: #fff; border-radius: 12px;
+             max-width: 100%; height: auto; }
+  .can { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  .can button { min-height: 76px; font-size: 14px; font-weight: 700; line-height: 1.35; }
+  .can .em { display: block; font-size: 26px; margin-bottom: 2px; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+  .bin { background: #f7fafd; border-radius: 14px; padding: 10px; min-height: 82px; }
+  .bin h4 { margin: 0 0 6px; font-size: 15px; }
+  .bin span { display: block; background: #fff; border-radius: 10px; padding: 7px 9px;
+              font-size: 14px; margin-bottom: 5px; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Internet bilen tanyşlyk</h1>
+  <div class="sub">Informatika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="goal"><b>Internet</b> – bu <b>bütindünýä kompýuter tory</b>. Ony başgaça
+      <b>global tor</b> diýip hem atlandyrýarlar. Kompýutere bas – ol tora birigýär.</div>
+    <div class="hint">Dünýäde Internetiň döredilen güni – <b>1991-nji ýylyň 17-nji maýy</b>.</div>
+    <div class="net" id="nt"></div>
+    <div class="msg" id="nmsg"></div>
+    <button class="btn ghost" id="nr" style="margin-top:8px">Başdan</button>
+  </div>
+
+  <div class="card">
+    <h3>Hat nähili gidýär?</h3>
+    <div class="goal">Iki ýoly deňeşdir: adaty hat we <b>elektron hat</b>.</div>
+    <div class="row">
+      <button class="btn" id="post">✉️ Adaty hat</button>
+      <button class="btn primary" id="mail">📧 Elektron hat</button>
+    </div>
+    <div class="msg" id="hmsg" style="min-height:44px"></div>
+    <div class="hint">Internetde öz <b>elektron gutyňy</b> döredip, birnäçe sekundyň dowamynda
+      dünýäniň islendik ýerine elektron hat ugradyp bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Internetde näme edip bolýar?</h3>
+    <div class="goal">Ýazga bas – ol dogry sütüne geçsin.</div>
+    <div class="can" id="pool"></div>
+    <div class="bins">
+      <div class="bin"><h4 style="color:#1d7a3d">✅ Bolýar</h4><div id="bok"></div></div>
+      <div class="bin"><h4 style="color:#b4232a">⛔ Bolanok</h4><div id="bno"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 1-nji synp · VII bölüm, sah. 70–73</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- tor ---------------- */
+const NODES = [
+  [60, 60, "🏫"], [240, 56, "🏠"], [58, 172, "🏥"], [246, 176, "🏪"], [150, 214, "📱"],
+];
+let linked = [];
+function net() {
+  const cx = 150, cy = 116;
+  const edges = linked.map(i =>
+    `<line x1="${cx}" y1="${cy}" x2="${NODES[i][0]}" y2="${NODES[i][1]}"
+       stroke="#1d7a3d" stroke-width="4" stroke-linecap="round"/>`).join("");
+  const dots = NODES.map((n, i) =>
+    `<g class="hit" data-i="${i}" style="cursor:pointer">
+       <circle cx="${n[0]}" cy="${n[1]}" r="24"
+         fill="${linked.includes(i) ? "#e0f5e6" : "#f0f4f9"}"
+         stroke="${linked.includes(i) ? "#1d7a3d" : "#93a2b5"}" stroke-width="3"/>
+       <text x="${n[0]}" y="${n[1] + 8}" text-anchor="middle" font-size="22">${n[2]}</text>
+     </g>`).join("");
+  $("nt").innerHTML = `<svg viewBox="0 0 300 250" width="300"
+    xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">
+    ${edges}${dots}
+    <circle cx="${cx}" cy="${cy}" r="32" fill="#dbe7ff" stroke="#2456b0" stroke-width="3"/>
+    <text x="${cx}" y="${cy + 9}" text-anchor="middle" font-size="24">🌐</text>
+  </svg>`;
+  $("nt").querySelectorAll(".hit").forEach(g => g.onclick = () => {
+    const i = +g.dataset.i;
+    if (!linked.includes(i)) linked.push(i);
+    $("nmsg").textContent = linked.length === NODES.length
+      ? "🎉 Ähli kompýuter tora birikdi – ine, şuňa internet diýilýär!"
+      : `Birikdi! Ýene ${NODES.length - linked.length} enjam galdy.`;
+    $("nmsg").className = "msg ok";
+    net();
+  });
+}
+$("nr").onclick = () => {
+  linked = [];
+  $("nmsg").textContent = ""; $("nmsg").className = "msg";
+  net();
+};
+
+/* ---------------- bolýar / bolanok ---------------- */
+const CAN = [
+  ["📚", "Sapak üçin surat tapmak", true],
+  ["🎬", "Multfilm görmek", true],
+  ["🎵", "Aýdym diňlemek", true],
+  ["🏠", "Öz salgyňy nätanyşa ýazmak", false],
+  ["📸", "Suratyňy nätanyşa ibermek", false],
+  ["🔒", "Paroly başga çaga aýtmak", false],
+];
+let left = [];
+function bins() {
+  left = CAN.map((_, i) => i);
+  $("bok").innerHTML = ""; $("bno").innerHTML = "";
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  pool();
+}
+function pool() {
+  $("pool").innerHTML = left.map(i =>
+    `<button class="btn" data-i="${i}"><span class="em">${CAN[i][0]}</span>${CAN[i][1]}</button>`
+  ).join("") || "<span class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [em, txt, ok] = CAN[i];
+    $(ok ? "bok" : "bno").innerHTML += `<span>${em} ${txt}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").textContent = ok
+      ? "✅ Dogry, muny etmek bolýar."
+      : "⛔ Dogry, muny etmek bolanok – bu şahsy maglumat.";
+    $("bmsg").className = "msg ok";
+    pool();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- adaty we elektron hat (sah. 70) ---------------- */
+$("post").onclick = () => {
+  $("hmsg").innerHTML = "✉️ Öň adamlar haty kagyza ýazyp, bukja salyp ugradýardylar. " +
+    "Jogaba <b>birnäçe hepde</b> garaşmaly bolýardy.";
+  $("hmsg").className = "msg bad";
+};
+$("mail").onclick = () => {
+  $("hmsg").innerHTML = "📧 Elektron hat <b>birnäçe sekundyň</b> dowamynda dünýäniň islendik " +
+    "ýerine barýar. Jogaby çalt almak zerurlygy Interneti döretdi.";
+  $("hmsg").className = "msg ok";
+};
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Internet näme?", ["Bütindünýä kompýuter tory", "Kompýuteriň bölegi", "Kitap"], 0],
+  ["Dünýäde Internetiň döredilen ýyly haýsy?", ["1977", "1991", "2001"], 1],
+  ["Elektron hat näçe wagtda gowuşýar?",
+   ["Birnäçe hepdede", "Bir aýda", "Birnäçe sekuntda"], 2],
+  ["Internete haçan girmeli?", ["Ýeke özüň", "Ulular bilen bile", "Gije"], 1],
+  ["Nätanyşa näme ibermek bolmaýar?", ["Salam sözüni", "Emoji", "Öz suratyňy we salgyňy"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+net(); bins();
+</script>
+</body>
+</html>

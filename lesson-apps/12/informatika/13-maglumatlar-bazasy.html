@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maglumatlar bazasynyň tablisalary — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tabs button { flex: 1; min-width: 120px; min-height: 44px; border: none; border-radius: 11px;
+                 background: #eef2f8; color: #3d4d63; font-weight: 800; font-size: 14px;
+                 cursor: pointer; }
+  .tabs button.on { background: #2456b0; color: #fff; }
+  .grid { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .grid th, .grid td { border: 1px solid #d6e0ee; padding: 8px 9px; text-align: left; }
+  .grid th { background: #eef2f8; color: #3d4d63; font-size: 12.5px; }
+  .grid td.key { background: #fff8e2; font-weight: 700; }
+  .scroll { overflow-x: auto; border-radius: 10px; }
+  .fld { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .fld input, .fld select { padding: 9px; border-radius: 9px; border: 2px solid #d6e0ee;
+                            font-size: 14px; min-width: 0; }
+  .fld input { flex: 1; }
+  .fld .k { width: 44px; height: 42px; border: none; border-radius: 9px; background: #eef2f8;
+            font-size: 17px; cursor: pointer; flex: 0 0 auto; }
+  .fld .k.on { background: #fff0bd; }
+  .fld .x { width: 42px; height: 42px; border: none; border-radius: 9px; background: #fbe3e3;
+            color: #b02424; cursor: pointer; flex: 0 0 auto; }
+  .form { border: 2px solid #d6e0ee; border-radius: 12px; padding: 14px; background: #fff; }
+  .form .r { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid #edf1f7; }
+  .form .r:last-child { border-bottom: none; }
+  .form .r span:first-child { width: 130px; font-weight: 800; color: #5b6b80; font-size: 13.5px; }
+  .qrow { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .qrow select, .qrow input { padding: 10px; border-radius: 10px; border: 2px solid #d6e0ee;
+                              font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maglumatlar bazasynyň tablisalary</h1>
+  <div class="sub">Konstruktor · meýdança we ýazgy · baş açar · talaplar · 12-nji synp</div>
+
+  <div class="tabs">
+    <button data-t="k" class="on">Konstruktor</button>
+    <button data-t="t">Tablisa</button>
+    <button data-t="q">Talap</button>
+    <button data-t="f">Forma</button>
+  </div>
+
+  <div class="card" id="pk">
+    <div class="goal">Meýdançalaryň atlaryny we giňeltmelerini ber. 🔑 düwmesi meýdançany
+      <b>baş açara</b> öwürýär – onuň bahasy gaýtalanmaly däldir.</div>
+    <div id="flds"></div>
+    <div class="row tight">
+      <button class="btn" id="addf">+ Meýdança goş</button>
+      <button class="btn ghost" id="rstf">Başdaky gurluş</button>
+    </div>
+    <div class="msg" id="km"></div>
+  </div>
+
+  <div class="card" id="pt" style="display:none">
+    <div class="goal">«Режим таблицы» – maglumatlary girizmek düzgüni. Setir – <b>ýazgy</b>,
+      sütün – <b>meýdança</b>.</div>
+    <div class="scroll"><table class="grid" id="tbl"></table></div>
+    <div class="row tight">
+      <button class="btn" id="addr">+ Ýazgy goş</button>
+      <button class="btn ghost" id="delr">Soňky ýazgyny öçür</button>
+    </div>
+    <div class="msg" id="tm"></div>
+  </div>
+
+  <div class="card" id="pq" style="display:none">
+    <div class="goal">Talap – bazanyň özbaşdak obýekti. Şert boýunça ýazgylary saýlaýar.</div>
+    <div class="qrow">
+      <select id="qf"></select>
+      <select id="qo">
+        <option value="=">=</option><option value=">=">&gt;=</option>
+        <option value="<=">&lt;=</option><option value="~">içinde bar</option>
+      </select>
+      <input id="qv" placeholder="baha" size="8">
+      <button class="btn" id="qgo">Talaby işlet</button>
+    </div>
+    <div class="row tight">
+      <button class="btn ghost" id="sa">A→Z tertiple</button>
+      <button class="btn ghost" id="sd">Z→A tertiple</button>
+      <button class="btn ghost" id="qc">Şerti aýyr</button>
+    </div>
+    <div class="scroll"><table class="grid" id="qtbl"></table></div>
+    <div class="msg" id="qm"></div>
+  </div>
+
+  <div class="card" id="pf" style="display:none">
+    <div class="goal">Forma bir ýazgyny doly ekrana çykarýar.</div>
+    <div class="form" id="frm"></div>
+    <div class="row tight">
+      <button class="btn" id="prev">◀︎ Öňki</button>
+      <button class="btn" id="nextr">Indiki ▶︎</button>
+      <span class="score" id="fpos"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">MS Access-iň esasy obýektleri: <b>tablisalar</b>, <b>talaplar</b>,
+      <b>formalar</b>, <b>hasabatlar</b>, makroslar we modullar. Süzgüç talapdan tapawutlylykda
+      diňe bir tablisa baglanýar.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §21–§29</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TYPES = ["Tekstli", "Sanly", "Sene", "Logiki"];
+const DEF = [
+  { n: "T/b", t: "Sanly", k: true },
+  { n: "Familiýasy", t: "Tekstli", k: false },
+  { n: "Ady", t: "Tekstli", k: false },
+  { n: "Dersi", t: "Tekstli", k: false },
+  { n: "Iş stažy", t: "Sanly", k: false }
+];
+const DEFR = [
+  ["1", "Amanow", "Serdar", "Matematika", "18"],
+  ["2", "Berdiýewa", "Aýna", "Informatika", "12"],
+  ["3", "Çaryýew", "Merdan", "Fizika", "25"],
+  ["4", "Döwletow", "Kerim", "Informatika", "7"],
+  ["5", "Ereşowa", "Maýa", "Himiýa", "15"]
+];
+let flds = DEF.map(f => ({ ...f })), rows = DEFR.map(r => r.slice()), fi = 0, qres = null;
+
+/* ------------------------------------------------------------------ tab geçiş */
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  ["k", "t", "q", "f"].forEach(t => $("p" + t).style.display = t === b.dataset.t ? "block" : "none");
+  if (b.dataset.t === "t") drawTbl();
+  if (b.dataset.t === "q") { fillQ(); drawQ(); }
+  if (b.dataset.t === "f") drawForm();
+});
+
+/* ---------------------------------------------------------------- konstruktor */
+function drawFlds() {
+  const box = $("flds"); box.innerHTML = "";
+  flds.forEach((f, i) => {
+    const d = document.createElement("div"); d.className = "fld";
+    const nm = document.createElement("input");
+    nm.value = f.n; nm.placeholder = "Имя поля";
+    nm.oninput = () => { f.n = nm.value; };
+    const sl = document.createElement("select");
+    TYPES.forEach(t => {
+      const o = document.createElement("option"); o.value = t; o.textContent = t;
+      if (t === f.t) o.selected = true; sl.appendChild(o);
+    });
+    sl.onchange = () => { f.t = sl.value; };
+    const k = document.createElement("button");
+    k.className = "k" + (f.k ? " on" : ""); k.textContent = "🔑"; k.title = "Baş açar";
+    k.onclick = () => {
+      flds.forEach(x => x.k = false); f.k = true; drawFlds();
+      $("km").className = "msg ok";
+      $("km").textContent = "«" + f.n + "» baş açar edildi – onuň bahasy gaýtalanmaly däldir.";
+    };
+    const x = document.createElement("button");
+    x.className = "x"; x.textContent = "✕";
+    x.onclick = () => {
+      if (flds.length < 2) return;
+      flds.splice(i, 1); rows.forEach(r => r.splice(i, 1)); drawFlds();
+    };
+    d.appendChild(nm); d.appendChild(sl); d.appendChild(k); d.appendChild(x);
+    box.appendChild(d);
+  });
+}
+$("addf").onclick = () => {
+  flds.push({ n: "Meýdança " + (flds.length + 1), t: "Tekstli", k: false });
+  rows.forEach(r => r.push("")); drawFlds();
+};
+$("rstf").onclick = () => {
+  flds = DEF.map(f => ({ ...f })); rows = DEFR.map(r => r.slice());
+  drawFlds(); $("km").textContent = "";
+};
+
+/* -------------------------------------------------------------------- tablisa */
+function keyIdx() { return flds.findIndex(f => f.k); }
+function drawTbl() {
+  const t = $("tbl"); t.innerHTML = "";
+  const hr = document.createElement("tr");
+  flds.forEach(f => {
+    const th = document.createElement("th");
+    th.textContent = (f.k ? "🔑 " : "") + f.n; hr.appendChild(th);
+  });
+  t.appendChild(hr);
+  rows.forEach((r, ri) => {
+    const tr = document.createElement("tr");
+    flds.forEach((f, ci) => {
+      const td = document.createElement("td");
+      if (f.k) td.className = "key";
+      td.contentEditable = "true";
+      td.textContent = r[ci] || "";
+      td.oninput = () => { rows[ri][ci] = td.textContent.trim(); checkKey(); };
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  });
+  checkKey();
+}
+function checkKey() {
+  const k = keyIdx();
+  if (k < 0) { $("tm").className = "msg bad"; $("tm").textContent = "Baş açar bellenmedik."; return; }
+  const v = rows.map(r => r[k]), dup = v.filter((x, i) => x !== "" && v.indexOf(x) !== i);
+  const emp = v.filter(x => x === "").length;
+  if (dup.length) {
+    $("tm").className = "msg bad";
+    $("tm").textContent = "Baş açaryň bahasy gaýtalandy: «" + dup[0] + "». Access beýle ýazgyny kabul etmeýär.";
+  } else if (emp) {
+    $("tm").className = "msg bad";
+    $("tm").textContent = "Baş açaryň meýdançasy boş bolmaly däl.";
+  } else {
+    $("tm").className = "msg ok";
+    $("tm").textContent = rows.length + " ýazgy · " + flds.length + " meýdança · baş açar dogry.";
+  }
+}
+$("addr").onclick = () => { rows.push(flds.map(() => "")); drawTbl(); };
+$("delr").onclick = () => { if (rows.length > 1) { rows.pop(); drawTbl(); } };
+
+/* --------------------------------------------------------------------- talap */
+function fillQ() {
+  const s = $("qf"); s.innerHTML = "";
+  flds.forEach((f, i) => {
+    const o = document.createElement("option"); o.value = i; o.textContent = f.n; s.appendChild(o);
+  });
+}
+function drawQ(list) {
+  const data = list || rows;
+  const t = $("qtbl"); t.innerHTML = "";
+  const hr = document.createElement("tr");
+  flds.forEach(f => { const th = document.createElement("th"); th.textContent = f.n; hr.appendChild(th); });
+  t.appendChild(hr);
+  data.forEach(r => {
+    const tr = document.createElement("tr");
+    r.forEach(c => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); });
+    t.appendChild(tr);
+  });
+  qres = data;
+}
+$("qgo").onclick = () => {
+  const i = +$("qf").value, op = $("qo").value, v = $("qv").value.trim();
+  const num = x => parseFloat(String(x).replace(",", "."));
+  const out = rows.filter(r => {
+    const c = r[i];
+    if (op === "=") return String(c).toLowerCase() === v.toLowerCase();
+    if (op === "~") return String(c).toLowerCase().indexOf(v.toLowerCase()) >= 0;
+    if (op === ">=") return num(c) >= num(v);
+    return num(c) <= num(v);
+  });
+  drawQ(out);
+  $("qm").className = "msg " + (out.length ? "ok" : "bad");
+  $("qm").textContent = "«Условие отбора»: " + flds[i].n + " " + op + " " + v +
+    " → " + out.length + " ýazgy saýlandy.";
+};
+$("qc").onclick = () => { drawQ(rows); $("qm").textContent = "Şert aýryldy – ähli ýazgylar."; };
+function sort(dir) {
+  const i = +$("qf").value;
+  const d = (qres || rows).slice().sort((a, b) => {
+    const x = a[i], y = b[i], nx = parseFloat(x), ny = parseFloat(y);
+    const c = (!isNaN(nx) && !isNaN(ny)) ? nx - ny : String(x).localeCompare(String(y), "tk");
+    return dir * c;
+  });
+  drawQ(d);
+  $("qm").className = "msg ok";
+  $("qm").textContent = flds[i].n + " boýunça " + (dir > 0 ? "ösýän" : "kemelýän") + " tertipde tertipleşdirildi.";
+}
+$("sa").onclick = () => sort(1);
+$("sd").onclick = () => sort(-1);
+
+/* --------------------------------------------------------------------- forma */
+function drawForm() {
+  if (fi >= rows.length) fi = 0;
+  const f = $("frm"); f.innerHTML = "";
+  flds.forEach((fl, i) => {
+    const d = document.createElement("div"); d.className = "r";
+    const a = document.createElement("span"); a.textContent = fl.n;
+    const b = document.createElement("span"); b.textContent = rows[fi][i] || "—";
+    d.appendChild(a); d.appendChild(b); f.appendChild(d);
+  });
+  $("fpos").textContent = "Ýazgy " + (fi + 1) + " / " + rows.length;
+}
+$("prev").onclick = () => { fi = (fi - 1 + rows.length) % rows.length; drawForm(); };
+$("nextr").onclick = () => { fi = (fi + 1) % rows.length; drawForm(); };
+
+drawFlds();
+</script>
+</body>
+</html>

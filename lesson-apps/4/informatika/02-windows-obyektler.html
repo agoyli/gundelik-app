@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windowsyň obýektleri — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .desk { background: #cfe0fb; border-radius: 14px; padding: 12px; }
+  .icons { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 10px; }
+  .icon { background: #ffffff55; border-radius: 12px; padding: 9px 4px; text-align: center;
+          font-size: 12px; font-weight: 700; color: #1e2a3a; position: relative;
+          min-height: 78px; }
+  .icon.on { background: #fff; box-shadow: 0 0 0 3px #2456b0; }
+  .icon .em { display: block; font-size: 30px; }
+  .icon .lnk { position: absolute; right: 18px; bottom: 26px; font-size: 13px; }
+  .tree { background: #f7fafd; border-radius: 14px; padding: 10px; font-size: 14px; }
+  .tree button { display: block; text-align: left; width: 100%; background: #fff;
+                 border-radius: 9px; padding: 7px 10px; margin-bottom: 4px;
+                 font-size: 13.5px; font-weight: 600; color: #1e2a3a; min-height: 40px; }
+  .tree button.on { box-shadow: 0 0 0 2px #2456b0; }
+  .tree .kok { color: #b25b12; }
+  .tree .yaprak { color: #1d7a3d; }
+  .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .legend div { background: #f7fafd; border-radius: 12px; padding: 9px 11px; font-size: 13px;
+                line-height: 1.5; }
+  .legend b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Windowsyň obýektleri</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <h3>Nyşanjyklar</h3>
+    <div class="goal">Kitap: «Nyşanjyk – bu programmany, papkany, resminamany, diski,
+      kompýuteriň gurluşyny aňladýan iş stolundaky ýa-da papkadaky suratdyr.»
+      Nyşanjyga bas – ol näme aňladýar?</div>
+    <div class="desk"><div class="icons" id="ic"></div></div>
+    <div class="msg" id="imsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Papkalaryň agajy</h3>
+    <div class="goal">Depä bas – ol kökmi, ýapraklarmy ýa-da adaty depemi?
+      Papkany açyp-ýapyp hem bolýar.</div>
+    <div class="tree" id="tr"></div>
+    <div class="msg" id="tmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Agajyň sözleri</h3>
+    <div class="legend">
+      <div><b>Agaç</b><br>Obýektleriň arasyndaky gatnaşyklary gurnamagyň usuly.</div>
+      <div><b>Depeler</b><br>Agajyň düwünleri – papkalar we faýllar.</div>
+      <div><b>Gapyrgalar</b><br>Depeleri birikdirýän çyzyklar.</div>
+      <div><b>Kök</b><br>Hiç hili gapyrga birikmeýän depe.</div>
+      <div><b>Ýapraklar</b><br>Hiç hili gapyrga çykmaýan depeler.</div>
+      <div><b>Goýlan papka</b><br>Papkanyň içindäki papka.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- nyşanjyklar ---------------- */
+const ICONS = [
+  ["📁", "Suratlar", "Bu <b>boş papka</b> – içinde faýl ýok."],
+  ["🗂", "Ýazgylar", "Bu <b>faýlly papka</b> – içinde faýllar saklanýar."],
+  ["📄", "Maslahatlar", "Bu <b>faýl</b> – kompýuteriň diskindäki ýörite ady bolan ýer."],
+  ["🎨", "Paint", "Bu <b>ýarlyk</b> – programma salgylanma. Burçunda egri ugur görkeziji bar.",
+   true],
+  ["🧮", "Kalkulýator", "Bu-da <b>ýarlyk</b> – Kalkulýator programmasyna salgylanma.", true],
+  ["💽", "Gaty disk", "Bu <b>gaty disk</b> – kompýuteriň maglumat göterijisi."],
+];
+let isel = null;
+function icons() {
+  $("ic").innerHTML = ICONS.map((it, i) =>
+    `<button class="icon${i === isel ? " on" : ""}" data-i="${i}">
+       <span class="em">${it[0]}</span>${it[1]}
+       ${it[3] ? '<span class="lnk">↗️</span>' : ""}</button>`).join("");
+  $("ic").querySelectorAll("button").forEach(b => b.onclick = () => {
+    isel = +b.dataset.i; icons();
+    $("imsg").innerHTML = ICONS[isel][2];
+    $("imsg").className = "msg ok";
+  });
+}
+
+/* ---------------- agaç ---------------- */
+const NODES = {
+  disk: {n: "💽 Gaty disk", kids: ["yaz", "sur"]},
+  yaz:  {n: "📁 Ýazgylar", kids: ["ert", "mas"]},
+  ert:  {n: "📁 Ertekiler", kids: ["akp", "yar"]},
+  akp:  {n: "📄 Akpamyk", kids: []},
+  yar:  {n: "📄 Ýartygulak", kids: []},
+  mas:  {n: "📄 Maslahatlar", kids: []},
+  sur:  {n: "📁 Suratlar", kids: ["nat", "nag"]},
+  nat:  {n: "🖼 Natýurmort", kids: []},
+  nag:  {n: "🖼 Nagyş", kids: []},
+};
+const parent = {};
+Object.entries(NODES).forEach(([k, v]) => v.kids.forEach(c => parent[c] = k));
+let open = {disk: true, yaz: true, sur: true, ert: true}, tsel = null;
+
+function kind(k) {
+  if (!parent[k]) return ["kök", "kok"];
+  if (!NODES[k].kids.length) return ["ýaprak", "yaprak"];
+  return ["adaty depe", ""];
+}
+function path(k) {
+  const p = [];
+  let c = k;
+  while (c) { p.unshift(NODES[c].n.replace(/^\S+\s/, "")); c = parent[c]; }
+  return p.join(" › ");
+}
+function tree() {
+  const rows = [];
+  const walk = (k, lvl) => {
+    const [word, cls] = kind(k);
+    const kids = NODES[k].kids;
+    const arrow = kids.length ? (open[k] ? "▾ " : "▸ ") : "• ";
+    rows.push(`<button class="${cls}${k === tsel ? " on" : ""}" data-k="${k}"
+      style="margin-left:${lvl * 18}px">${arrow}${NODES[k].n}</button>`);
+    if (kids.length && open[k]) kids.forEach(c => walk(c, lvl + 1));
+  };
+  walk("disk", 0);
+  $("tr").innerHTML = rows.join("");
+  $("tr").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    if (k === tsel && NODES[k].kids.length) open[k] = !open[k];
+    tsel = k;
+    tree();
+    const [word] = kind(k);
+    const kids = NODES[k].kids.length;
+    $("tmsg").innerHTML =
+      `<b>${NODES[k].n}</b> – bu <b>${word}</b>. ` +
+      (word === "kök" ? "Oňa hiç hili gapyrga birikmeýär. " :
+       word === "ýaprak" ? "Ondan hiç hili gapyrga çykmaýar. " :
+       `Ondan ${kids} gapyrga çykýar. `) +
+      `Ýoly: ${path(k)}.` +
+      (NODES[k].kids.length ? " Ýene bir gezek bassaň, açylýar ýa-da ýapylýar." : "");
+    $("tmsg").className = "msg ok";
+  });
+}
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Nyşanjyk näme aňladýar?",
+   ["Programmany, papkany, resminamany ýa-da diski", "Diňe suraty", "Diňe sesi"], 0],
+  ["Agajyň hiç hili gapyrga birikmeýän depesi näme?",
+   ["Ýaprak", "Kök", "Gapyrga"], 1],
+  ["Papkanyň içindäki papka näme diýilýär?",
+   ["Ýarlyk", "Kök", "Goýlan papka"], 2],
+  ["Ýarlygy näme tapawutlandyrýar?",
+   ["Nyşanjygyndaky egri ugur görkeziji", "Sary reňki", "Uly ölçegi"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+icons(); tree();
+</script>
+</body>
+</html>

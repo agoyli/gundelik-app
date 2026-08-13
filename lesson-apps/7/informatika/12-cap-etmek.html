@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resminamany çap etmek — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .dlg { background: #eef2f8; border-radius: 12px; padding: 11px; }
+  .dlg h4 { margin: 0 0 7px; font-size: 12.5px; color: #5b6b80; text-transform: uppercase;
+            letter-spacing: .04em; }
+  .fld { background: #fff; border: 1px solid #d6e0ee; border-radius: 9px; padding: 9px 10px;
+         margin-bottom: 7px; font-size: 14px; }
+  .fld select, .fld input { border: none; outline: none; font-size: 14px; width: 100%;
+                            background: transparent; min-height: 26px; }
+  .fld label { display: block; font-size: 11.5px; color: #93a2b5; margin-bottom: 2px; }
+  .pv { display: flex; flex-wrap: wrap; gap: 7px; }
+  .pg { width: 74px; height: 100px; background: #fff; border: 2px solid #d6e0ee; border-radius: 6px;
+        padding: 6px 5px; font-size: 6px; line-height: 1.5; color: #93a2b5; position: relative;
+        overflow: hidden; }
+  .pg.on { border-color: #2456b0; box-shadow: 0 0 0 3px #dbe7ff; }
+  .pg.on::after { content: "çap"; position: absolute; right: 3px; bottom: 3px; font-size: 8px;
+                  color: #2456b0; font-weight: 800; }
+  .pg b { display: block; text-align: center; font-size: 9px; color: #1e2a3a; margin-bottom: 4px; }
+  .pg i { display: block; height: 2px; background: #d6e0ee; border-radius: 2px; margin: 3px 0; }
+  .pg.land { width: 100px; height: 74px; }
+  .sum { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+         background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .sum b { color: #2456b0; }
+  .steps { counter-reset: s; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+       font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Resminamany çap etmek</h1>
+  <div class="sub">Tekst informasiýalary bilen işlemek · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Resminama <b>Файл → Печать</b> (Faýl → Çap etmek) buýrugy bilen kagyza
+      çykarylýar. Sazlamalary üýtgedip, deslapky görnüşiň nähili üýtgeýändigine seret.</div>
+    <div class="cols">
+      <div class="col">
+        <div class="dlg">
+          <h4>Принтер · Printer</h4>
+          <div class="fld"><label>printer</label>
+            <select id="prn">
+              <option>HP LaserJet 1020 (ak-gara)</option>
+              <option>Canon PIXMA G3410 (reňkli)</option>
+              <option>Microsoft Print to PDF (faýla)</option>
+            </select></div>
+          <h4>Настройка · Sazlamalar</h4>
+          <div class="fld"><label>çap ediljek sahypalar</label>
+            <select id="mode">
+              <option value="all">Ähli sahypalar</option>
+              <option value="cur">Diňe häzirki sahypa</option>
+              <option value="rng">Görkezilen sahypalar</option>
+              <option value="odd">Diňe täk sahypalar</option>
+              <option value="even">Diňe jübüt sahypalar</option>
+            </select></div>
+          <div class="fld" id="rngf" style="display:none"><label>sahypalar (meselem 2-5, 8)</label>
+            <input id="rng" value="2-5, 8"></div>
+          <div class="fld"><label>kagyzyň ölçegi</label>
+            <select id="pap"><option>A4 – 21 × 29,7 sm</option><option>A5 – 14,8 × 21 sm</option>
+              <option>A3 – 29,7 × 42 sm</option></select></div>
+          <div class="fld"><label>ýerleşişi</label>
+            <select id="ori"><option value="p">Kitap görnüşi (dik)</option>
+              <option value="l">Albom görnüşi (keseligine)</option></select></div>
+          <div class="slider"><span class="lbl">Копии · nusgalaryň sany</span>
+            <input type="range" id="cop" min="1" max="10" value="1"><span class="out" id="copo"></span></div>
+          <button class="btn primary" id="go" style="width:100%">Печать · Çap etmek</button>
+        </div>
+      </div>
+      <div class="col">
+        <div class="sub" style="margin:0 0 6px">Deslapky görnüş (предварительный просмотр)</div>
+        <div class="pv" id="pv"></div>
+        <div class="sum" id="sum" style="margin-top:9px"></div>
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+    <div class="hint">Häzirki sahypa – kursoryň duran sahypasy. Sahypa belgilerine basyp,
+      häzirki sahypany üýtget.</div>
+  </div>
+
+  <div class="card">
+    <h3>Yzygiderligi bil</h3>
+    <div class="goal">Resminamany çap etmegiň ädimlerini dogry tertipde saýla.</div>
+    <div id="ord"></div>
+    <div class="msg" id="omsg"></div>
+    <button class="btn ghost" id="or">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barlag soraglary</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Çalt ýerine ýetirmek panelindäki printeriň şekili bolan düwme resminamany sazlamalar
+      penjiresini açman <b>göni çapa</b> iberýär. Şonuň üçin köp sahypaly resminamany çap etmezden
+      öň hökman <b>Файл → Печать</b> arkaly sazlamalary barlamaly.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = 8;
+let cur = 3;
+
+function parseRange(s) {
+  const out = new Set();
+  s.split(",").forEach(part => {
+    const p = part.trim();
+    if (!p) return;
+    const m = p.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (m) { for (let i = +m[1]; i <= +m[2]; i++) if (i >= 1 && i <= N) out.add(i); }
+    else if (/^\d+$/.test(p) && +p >= 1 && +p <= N) out.add(+p);
+  });
+  return [...out].sort((a, b) => a - b);
+}
+function pages() {
+  const m = $("mode").value;
+  if (m === "all") return Array.from({length: N}, (_, i) => i + 1);
+  if (m === "cur") return [cur];
+  if (m === "rng") return parseRange($("rng").value);
+  if (m === "odd") return Array.from({length: N}, (_, i) => i + 1).filter(p => p % 2 === 1);
+  return Array.from({length: N}, (_, i) => i + 1).filter(p => p % 2 === 0);
+}
+function draw() {
+  $("rngf").style.display = $("mode").value === "rng" ? "" : "none";
+  const sel = pages(), land = $("ori").value === "l", cop = +$("cop").value;
+  $("copo").textContent = cop;
+  $("pv").innerHTML = Array.from({length: N}, (_, i) => {
+    const p = i + 1;
+    return `<div class="pg ${land ? "land" : ""} ${sel.includes(p) ? "on" : ""}" data-p="${p}">
+      <b>${p}${p === cur ? " ●" : ""}</b><i></i><i style="width:82%"></i><i></i>
+      <i style="width:64%"></i><i></i><i style="width:74%"></i></div>`;
+  }).join("");
+  $("pv").querySelectorAll(".pg").forEach(d => d.onclick = () => { cur = +d.dataset.p; draw(); });
+  const sheets = sel.length * cop;
+  $("sum").innerHTML =
+    `çap ediljek sahypalar: <b>${sel.length ? sel.join(", ") : "ýok"}</b><br>` +
+    `sahypanyň sany: <b>${sel.length}</b> · nusga: <b>${cop}</b><br>` +
+    `jemi kagyz: ${sel.length} · ${cop} = <b>${sheets} sahypa</b><br>` +
+    `häzirki sahypa: <b>${cur}</b> · kagyz: <b>${$("pap").value.split(" ")[0]}</b>` +
+    ` · ${land ? "albom" : "kitap"} görnüşi`;
+  if (!sel.length) {
+    $("msg").textContent = "Hiç bir sahypa saýlanmady – sahypalaryň belgisini dogry ýaz.";
+    $("msg").className = "msg bad";
+  } else { $("msg").textContent = ""; $("msg").className = "msg"; }
+}
+["mode", "pap", "ori"].forEach(k => $(k).addEventListener("change", draw));
+$("rng").addEventListener("input", draw);
+$("cop").addEventListener("input", draw);
+$("go").onclick = () => {
+  const sel = pages(), cop = +$("cop").value;
+  if (!sel.length) { draw(); return; }
+  const pdf = $("prn").selectedIndex === 2;
+  $("msg").innerHTML = pdf
+    ? `Resminama kagyza çykarylman, <b>PDF faýla</b> ýazyldy: ${sel.length} sahypa.`
+    : `«${$("prn").value}» printerine ${sel.length * cop} sahypa iberildi (${cop} nusga).`;
+  $("msg").className = "msg ok";
+};
+
+/* ---------------- yzygiderlik ---------------- */
+const ST = ["Resminamany taýýarlap, ýatda sakla.",
+            "Файл menýusyndan Печать buýrugyny saýla.",
+            "Printeri saýla.",
+            "Deslapky görnüşe seredip, bezegi barla.",
+            "Çap ediljek sahypalary we nusgalaryň sanyny ber.",
+            "Печать düwmesine bas."];
+const MIX = [3, 0, 5, 2, 4, 1];
+let ord = [];
+function ordr() {
+  const rest = MIX.filter(i => !ord.includes(i));
+  $("ord").innerHTML = ord.concat(rest).map(i => {
+    const k = ord.indexOf(i);
+    return `<div class="qa" data-i="${i}" style="cursor:pointer">
+      <span class="badge ${k >= 0 ? "ok" : "info"}">${k >= 0 ? k + 1 : "?"}</span> ${ST[i]}</div>`;
+  }).join("");
+  $("ord").querySelectorAll(".qa").forEach(d => d.onclick = () => {
+    const i = +d.dataset.i;
+    if (ord.includes(i)) return;
+    ord.push(i); ordr();
+  });
+  if (ord.length === ST.length) {
+    const good = ord.every((v, i) => v === i);
+    $("omsg").textContent = good ? "Yzygiderlik dogry." :
+      "Yzygiderlik nädogry. Ilki resminama ýatda saklanýar, iň soňunda Печать basylýar.";
+    $("omsg").className = good ? "msg ok" : "msg bad";
+  } else $("omsg").textContent = "";
+}
+$("or").onclick = () => { ord = []; $("omsg").textContent = ""; ordr(); };
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["«2-5, 8» diýip ýazsaň, näçe sahypa çap edilýär?", ["4", "5", "6", "8"], 1],
+  ["Printeriň şekili bolan panel düwmesi näme edýär?",
+   ["Sazlamalar penjiresini açýar", "Resminamany göni çapa iberýär",
+    "Sahypany deslapky görnüşde açýar", "Resminamany PDF-e ýazýar"], 1],
+  ["8 sahypaly resminamada näçe täk sahypa bar?", ["3", "4", "5", "8"], 1],
+  ["6 sahypany 3 nusgada çap etseň, näçe kagyz gerek?", ["9", "12", "18", "6"], 2]
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${"ABÇD"[j]}) ${o}</button>`).join("") +
+  `</div><div class="expl" id="qe${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("qe" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("qe" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${"ABÇD"[Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+draw(); ordr();
+</script>
+</body>
+</html>

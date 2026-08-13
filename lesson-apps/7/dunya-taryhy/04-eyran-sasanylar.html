@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eýran III-VII asyryň ortalarynda — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Eýran III–VII asyryň ortalarynda</h1>
+  <div class="sub">Dünýä taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">226-njy ýylda Parfiýanyň ornunda <b>Sasanylar</b> döwleti döräp, <b>zoroastrizm (otparazçylyk)</b> döwlet dinine öwrülýär.</div>
+    <div class="tbl" style="margin-top:8px">gezit – jan başyna salgyt&nbsp;&nbsp;|&nbsp;&nbsp;harag – ýerden alynýan salgyt</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy düşünje?</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Beýan haýsy düşünjä degişli?</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="gz">Gezit</button><button class="btn" data-k="hr">Harag</button><button class="btn" data-k="mn">Maniheýçilik</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Senäni tap</h3>
+    <div class="task" id="task" style="margin-top:8px"></div>
+    <div class="goal">Dogry senäni saýla.</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row"><button class="btn ghost" id="next">Indiki sorag</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Dünýä taryhy 7 · 4-nji tema</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Jan başyna alynýan salgyt.", "gz", "Her adamdan alnypdyr."], ["Ýerden alynýan salgyt.", "hr", "Ýeriň möçberine bagly bolupdyr."], ["Mani tarapyndan wagyz edilen taglymat.", "mn", "242-nji ýylda Ktesifonda başlanypdyr."], ["Ilat bu salgydy hasyla görä töläpdir.", "hr", "Harag ekerançylykdan alnypdyr."], ["Bu taglymatyň esaslandyryjysy 276-njy ýylda öldürilipdir.", "mn", "Mani tussag edilip öldürilipdir."], ["Bu salgyt maşgaladaky adam sanyna baglydyr.", "gz", "Gezit – jan başyna salgytdyr."]];
+var KN = {"gz": "gezit", "hr": "harag", "mn": "maniheýçilik"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+// [sorag, jogap, düşündiriş]
+var T = [["Sasanylar döwleti haýsy ýylda döräpdir?", "226", "Ardaşir Papakan Artaban V-ni ýeňipdir."], ["Papak haýsy ýylda Parsda häkimiýeti eline alypdyr?", "208", "Sasany urugyndan bolupdyr."], ["Mani haýsy ýylda dogulypdyr?", "215", "Wawilonda dünýä inipdir."], ["Mani haýsy ýylda öldürilipdir?", "276", "Ol tussag edilip öldürilipdir."], ["Şapur I haýsy ýylda tagta çykypdyr?", "241", "241–272-nji ýyllarda dolandyrypdyr."], ["Ilat näçe gatlaga bölünipdir?", "4", "Ruhanylar, harbylar, emeldarlar we salgyt töleýänler."]];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+function show() {
+  document.getElementById("task").textContent = T[ti][0];
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  tlock = 0;
+}
+var VALS = ["208", "215", "226", "241", "242", "272", "276", "4"];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + i + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = VALS[parseInt(this.getAttribute("data-n"), 10)], t = T[ti], m = document.getElementById("msg");
+    if (v === t[1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogrusy: " + t[1] + ". " + t[2]; }
+    document.getElementById("sc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+show();
+
+var Q = [["Sasanylaryň döwlet dini haýsy?", ["Zoroastrizm", "Buddaçylyk", "Hristiançylyk"], 0], ["Kanunnama nähili atlandyrylypdyr?", ["«Müň çözgüt»", "«Rus hakykaty»", "«Jem kanuny»"], 0], ["Ýerden alynýan salgyt nähili atlandyrylýar?", ["Harag", "Gezit", "Obrok"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadrlar we wagt şkalasy — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; display: flex; justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .tl { overflow-x: auto; padding-bottom: 4px; }
+  .strip { display: flex; gap: 1px; min-width: max-content; }
+  .fr { width: 20px; }
+  .fr .n { height: 15px; font-size: 9px; color: #93a2b5; text-align: center; line-height: 15px; }
+  .fr .c { height: 34px; border: 1px solid #d6e0ee; background: #fff; display: flex;
+           align-items: center; justify-content: center; cursor: pointer; }
+  .fr.f .c { background: #d9e6f6; }
+  .fr.k .c { background: #b9d3f2; }
+  .fr.b .c { background: #fff; }
+  .fr.cur .c { outline: 2px solid #b02424; outline-offset: -2px; }
+  .fr .c i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+  .fr.k .c i { background: #1e2a3a; }
+  .fr.b .c i { border: 1.5px solid #1e2a3a; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: #5b6b80; margin-top: 8px; }
+  .legend b { display: inline-block; width: 16px; height: 14px; border: 1px solid #d6e0ee;
+              vertical-align: -2px; margin-right: 4px; }
+  .meter { display: flex; gap: 12px; font-size: 13px; color: #5b6b80; font-weight: 700;
+           background: #f7fafd; border-radius: 10px; padding: 8px 11px; margin-top: 8px;
+           font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kadrlar we wagt şkalasy</h1>
+  <div class="sub">Esasy kadr, aralyk kadr, freýmler · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Wagt şkalasynda kadra bas we oňa esasy kadr goý. Iki esasy kadryň arasyndaky
+      <b>aralyk kadrlary</b> programma özi döredýär.</div>
+    <div class="stage">
+      <svg id="art" width="300" height="120" viewBox="0 0 300 120"></svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Wagt şkalasy</h3>
+    <div class="tl"><div class="strip" id="strip"></div></div>
+    <div class="legend">
+      <span><b style="background:#fff"></b>boş kadr</span>
+      <span><b style="background:#d9e6f6"></b>adaty kadr</span>
+      <span><b style="background:#b9d3f2"></b>esasy kadr</span>
+      <span><b style="background:#fff"></b>boş esasy kadr</span>
+    </div>
+    <div class="meter"><span id="mFrame"></span><span id="mFps">12,0 kadr/s</span><span id="mTime"></span></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="f5">Kadr goşmak (F5)</button>
+      <button class="btn" id="key">Esasy kadr goýmak</button>
+      <button class="btn" id="blank">Boş esasy kadr</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn primary" id="play">▶ Ýerine ýetirmek</button>
+      <button class="btn" id="tween">Hereketiň animasiýasy: ýok</button>
+      <button class="btn ghost" id="reset">Täzeden</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Obýektiň häsiýetleri üýtgeýän kadrlara <b>esasy kadrlar</b> diýilýär. Esasy kadrlaryň
+      arasynda kompýuter tarapyndan döredilýän kadrlara <b>aralyk kadrlar</b> diýilýär.
+      Wagt şkalasyna kadr goşmak üçin <b>Вставка → Временная шкала → Кадр</b> buýrugy ýa-da
+      <b>F5</b> klawişi ulanylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = 30, FPS = 12;
+
+// "none" – boş, "frame" – adaty kadr, "key" – esasy kadr, "blank" – boş esasy kadr
+let f = Array.from({ length: N }, () => ({ t: "none", x: 40 }));
+let cur = 0, tween = false, timer = null;
+
+function init() {
+  f = Array.from({ length: N }, () => ({ t: "none", x: 40 }));
+  f[0] = { t: "key", x: 40 };
+  for (let i = 1; i < 12; i++) f[i] = { t: "frame", x: 40 };
+  cur = 0; tween = false;
+  $("tween").textContent = "Hereketiň animasiýasy: ýok";
+  $("tween").className = "btn";
+  draw();
+}
+
+function keysUpTo(i) {
+  for (let k = i; k >= 0; k--) if (f[k].t === "key" || f[k].t === "blank") return k;
+  return -1;
+}
+function nextKey(i) {
+  for (let k = i + 1; k < N; k++) if (f[k].t === "key") return k;
+  return -1;
+}
+
+function posAt(i) {
+  const a = keysUpTo(i);
+  if (a < 0 || f[a].t === "blank") return null;
+  if (!tween) return f[a].x;
+  const b = nextKey(a);
+  if (b < 0 || i >= b) return f[a].x;
+  const t = (i - a) / (b - a);
+  return f[a].x + (f[b].x - f[a].x) * t;
+}
+
+function draw() {
+  // stage
+  const x = posAt(cur);
+  const a = keysUpTo(cur);
+  $("art").innerHTML = x === null ? "" :
+    `<circle cx="${x.toFixed(1)}" cy="60" r="22" fill="#e5007d" opacity="${a === cur ? 1 : .85}"/>`;
+
+  // strip
+  const S = $("strip"); S.innerHTML = "";
+  f.forEach((fr, i) => {
+    const d = document.createElement("div");
+    const cls = fr.t === "key" ? "k" : fr.t === "blank" ? "b" : fr.t === "frame" ? "f" : "";
+    d.className = "fr " + cls + (i === cur ? " cur" : "");
+    d.innerHTML = `<div class="n">${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ""}</div>` +
+      `<div class="c">${fr.t === "key" || fr.t === "blank" ? "<i></i>" : ""}</div>`;
+    d.querySelector(".c").onclick = () => { cur = i; draw(); };
+    S.appendChild(d);
+  });
+
+  const T = f[cur].t;
+  $("mFrame").textContent = `Kadr: ${cur + 1}`;
+  $("mTime").textContent = `Wagt: ${(cur / FPS).toFixed(1)} s`;
+  const nm = T === "key" ? "esasy kadr" : T === "blank" ? "boş esasy kadr"
+    : T === "frame" ? (tween && a >= 0 && nextKey(a) > cur ? "aralyk kadr" : "adaty kadr") : "boş kadr";
+  $("msg").textContent = `${cur + 1}-nji kadr – ${nm}.`;
+  $("msg").className = "msg ok";
+}
+
+$("f5").onclick = () => {
+  if (f[cur].t !== "none") { $("msg").textContent = "Bu kadrda eýýäm mazmun bar."; $("msg").className = "msg bad"; return; }
+  const a = keysUpTo(cur);
+  if (a < 0) { $("msg").textContent = "Ilki esasy kadr goýmaly – kadr diňe onuň dowamy bolýar."; $("msg").className = "msg bad"; return; }
+  for (let i = 0; i <= cur; i++) if (f[i].t === "none") f[i] = { t: "frame", x: f[a].x };
+  draw();
+  $("msg").textContent = `${cur + 1}-nji kadra çenli kadrlar goşuldy (F5).`;
+};
+$("key").onclick = () => {
+  const a = keysUpTo(cur);
+  const base = a >= 0 && f[a].t === "key" ? f[a].x : 40;
+  for (let i = 0; i < cur; i++) if (f[i].t === "none") f[i] = { t: "frame", x: base };
+  f[cur] = { t: "key", x: cur === 0 ? 40 : 260 };
+  draw();
+  $("msg").textContent = `${cur + 1}-nji kadr esasy kadra öwrüldi. Obýekt täze ýere geçirildi.`;
+};
+$("blank").onclick = () => {
+  for (let i = 0; i < cur; i++) if (f[i].t === "none") f[i] = { t: "frame", x: 40 };
+  f[cur] = { t: "blank", x: 40 };
+  draw();
+  $("msg").textContent = `${cur + 1}-nji kadr boş esasy kadr boldy – onda obýekt ýok.`;
+};
+$("tween").onclick = () => {
+  tween = !tween;
+  $("tween").textContent = "Hereketiň animasiýasy: " + (tween ? "bar" : "ýok");
+  $("tween").className = "btn" + (tween ? " sel" : "");
+  draw();
+  $("msg").textContent = tween
+    ? "Esasy kadrlaryň arasyndaky kadrlar indi aralyk kadrlar – olary kompýuter döredýär."
+    : "Aralyk kadrlar aýryldy. Obýekt diňe esasy kadrda ýerini üýtgedýär.";
+};
+$("play").onclick = () => {
+  if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Ýerine ýetirmek"; return; }
+  $("play").textContent = "⏸ Duruzmak";
+  cur = 0;
+  timer = setInterval(() => {
+    cur++;
+    if (cur >= N || f[cur].t === "none") { clearInterval(timer); timer = null; $("play").textContent = "▶ Ýerine ýetirmek"; cur = Math.max(0, cur - 1); }
+    draw();
+  }, 1000 / FPS);
+};
+$("reset").onclick = () => { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Ýerine ýetirmek"; } init(); };
+
+init();
+</script>
+</body>
+</html>

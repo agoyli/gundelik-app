@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meseleleri deňleme bilen çözmek — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .task { background: #eef2f8; border-radius: 12px; padding: 11px 13px; font-size: 14px;
+          line-height: 1.75; }
+  .bar { display: flex; align-items: center; gap: 3px; margin: 4px 0; flex-wrap: nowrap; }
+  .bar .seg { height: 30px; border-radius: 7px; display: flex; align-items: center;
+              justify-content: center; font-size: 12px; font-weight: 700; color: #fff;
+              min-width: 34px; }
+  .bar .lab { font-size: 12px; color: #5b6b80; min-width: 26px;
+              font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .sc { background: #fff; border: 2px solid #d6e0ee; border-radius: 11px; padding: 10px; }
+  .lines { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+           line-height: 2; }
+  .lines div { padding: 3px 0; }
+  .lines .hi { color: #e5007d; font-weight: 800; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Meseleleri deňleme düzüp çözmek</h1>
+  <div class="sub">Deňlemeler · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Meseläni deňleme arkaly çözmegiň ýoly: <b>näbellini x bilen belgile →
+      galan ululyklary x arkaly aňlat → deňligi düz → x-i tap → şerte görä barla</b>.</div>
+    <div class="row tight" id="tabs"></div>
+    <div class="task" id="task" style="margin-top:9px"></div>
+    <div class="sc" id="pic" style="margin-top:9px"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="step">Indiki ädim</button>
+      <button class="btn ghost" id="rst">Başdan</button>
+    </div>
+    <div class="lines" id="sol" style="margin-top:6px"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Deňleme deňagramlylyk ýaly</h3>
+    <div class="goal">Terezidäki deňagramlylygy bozmazlyk üçin iki tarapa hem <b>şol bir</b>
+      amaly ýerine ýetirmeli. Sürgüni süýşürip gör.</div>
+    <div class="slider"><span class="lbl">Iki tarapdan aýyrýarys</span>
+      <input type="range" id="sub" min="0" max="8" value="0"><span class="out" id="subo"></span></div>
+    <div class="calc" id="bal"></div>
+  </div>
+
+  <div class="card">
+    <h3>Deňlemäni düz</h3>
+    <div class="goal">Sözlem üçin dogry deňlemäni saýla.</div>
+    <div id="q"></div>
+    <div class="score" id="sc2"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Jogap hemişe <b>ölçeg birligi</b> bilen ýazylýar: 247 km, 29 kg, 900 ga, 6,67 manat.
+      Tapylan kök meseläniň şertine görä barlanmalydyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, II kitap (2018), §38–39</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+// artykmaç nollary aýryp, türkmen ýazgysynda otur bilen görkezýäris
+const num = v => String(Math.round(v * 100) / 100).replace(".", ",");
+
+/* ---------------- meseleler ---------------- */
+const TASKS = [
+  {
+    name: "Derýalar",
+    text: "Türkmen derýasy Sumbar derýasyndan 87 km gysga. Iki derýanyň jemi uzynlygy " +
+          "407 km bolsa, her derýanyň uzynlygyny tap.",
+    steps: [
+      "Näbelli: Sumbaryň uzynlygy – x km",
+      "Türkmen derýasy: x − 87 km",
+      "Şert boýunça deňleme: x + (x − 87) = 407",
+      "2x − 87 = 407",
+      "2x = 407 + 87 = 494",
+      "x = 494 : 2 = 247"
+    ],
+    answer: "Sumbar – 247 km, Türkmen derýasy – 247 − 87 = 160 km. Barlag: 247 + 160 = 407 km.",
+    bars: [["Sumbar", 247], ["Türkmen", 160]], unit: "km"
+  },
+  {
+    name: "Şugundyr",
+    text: "Iki haltada 78 kg şugundyr bar. Birinji haltada beýlekisinden 20 kg köp bolsa, " +
+          "her haltada näçe kilogram şugundyr bar?",
+    steps: [
+      "Näbelli: kiçi haltadaky şugundyr – x kg",
+      "Uly halta: x + 20 kg",
+      "Şert boýunça deňleme: x + (x + 20) = 78",
+      "2x + 20 = 78",
+      "2x = 78 − 20 = 58",
+      "x = 58 : 2 = 29"
+    ],
+    answer: "Kiçi halta – 29 kg, uly halta – 29 + 20 = 49 kg. Barlag: 29 + 49 = 78 kg.",
+    bars: [["Kiçi", 29], ["Uly", 49]], unit: "kg"
+  },
+  {
+    name: "Kitaplar",
+    text: "Iki kitap üçin 15 manat tölendi. Birinji kitap beýlekisinden 25% gymmat bolsa, " +
+          "her kitabyň bahasyny tap.",
+    steps: [
+      "Näbelli: arzan kitabyň bahasy – x manat",
+      "Gymmat kitap 25% köp: 1,25x manat",
+      "Şert boýunça deňleme: x + 1,25x = 15",
+      "2,25x = 15",
+      "x = 15 : 2,25",
+      "x ≈ 6,67"
+    ],
+    answer: "Arzan kitap ≈ 6,67 manat, gymmat kitap ≈ 8,33 manat. Barlag: 6,67 + 8,33 = 15 manat.",
+    bars: [["Arzan", 6.67], ["Gymmat", 8.33]], unit: "manat"
+  },
+  {
+    name: "Ekin meýdany",
+    text: "Ekin meýdany 1500 ga. Onuň 2/5 bölegine bugdaý, galanyna dary ekildi. " +
+          "Dary ekilen meýdan näçe gektar?",
+    steps: [
+      "Näbelli: dary ekilen meýdan – x ga",
+      "Bugdaý ekilen meýdan: 1500 · 2/5 = 600 ga",
+      "Şert boýunça deňleme: x + 600 = 1500",
+      "x = 1500 − 600",
+      "x = 900"
+    ],
+    answer: "Dary ekilen meýdan – 900 ga. Barlag: 600 + 900 = 1500 ga.",
+    bars: [["Bugdaý", 600], ["Dary", 900]], unit: "ga"
+  }
+];
+
+let ti = 0, si = 0;
+function drawTask() {
+  const t = TASKS[ti];
+  $("task").innerHTML = t.text;
+  $("sol").innerHTML = t.steps.slice(0, si).map((s, i) =>
+    `<div class="${i === si - 1 ? "hi" : ""}">${i + 1}. ${s}</div>`).join("");
+  if (si >= t.steps.length) {
+    $("msg").innerHTML = `<b>Jogap:</b> ${t.answer}`;
+    $("msg").className = "msg ok";
+  } else {
+    $("msg").textContent = "«Indiki ädim» düwmesine bas.";
+    $("msg").className = "msg";
+  }
+  const max = Math.max(...t.bars.map(b => b[1]));
+  const done = si >= t.steps.length;
+  $("pic").innerHTML = t.bars.map(([lab, v], i) => `
+    <div class="bar"><span class="lab">${lab}</span>
+      <span class="seg" style="width:${Math.max(12, (v / max) * 74)}%;
+        background:${i ? "#e5007d" : "#2456b0"}">${done ? num(v) + " " + t.unit : "?"}</span></div>`)
+    .join("") + `<div class="hint" style="margin:6px 0 0">Jemi: ` +
+    `<b>${num(t.bars.reduce((s, b) => s + b[1], 0))} ${t.unit}</b></div>`;
+}
+$("tabs").innerHTML = TASKS.map((t, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${t.name}</button>`).join("");
+$("tabs").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("tabs").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  ti = +b.dataset.i; si = 0; drawTask();
+});
+$("step").onclick = () => { if (si < TASKS[ti].steps.length) si++; drawTask(); };
+$("rst").onclick = () => { si = 0; drawTask(); };
+
+/* ---------------- terezi ---------------- */
+function bal() {
+  const k = +$("sub").value;
+  $("subo").textContent = k;
+  $("bal").innerHTML =
+    `başlangyç deňleme: <b>x + 8 = 15</b><br>` +
+    `iki tarapdan hem ${k} aýyrýarys:<br>` +
+    `çep tarap: x + 8 − ${k} = ${k === 8 ? "x" : `x + ${8 - k}`}<br>` +
+    `sag tarap: 15 − ${k} = ${15 - k}<br>` +
+    `häzirki görnüş: <b>${k === 8 ? "x" : `x + ${8 - k}`} = ${15 - k}</b><br>` +
+    (k === 8
+      ? `<b>x = 7</b> – näbelli ýeke galdy, kök tapyldy`
+      : `näbellini ýeke goýmak üçin ýene ${8 - k} aýyrmaly`);
+}
+$("sub").addEventListener("input", bal);
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Bir san beýlekisinden 20 kg köp, jemi 78 kg. Deňleme:",
+   ["x + 20 = 78", "x + (x + 20) = 78", "x − 20 = 78", "2x = 78"], 1],
+  ["1500 ga meýdanyň 2/5 bölegi näçe gektar?", ["300", "600", "750", "900"], 1],
+  ["a + x = b deňlemede x nähili tapylýar?",
+   ["x = b + a", "x = b − a", "x = a − b", "x = a · b"], 1],
+  ["Meseläni deňleme bilen çözmegiň birinji ädimi",
+   ["Jogaby ýazmak", "Näbellini harp bilen belgilemek",
+    "Barlag geçirmek", "Deňlemäni çözmek"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc2").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+drawTask(); bal();
+</script>
+</body>
+</html>

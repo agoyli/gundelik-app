@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Papkalar bilen işlemek — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .exp { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; overflow: hidden; }
+  .exp .path { background: #f7fafd; padding: 8px 10px; font-size: 13px; font-weight: 700;
+               color: #5b6b80; border-bottom: 1px solid #dbe7ff; }
+  .exp .list { padding: 10px; display: grid;
+               grid-template-columns: repeat(auto-fit, minmax(94px, 1fr)); gap: 9px;
+               min-height: 108px; }
+  .item { background: #f7fafd; border-radius: 11px; padding: 9px 5px; text-align: center;
+          font-size: 12px; font-weight: 700; min-height: 72px; }
+  .item.on { background: #dbe7ff; box-shadow: 0 0 0 3px #2456b0; }
+  .item .em { display: block; font-size: 26px; }
+  .clip { background: #f2edfd; border-radius: 12px; padding: 9px 11px; font-size: 13.5px;
+          min-height: 42px; display: flex; align-items: center; }
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 7px; }
+  .tools button { min-height: 48px; font-size: 13.5px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Papkalar bilen işlemek</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Papka döret, adyny üýtget, nusgala, geçir we ýok et. Ýok edilen papka
+      <b>Sebede</b> düşýär – ony dikeldip bolýar.</div>
+    <div class="exp">
+      <div class="path" id="pt"></div>
+      <div class="list" id="ls"></div>
+    </div>
+    <div class="clip" id="cl" style="margin-top:9px"></div>
+    <div class="tools" style="margin-top:9px">
+      <button class="btn" data-a="new">➕ Döretmek (Создать)</button>
+      <button class="btn" data-a="rename">✏️ Adyny üýtgetmek (Переименовать)</button>
+      <button class="btn" data-a="copy">📄 Nusgalamak (Копировать)</button>
+      <button class="btn" data-a="cut">✂️ Kesip almak (Вырезать)</button>
+      <button class="btn primary" data-a="paste">📌 Goýmak (Вставить)</button>
+      <button class="btn" data-a="enter">📂 Aç</button>
+      <button class="btn ghost" data-a="up">⬆️ Yza</button>
+      <button class="btn warn" data-a="del">🗑 Ýok etmek (Удалить)</button>
+      <button class="btn" data-a="bin">♻️ Sebet</button>
+      <button class="btn primary" data-a="restore">↩️ Dikeltmek (Восстановить)</button>
+      <button class="btn ghost" data-a="reset">🔄 Başdan</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const START = () => ({
+  name: "Meniň resminamalarym",
+  items: [
+    {t: "folder", n: "Sapaklar", items: [
+      {t: "file", n: "Informatika.docx"}, {t: "file", n: "Matematika.docx"}]},
+    {t: "folder", n: "Suratlar", items: [{t: "file", n: "Bahar.bmp"}]},
+    {t: "file", n: "Hat.docx"},
+  ],
+});
+let root = START(), stack = [], sel = null, clip = null, clipCut = false, bin = [], inBin = false;
+let nn = 1;
+
+const cur = () => stack.length ? stack[stack.length - 1] : root;
+function path() {
+  return inBin ? "♻️ Sebet"
+               : "📂 " + [root.name, ...stack.map(s => s.n)].join(" › ");
+}
+function draw() {
+  const items = inBin ? bin : cur().items;
+  $("pt").textContent = path();
+  $("ls").innerHTML = items.map((it, i) =>
+    `<button class="item ${sel === i ? "on" : ""}" data-i="${i}">
+       <span class="em">${it.t === "folder" ? "📁" : "📄"}</span>${it.n}</button>`).join("") ||
+    "<span style='color:#93a2b5;font-size:13px'>Boş</span>";
+  $("ls").querySelectorAll("button").forEach(b => b.onclick = () => {
+    sel = +b.dataset.i; draw(); say(`«${items[sel].n}» bellendi.`);
+  });
+  $("cl").innerHTML = clip
+    ? `<b>Aralyk ýat:</b>&nbsp;${clip.t === "folder" ? "📁" : "📄"} ${clip.n}
+       ${clipCut ? "(kesilen)" : "(nusga)"}`
+    : `<b>Aralyk ýat:</b>&nbsp;<span style="color:#93a2b5">boş</span>`;
+}
+function say(t, bad) { $("msg").textContent = t; $("msg").className = "msg " + (bad ? "bad" : "ok"); }
+function selected() {
+  const items = inBin ? bin : cur().items;
+  return sel !== null ? items[sel] : null;
+}
+
+document.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+  const a = b.dataset.a;
+  const items = inBin ? bin : cur().items;
+  const it = selected();
+  if (a === "reset") { root = START(); stack = []; sel = null; clip = null; bin = []; inBin = false;
+    draw(); return say("Başlangyç ýagdaý dikeldildi."); }
+  if (a === "bin") { inBin = !inBin; sel = null; draw();
+    return say(inBin ? `Sebet açyldy – içinde ${bin.length} obýekt bar.` : "Sebet ýapyldy."); }
+  if (a === "new") {
+    if (inBin) return say("Sebetde papka döretmek bolmaýar.", true);
+    cur().items.push({t: "folder", n: "Täze papka " + nn++, items: []});
+    sel = null; draw(); return say("Täze papka döredildi. Indi oňa at ber.");
+  }
+  if (a === "up") {
+    if (inBin) { inBin = false; sel = null; draw(); return say("Sebetden çykdyk."); }
+    if (!stack.length) return say("Bu iň ýokarky papka.", true);
+    stack.pop(); sel = null; draw(); return say("Bir ädim yza gaýtdyk.");
+  }
+  if (a === "paste") {
+    if (inBin) return say("Sebede goýmak bolmaýar.", true);
+    if (!clip) return say("Aralyk ýat boş – ilki nusgala ýa-da kes.", true);
+    const copy = JSON.parse(JSON.stringify(clip));
+    if (cur().items.some(x => x.n === copy.n)) copy.n += " – nusga";
+    cur().items.push(copy);
+    say(clipCut ? `«${clip.n}» täze ýere geçirildi – öňki ýerinde galmady.`
+                : `«${clip.n}» nusgalandy – indi iki ýerde bar.`);
+    if (clipCut) { clip = null; clipCut = false; }
+    sel = null; draw(); return;
+  }
+  if (!it) return say("Ilki obýekte bas.", true);
+  if (a === "restore") {
+    if (!inBin) return say("Dikeltmek diňe Sebetde bolýar – ilki «Sebet» düwmesine bas.", true);
+    // dikeldilen obýekt öz öňki papkasyna – bu ýerde iň ýokarky papka – gaýdyp gelýär
+    root.items.push(bin.splice(sel, 1)[0]);
+    sel = null; draw();
+    return say(`«${it.n}» dikeldildi we «${root.name}» papkasyna gaýdyp geldi.`);
+  }
+  if (a === "enter") {
+    if (it.t !== "folder") return say("Diňe papkany açyp bolýar.", true);
+    if (inBin) return say("Sebetdäki papkany açmak bolmaýar.", true);
+    stack.push(it); sel = null; draw(); return say(`«${it.n}» açyldy.`);
+  }
+  if (a === "rename") {
+    if (inBin) return say("Sebetdäki obýektiň adyny üýtgetmek bolmaýar.", true);
+    const NAMES = ["Sapaklar", "Suratlar", "Aýdymlar", "Meniň işlerim", "Informatika"];
+    it.n = NAMES[Math.floor(Math.random() * NAMES.length)] + " " + nn++;
+    draw(); return say(`Ady üýtgedildi: «${it.n}».`);
+  }
+  if (a === "copy") {
+    clip = JSON.parse(JSON.stringify(it)); clipCut = false;
+    draw(); return say(`«${it.n}» nusgalandy – ol öňki ýerinde galdy.`);
+  }
+  if (a === "cut") {
+    if (inBin) return say("Sebetden kesip bolmaýar.", true);
+    clip = JSON.parse(JSON.stringify(it)); clipCut = true;
+    items.splice(sel, 1); sel = null;
+    draw(); return say(`«${clip.n}» kesildi – ony täze ýerde «Goý» bilen ýerleşdir.`);
+  }
+  if (a === "del") {
+    if (inBin) {
+      bin.splice(sel, 1); sel = null; draw();
+      return say("Sebetden biragyzdan ýok edildi – indi dikeldip bolmaýar.", true);
+    }
+    bin.push(items.splice(sel, 1)[0]); sel = null; draw();
+    return say("Ýok edildi – ol Sebede düşdi, ony dikeldip bolýar.");
+  }
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Papkany döretmek üçin syçanyň haýsy gulagyna basmaly?",
+   ["Sag gulagyna", "Çep gulagyna", "Tigirjigine"], 0],
+  ["Papkany geçirmek üçin haýsy buýruk ulanylýar?",
+   ["Nusgalamak (Копировать)", "Kesip almak (Вырезать)", "Döretmek (Создать)"], 1],
+  ["Ýok edilen papka nireden dikeldilýär?", ["Internetden", "Printerden", "Sebetden"], 2],
+  ["Papkalar bilen işlemeklige näçe amal degişli?", ["Alty", "Üç", "Sekiz"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+draw();
+</script>
+</body>
+</html>

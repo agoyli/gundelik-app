@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meseläniň formal goýluşy — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .task { background: #f7fafd; border-radius: 12px; padding: 12px; font-size: 14.5px; line-height: 1.7; }
+  .task span.p { border-radius: 6px; padding: 1px 4px; cursor: pointer; border-bottom: 2px dotted #b9cdf0; }
+  .task span.p.g { background: #e0f5e6; border-bottom-color: #1d7a3d; }
+  .task span.p.r { background: #e3edfd; border-bottom-color: #2456b0; }
+  .task span.p.u { background: #efe9fb; border-bottom-color: #6a4bb8; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: #5b6b80; margin-top: 8px; }
+  .legend b { display: inline-block; width: 14px; height: 12px; border-radius: 3px; vertical-align: -1px; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; line-height: 1.8;
+          background: #f7fafd; border-radius: 11px; padding: 11px; }
+  .calc b { color: #2456b0; }
+  table.bs { font-size: 13px; font-variant-numeric: tabular-nums; }
+  table.bs th, table.bs td { text-align: right; padding: 6px 7px; }
+  table.bs thead th { background: #eef2f8; color: #5b6b80; text-align: right; }
+  table.bs tr:last-child td { font-weight: 800; color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Meseläniň formal we formal däl goýluşy</h1>
+  <div class="sub">Formallaşdyrmak we matematiki model · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Aşakda mesele adaty dilde – <b>formal däl</b> ýazylan. Her bölege basyp,
+      onuň başlangyç maglumatmy, netijemi ýa-da çözmegiň usulymy diýip belle.</div>
+    <div class="task" id="task"></div>
+    <div class="legend">
+      <span><b style="background:#e0f5e6"></b> başlangyç maglumat</span>
+      <span><b style="background:#e3edfd"></b> alynmaly netije</span>
+      <span><b style="background:#efe9fb"></b> çözmegiň usuly</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="score" id="score"></span>
+      <button class="btn ghost" id="reset">Täzeden</button>
+    </div>
+    <div class="msg" id="tx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Formal model: Geronyň formulasy</h3>
+    <div class="stage"><svg id="tri" width="280" height="170" viewBox="0 0 280 170"></svg></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">a tarapy</span>
+      <input type="range" id="a" min="1" max="20" value="12"><span class="out" id="ao">12</span></div>
+    <div class="slider"><span class="lbl">b tarapy</span>
+      <input type="range" id="b" min="1" max="20" value="14"><span class="out" id="bo">14</span></div>
+    <div class="slider"><span class="lbl">c tarapy</span>
+      <input type="range" id="c" min="1" max="20" value="5"><span class="out" id="co">5</span></div>
+    <div class="calc" id="geron"></div>
+  </div>
+
+  <div class="card">
+    <h3>Deňlemäniň kökini ýarpa bölmek usuly bilen tapmak</h3>
+    <div class="goal">Formal model: <b>x³ − cos x = 0</b>. Kesimiň ortasyny alyp, köküň haýsy
+      ýarymda ýatandygyny kesgitleýäris.</div>
+    <div style="overflow-x:auto"><table class="bs" id="bs"></table></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="half">Ýarpa böl</button>
+      <button class="btn ghost" id="bsr">Başdan</button>
+      <span class="score" id="bsx"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Maglumat modelleri formal dilleriň kömegi bilen gurmaklyga <b>formallaşdyrmak</b> diýilýär.
+      Ol iki tapgyrda geçirilýär: ilki <b>maglumatlaryň düzümi</b> (üýtgeýänler, massiwler)
+      saýlanýar, soňra <b>meseläni çözmegiň usuly</b> ýazylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- formal däl goýluş ---------------- */
+const PARTS = [
+  ["Mekdebiň bagçylyk meýdançasy ", null],
+  ["n sany üçburçluk ýer böleginden", "g"],
+  [" durýar. Her böleginiň ", null],
+  ["taraplarynyň uzynlyklary aᵢ, bᵢ, cᵢ (m)", "g"],
+  [" ölçelen. ", null],
+  ["Bölekleriň her biriniň meýdanyny (m²)", "r"],
+  [" tapmaly. Munuň üçin ", null],
+  ["Geronyň formulasyndan peýdalanmaly", "u"],
+  [". Netijeler ", null],
+  ["S₁, S₂, …, Sₙ görnüşinde ýazylýar", "r"],
+  [".", null]
+];
+const NAME = { g: "başlangyç maglumat", r: "alynmaly netije", u: "çözmegiň usuly" };
+let picks = {};
+
+function drawTask() {
+  $("task").innerHTML = PARTS.map(([t, k], i) =>
+    k ? `<span class="p ${picks[i] || ""}" data-i="${i}">${t}</span>` : t).join("");
+  $("task").querySelectorAll(".p").forEach(s => s.onclick = () => {
+    const i = +s.dataset.i;
+    const order = ["", "g", "r", "u"];
+    picks[i] = order[(order.indexOf(picks[i] || "") + 1) % 4];
+    drawTask();
+  });
+  const need = PARTS.map((p, i) => [i, p[1]]).filter(x => x[1]);
+  const ok = need.filter(([i, k]) => picks[i] === k).length;
+  $("score").textContent = `${ok} / ${need.length} bölek dogry bellenen`;
+  if (ok === need.length) {
+    $("tx").textContent = "Ählisi dogry. Ine, şu üç zat meseläniň formal däl goýluşyny düzýär.";
+    $("tx").className = "msg ok";
+  } else {
+    const bad = need.find(([i, k]) => picks[i] && picks[i] !== k);
+    $("tx").textContent = bad ? `Bellenen bölek «${NAME[picks[bad[0]]]}» däl. Ýene bir gezek bas.` : "";
+    $("tx").className = "msg bad";
+  }
+}
+$("reset").onclick = () => { picks = {}; drawTask(); };
+
+/* ---------------- Geron ---------------- */
+function geron() {
+  const a = +$("a").value, b = +$("b").value, c = +$("c").value;
+  $("ao").textContent = a; $("bo").textContent = b; $("co").textContent = c;
+  const ok = a + b > c && a + c > b && b + c > a;
+  const p = (a + b + c) / 2;
+  const q = p * (p - a) * (p - b) * (p - c);
+  const S = ok ? Math.sqrt(q) : 0;
+  const num = x => String(Math.round(x * 100) / 100).replace(".", ",");
+  $("geron").innerHTML = ok
+    ? `p = (${a} + ${b} + ${c}) / 2 = <b>${num(p)}</b><br>` +
+      `S = √(${num(p)} · ${num(p - a)} · ${num(p - b)} · ${num(p - c)})<br>` +
+      `S = √${num(q)} ≈ <b>${num(S)}</b> m²`
+    : (() => {
+        // haýsy deňsizligiň bozulandygyny anyk aýdalyň
+        const bad = a + b <= c ? `a + b > c   (${a} + ${b} ≤ ${c})`
+                  : a + c <= b ? `a + c > b   (${a} + ${c} ≤ ${b})`
+                  : `b + c > a   (${b} + ${c} ≤ ${a})`;
+        return `Üçburçlugyň şerti bozuldy: <b>${bad}</b>. Şeýle taraplardan üçburçluk ` +
+               `gurup bolmaýar – Geronyň formulasy kesgitsiz bolýar.`;
+      })();
+
+  // şekil: taraplary boýunça üçburçlugy gur
+  const T = $("tri");
+  if (!ok) { T.innerHTML = `<text x="140" y="90" font-size="13" fill="#b02424" text-anchor="middle">üçburçluk gurulmaýar</text>`; return; }
+  const cosA = (b * b + c * c - a * a) / (2 * b * c);
+  const A = { x: 0, y: 0 }, B = { x: c, y: 0 };
+  const C = { x: b * cosA, y: b * Math.sqrt(Math.max(0, 1 - cosA * cosA)) };
+  const xs = [A.x, B.x, C.x], ys = [A.y, B.y, C.y];
+  const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
+  const k = Math.min(220 / Math.max(w, 1), 120 / Math.max(h, 1));
+  const ox = 140 - (Math.min(...xs) + w / 2) * k, oy = 150;
+  const P = pt => [(pt.x * k + ox).toFixed(1), (oy - pt.y * k).toFixed(1)];
+  const [ax, ay] = P(A), [bx, by] = P(B), [cx, cy] = P(C);
+  T.innerHTML =
+    `<polygon points="${ax},${ay} ${bx},${by} ${cx},${cy}" fill="#e3edfd" stroke="#2456b0" stroke-width="2.5"/>
+     <text x="${(+ax + +bx) / 2}" y="${+ay + 15}" font-size="12" fill="#5b6b80" text-anchor="middle">c = ${c}</text>
+     <text x="${(+ax + +cx) / 2 - 14}" y="${(+ay + +cy) / 2}" font-size="12" fill="#5b6b80">b = ${b}</text>
+     <text x="${(+bx + +cx) / 2 + 6}" y="${(+by + +cy) / 2}" font-size="12" fill="#5b6b80">a = ${a}</text>`;
+}
+["a", "b", "c"].forEach(i => $(i).addEventListener("input", geron));
+
+/* ---------------- ýarpa bölmek ---------------- */
+const f = x => x * x * x - Math.cos(x);
+let lo = 0, hi = 1.5, rows = [];
+function bsDraw() {
+  const num = (x, d) => x.toFixed(d).replace(".", ",");
+  let h = "<thead><tr><th>ädim</th><th>a</th><th>b</th><th>x*</th><th>f(x*)</th></tr></thead><tbody>";
+  h += rows.map((r, i) =>
+    `<tr><td>${i}</td><td>${num(r.lo, 4)}</td><td>${num(r.hi, 4)}</td>` +
+    `<td>${num(r.m, 4)}</td><td>${num(r.fm, 4)}</td></tr>`).join("");
+  $("bs").innerHTML = h + "</tbody>";
+  const last = rows[rows.length - 1];
+  $("bsx").textContent = `Kök ${num(last.lo, 3)} … ${num(last.hi, 3)} aralykda, x* ≈ ${num(last.m, 3)}`;
+}
+function bsStep() {
+  const m = (lo + hi) / 2, fm = f(m);
+  rows.push({ lo, hi, m, fm });
+  if (f(lo) * fm <= 0) hi = m; else lo = m;
+  bsDraw();
+}
+function bsReset() { lo = 0; hi = 1.5; rows = []; bsStep(); }
+$("half").onclick = bsStep;
+$("bsr").onclick = bsReset;
+
+drawTask(); geron(); bsReset();
+</script>
+</body>
+</html>

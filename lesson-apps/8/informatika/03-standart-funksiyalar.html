@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standart funksiýalar — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .machine { display: flex; align-items: center; justify-content: center; gap: 12px;
+             margin: 14px 0; flex-wrap: wrap; }
+  .box { background: #e3edfd; border-radius: 14px; padding: 14px 16px; text-align: center;
+         min-width: 92px; }
+  .box .cap { font-size: 12px; color: #5b6b80; font-weight: 700; }
+  .box .val { font-size: 26px; font-weight: 800; color: #1e2a3a; font-variant-numeric: tabular-nums; }
+  .fn { background: #6a4bb8; color: #fff; border-radius: 14px; padding: 16px 18px;
+        font-size: 20px; font-weight: 800; }
+  .arrow { font-size: 26px; color: #93a2b5; }
+  .fns { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
+  .fns .btn { text-align: center; padding: 12px 8px; }
+  .tbl td:first-child { font-weight: 700; width: 86px; }
+  .q { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+  input[type=number] { width: 110px; padding: 10px; font-size: 17px; border-radius: 10px;
+                       border: 2px solid #d6e0ee; text-align: center; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Standart funksiýalar</h1>
+  <div class="sub">Modul, sanyň kwadraty we beýlekiler · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Funksiýany saýla we argumenti üýtget. Maşyn saňa netijäni berer.</div>
+    <div class="slider"><span class="lbl">Argument x</span>
+      <input type="range" id="x" min="-200" max="200" value="-90"><span class="out" id="xo">-9</span></div>
+    <div class="machine">
+      <div class="box"><div class="cap">x</div><div class="val" id="inv">-9</div></div>
+      <span class="arrow">→</span>
+      <div class="fn" id="fname">abs</div>
+      <span class="arrow">→</span>
+      <div class="box"><div class="cap">netije</div><div class="val" id="outv">9</div></div>
+    </div>
+    <div class="fns" id="fns"></div>
+    <div class="note" id="explain"></div>
+  </div>
+
+  <div class="card">
+    <h3>Funksiýalaryň tablisasy</h3>
+    <table class="tbl"><tbody id="tbl"></tbody></table>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div class="q" id="q"></div>
+    <div class="row">
+      <input type="number" id="ans" step="any" inputmode="decimal" placeholder="?">
+      <button class="btn primary" id="check">Barla</button>
+      <button class="btn ghost" id="next">Indiki</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="score" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Funksiýanyň argumenti hemişe <b>ýaýlarda</b> ýazylýar. Argument aňlatma hem bolup biler,
+      meselem <b>abs(b*b – 4*a*c)</b>. <b>trunc</b> diňe bitin bölegi alýar,
+      <b>round</b> bolsa ýakyn bitin sana çenli tegelekleýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const FN = {
+  abs:   { f: x => Math.abs(x),        d: "sanyň absolýut bahasyny (modulyny) berýär" },
+  sqr:   { f: x => x * x,              d: "sany kwadrata göterýär" },
+  sqrt:  { f: x => x < 0 ? null : Math.sqrt(x), d: "sandan kwadrat kök alýar" },
+  trunc: { f: x => Math.trunc(x),      d: "hakyky sanyň diňe bitin bölegini alýar" },
+  round: { f: x => Math.round(x),      d: "ýakyn bitin sana çenli tegelekleýär" },
+  frac:  { f: x => x - Math.trunc(x),  d: "hakyky sanyň drob bölegini berýär" }
+};
+let name = "abs", right = 0, total = 0, cur = null;
+const r2 = v => v === null ? null : Math.round(v * 100) / 100;
+
+Object.keys(FN).forEach(k => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = k; b.dataset.k = k;
+  b.onclick = () => { name = k; draw(); };
+  $("fns").appendChild(b);
+});
+
+function draw() {
+  const x = r2(+$("x").value / 10);
+  $("xo").textContent = x; $("inv").textContent = x; $("fname").textContent = name;
+  [...$("fns").children].forEach(b => b.className = "btn" + (b.dataset.k === name ? " sel" : ""));
+
+  const out = r2(FN[name].f(x));
+  $("outv").textContent = out === null ? "—" : out;
+  $("explain").innerHTML = out === null
+    ? `<b>sqrt(${x})</b> hasaplanmaýar: otrisatel sandan kwadrat kök alyp bolmaýar.`
+    : `<b>${name}(${x}) = ${out}</b> — ${FN[name].d}.`;
+
+  const T = $("tbl"); T.innerHTML = "";
+  Object.entries(FN).forEach(([k, v]) => {
+    const o = r2(v.f(x));
+    T.innerHTML += `<tr><td>${k}(x)</td><td>${v.d}</td>
+      <td style="text-align:right;font-weight:800">${o === null ? "—" : o}</td></tr>`;
+  });
+}
+
+function ask() {
+  const keys = ["abs", "sqr", "trunc", "round"];
+  const k = keys[Math.floor(Math.random() * keys.length)];
+  let x;
+  if (k === "abs" || k === "sqr") x = Math.floor(Math.random() * 25) - 12;
+  else x = r2((Math.random() * 20 - 10));
+  cur = { k, x, val: r2(FN[k].f(x)) };
+  $("q").textContent = `${k}(${x}) = ?`;
+  $("ans").value = ""; $("msg").textContent = ""; $("msg").className = "msg";
+  $("ans").focus();
+}
+
+$("check").onclick = () => {
+  if ($("ans").value === "") return;
+  total++;
+  if (Math.abs(+$("ans").value - cur.val) < 1e-9) {
+    right++; $("msg").textContent = "Dogry! ✅"; $("msg").className = "msg ok";
+  } else {
+    $("msg").textContent = `Nädogry. ${cur.k} funksiýasy ${FN[cur.k].d}, ` +
+      `şonuň üçin ${cur.k}(${cur.x}) = ${cur.val}.`;
+    $("msg").className = "msg bad";
+  }
+  $("score").textContent = `Dogry jogap: ${right} / ${total}`;
+};
+
+$("next").onclick = ask;
+$("ans").addEventListener("keydown", e => { if (e.key === "Enter") $("check").click(); });
+$("x").addEventListener("input", draw);
+draw(); ask();
+</script>
+</body>
+</html>

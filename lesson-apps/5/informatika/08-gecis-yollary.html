@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geçiş ýollary — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  svg { background: #f7fafd; border-radius: 12px; }
+  .found { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  .path {
+    background: #e0f5e6; color: #1d7a3d; border-radius: 10px; padding: 8px 12px;
+    font-size: 15px; font-weight: 700;
+  }
+  .path.todo { background: #f4f7fb; color: #c3ccd8; }
+  .cur { text-align: center; font-size: 18px; font-weight: 800; color: #e2574c; min-height: 26px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Geçiş ýollary</h1>
+  <div class="sub">Gatnaşyklaryň shemalary. Obýektleri birikdiriji ýollar · Informatika · 5-nji synp</div>
+
+  <div class="card">
+    <h3>Gatnaşyklar shemasy</h3>
+    <div class="goal">Kitap: «Gatnaşyklar shemasynyň depeleri adaty ýagdaýda süýrümtik
+      şekilde (owal) obýektiň adyny özünde saklaýar.» Gapyrga bas – onuň ugruny üýtget.</div>
+    <svg id="rel" viewBox="0 0 420 120"></svg>
+    <div class="row tight" id="relbtn" style="margin-top:8px"></div>
+    <div class="msg" id="relmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kaka bilen ogul</h3>
+    <div class="goal">Kitap: «Kakasy bilen oglunyň arasyndaky gatnaşygyň şekillendirilmesinde
+      oglunyň ady kakasynyň adyndan aşakda ýerleşdirilýär.» Şonuň üçin bu ýerde
+      <b>ugry kesgitlenmedik</b> gapyrgalar hem ýeterlik.</div>
+    <svg id="fam" viewBox="0 0 420 220"></svg>
+    <div class="note" style="margin-top:8px">Şu düzgün boýunça Azadyň – Atanyň ogludygy
+      we Umydyň kakasydygy aýdyň bolýar.</div>
+  </div>
+
+  <div class="card">
+    <div class="goal">Shemada <b>A</b> şäherden <b>D</b> şähere barýan ähli geçiş ýollaryny tap. Şäherlere yzygiderli bas. Bir şäherden iki gezek geçmeli däl!</div>
+    <svg id="board" viewBox="0 0 420 250"></svg>
+    <div class="cur" id="cur"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost" id="resetBtn">Ýoly täzeden başla</button>
+      <span class="score" id="score"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tapylan ýollar</h3>
+    <div class="found" id="found"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Obýektleriň arasyndaky gatnaşyklary <b>shema</b> arkaly görkezmek amatlydyr.
+      Shemada bir obýektden beýlekisine barýan ýola <b>geçiş ýoly</b> diýilýär.
+      Ony grafdaky marşrut ýaly yzarlap bolýar. Depeleriň we gapyrgalaryň
+      yzygiderligine <b>marşrut</b>, gapyrgalarynyň mukdaryna bolsa onuň
+      <b>uzynlygy</b> diýilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+
+/* ---------------- gatnaşyklar shemasy (kitap, sah. 50) ---------------- */
+const REL = [
+  {k: "yok", b: "— Ugry ýok", t: "«Maksat we Myrat dost»",
+   e: "Gatnaşyk iki tarapa-da deň, şonuň üçin ugry kesgitlenmedik gapyrga ulanylýar."},
+  {k: "ong", b: "→ Maksatdan Myrada", t: "«Maksat Myratlara myhmançylyga bardy»",
+   e: "Indi Maksadyň myhmandygy, Myradyň bolsa öý eýesidigi belli."},
+  {k: "cep", b: "← Myratdan Maksada", t: "«Myrat Maksatlara myhmançylyga bardy»",
+   e: "Gapyrganyň ugry garşylykly tarapa üýtgedilse, gatnaşyk hem başgaça bolýar."},
+];
+let rel = 0;
+function oval(x, y, name) {
+  return `<ellipse cx="${x}" cy="${y}" rx="62" ry="21" fill="#fff" stroke="#2456b0"
+      stroke-width="3"/><text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17"
+      font-weight="700" fill="#1e2a3a">${name}</text>`;
+}
+function drawRel() {
+  const m = REL[rel].k;
+  const arrow = `<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5"
+      markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2456b0"/></marker></defs>`;
+  const line = m === "cep"
+    ? `<line x1="228" y1="60" x2="192" y2="60" stroke="#2456b0" stroke-width="3"
+        marker-end="url(#ah)"/>`
+    : `<line x1="192" y1="60" x2="228" y2="60" stroke="#2456b0" stroke-width="3"
+        ${m === "ong" ? 'marker-end="url(#ah)"' : ""}/>`;
+  document.getElementById("rel").innerHTML =
+    arrow + line + oval(128, 60, "Maksat") + oval(292, 60, "Myrat");
+  document.getElementById("relbtn").innerHTML = REL.map((r, i) =>
+    `<button class="btn ${i === rel ? "sel" : ""}" data-r="${i}">${r.b}</button>`).join("");
+  document.getElementById("relbtn").querySelectorAll("button").forEach(b =>
+    b.onclick = () => { rel = +b.dataset.r; drawRel(); });
+  const mm = document.getElementById("relmsg");
+  mm.innerHTML = `<b>${REL[rel].t}</b> — ${REL[rel].e}`;
+  mm.className = "msg ok";
+}
+document.getElementById("rel").onclick = () => { rel = (rel + 1) % REL.length; drawRel(); };
+drawRel();
+
+/* ---------------- Ata – Azat – Umyt (kitap, 31-nji surat) ---------------- */
+document.getElementById("fam").innerHTML =
+  `<line x1="210" y1="51" x2="210" y2="99" stroke="#2456b0" stroke-width="3"/>
+   <line x1="210" y1="141" x2="210" y2="189" stroke="#2456b0" stroke-width="3"/>` +
+  oval(210, 30, "Ata") + oval(210, 120, "Azat") + oval(210, 190, "Umyt");
+
+/* ---------------- geçiş ýollary ---------------- */
+const SVG = document.getElementById("board");
+const NAMES = ["A", "B", "Ç", "D"];
+const POS = [{ x: 70, y: 60 }, { x: 340, y: 60 }, { x: 70, y: 195 }, { x: 340, y: 195 }];
+const EDGES = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
+const ALL = [];   // all simple paths A(0) → D(3)
+let path = [0], found = [];
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+function connected(a, b) { return EDGES.some(([x, y]) => (x === a && y === b) || (x === b && y === a)); }
+function key(p) { return p.join("-"); }
+
+(function enumerate(cur, visited) {
+  if (cur === 3) { ALL.push([...visited]); return; }
+  for (let n = 0; n < 4; n++)
+    if (connected(cur, n) && !visited.includes(n)) enumerate(n, [...visited, n]);
+})(0, [0]);
+ALL.sort((a, b) => a.length - b.length || key(a).localeCompare(key(b)));
+
+function msg(t, cls) { const m = document.getElementById("msg"); m.textContent = t; m.className = "msg" + (cls ? " " + cls : ""); }
+
+function inPath(a, b) {
+  for (let i = 0; i + 1 < path.length; i++)
+    if ((path[i] === a && path[i + 1] === b) || (path[i] === b && path[i + 1] === a)) return true;
+  return false;
+}
+
+function render() {
+  SVG.innerHTML = "";
+  EDGES.forEach(([a, b]) => {
+    const hot = inPath(a, b);
+    SVG.appendChild(el("line", {
+      x1: POS[a].x, y1: POS[a].y, x2: POS[b].x, y2: POS[b].y,
+      stroke: hot ? "#e2574c" : "#b8c6d8", "stroke-width": hot ? 6 : 3
+    }));
+  });
+  POS.forEach((p, i) => {
+    const on = path.includes(i);
+    const g = el("g", { style: "cursor:pointer", "data-i": i });
+    g.appendChild(el("circle", {
+      cx: p.x, cy: p.y, r: 26,
+      fill: on ? "#fbe2c9" : "#fff",
+      stroke: i === 0 ? "#1d7a3d" : i === 3 ? "#b02424" : "#2456b0", "stroke-width": 4
+    }));
+    const t = el("text", { x: p.x, y: p.y + 7, "text-anchor": "middle", "font-size": 19, "font-weight": 800, fill: "#1e2a3a" });
+    t.textContent = NAMES[i];
+    g.appendChild(t);
+    SVG.appendChild(g);
+  });
+  const lbl = el("text", { x: 70, y: 30, "font-size": 12, fill: "#1d7a3d", "font-weight": 700, "text-anchor": "middle" });
+  lbl.textContent = "başlangyç"; SVG.appendChild(lbl);
+  const lbl2 = el("text", { x: 340, y: 238, "font-size": 12, fill: "#b02424", "font-weight": 700, "text-anchor": "middle" });
+  lbl2.textContent = "maksat"; SVG.appendChild(lbl2);
+
+  document.getElementById("cur").textContent = path.map(i => NAMES[i]).join(" → ");
+  document.getElementById("score").textContent = `Tapyldy: ${found.length} / ${ALL.length}`;
+
+  const F = document.getElementById("found");
+  F.innerHTML = "";
+  ALL.forEach(p => {
+    const d = document.createElement("div");
+    const got = found.includes(key(p));
+    d.className = "path" + (got ? "" : " todo");
+    d.textContent = got ? `${p.map(i => NAMES[i]).join(" – ")}  (uzynlygy ${p.length - 1})` : "??? ";
+    F.appendChild(d);
+  });
+}
+
+SVG.addEventListener("click", e => {
+  const r = SVG.getBoundingClientRect();
+  const x = (e.clientX - r.left) * (420 / r.width);
+  const y = (e.clientY - r.top) * (250 / r.height);
+  const i = POS.findIndex(p => Math.hypot(p.x - x, p.y - y) < 30);
+  if (i < 0) return;
+  const last = path[path.length - 1];
+  if (path.includes(i)) { msg(`${NAMES[i]} şäherinden eýýäm geçdik. Bir şähere iki gezek barmaly däl.`, "bad"); return; }
+  if (!connected(last, i)) { msg(`${NAMES[last]} bilen ${NAMES[i]} şäherleriniň arasynda göni ýol ýok.`, "bad"); return; }
+  path.push(i);
+  if (i === 3) {
+    const k = key(path);
+    if (found.includes(k)) msg("Bu ýoly eýýäm tapypdyň. Başga ýol synanyş!", "bad");
+    else {
+      found.push(k);
+      msg(found.length === ALL.length
+        ? `Berekella! 🎉 Ähli ${ALL.length} geçiş ýoluny tapdyň!`
+        : `Täze ýol tapyldy: ${path.map(n => NAMES[n]).join(" – ")} (uzynlygy ${path.length - 1})`, "ok");
+    }
+    setTimeout(() => { path = [0]; render(); }, 1200);
+  } else msg("");
+  render();
+});
+
+document.getElementById("resetBtn").onclick = () => { path = [0]; msg(""); render(); };
+render();
+</script>
+</body>
+</html>

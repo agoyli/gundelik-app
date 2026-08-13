@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ady droblar — 5-nji synp</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #f0f6ff;
+    color: #1e2a3a;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #5b6b80; font-size: 14px; margin-bottom: 16px; }
+  .card {
+    background: #fff; border-radius: 16px; padding: 16px;
+    box-shadow: 0 2px 8px rgba(30,42,58,.08); margin-bottom: 14px;
+  }
+  .frac-row { display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; }
+  .frac {
+    display: flex; flex-direction: column; align-items: center; font-size: 44px; font-weight: 700;
+  }
+  .frac .top { color: #e2574c; }
+  .frac .bar { width: 70px; height: 4px; background: #1e2a3a; border-radius: 2px; margin: 4px 0; }
+  .frac .bot { color: #2f7fd1; }
+  .ctrls { display: flex; flex-direction: column; gap: 10px; }
+  .ctrl { display: flex; align-items: center; gap: 10px; }
+  .ctrl .lbl { width: 110px; font-weight: 600; font-size: 15px; }
+  .ctrl .lbl.s { color: #e2574c; }
+  .ctrl .lbl.m { color: #2f7fd1; }
+  button {
+    font-family: inherit; border: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .step {
+    width: 44px; height: 44px; border-radius: 12px; font-size: 24px; font-weight: 700;
+    background: #e8eef7; color: #1e2a3a;
+  }
+  .step:active { background: #d4deed; }
+  .val { width: 36px; text-align: center; font-size: 22px; font-weight: 700; }
+  .circles { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 6px 0; }
+  .badge {
+    display: inline-block; padding: 8px 14px; border-radius: 999px;
+    font-weight: 700; font-size: 15px; margin-bottom: 8px;
+  }
+  .badge.dogry { background: #e0f5e6; color: #1d7a3d; }
+  .badge.nadogry { background: #fdeee0; color: #b25b12; }
+  .expl { font-size: 15px; line-height: 1.55; }
+  .expl b.s { color: #e2574c; }
+  .expl b.m { color: #2f7fd1; }
+  .reading { font-size: 15px; color: #5b6b80; margin-top: 6px; }
+  .mixed { margin-top: 10px; font-size: 17px; }
+  .mixed .num { font-weight: 700; }
+  .hint { margin-top: 10px; font-size: 15px; color: #6a4bb8; background: #f2edfd; border-radius: 10px; padding: 10px 12px; }
+  .footer { text-align: center; color: #93a2b5; font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ady droblar</h1>
+  <div class="sub">Sanyň bitin we drob bölekleri · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="frac-row">
+      <div class="frac">
+        <div class="top" id="fs">5</div>
+        <div class="bar"></div>
+        <div class="bot" id="fm">8</div>
+      </div>
+      <div class="ctrls">
+        <div class="ctrl">
+          <span class="lbl s">Sanawjy</span>
+          <button class="step" id="sMinus">−</button>
+          <span class="val" id="sVal">5</span>
+          <button class="step" id="sPlus">+</button>
+        </div>
+        <div class="ctrl">
+          <span class="lbl m">Maýdalawjy</span>
+          <button class="step" id="mMinus">−</button>
+          <span class="val" id="mVal">8</span>
+          <button class="step" id="mPlus">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="circles" id="circles"></div>
+    <div class="reading" id="reading"></div>
+  </div>
+
+  <div class="card">
+    <div id="badge"></div>
+    <div class="expl" id="expl"></div>
+    <div class="mixed" id="mixed"></div>
+    <div class="hint" id="hint" style="display:none"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5 (2017)</div>
+</div>
+
+<script>
+let s = 5, m = 8;
+
+const WORDS = ["", "bir", "iki", "üç", "dört", "bäş", "alty", "ýedi", "sekiz", "dokuz",
+  "on", "on bir", "on iki", "on üç", "on dört", "on bäş", "on alty", "on ýedi",
+  "on sekiz", "on dokuz", "ýigrimi", "ýigrimi bir", "ýigrimi iki", "ýigrimi üç", "ýigrimi dört"];
+const ABL = { 2: "ikiden", 3: "üçden", 4: "dörtden", 5: "bäşden", 6: "altydan",
+  7: "ýediden", 8: "sekizden", 9: "dokuzdan", 10: "ondan", 11: "on birden", 12: "on ikiden" };
+const DAT = { 2: "2-ä", 3: "3-e", 4: "4-e", 5: "5-e", 6: "6-a", 7: "7-ä", 8: "8-e",
+  9: "9-a", 10: "10-a", 11: "11-e", 12: "12-ä" };
+
+function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+
+function sectorPath(cx, cy, r, a0, a1) {
+  const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+  const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+  const large = (a1 - a0) > Math.PI ? 1 : 0;
+  return `M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+}
+
+function drawCircles() {
+  const box = document.getElementById("circles");
+  box.innerHTML = "";
+  const count = Math.max(1, Math.ceil(s / m));
+  let left = s;
+  for (let c = 0; c < count; c++) {
+    const filled = Math.min(m, left);
+    left -= filled;
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    const size = count > 1 ? 110 : 150;
+    svg.setAttribute("width", size); svg.setAttribute("height", size);
+    svg.setAttribute("viewBox", "0 0 100 100");
+    for (let i = 0; i < m; i++) {
+      const a0 = -Math.PI / 2 + i * 2 * Math.PI / m;
+      const a1 = -Math.PI / 2 + (i + 1) * 2 * Math.PI / m;
+      const p = document.createElementNS(svgNS, "path");
+      p.setAttribute("d", sectorPath(50, 50, 46, a0, a1));
+      p.setAttribute("fill", i < filled ? "#ffb340" : "#eef2f8");
+      p.setAttribute("stroke", "#1e2a3a");
+      p.setAttribute("stroke-width", "1.6");
+      p.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(p);
+    }
+    box.appendChild(svg);
+  }
+}
+
+function update() {
+  document.getElementById("fs").textContent = s;
+  document.getElementById("fm").textContent = m;
+  document.getElementById("sVal").textContent = s;
+  document.getElementById("mVal").textContent = m;
+
+  drawCircles();
+
+  document.getElementById("reading").textContent =
+    `Okalyşy: «${ABL[m]} ${WORDS[s]}» — bitin ${m} deň bölege bölündi, ${s} bölek alyndy.`;
+
+  const badge = document.getElementById("badge");
+  const expl = document.getElementById("expl");
+  if (s < m) {
+    badge.innerHTML = `<span class="badge dogry">Dogry drob</span>`;
+    expl.innerHTML = `<b class="s">Sanawjy</b> (${s}) <b class="m">maýdalawjydan</b> (${m}) kiçi. Şonuň üçin bu — dogry drob.`;
+  } else {
+    badge.innerHTML = `<span class="badge nadogry">Nädogry drob</span>`;
+    expl.innerHTML = s === m
+      ? `<b class="s">Sanawjy</b> (${s}) <b class="m">maýdalawja</b> (${m}) deň. Şonuň üçin bu — nädogry drob.`
+      : `<b class="s">Sanawjy</b> (${s}) <b class="m">maýdalawjydan</b> (${m}) uly. Şonuň üçin bu — nädogry drob.`;
+  }
+
+  const mixed = document.getElementById("mixed");
+  if (s >= m) {
+    const whole = Math.floor(s / m), rest = s % m;
+    if (rest === 0) {
+      mixed.innerHTML = `Garyşyk sana öwreliň: <span class="num">${s}/${m} = ${whole} bitin</span>.`;
+    } else {
+      mixed.innerHTML = `Garyşyk sana öwreliň: <span class="num">${s}/${m} = ${whole} bitin ${rest}/${m}</span> — sanawjyny maýdalawja galyndyly böldük.`;
+    }
+  } else {
+    mixed.innerHTML = "";
+  }
+
+  const hint = document.getElementById("hint");
+  const g = gcd(s, m);
+  if (g > 1) {
+    hint.style.display = "";
+    hint.textContent = `Gysgaldyp bolýar: ${s}/${m} = ${s / g}/${m / g} (sanawjyny-da, maýdalawjyny-da ${DAT[g] || g + "-e"} böldük). Drobuň bahasy üýtgemeýär.`;
+  } else {
+    hint.style.display = "none";
+  }
+}
+
+function clampS() { s = Math.min(s, 3 * m); }
+
+document.getElementById("sPlus").onclick = () => { if (s < 3 * m && s < 24) s++; update(); };
+document.getElementById("sMinus").onclick = () => { if (s > 1) s--; update(); };
+document.getElementById("mPlus").onclick = () => { if (m < 12) m++; update(); };
+document.getElementById("mMinus").onclick = () => { if (m > 2) m--; clampS(); update(); };
+
+update();
+</script>
+</body>
+</html>

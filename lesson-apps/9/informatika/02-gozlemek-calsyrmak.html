@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gözlemek we çalşyrmak — 9-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .doc { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; padding: 14px;
+         font-size: 15px; line-height: 1.75; max-height: 250px; overflow-y: auto; }
+  .doc mark { background: #ffe680; border-radius: 3px; padding: 0 1px; }
+  .doc mark.cur { background: #f0b429; }
+  .doc .sel { background: #dbe8fb; }
+  .fld { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .fld label { width: 108px; font-size: 13.5px; font-weight: 700; color: #5b6b80; flex: 0 0 auto; }
+  .fld input { flex: 1; padding: 10px; font-size: 15px; border-radius: 10px;
+               border: 2px solid #d6e0ee; min-width: 0; }
+  .nav { background: #f7fafd; border-radius: 12px; padding: 11px 12px; }
+  .nav .h { font-size: 13px; font-weight: 700; color: #5b6b80; margin-bottom: 6px; }
+  .hits { display: flex; flex-direction: column; gap: 5px; max-height: 130px; overflow-y: auto; }
+  .hit { font-size: 13px; background: #fff; border-radius: 8px; padding: 7px 9px; cursor: pointer;
+         line-height: 1.4; }
+  .hit b { background: #ffe680; }
+  .hit.cur { outline: 2px solid #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tekstde gözlemek we çalşyrmak</h1>
+  <div class="sub">Главная → Найти / Заменить · Informatika · 9-njy synp</div>
+
+  <div class="card">
+    <div class="fld"><label>Найти</label>
+      <input id="q" value="Baýram" autocomplete="off" spellcheck="false"></div>
+    <div class="fld"><label>Заменить на</label>
+      <input id="r" value="Baýramçylyk" autocomplete="off" spellcheck="false"></div>
+    <div class="row">
+      <button class="btn" id="findNext">Найти далее</button>
+      <button class="btn" id="repl">Заменить</button>
+      <button class="btn primary" id="replAll">Заменить все</button>
+      <button class="btn ghost" id="undo">Yzyna al</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="selMode">Diňe tapawutlandyrylan parçada gözle</button>
+      <span class="score" id="cnt"></span>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Dokument</h3>
+    <div class="doc" id="doc"></div>
+  </div>
+
+  <div class="card">
+    <div class="nav">
+      <div class="h">Навигация — gözleg netijeleri</div>
+      <div class="hits" id="hits"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Ýumuş</h3>
+    <div class="goal" id="task"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Gözleg <b>Главная → Найти</b> buýrugy bilen başlanýar, çep gyradan <b>Навигация</b>
+      penjiresi açylýar. Eger gözleg başlanmazdan öň dokumentiň belli bir parçasy
+      tapawutlandyrylan bolsa, gözleg <b>şol parçanyň çäginde</b> geçirilýär.
+      Ähli gabat gelmeleri birbada çalşyrmak üçin <b>Заменить все</b> berilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 9 (2021)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const ORIG =
+`Baýram şu gün Bitaraplyk baýramyna bagyşlanyp Baýramalyda geçirilýän baýramçylyk çäresine gatnaşmaga gitdi.
+Mekdebiň okuwçylary hem şol baýramçylyga taýýarlyk gördüler. Okuwçy Aýna goşgy okady, okuwçy Merdan bolsa surat çekdi.
+Baýramçylykdan soň okuwçylar Baýramalynyň seýilgäbinde gezelenç etdiler.`;
+
+const SEL = [0, 104];   // "tapawutlandyrylan parça" = first line
+let text = ORIG, hist = [], cur = -1, selOnly = false;
+
+function esc(s) { return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+function matches() {
+  const q = $("q").value;
+  if (!q) return [];
+  const res = [];
+  const lo = selOnly ? SEL[0] : 0, hi = selOnly ? SEL[1] : text.length;
+  let i = text.indexOf(q, lo);
+  while (i >= 0 && i < hi) { res.push(i); i = text.indexOf(q, i + q.length); }
+  return res;
+}
+
+function render() {
+  const q = $("q").value, ms = matches();
+  if (cur >= ms.length) cur = ms.length - 1;
+
+  let html = "", last = 0;
+  ms.forEach((i, n) => {
+    html += esc(text.slice(last, i));
+    html += `<mark class="${n === cur ? "cur" : ""}">${esc(text.slice(i, i + q.length))}</mark>`;
+    last = i + q.length;
+  });
+  html += esc(text.slice(last));
+  if (selOnly) {
+    // wrap the searched region so the restriction is visible
+    const pre = html.split("\n");
+    html = `<span class="sel">${pre[0]}</span>\n` + pre.slice(1).join("\n");
+  }
+  $("doc").innerHTML = html.replace(/\n/g, "<br>");
+
+  $("cnt").textContent = q ? `Tapyldy: ${ms.length}` + (selOnly ? " (diňe tapawutlandyrylan parçada)" : "") : "";
+
+  const H = $("hits"); H.innerHTML = "";
+  if (!ms.length) H.innerHTML = '<div style="font-size:13px;color:#93a2b5">Gabat gelme ýok.</div>';
+  ms.forEach((i, n) => {
+    const a = Math.max(0, i - 22), b = Math.min(text.length, i + q.length + 22);
+    const d = document.createElement("div");
+    d.className = "hit" + (n === cur ? " cur" : "");
+    d.innerHTML = (a ? "…" : "") + esc(text.slice(a, i)) + "<b>" + esc(q) + "</b>" +
+                  esc(text.slice(i + q.length, b)) + (b < text.length ? "…" : "");
+    d.onclick = () => { cur = n; render(); };
+    H.appendChild(d);
+  });
+
+  task();
+}
+
+function msg(t, cls) { $("msg").textContent = t; $("msg").className = "msg" + (cls ? " " + cls : ""); }
+
+$("findNext").onclick = () => {
+  const ms = matches();
+  if (!ms.length) { msg("Gabat gelme tapylmady.", "bad"); return; }
+  cur = (cur + 1) % ms.length;
+  msg(`${cur + 1}-nji gabat gelme (jemi ${ms.length}).`, "ok");
+  render();
+};
+
+$("repl").onclick = () => {
+  const ms = matches(), q = $("q").value, r = $("r").value;
+  if (!ms.length) { msg("Çalşyrmaga zat ýok.", "bad"); return; }
+  if (cur < 0) cur = 0;
+  hist.push(text);
+  const i = ms[cur];
+  text = text.slice(0, i) + r + text.slice(i + q.length);
+  msg(`Bir gabat gelme çalşyryldy: «${q}» → «${r}».`, "ok");
+  cur = -1; render();
+};
+
+$("replAll").onclick = () => {
+  const q = $("q").value, r = $("r").value, ms = matches();
+  if (!ms.length) { msg("Çalşyrmaga zat ýok.", "bad"); return; }
+  hist.push(text);
+  // replace right-to-left so earlier indexes stay valid
+  [...ms].reverse().forEach(i => { text = text.slice(0, i) + r + text.slice(i + q.length); });
+  msg(`${ms.length} sany gabat gelme birbada çalşyryldy.`, "ok");
+  cur = -1; render();
+};
+
+$("undo").onclick = () => {
+  if (!hist.length) { msg("Yzyna aljak üýtgeşme ýok.", "bad"); return; }
+  text = hist.pop(); cur = -1; msg("Soňky üýtgeşme yzyna alyndy.", "ok"); render();
+};
+
+$("selMode").onclick = () => {
+  selOnly = !selOnly;
+  $("selMode").className = "btn" + (selOnly ? " sel" : "");
+  $("selMode").textContent = selOnly ? "Tutuş dokumentde gözle" : "Diňe tapawutlandyrylan parçada gözle";
+  cur = -1;
+  msg(selOnly ? "Birinji sözlem tapawutlandyryldy – gözleg şol parçanyň çäginde geçýär." : "Gözleg tutuş dokument boýunça geçýär.", "ok");
+  render();
+};
+
+function task() {
+  const done1 = !text.includes("Baýramalyda") ? false : true;
+  const okuw = (text.match(/okuw/gi) || []).length;
+  $("task").innerHTML = `
+    <div>1. Найти setirine <b>okuw</b> ýaz – «okuwçy» we «okuwçylar» sözleriniň ikisi hem
+       tapylar. Häzir tapylýan «okuw» sany: <b>${okuw}</b>.</div>
+    <div style="margin-top:6px">2. <b>Baýram</b> sözüni <b>Baýramçylyk</b> bilen çalşyr –
+       «Baýramalyda» sözüniň hem üýtgeýändigine üns ber. Gözleg sözi näçe takyk bolsa,
+       netije şonça-da dogrudyr.</div>`;
+}
+
+["q", "r"].forEach(id => $(id).addEventListener("input", () => { cur = -1; render(); }));
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sirkul we çyzgyç bilen gurmak — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .board { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .board svg { display: block; width: 100%; height: auto; max-height: 220px; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 12px; font-size: 17px; font-weight: 700; text-align: center; }
+  .opts { display: grid; grid-template-columns: 1fr; gap: 7px; }
+  .opts button { min-height: 46px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 11px; }
+  .done { background: #f7fafd; border-radius: 12px; padding: 10px; font-size: 15.5px; line-height: 1.75; }
+  .parts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .parts button { min-height: 48px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sirkulyň we çyzgyjyň kömegi bilen gurmak. Gurmaga degişli meseleler</h1>
+  <div class="sub">Geometriýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Gurmaga degişli meseleler <b>diňe sirkulyň we masştabsyz çyzgyjyň</b>
+      kömegi bilen çözülýär. Berlen nokatdan berlen uzaklykda ýerleşýän ähli nokatlar
+      <b>töweregi</b> emele getirýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Gurluşyň tertibini düz</h3>
+    <div class="task" id="task"></div>
+    <div class="board"><svg id="bd" viewBox="0 0 320 220"></svg></div>
+    <div class="done" id="done"></div>
+    <div class="goal" id="ask"></div>
+    <div class="opts" id="opts"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki gurluş</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Töweregiň bölegini tana</h3>
+    <div class="board"><svg id="cb" viewBox="0 0 320 200"></svg></div>
+    <div class="goal" id="cask"></div>
+    <div class="parts" id="cparts">
+      <button class="btn" data-k="radius">Radius</button>
+      <button class="btn" data-k="diametr">Diametr</button>
+      <button class="btn" data-k="horda">Horda</button>
+      <button class="btn" data-k="merkez">Merkez</button>
+    </div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><button class="btn ghost" id="cnext">Indiki sorag</button></div>
+    <div class="score" id="csc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geometriýa 7 · 67–76-njy sahypalar</div>
+</div>
+
+<script>
+// [at, [ädimler tertip boýunça], [her ädim üçin ýalňyş warian]]
+var G = [
+  ["Kesimi deň ýarpa bölmek", [
+    "Merkezi A nokatda bolan, AB-den kiçi bolmadyk radiusly töweregi geçir.",
+    "Şol radius bilen merkezi B nokatda bolan ikinji töweregi geçir.",
+    "Töwerekleriň kesişme nokatlaryny P we Q bilen belle.",
+    "P we Q nokatlaryň üstünden göni çyzyk geçir.",
+    "Ol çyzygyň AB bilen kesişýän O nokady kesimiň ortasydyr."
+  ], [
+    "Transportir bilen 90° belle.",
+    "AB kesimi çyzgyç bilen ölçäp, ýaryna böl.",
+    "Islendik nokady saýla.",
+    "A we B nokatlary birikdir.",
+    "O nokady çak edip belle."
+  ]],
+  ["Burçuň bissektrisasyny gurmak", [
+    "Merkezi burçuň depesinde bolan erkin radiusly töweregi geçir.",
+    "Töweregiň taraplary kesýän nokatlaryny B we C bilen belle.",
+    "Merkezleri B we C bolan deň radiusly iki dugany geçir.",
+    "Dugalaryň kesişme nokadyny D bilen belle.",
+    "AD şöhläni geçir – ol bissektrisadyr."
+  ], [
+    "Burçy transportir bilen ölçäp, ikä böl.",
+    "Diňe bir tarapy belle.",
+    "Dürli radiusly dugalary geçir.",
+    "Depäni D diýip belle.",
+    "BC kesimi geçir."
+  ]],
+  ["Berlen burça deň burç gurmak", [
+    "Merkezi berlen burçuň depesinde bolan erkin radiusly töweregi geçir.",
+    "Şol radius bilen şöhläniň başlangyjynda töwerek geçir.",
+    "Töweregiň şöhläni kesýän nokadyny D bilen belle.",
+    "Radiusy BC deň bolan, merkezi D bolan töweregi geçir.",
+    "Kesişme nokady E bilen O-ny birikdir – EOD gurlan burçdur."
+  ], [
+    "Şöhläni uzalt.",
+    "Başga radiusly töwerek geçir.",
+    "Depäni D diýip belle.",
+    "Radiusy erkin al.",
+    "Şöhläni ölçäp ikä böl."
+  ]]
+];
+var gi = 0, stage = 0, d = 0, ok = 0;
+function steps() { return G[gi][1]; }
+function draw() {
+  var s = "";
+  if (gi === 0) {
+    s += '<line x1="40" y1="120" x2="260" y2="120" stroke="#94aec9" stroke-width="3"/>';
+    s += '<circle cx="40" cy="120" r="6" fill="#2456b0"/><circle cx="260" cy="120" r="6" fill="#2456b0"/>';
+    s += '<text x="32" y="142" font-size="14" fill="#33506f">A</text>';
+    s += '<text x="256" y="142" font-size="14" fill="#33506f">B</text>';
+    if (stage >= 1) s += '<circle cx="40" cy="120" r="140" fill="none" stroke="#c9d8e8" stroke-width="2"/>';
+    if (stage >= 2) s += '<circle cx="260" cy="120" r="140" fill="none" stroke="#c9d8e8" stroke-width="2"/>';
+    if (stage >= 3) {
+      s += '<circle cx="150" cy="13" r="5" fill="#b0407a"/><circle cx="150" cy="227" r="5" fill="#b0407a"/>';
+      s += '<text x="156" y="20" font-size="13" fill="#b0407a">P</text>';
+      s += '<text x="156" y="222" font-size="13" fill="#b0407a">Q</text>';
+    }
+    if (stage >= 4) s += '<line x1="150" y1="10" x2="150" y2="230" stroke="#b0407a" stroke-width="3"/>';
+    if (stage >= 5) {
+      s += '<circle cx="150" cy="120" r="6" fill="#2b7a4a"/>';
+      s += '<text x="132" y="112" font-size="14" fill="#2b7a4a">O</text>';
+    }
+  } else {
+    s += '<line x1="40" y1="170" x2="280" y2="170" stroke="#94aec9" stroke-width="3"/>';
+    s += '<line x1="40" y1="170" x2="250" y2="40" stroke="#94aec9" stroke-width="3"/>';
+    s += '<circle cx="40" cy="170" r="6" fill="#2456b0"/>';
+    s += '<text x="24" y="186" font-size="14" fill="#33506f">' + (gi === 1 ? "A" : "O") + "</text>";
+    if (stage >= 1) s += '<circle cx="40" cy="170" r="90" fill="none" stroke="#c9d8e8" stroke-width="2"/>';
+    if (stage >= 2) {
+      s += '<circle cx="130" cy="170" r="5" fill="#2456b0"/><circle cx="117" cy="121" r="5" fill="#2456b0"/>';
+      s += '<text x="126" y="190" font-size="13" fill="#33506f">B</text>';
+      s += '<text x="98" y="116" font-size="13" fill="#33506f">C</text>';
+    }
+    if (stage >= 3) {
+      s += '<circle cx="130" cy="170" r="70" fill="none" stroke="#eed3e0" stroke-width="2"/>';
+      s += '<circle cx="117" cy="121" r="70" fill="none" stroke="#eed3e0" stroke-width="2"/>';
+    }
+    if (stage >= 4) {
+      s += '<circle cx="182" cy="124" r="5" fill="#b0407a"/>';
+      s += '<text x="188" y="120" font-size="13" fill="#b0407a">D</text>';
+    }
+    if (stage >= 5) s += '<line x1="40" y1="170" x2="250" y2="106" stroke="#b0407a" stroke-width="3"/>';
+  }
+  document.getElementById("bd").innerHTML = s;
+}
+function show() {
+  var g = G[gi];
+  document.getElementById("task").textContent = g[0];
+  draw();
+  var l = "";
+  for (var i = 0; i < stage; i++) l += (i + 1) + ") " + steps()[i] + "<br>";
+  document.getElementById("done").innerHTML = l || "Ädimler entek saýlanmady.";
+  document.getElementById("ask").textContent = stage < steps().length ?
+    ((stage + 1) + "-nji ädim haýsy?") : "Gurluş tamamlandy.";
+  var arr = [];
+  if (stage < steps().length) {
+    arr = [steps()[stage], g[2][stage]];
+    if ((gi + stage) % 2 === 1) arr.reverse();
+  }
+  var h = "";
+  for (var k = 0; k < arr.length; k++) h += '<button class="btn" data-i="' + k + '">' + arr[k] + "</button>";
+  document.getElementById("opts").innerHTML = h;
+  var bs = document.getElementById("opts").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = pick;
+  var m = document.getElementById("msg");
+  m.className = stage >= steps().length ? "msg ok" : "msg";
+  m.textContent = stage >= steps().length ? "Gurluşyň dogrudygy üçburçluklaryň deňligi bilen subut edilýär." : "";
+}
+function pick() {
+  if (stage >= steps().length) return;
+  var m = document.getElementById("msg");
+  d++;
+  if (this.textContent === steps()[stage]) {
+    stage++; ok++; show();
+    if (stage < steps().length) { m.className = "msg ok"; m.textContent = "Dogry! Indiki ädime geç."; }
+  } else {
+    m.className = "msg bad";
+    m.textContent = "Ýalňyş. Diňe sirkul we çyzgyç ulanylýar.";
+  }
+  document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+}
+document.getElementById("next").onclick = function () { gi = (gi + 1) % G.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var C = ["radius", "diametr", "horda", "merkez"];
+var ci = 0, cd = 0, cok = 0, clock = 0;
+var CN = { radius: "radiusy", diametr: "diametri", horda: "hordasy", merkez: "merkezi" };
+var CW = {
+  radius: "Radius merkezi töweregiň nokady bilen birikdirýär.",
+  diametr: "Diametr merkezden geçýän hordadyr, ol radiusdan iki esse uludyr.",
+  horda: "Horda töweregiň iki nokadyny birikdirýän kesimdir.",
+  merkez: "Merkez – töweregiň ähli nokatlaryndan deň uzaklykdaky nokat."
+};
+function drawC() {
+  var s = '<circle cx="160" cy="100" r="80" fill="#eef4fb" stroke="#2456b0" stroke-width="3"/>';
+  s += '<line x1="160" y1="100" x2="160" y2="20" stroke="#2b7a4a" stroke-width="4"/>';
+  s += '<text x="166" y="60" font-size="13" fill="#2b7a4a">r</text>';
+  s += '<line x1="80" y1="100" x2="240" y2="100" stroke="#b0407a" stroke-width="4"/>';
+  s += '<text x="200" y="94" font-size="13" fill="#b0407a">d</text>';
+  s += '<line x1="104" y1="157" x2="232" y2="132" stroke="#8a5cc0" stroke-width="4"/>';
+  s += '<text x="150" y="166" font-size="13" fill="#8a5cc0">horda</text>';
+  s += '<circle cx="160" cy="100" r="6" fill="#1e2a3a"/>';
+  s += '<text x="140" y="118" font-size="13" fill="#1e2a3a">O</text>';
+  document.getElementById("cb").innerHTML = s;
+}
+function showC() {
+  drawC();
+  document.getElementById("cask").textContent = "Töweregiň " + CN[C[ci]] + " haýsy? Dogry ady saýla.";
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  clock = 0;
+}
+var cb = document.getElementById("cparts").getElementsByTagName("button");
+for (var i = 0; i < cb.length; i++) {
+  cb[i].onclick = function () {
+    if (clock) return;
+    clock = 1; cd++;
+    var k = this.getAttribute("data-k"), w = C[ci], m = document.getElementById("cmsg");
+    if (k === w) { cok++; m.className = "msg ok"; m.textContent = "Dogry! " + CW[w]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + CW[w]; }
+    document.getElementById("csc").textContent = "Netije: " + cok + " / " + cd;
+  };
+}
+document.getElementById("cnext").onclick = function () { ci = (ci + 1) % C.length; showC(); };
+showC();
+
+var Q = [
+  ["Gurmaga degişli meselelerde haýsy gurallar ulanylýar?",
+   ["Sirkul we masştabsyz çyzgyç", "Transportir we çyzgyç", "Diňe sirkul"], 0],
+  ["Töweregiň merkezinden geçýän horda näme diýilýär?", ["Diametr", "Radius", "Duga"], 0],
+  ["Töweregiň diametri radiusdan näçe esse uly?", ["2 esse", "3 esse", "4 esse"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

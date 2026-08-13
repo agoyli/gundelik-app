@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paint.net interfeýsi — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .app { border: 2px solid #d6e0ee; border-radius: 10px; overflow: hidden; background: #eef2f8;
+         position: relative; user-select: none; }
+  .app .z { cursor: pointer; transition: box-shadow .12s; }
+  .app .z.on { box-shadow: inset 0 0 0 3px #e5007d; }
+  .app .tb { background: #e3edfd; padding: 6px 9px; font-size: 12.5px; font-weight: 700;
+             color: #2456b0; }
+  .app .mn { background: #f7fafd; padding: 5px 9px; font-size: 12px; color: #5b6b80;
+             border-bottom: 1px solid #e2e9f2; }
+  .app .op { background: #f7fafd; padding: 5px 9px; font-size: 11.5px; color: #5b6b80;
+             border-bottom: 1px solid #e2e9f2; display: flex; gap: 8px; flex-wrap: wrap; }
+  .app .row2 { display: flex; min-height: 190px; }
+  .app .lp { width: 62px; background: #f7fafd; padding: 5px; display: grid;
+             grid-template-columns: 1fr 1fr; gap: 3px; align-content: start; }
+  .app .lp i { background: #fff; border: 1px solid #d6e0ee; border-radius: 5px; height: 24px;
+               display: grid; place-items: center; font-size: 12px; font-style: normal; }
+  .app .cv { flex: 1; background: #cfd6e0; padding: 12px; display: grid; place-items: center; }
+  .app .cv .sheet { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.2); width: 100%;
+                    max-width: 240px; aspect-ratio: 4/3; display: grid; place-items: center;
+                    color: #93a2b5; font-size: 12px; letter-spacing: 2px; }
+  .app .rp { width: 96px; background: #f7fafd; padding: 5px; font-size: 10.5px; color: #5b6b80; }
+  .app .rp div.b { background: #fff; border: 1px solid #d6e0ee; border-radius: 6px;
+                   padding: 5px; margin-bottom: 4px; }
+  .app .thumbs { background: #f7fafd; padding: 4px 9px; display: flex; gap: 5px;
+                 border-bottom: 1px solid #e2e9f2; }
+  .app .thumbs i { width: 26px; height: 20px; background: #cfe0f5; border-radius: 3px;
+                   border: 1px solid #b9cdf0; }
+  .app .st { background: #e9edf3; padding: 4px 9px; font-size: 10.5px; color: #93a2b5;
+             display: flex; justify-content: space-between; }
+  .tag { position: absolute; width: 21px; height: 21px; border-radius: 50%; background: #e5007d;
+         color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center;
+         pointer-events: none; }
+  .dlg { background: #f7fafd; border-radius: 11px; padding: 11px; font-size: 13.5px; }
+  .dlg .fld { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .dlg .fld label { width: 104px; color: #5b6b80; }
+  .dlg input { width: 88px; padding: 7px; border-radius: 8px; border: 2px solid #d6e0ee;
+               font-family: ui-monospace, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Paint.net grafiki redaktorynyň interfeýsi</h1>
+  <div class="sub">Penjiräniň elementleri, şekili saklamak we ýüklemek · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Penjiräniň islendik bölegine bas – onuň ady we wezipesi ýazylar.
+      Interfeýs <b>7 sany</b> esasy elementden durýar.</div>
+    <div class="app" id="app">
+      <div class="tb z" data-e="1">Bezeg.png – paint.net wersiýa 4.0.19</div>
+      <div class="mn z" data-e="2">Faýl · Prawka · Wid · Şekil · Gatlaklar · Korreksiýa · Effektler</div>
+      <div class="op z" data-e="3"><span>Gural: ✏️</span><span>Ini: 5</span><span>Doldurma: ▣</span>
+        <span>Garyşmak: adaty</span></div>
+      <div class="thumbs z" data-e="4"><i></i><i></i><i></i></div>
+      <div class="row2">
+        <div class="lp z" data-e="5">
+          <i>▭</i><i>✥</i><i>🔍</i><i>✎</i><i>🪄</i><i>✋</i><i>🖌</i><i>🪣</i><i>🩹</i><i>✏️</i><i>A</i><i>⌇</i>
+        </div>
+        <div class="cv"><div class="sheet">IŞ MEÝDANY</div></div>
+        <div class="rp z" data-e="6">
+          <div class="b"><b>Žurnal</b><br>Gatlagy arassalamak<br>Boýag<br>Çotga</div>
+          <div class="b"><b>Gatlaklar</b><br>Fon</div>
+          <div class="b"><b>Reňkler</b><br>■ esasy · □ ikinji</div>
+        </div>
+      </div>
+      <div class="st z" data-e="7"><span>800 × 600</span><span>x: 214, y: 118</span><span>100%</span></div>
+    </div>
+    <div class="note" id="ex">Penjiräniň bir bölegine bas.</div>
+  </div>
+
+  <div class="card">
+    <h3>Täze şekil döretmek</h3>
+    <div class="goal">Faýl → <b>Создать…</b> buýrugy iş meýdanynyň ölçegini soraýar. Adaty
+      ýagdaýda ol 800 × 600 piksele deňdir.</div>
+    <div class="dlg">
+      <div class="fld"><label>Ini (piksel)</label><input type="number" id="w" value="800" min="1" max="4000"></div>
+      <div class="fld"><label>Beýikligi (piksel)</label><input type="number" id="h" value="600" min="1" max="4000"></div>
+      <div class="fld"><label>Çözüji ukyby</label><input type="number" id="d" value="96" min="1" max="1200"><span>nokat/dýuým</span></div>
+      <div class="note" id="calc" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy menýu?</h3>
+    <div class="row" style="margin-bottom:8px"><span class="badge purple" id="task"></span></div>
+    <div class="row tight" id="opts"></div>
+    <div class="msg" id="qmsg"></div>
+    <div class="row"><span class="score" id="qsc"></span>
+      <button class="btn ghost" id="qr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Şekili saklamak we ýüklemek</h3>
+    <div class="row tight">
+      <button class="btn" data-s="save">Saklamak</button>
+      <button class="btn" data-s="open">Ýüklemek</button>
+      <button class="btn" data-s="print">Çap etmek</button>
+    </div>
+    <div class="note" id="sx">Amaly saýla.</div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Iş meýdany</b> – şekiliň ýerleşdirilmeli ýeridir, onuň reňkine <b>düşegiň reňki</b>
+      diýilýär. Şekil <b>Faýl → Сохранить как</b> buýrugy bilen at dakylyp saklanýar,
+      <b>Faýl → Открыть</b> buýrugy bilen bolsa diskden ýüklenýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = x => x.toLocaleString("ru-RU");
+const dec = (x, d) => x.toFixed(d).replace(".", ",");
+
+/* ---------------- elementler ---------------- */
+const EL = {
+  1: ["Penjiräniň sözbaşysy", "Penjiräniň ýokarsynda grafiki şekiliň adyny özünde saklaýar."],
+  2: ["Menýu setiri", "Grafiki redaktoryň esasy penjiresi we suratlar bilen işlemek üçin buýruklary saklaýar."],
+  3: ["Gurallaryň kese ýerleşen paneli", "Buýruklary ýerine ýetirmäge ýa-da işjeň guralyň parametrlerini sazlamaga hyzmat edýär."],
+  4: ["Işlenýän şekilleriň sanawy", "Programmada açyk şekilleriň kiçeldilen (eskiz) görnüşindäki sanawydyr."],
+  5: ["Gurallaryň dik ýerleşen paneli", "Suratlary ýa-da şekilleri döretmek we özgertmek üçin gurallary saklaýar."],
+  6: ["Ýüzýän penjireler", "Žurnal, Gatlaklar we Reňkler penjireleri: amallaryň taryhy, gatlaklar we reňk saýlamak."],
+  7: ["Ýagdaýlar setiri", "Çep tarapda häzirki ýagdaý, sagda şekiliň ölçegi we kursoryň koordinatalary."]
+};
+function tags() {
+  document.querySelectorAll("#app .tag").forEach(t => t.remove());
+  document.querySelectorAll("#app .z").forEach(z => {
+    const t = document.createElement("span");
+    t.className = "tag";
+    t.textContent = z.dataset.e;
+    const r = z.getBoundingClientRect(), a = $("app").getBoundingClientRect();
+    t.style.left = (r.right - a.left - 27) + "px";
+    t.style.top = (r.top - a.top + 4) + "px";
+    $("app").appendChild(t);
+  });
+}
+document.querySelectorAll("#app .z").forEach(z => z.onclick = () => {
+  document.querySelectorAll("#app .z").forEach(x => x.classList.remove("on"));
+  z.classList.add("on");
+  const [n, t] = EL[z.dataset.e];
+  $("ex").innerHTML = `<b>${z.dataset.e}. ${n}</b> — ${t}`;
+});
+
+/* ---------------- täze şekil ---------------- */
+function calc() {
+  const w = +$("w").value || 0, h = +$("h").value || 0, d = +$("d").value || 1;
+  const px = w * h, mb = px * 4 / 1024 / 1024;
+  $("calc").innerHTML =
+    `Pikselleriň sany: ${num(w)} · ${num(h)} = <b>${num(px)}</b><br>` +
+    `Çap edilende ölçegi: ${dec(w / d * 2.54, 2)} × ${dec(h / d * 2.54, 2)} sm ` +
+    `(${d} nokat/dýuým, 1 dýuým = 2,54 sm)<br>` +
+    `Faýlyň takmynan möçberi: <b>${dec(mb, 2)} Mbaýt</b>`;
+}
+["w", "h", "d"].forEach(i => $(i).addEventListener("input", calc));
+
+/* ---------------- haýsy menýu ---------------- */
+const MENUS = ["Faýl", "Prawka", "Wid", "Şekil", "Gatlaklar", "Korreksiýa", "Effektler"];
+const Q = [
+  ["Täze şekil döretmeli", "Faýl"],
+  ["Soňky amaly ýatyrmaly (Ctrl+Z)", "Prawka"],
+  ["Şekili ulaltmaly ýa-da kiçeltmeli görkezmeli", "Wid"],
+  ["Şekili 90°-a öwürmeli", "Şekil"],
+  ["Täze dury gatlak goşmaly", "Gatlaklar"],
+  ["Şekili gara-ak reňke geçirmeli", "Korreksiýa"],
+  ["Şekile «Şum» effektini ulanmaly", "Effektler"],
+  ["Şekili diskde saklamaly", "Faýl"]
+];
+let qi = 0, qok = 0;
+function q() {
+  if (qi >= Q.length) {
+    $("task").textContent = "Tamamlandy";
+    $("opts").innerHTML = "";
+    $("qmsg").textContent = `Netije: ${qok} / ${Q.length}`;
+    $("qmsg").className = "msg ok";
+    return;
+  }
+  $("task").textContent = Q[qi][0];
+  $("opts").innerHTML = MENUS.map(m => `<button class="btn" data-m="${m}">${m}</button>`).join("");
+  $("opts").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const good = b.dataset.m === Q[qi][1];
+    if (good) qok++;
+    $("qmsg").textContent = good ? "Dogry." : `Ýalňyş. Bu buýruk ${Q[qi][1]} menýusynda.`;
+    $("qmsg").className = good ? "msg ok" : "msg bad";
+    qi++; q();
+  });
+  $("qsc").textContent = `${qi} / ${Q.length}`;
+}
+$("qr").onclick = () => { qi = 0; qok = 0; $("qmsg").textContent = ""; q(); };
+
+/* ---------------- saklamak ---------------- */
+const SV = {
+  save: "<b>Faýl → Сохранить как</b>: açylan penjiredäki <i>Имя файла</i> ýazgysynyň " +
+        "gapdalyndaky boş setire faýla at goýulýar, soňra <i>Сохранить</i> düwmesine basylýar.",
+  open: "<b>Faýl → Открыть</b>: papka saýlanýar, faýl tapawutlandyrylýar we <i>Открыть</i> " +
+        "düwmesine basylýar. Golaýda açylan faýllary <i>Недавние файлы</i> arkaly hem tapyp bolýar.",
+  print: "<b>Faýl → Печать</b> buýrugy şekili printerde çap edýär."
+};
+document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-s]").forEach(x => x.className = "btn");
+  b.className = "btn sel";
+  $("sx").innerHTML = SV[b.dataset.s];
+});
+
+calc(); q(); tags();
+window.addEventListener("resize", tags);
+</script>
+</body>
+</html>

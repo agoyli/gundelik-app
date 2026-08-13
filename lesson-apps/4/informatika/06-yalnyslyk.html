@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýalňyşlyklary gözlemek we düzetmek — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .prog { background: #f7fafd; border-radius: 13px; padding: 10px;
+          font-family: ui-monospace, Menlo, monospace; font-size: 13.5px; line-height: 1.9; }
+  .prog button { display: block; width: 100%; text-align: left; background: #fff;
+                 border-radius: 8px; padding: 7px 10px; margin-bottom: 5px; font-size: 13.5px;
+                 font-family: inherit; color: #1e2a3a; font-weight: 600; }
+  .prog button.now { background: #dbe7ff; }
+  .prog button.bad { background: #fbe3e3; color: #b02424; font-weight: 800; }
+  .prog button.fixed { background: #e0f5e6; color: #1d7a3d; font-weight: 800; }
+  .stage { background: #eef2f8; border-radius: 14px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 11px;
+               max-width: 100%; height: auto; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ýalňyşlyklary gözlemek we düzetmek</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Bu programma <b>kwadrat</b> çyzmalydy, ýöne şekil ýapylmaýar.
+      «Bir ädim» bilen ýöredip, ýalňyş buýrugy tap-da, oňa bas.</div>
+    <div class="stage" id="cv"></div>
+    <div class="prog" id="pg" style="margin-top:9px"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="step">👣 Bir ädim</button>
+      <button class="btn primary" id="run">▶️ Işlet</button>
+      <button class="btn ghost" id="rst">🔄 Başdan</button>
+      <button class="btn ghost" id="newp">🔀 Başga ýumuş</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barlagyň tertibi</h3>
+    <div class="prog">
+      <div>1. Garaşylýan netijäni anyk ýaz</div>
+      <div>2. Programmany ilkinji ädiminden ýöret</div>
+      <div>3. Her ädimden soň ýagdaýa seret</div>
+      <div>4. Netije ilkinji gezek üýtgän ýerini tap</div>
+      <div>5. Şol ädimi düzet</div>
+      <div>6. Programmany başdan işledip barla</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Ýalan pikir ýöretmeleri tap</h3>
+    <div class="goal">Kitapdaky 4-nji ýumuş. Her ýazga bas – ol çynmy ýa-da ýalan?</div>
+    <div id="pikir"></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const TASKS = [
+  {name: "Kwadrat", bad: 5, fix: "saga öwrül",
+   prog: ["öňe 60", "saga öwrül", "öňe 60", "saga öwrül", "öňe 60", "çepe öwrül", "öňe 60"],
+   why: "Kwadratda ähli öwrülmeler bir tarapa bolmaly. Bu ýerde biri çepe öwrülýär."},
+  {name: "Basgançak", bad: 4, fix: "öňe 40",
+   prog: ["öňe 40", "saga öwrül", "öňe 40", "çepe öwrül", "öňe 90", "saga öwrül", "öňe 40"],
+   why: "Basgançakda her ädim deň uzynlykda bolmaly – bu ýerde biri artykmaç uzyn."},
+];
+let t = 0, prog = [], ptr = 0, fixed = false, path = [], dir = 0, x = 0, y = 0;
+
+function load() {
+  prog = TASKS[t].prog.slice();
+  ptr = 0; fixed = false;
+  reset();
+}
+function reset() {
+  x = 70; y = 160; dir = -90; path = [[x, y]]; ptr = 0;
+  render(); drawPath();
+}
+function render(msg) {
+  const T = TASKS[t];
+  $("pg").innerHTML = prog.map((c, i) =>
+    `<button data-i="${i}" class="${i === ptr ? "now" : ""}${
+      fixed && i === T.bad ? " fixed" : ""}">${i + 1}. ${c}</button>`).join("");
+  $("pg").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (fixed) return say("Bu ýumuşdaky ýalňyşlyk eýýäm düzedildi.", false);
+    if (i === T.bad) {
+      prog[i] = T.fix; fixed = true;
+      say(`✅ Dogry tapdyň! ${T.why} Ol «${T.fix}» buýrugyna çalşyryldy – indi işlet.`, false);
+      reset();
+    } else {
+      b.classList.add("bad");
+      say("❌ Bu ädim dogry. Programmany ädimme-ädim ýöredip, gowy seret.", true);
+    }
+  });
+  if (msg !== undefined) { $("msg").textContent = msg.t; $("msg").className = "msg " + msg.c; }
+}
+function drawPath() {
+  const pts = path.map(p => `${p[0]},${p[1]}`).join(" ");
+  $("cv").innerHTML = `<svg viewBox="0 0 300 200" width="300"
+    xmlns="http://www.w3.org/2000/svg">
+    ${path.length > 1 ? `<polyline points="${pts}" fill="none" stroke="${fixed ? "#1d7a3d" : "#2456b0"}"
+      stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>` : ""}
+    <circle cx="${path[path.length - 1][0]}" cy="${path[path.length - 1][1]}" r="6"
+      fill="#e5007d"/>
+  </svg>`;
+}
+function stepOnce() {
+  if (ptr >= prog.length) {
+    render({t: fixed ? "🎉 Şekil dogry çyzyldy!" : "Programma gutardy – şekil ýapylmady.",
+            c: fixed ? "ok" : "bad"});
+    return false;
+  }
+  const c = prog[ptr];
+  const m = c.match(/^öňe (\d+)$/);
+  if (m) {
+    const L = +m[1];
+    x += L * Math.cos(dir * Math.PI / 180);
+    y += L * Math.sin(dir * Math.PI / 180);
+    path.push([Math.round(x), Math.round(y)]);
+  } else if (c === "saga öwrül") dir += 90;
+  else if (c === "çepe öwrül") dir -= 90;
+  ptr++;
+  drawPath();
+  render({t: `${ptr}-nji buýruk: ${c}`, c: ""});
+  return true;
+}
+$("step").onclick = () => { if (ptr === 0) reset(); stepOnce(); };
+$("run").onclick = () => {
+  reset();
+  const iv = setInterval(() => { if (!stepOnce()) clearInterval(iv); }, 320);
+};
+$("rst").onclick = () => { reset(); render({t: "", c: ""}); };
+$("newp").onclick = () => { t = (t + 1) % TASKS.length; load();
+  render({t: `Täze ýumuş: «${TASKS[t].name}» çyzylmaly.`, c: ""}); };
+function say(t2, bad) { $("msg").textContent = t2; $("msg").className = "msg " + (bad ? "bad" : "ok"); }
+
+/* ---------------- çyn / ýalan (kitap, sah. 48) ---------------- */
+const PIKIR = [
+  ["Monitoryň kömegi bilen sözleri çap edýärler.", false,
+   "Çap etmek printeriň işi, monitor bolsa diňe görkezýär."],
+  ["Printeriň kömegi bilen kagyza ýazgyny çykarýarlar.", true,
+   "Printer – çykaryjy gurluş, ol kagyza çap edýär."],
+  ["Kolonkalaryň kömegi bilen sesi ýazýarlar.", false,
+   "Sesi mikrofon ýazýar, kolonkalar bolsa sesi eşitdirýär."],
+  ["Syçanyň kömegi bilen piktogrammalaryň ornuny üýtgedýärler.", true,
+   "Syçan ekrandaky obýektleri saýlaýar we süýşürýär."],
+];
+let pd = 0, pr = 0;
+$("pikir").innerHTML = PIKIR.map((p, i) =>
+  `<div class="qa" style="background:#f7fafd;border-radius:13px;padding:11px;
+     margin-bottom:6px;font-size:15px;line-height:1.6">
+   <b>${i + 1}. ${p[0]}</b><div class="row tight" style="margin-top:6px">
+   <button class="btn" data-i="${i}" data-v="1">✅ Çyn</button>
+   <button class="btn" data-i="${i}" data-v="0">❌ Ýalan</button></div>
+   <div class="expl" id="pe${i}"></div></div>`).join("");
+$("pikir").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("pe" + i).textContent) return;
+  const good = (b.dataset.v === "1") === PIKIR[i][1];
+  b.classList.add("sel");
+  $("pe" + i).textContent = (good ? "✅ Dogry. " : "❌ Beýle däl. ") + PIKIR[i][2];
+  pd++; if (good) pr++;
+  $("psc").textContent = `${pr} / ${pd}` + (pd === PIKIR.length ? " – tamam 🎉" : "");
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Programma düzülenden soň näme etmeli?",
+   ["Ýerine ýetirip barlamaly", "Derrew saklamaly", "Ýapmaly"], 0],
+  ["Algoritmdäki hereketler ýalňyş bolsa näme etmeli?",
+   ["Üns bermeli däl", "Olary hökman düzetmeli", "Programmany öçürmeli"], 1],
+  ["Düzedişden soň näme edilýär?",
+   ["Iş ýapylýar", "Faýl pozulýar", "Programma başdan işledilýär"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+load();
+</script>
+</body>
+</html>

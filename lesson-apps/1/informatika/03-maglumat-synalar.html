@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maglumaty kabul etmek — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 24px; }
+  .organs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 9px; }
+  .organ { background: #f7fafd; border-radius: 16px; padding: 12px 6px; text-align: center;
+           font-size: 15px; font-weight: 700; min-height: 88px; }
+  .organ .em { display: block; font-size: 32px; margin-bottom: 3px; }
+  .organ.on { background: #dbe7ff; }
+  .organ.done { background: #e0f5e6; }
+  .card-q { background: #f2edfd; border-radius: 16px; padding: 16px; text-align: center;
+            font-size: 18px; font-weight: 700; line-height: 1.5; }
+  .card-q .em { display: block; font-size: 44px; margin-bottom: 6px; }
+  .srcs { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .srcs button { min-height: 66px; font-size: 15px; }
+  .srcs .em { display: block; font-size: 26px; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maglumaty nädip kabul edýäris?</h1>
+  <div class="sub">Informatika · 1-nji synp</div>
+
+  <div class="card">
+    <h3>Haýsy syna bilen?</h3>
+    <div class="goal">Suratdaky zady haýsy syna bilen bilýäris? Dogry synanyň üstüne bas.</div>
+    <div class="card-q" id="qq"></div>
+    <div class="organs" id="og" style="margin-top:10px"></div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="sc"></div>
+    <button class="btn ghost" id="next" style="margin-top:8px">Indiki</button>
+  </div>
+
+  <div class="card">
+    <h3>Maglumat çeşmesimi?</h3>
+    <div class="goal">Bize habar berýän zatlara «Hawa», bermeýänlere «Ýok» diý.</div>
+    <div class="srcs" id="src"></div>
+    <div class="msg" id="smsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 1-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* kitapdaky bäş duýgy synasy (sah. 30) */
+const ORGANS = [
+  ["goz", "👁", "Görüş"], ["gulak", "👂", "Eşidiş"], ["burun", "👃", "Ys alyş"],
+  ["dil", "👅", "Tagam biliş"], ["deri", "✋", "Duýuş"],
+];
+const ITEMS = [
+  ["🚦", "Ýoluň gyzyl çyrasy", "goz", "Çyranyň reňkini göz bilen görýäris."],
+  ["🔔", "Mekdep jaňy", "gulak", "Jaňyň sesini gulak bilen eşidýäris."],
+  ["🌸", "Gülüň ysy", "burun", "Ysy burun bilen alýarys."],
+  ["🍋", "Limonyň turşulygy", "dil", "Tagamy dil bilen bilýäris."],
+  ["🧊", "Buzuň sowuklygy", "deri", "Sowuklygy deri bilen duýýarys."],
+  ["📖", "Kitapdaky ýazgy", "goz", "Ýazgyny göz bilen okaýarys."],
+  ["🎵", "Aýdymyň sazy", "gulak", "Sazy gulak bilen diňleýäris."],
+  ["🍞", "Çöregiň ysy", "burun", "Ysy burun kabul edýär."],
+];
+let idx = 0, done = 0, right = 0, answered = false;
+
+function show() {
+  const it = ITEMS[idx % ITEMS.length];
+  $("qq").innerHTML = `<span class="em">${it[0]}</span>${it[1]}`;
+  answered = false;
+  $("msg").textContent = ""; $("msg").className = "msg";
+  $("og").innerHTML = ORGANS.map(o =>
+    `<button class="organ" data-k="${o[0]}"><span class="em">${o[1]}</span>${o[2]}</button>`
+  ).join("");
+  $("og").querySelectorAll("button").forEach(b => b.onclick = () => {
+    if (answered) return;
+    answered = true;
+    const good = b.dataset.k === it[2];
+    b.classList.add(good ? "done" : "on");
+    done++; if (good) right++;
+    $("msg").textContent = (good ? "✅ Dogry! " : "❌ Beýle däl. ") + it[3];
+    $("msg").className = good ? "msg ok" : "msg bad";
+    $("sc").textContent = `${right} / ${done}`;
+  });
+}
+$("next").onclick = () => { idx++; show(); };
+
+/* ---------------- çeşmeler ---------------- */
+/* kitapdaky maglumat çeşmeleri (sah. 27-28) */
+const SRC = [
+  ["🌦", "Howa", true], ["🖼", "Surat", true], ["📰", "Žurnallar we gazetler", true],
+  ["📻", "Radio", true], ["📺", "Teleýaýlym", true], ["💻", "Kompýuter", true],
+  ["🏫", "Sapak", true], ["⚽", "Oýun", true], ["☎️", "Telefon arkaly", true],
+];
+$("src").innerHTML = SRC.map((s, i) =>
+  `<button class="btn" data-i="${i}"><span class="em">${s[0]}</span>${s[1]}</button>`).join("");
+$("src").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const s = SRC[+b.dataset.i];
+  b.classList.add("sel");
+  $("smsg").innerHTML = `✅ <b>${s[1]}</b> – maglumat çeşmesi. Maglumaty berýän obýekte ` +
+    `<b>maglumat çeşmesi</b>, alýan obýekte bolsa <b>maglumaty kabul edijisi</b> diýilýär.`;
+  $("smsg").className = "msg ok";
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Suraty haýsy duýgy synasy arkaly kabul edýäris?", ["Eşidiş", "Görüş", "Tagam biliş"], 1],
+  ["Sesi haýsy syna kabul edýär?", ["Gulak", "Burun", "Deri"], 0],
+  ["Maglumaty berýän obýekte näme diýilýär?", ["Maglumaty kabul edijisi", "Maglumat çeşmesi", "Model"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("qsc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+show();
+</script>
+</body>
+</html>

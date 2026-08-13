@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sifrli gurluşlar — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .dev { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .dev div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px; cursor: pointer; }
+  .dev div.on { background: #e3edfd; }
+  .dev b { display: block; color: #2456b0; margin-bottom: 3px; }
+  .dev small { display: block; font-size: 12.5px; color: #93a2b5; line-height: 1.45; }
+  .dev div.on small { color: #5b6b80; }
+  .cvs { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .cvs figure { text-align: center; }
+  .cvs canvas { border-radius: 10px; border: 2px solid #d6e0ee; background: #fff;
+                image-rendering: pixelated; }
+  .cvs figcaption { font-size: 12.5px; color: #93a2b5; font-weight: 700; margin-top: 5px; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sifrli gurluşlar</h1>
+  <div class="sub">Maglumatlary sifr görnüşde almak we işlemek · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Gurluşa bas – onuň wezipesi, faýl formaty we kompýutere birikdirilişi
+      ýazylar.</div>
+    <div class="dev" id="dev"></div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy gurluş gerek?</h3>
+    <div class="row" style="margin-bottom:8px"><span class="badge purple" id="task"></span></div>
+    <div class="row tight" id="opts"></div>
+    <div class="msg" id="qx"></div>
+    <div class="row" style="margin-top:6px"><span class="score" id="sc"></span>
+      <button class="btn ghost" id="again">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Skaner: analog şekilden sifr şekile</h3>
+    <div class="goal">Skaner şekiliň üstünden ýagtylyk geçirip, ony piksellere bölýär. Çözüji
+      ukyp näçe uly bolsa, sifr nusga şonça takyk bolýar.</div>
+    <div class="stage"><div class="cvs">
+      <figure><canvas id="src" width="160" height="120"></canvas>
+        <figcaption>kagyzdaky şekil</figcaption></figure>
+      <figure><canvas id="out" width="160" height="120"></canvas>
+        <figcaption>sifr nusga</figcaption></figure>
+    </div></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Çözüji ukyp</span>
+      <input type="range" id="dpi" min="1" max="8" value="3"><span class="out" id="dpio">75</span></div>
+    <div class="row"><span class="badge info" id="px"></span><span class="badge purple" id="sz"></span></div>
+    <div class="note" id="sx"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Maglumatlary sifr görnüşde berýän we kompýuterde işläp bolýan gurluşlara
+      <b>sifr gurluşlary</b> diýilýär. Skanerde ýagtylyk şekiliň üstünden geçip, duýgur
+      elementlere düşýär. Elektrik signaly görnüşinde alnan <b>analog</b> maglumat
+      <b>sifr</b> maglumata özgerdilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const DEV = [
+  ["Sifr fotoapparat", "Suraty sifr görnüşde alýar. Faýllar JPG ýa-da TIF formatda saklanýar. " +
+    "Kompýutere USB port arkaly birikdirilýär."],
+  ["Sifr wideokamera", "Wideoşekilleri we sesleri sifr görnüşde ýazýar. Faýllar AVI, MPEG we " +
+    "WMV formatlarda ýatda saklanýar."],
+  ["Web kamera", "Şekilleri kompýuter tory boýunça geçirmäge hyzmat edýär. Onuň öz ýady ýok – " +
+    "şekil göni kompýutere gidýär."],
+  ["Dokument-kamera", "Kagyz dokumentleriň, rentgen suratlaryň, hatda üçölçegli obýektleriň " +
+    "şekillerini almaga niýetlenendir."],
+  ["Skaner", "Şekiliň sifr nusgasyny döredip, ony kompýuteriň ýadyna geçirýär. El we stolda " +
+    "goýulýan görnüşleri bar."],
+  ["Sensor ekran", "Ekrana galtaşmak bilen kompýuteri dolandyrmaga mümkinçilik berýär. " +
+    "Bankomatlarda we töleg terminallarynda ulanylýar."],
+  ["Elektron kitap", "Dokumentleri PDF, DJVU, DOC, HTML we JPEG formatlarda saklaýar."]
+];
+$("dev").innerHTML = DEV.map(([n], i) =>
+  `<div data-i="${i}"><b>${n}</b><small>? basyp gör</small></div>`).join("");
+$("dev").querySelectorAll("div").forEach(d => d.onclick = () => {
+  const [n, t] = DEV[+d.dataset.i];
+  d.className = "on";
+  d.innerHTML = `<b>${n}</b><small>${t}</small>`;
+});
+
+/* ---------------- haýsy gurluş ---------------- */
+const Q = [
+  ["Okuw kitabyndaky sahypany kompýutere geçirmeli.", "Skaner"],
+  ["Mekdebiň howlusyndaky obýekti surata düşürmeli.", "Sifr fotoapparat"],
+  ["Uzakdaky synpdaşyň bilen wideokonferensiýa geçirmeli.", "Web kamera"],
+  ["Sapakda kagyzdaky çyzgyny tutuş synpa proýektorda görkezmeli.", "Dokument-kamera"],
+  ["Mekdep çäresini wideo ýazgy etmeli.", "Sifr wideokamera"],
+  ["Bankomatda amaly ekrana galtaşmak bilen ýerine ýetirmeli.", "Sensor ekran"]
+];
+let qi = 0, right = 0, tries = 0;
+function ask() {
+  if (qi >= Q.length) {
+    $("task").textContent = "Ähli soraglar tamamlandy";
+    $("opts").innerHTML = "";
+    $("qx").textContent = `Netije: ${right} / ${Q.length} sorag birinji synanyşykda dogry.`;
+    $("qx").className = "msg ok";
+    return;
+  }
+  $("task").textContent = Q[qi][0];
+  const opts = DEV.map(d => d[0]).sort(() => Math.random() - 0.5).slice(0, 3);
+  if (!opts.includes(Q[qi][1])) opts[0] = Q[qi][1];
+  opts.sort(() => Math.random() - 0.5);
+  $("opts").innerHTML = opts.map(o => `<button class="btn" data-o="${o}">${o}</button>`).join("");
+  $("opts").querySelectorAll("button").forEach(b => b.onclick = () => {
+    if (b.dataset.o === Q[qi][1]) {
+      if (tries === 0) right++;
+      $("qx").textContent = "Dogry."; $("qx").className = "msg ok";
+      qi++; tries = 0; setTimeout(ask, 650);
+    } else {
+      tries++;
+      $("qx").textContent = "Bu gurluş bu iş üçin amatly däl. Ýene bir gezek pikirlen.";
+      $("qx").className = "msg bad";
+    }
+    $("sc").textContent = `${qi} / ${Q.length}`;
+  });
+  $("sc").textContent = `${qi} / ${Q.length}`;
+}
+$("again").onclick = () => { qi = 0; right = 0; tries = 0; $("qx").textContent = ""; ask(); };
+
+/* ---------------- skaner ---------------- */
+const s = $("src").getContext("2d", { willReadFrequently: true });
+const o = $("out").getContext("2d");
+(function scene() {
+  s.fillStyle = "#fff"; s.fillRect(0, 0, 160, 120);
+  s.fillStyle = "#1e2a3a"; s.font = "bold 30px Georgia";
+  s.fillText("Aa", 12, 44);
+  s.strokeStyle = "#2456b0"; s.lineWidth = 3;
+  s.beginPath(); s.arc(120, 34, 20, 0, Math.PI * 2); s.stroke();
+  s.fillStyle = "#e5007d";
+  s.beginPath(); s.moveTo(20, 108); s.lineTo(60, 62); s.lineTo(100, 108); s.closePath(); s.fill();
+  s.strokeStyle = "#93a2b5"; s.lineWidth = 2;
+  s.beginPath(); s.moveTo(108, 74); s.lineTo(150, 74); s.moveTo(108, 90); s.lineTo(150, 90);
+  s.moveTo(108, 106); s.lineTo(150, 106); s.stroke();
+})();
+
+function scan() {
+  // süýşürgiç saga süýşdügiçe çözüji ukyp ýokarlanýar, ýagny bir piksel kiçelýär
+  const v = +$("dpi").value;
+  const step = 9 - v;
+  $("dpio").textContent = [0, 25, 35, 50, 75, 100, 150, 300, 600][v] + " dpi";
+  const img = s.getImageData(0, 0, 160, 120);
+  o.clearRect(0, 0, 160, 120);
+  for (let y = 0; y < 120; y += step) {
+    for (let x = 0; x < 160; x += step) {
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let dy = 0; dy < step && y + dy < 120; dy++)
+        for (let dx = 0; dx < step && x + dx < 160; dx++) {
+          const i = ((y + dy) * 160 + (x + dx)) * 4;
+          r += img.data[i]; g += img.data[i + 1]; b += img.data[i + 2]; n++;
+        }
+      o.fillStyle = `rgb(${r / n | 0},${g / n | 0},${b / n | 0})`;
+      o.fillRect(x, y, step, step);
+    }
+  }
+  const w = Math.ceil(160 / step), h = Math.ceil(120 / step);
+  const px = w * h;
+  const bytes = px * 3;
+  $("px").textContent = `${w} × ${h} = ${px.toLocaleString("ru-RU")} piksel`;
+  $("sz").textContent = `möçberi ≈ ${(bytes / 1024).toFixed(1).replace(".", ",")} Kbaýt`;
+  $("sx").innerHTML = step <= 2
+    ? "Çözüji ukyp ýokary: sifr nusga kagyzdakysyna örän ýakyn, ýöne faýl uly bolýar."
+    : step <= 4
+    ? "Orta çözüji ukyp: şekil düşnükli, faýlyň möçberi hem amatly."
+    : "Pes çözüji ukyp: pikseller görnüp başlady, harplary saýgarmak kynlaşdy.";
+}
+$("dpi").addEventListener("input", scan);
+
+ask(); scan();
+</script>
+</body>
+</html>

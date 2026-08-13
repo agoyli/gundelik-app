@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ululyklaryň görnüşleri — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .box { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .var { background: #f7fafd; border: 2px solid #d6e0ee; border-radius: 12px; padding: 10px 14px;
+         min-width: 108px; text-align: center; }
+  .var b { display: block; font-size: 13px; color: #93a2b5; }
+  .var span { display: block; font-size: 26px; font-weight: 800; color: #2456b0;
+              font-variant-numeric: tabular-nums; }
+  .var.hit { border-color: #1d7a3d; background: #e0f5e6; }
+  .var.hit span { color: #1d7a3d; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 2; }
+  .code div.l { border-radius: 7px; padding: 2px 7px; }
+  .code div.l.now { background: #e3edfd; font-weight: 800; color: #2456b0; }
+  .code div.l.past { color: #93a2b5; }
+  table.tr { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  table.tr th, table.tr td { padding: 6px 10px; text-align: center; }
+  table.tr thead th { background: #eef2f8; color: #5b6b80; }
+  table.tr tr:last-child td { font-weight: 800; color: #2456b0; }
+  .kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .kinds div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px; }
+  .kinds b { display: block; color: #2456b0; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ululyklaryň görnüşleri</h1>
+  <div class="sub">Üýtgeýänler, hemişelikler we adyna geçirme · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Ululygyň <b>ady</b>, <b>bahasy</b> we <b>görnüşi</b> bolýar. Aşakdaky dört
+      görnüş algoritmde iň köp ulanylýar.</div>
+    <div class="kinds">
+      <div><b>bit – bitin</b>Bölünmeýän tutuş san: 7, 0, −12, 1024.</div>
+      <div><b>hak – hakyky</b>Onluk drobly san: 3,14; 0,5; −2,75.</div>
+      <div><b>simwol</b>Bir belgi: «a», «7», «+», boşluk.</div>
+      <div><b>logiki</b>Diňe iki baha: çyn (1) ýa-da ýalan (0).</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Adyna geçirme buýrugy</h3>
+    <div class="goal">Ilki <b>aňlatmanyň bahasy hasaplanýar</b>, soň alnan baha üýtgeýäniň adyna
+      geçirilýär. Kitabyň mysaly: B = 4 bolanda B := 5 * B − 7.</div>
+    <div class="box" id="box"></div>
+    <div class="code" id="code" style="margin-top:10px"></div>
+    <div class="row">
+      <button class="btn primary" id="step">Bir ädim</button>
+      <button class="btn" id="all">Ahyryna çenli</button>
+      <button class="btn ghost" id="rst">Başdan</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="row tight" style="margin-top:6px">
+      <button class="btn sel" data-p="kitap">Kitapdaky mysal</button>
+      <button class="btn" data-p="jem">Jem hasaplamak</button>
+      <button class="btn" data-p="calys">Bahalary çalyşmak</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Bahalaryň tablisasy</h3>
+    <div class="goal">7-nji tablisadaky ýumuş: alnan san bilen amallary yzygiderli ýerine ýetir.</div>
+    <div class="slider"><span class="lbl">Alnan san</span>
+      <input type="range" id="n" min="1" max="20" value="6"><span class="out" id="no">6</span></div>
+    <div style="overflow-x:auto"><table class="tr" id="tab"></table></div>
+  </div>
+
+  <div class="card">
+    <h3>Ululygyň görnüşini tap</h3>
+    <div class="code" id="qv" style="text-align:center;font-size:17px"></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn" data-t="bit">bitin</button>
+      <button class="btn" data-t="hak">hakyky</button>
+      <button class="btn" data-t="simwol">simwol</button>
+      <button class="btn" data-t="logiki">logiki</button>
+    </div>
+    <div class="msg" id="qmsg"></div>
+    <div class="row"><span class="score" id="qsc"></span>
+      <button class="btn ghost" id="qr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Algoritm ýerine ýetirilende <b>hemişelik</b> ululyklaryň bahalary üýtgemeýär, bahasy
+      üýtgeýänlere bolsa <b>üýtgeýän ululyklar</b> diýilýär. Adyna geçirme buýrugy
+      <b>&lt;üýtgeýäniň ady&gt; := &lt;aňlatma&gt;</b> görnüşinde ýazylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- adyna geçirme ---------------- */
+const PROG = {
+  kitap: {vars: {B: 4}, lines: [
+    ["B := 4", v => ({B: 4}), "B üýtgeýäne 4 bahasy berildi."],
+    ["B := 5 * B - 7", v => ({B: 5 * v.B - 7}), "Ilki 5 · 4 − 7 = 13 hasaplanýar, soň 13 baha B-ä geçirilýär."]
+  ]},
+  jem: {vars: {a: 0, b: 0, S: 0}, lines: [
+    ["a := 12", v => ({a: 12}), "a üýtgeýäne 12 geçirildi."],
+    ["b := 9", v => ({b: 9}), "b üýtgeýäne 9 geçirildi."],
+    ["S := a + b", v => ({S: v.a + v.b}), "12 + 9 = 21, netije S-e geçirildi."],
+    ["S := S * 2", v => ({S: v.S * 2}), "S-iň öňki bahasy ulanylýar: 21 · 2 = 42."]
+  ]},
+  calys: {vars: {A: 5, B: 8, C: 0}, lines: [
+    ["C := A", v => ({C: v.A}), "A-nyň bahasy C-ä ätiýaçlyk üçin geçirildi."],
+    ["A := B", v => ({A: v.B}), "B-niň bahasy A-a geçirildi, A-nyň öňki bahasy C-de saklanýar."],
+    ["B := C", v => ({B: v.C}), "C-däki baha B-ä geçirildi. Bahalar çalyşdy: A = 8, B = 5."]
+  ]}
+};
+let pk = "kitap", pc = 0, vars = {};
+function draw() {
+  const P = PROG[pk];
+  $("box").innerHTML = Object.entries(vars).map(([k, v]) => {
+    const hit = pc > 0 && P.lines[pc - 1][0].startsWith(k + " :=");
+    return `<div class="var${hit ? " hit" : ""}"><b>${k}</b><span>${v}</span></div>`;
+  }).join("");
+  $("code").innerHTML = P.lines.map(([t], i) =>
+    `<div class="l ${i === pc ? "now" : i < pc ? "past" : ""}">${i + 1}. ${t}</div>`).join("");
+  if (pc > 0) {
+    $("msg").textContent = P.lines[pc - 1][2];
+    $("msg").className = pc === P.lines.length ? "msg ok" : "msg";
+  } else { $("msg").textContent = ""; $("msg").className = "msg"; }
+  $("step").disabled = pc >= P.lines.length;
+}
+function reset() {
+  pc = 0; vars = {...PROG[pk].vars}; draw();
+  document.querySelectorAll("[data-p]").forEach(b =>
+    b.className = "btn" + (b.dataset.p === pk ? " sel" : ""));
+}
+function step() {
+  const P = PROG[pk];
+  if (pc >= P.lines.length) return;
+  Object.assign(vars, P.lines[pc][1](vars));
+  pc++; draw();
+}
+$("step").onclick = step;
+$("all").onclick = () => { while (pc < PROG[pk].lines.length) step(); };
+$("rst").onclick = reset;
+document.querySelectorAll("[data-p]").forEach(b =>
+  b.onclick = () => { pk = b.dataset.p; reset(); });
+
+/* ---------------- 7-nji tablisa ---------------- */
+const OPS = [
+  ["Alnan san", n => n],
+  ["Ony 13-e köpeltmeli", n => n * 13],
+  ["Köpeltmek hasylyna 19-y goşmaly", n => n + 19],
+  ["Jemden 15-i aýyrmaly", n => n - 15],
+  ["Tapawudy 7-ä köpeltmeli", n => n * 7]
+];
+function tab() {
+  const n = +$("n").value;
+  $("no").textContent = n;
+  let v = n;
+  const rows = OPS.map(([t, f], i) => {
+    v = i === 0 ? n : f(v);
+    return `<tr><td style="text-align:left">${t}</td><td>${v}</td></tr>`;
+  });
+  $("tab").innerHTML =
+    "<thead><tr><th style='text-align:left'>Algoritm</th><th>Üýtgeýäniň bahasy</th></tr></thead><tbody>" +
+    rows.join("") + "</tbody>";
+}
+$("n").addEventListener("input", tab);
+
+/* ---------------- görnüşi tap ---------------- */
+const QV = [
+  ["Okuwçylaryň sany: 27", "bit"], ["Töweregiň radiusy: 4,5 sm", "hak"],
+  ["Bahalandyrma belgisi: «B»", "simwol"], ["Ýagyş ýagýarmy? – hawa", "logiki"],
+  ["Kitabyň sahypalarynyň sany: 144", "bit"], ["Howanyň temperaturasy: −3,2°", "hak"],
+  ["Jogap dogrymy? – ýok", "logiki"], ["Girizilen belgi: «+»", "simwol"]
+];
+let qi = 0, qok = 0, ord = [];
+function qv() {
+  if (!ord.length) ord = QV.map((_, i) => i).sort(() => Math.random() - 0.5);
+  if (qi >= ord.length) {
+    $("qv").textContent = "✓";
+    $("qmsg").textContent = `Netije: ${qok} / ${ord.length}`;
+    $("qmsg").className = "msg ok";
+    return;
+  }
+  $("qv").textContent = QV[ord[qi]][0];
+  $("qsc").textContent = `${qi} / ${ord.length}`;
+}
+document.querySelectorAll("[data-t]").forEach(b => b.onclick = () => {
+  if (qi >= ord.length) return;
+  const good = b.dataset.t === QV[ord[qi]][1];
+  if (good) qok++;
+  $("qmsg").textContent = good ? "Dogry." : `Ýalňyş. Bu – ${QV[ord[qi]][1]} görnüşli ululyk.`;
+  $("qmsg").className = good ? "msg ok" : "msg bad";
+  qi++; qv();
+});
+$("qr").onclick = () => { qi = 0; qok = 0; ord = []; $("qmsg").textContent = ""; qv(); };
+
+reset(); tab(); qv();
+</script>
+</body>
+</html>

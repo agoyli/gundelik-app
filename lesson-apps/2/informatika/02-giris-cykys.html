@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giriziji we çykaryjy gurluşlar — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 23px; }
+  .flow { background: #eef2f8; border-radius: 16px; padding: 10px; }
+  .flow svg { display: block; margin: 0 auto; background: #fff; border-radius: 12px;
+              max-width: 100%; height: auto; }
+  .pool { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  .pool button { min-height: 72px; font-size: 14px; font-weight: 700; }
+  .pool .em { display: block; font-size: 25px; margin-bottom: 2px; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+  .bin { background: #f7fafd; border-radius: 14px; padding: 10px; min-height: 96px; }
+  .bin h4 { margin: 0 0 6px; font-size: 14px; }
+  .bin span { display: block; background: #fff; border-radius: 10px; padding: 6px 9px;
+              font-size: 13.5px; margin-bottom: 5px; }
+  .kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 8px; }
+  .kind { background: #f7fafd; border-radius: 14px; padding: 10px; font-size: 13.5px;
+          line-height: 1.5; text-align: center; }
+  .kind b { display: block; font-size: 15px; color: #2456b0; margin-bottom: 2px; }
+  .kind .em { font-size: 24px; display: block; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 15.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Giriziji we çykaryjy gurluşlar</h1>
+  <div class="sub">Informatika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Maglumat kompýutere <b>giriziji</b> gurluşlar arkaly girýär, netije
+      bolsa <b>çykaryjy</b> gurluşlar arkaly gaýdyp gelýär.</div>
+    <div class="flow" id="fl"></div>
+    <div class="msg" id="fmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Enjamy dogry topara goý</h3>
+    <div class="pool" id="pool"></div>
+    <div class="bins">
+      <div class="bin"><h4 style="color:#2456b0">➡️ Giriziji</h4><div id="bin"></div></div>
+      <div class="bin"><h4 style="color:#e5007d">⬅️ Çykaryjy</h4><div id="bout"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Maglumatyň görnüşleri</h3>
+    <div class="kinds">
+      <div class="kind"><span class="em">📝</span><b>Ýazgy</b>Harplar we sözler</div>
+      <div class="kind"><span class="em">🔢</span><b>San</b>Sanlar we hasaplar</div>
+      <div class="kind"><span class="em">🖼</span><b>Surat</b>Şekiller we suratlar</div>
+      <div class="kind"><span class="em">🔊</span><b>Ses</b>Aýdym we gürrüň</div>
+      <div class="kind"><span class="em">🎬</span><b>Wideo</b>Hereketli şekil</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Maglumatyň dört esasy görnüşi</h3>
+    <div class="goal">Mysala bas – ol haýsy görnüşe degişlidigini aýt.</div>
+    <div class="pool" id="mp"></div>
+    <div class="msg" id="mmsg"></div>
+    <div class="score" id="msc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 2-nji synp · I–II bölüm, sah. 12–28</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- akym suraty ---------------- */
+let anim = 0;
+function flow() {
+  const dx = [0, 1, 2][anim % 3];
+  $("fl").innerHTML = `<svg viewBox="0 0 320 150" width="320"
+    xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif"
+    font-size="12" font-weight="700" text-anchor="middle">
+    <rect x="12" y="46" width="76" height="58" rx="12" fill="#dbe7ff" stroke="#2456b0"
+      stroke-width="3"/>
+    <text x="50" y="72" font-size="24">⌨️</text><text x="50" y="94" fill="#2456b0">Giriziji</text>
+    <rect x="122" y="34" width="76" height="82" rx="12" fill="#f0f4f9" stroke="#5b6b80"
+      stroke-width="3"/>
+    <text x="160" y="70" font-size="24">💻</text>
+    <text x="160" y="94" fill="#5b6b80">Kompýuter</text>
+    <rect x="232" y="46" width="76" height="58" rx="12" fill="#ffe3f1" stroke="#e5007d"
+      stroke-width="3"/>
+    <text x="270" y="72" font-size="24">🖨</text><text x="270" y="94" fill="#e5007d">Çykaryjy</text>
+    <polygon points="${100 + dx * 4},75 ${112 + dx * 4},68 ${112 + dx * 4},82" fill="#2456b0"/>
+    <polygon points="${222 + dx * 4},75 ${210 + dx * 4},68 ${210 + dx * 4},82" fill="#e5007d"/>
+    <text x="106" y="126" fill="#2456b0">maglumat</text>
+    <text x="216" y="126" fill="#e5007d">netije</text>
+  </svg>`;
+}
+$("fl").onclick = () => { anim++; flow(); $("fmsg").textContent =
+  "Klawiaturada ýazylan harp kompýutere girýär, soňra monitorda görünýär.";
+  $("fmsg").className = "msg ok"; };
+
+/* ---------------- toparlamak ---------------- */
+/* kitapdaky tablisa: 4 giriziji + 4 çykaryjy (sah. 13) */
+const DEV = [
+  ["⌨️", "Klawiatura", true], ["🖱", "Syçan", true],
+  ["🎤", "Mikrofon", true], ["📷", "Skaner", true],
+  ["🖥", "Monitor", false], ["🖨", "Printer", false],
+  ["🔊", "Kolonkalar", false], ["🎧", "Gulaklyklar", false],
+];
+let left = [];
+function bins() {
+  left = DEV.map((_, i) => i);
+  $("bin").innerHTML = ""; $("bout").innerHTML = "";
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  pool();
+}
+function pool() {
+  $("pool").innerHTML = left.map(i =>
+    `<button class="btn" data-i="${i}"><span class="em">${DEV[i][0]}</span>${DEV[i][1]}</button>`
+  ).join("") || "<span class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [em, name, isIn] = DEV[i];
+    $(isIn ? "bin" : "bout").innerHTML += `<span>${em} ${name}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").textContent = isIn
+      ? `✅ ${name} kompýutere maglumat berýär – giriziji gurluş.`
+      : `✅ ${name} kompýuterden netije berýär – çykaryjy gurluş.`;
+    $("bmsg").className = "msg ok";
+    pool();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- maglumatyň görnüşleri (sah. 16-17) ---------------- */
+const KINDS = ["ýazgy we san", "grafika", "saz", "nyşanlar"];
+const MITEMS = [
+  ["📖 Kitapdaky ýazgy", 0], ["🔢 2 + 2 mysaly", 0],
+  ["🗺 Türkmenistanyň kartasy", 1], ["🖼 Surat", 1],
+  ["🎵 Aýdym-saz", 2],
+  ["✋ El hereketi", 3], ["😊 Ýüz-göz hereketi", 3], ["🔔 Jaňyň sesi", 3],
+];
+let mdone = 0;
+$("mp").innerHTML = MITEMS.map((m, i) =>
+  `<button class="btn" data-i="${i}">${m[0]}</button>`).join("");
+$("mp").querySelectorAll("button").forEach(b => b.onclick = () => {
+  if (b.classList.contains("sel")) return;
+  const [name, k] = MITEMS[+b.dataset.i];
+  b.classList.add("sel");
+  mdone++;
+  $("mmsg").innerHTML = `<b>${name}</b> – bu <b>${KINDS[k]}</b> maglumaty.`;
+  $("mmsg").className = "msg ok";
+  $("msc").textContent = `${mdone} / ${MITEMS.length}`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Haýsysy giriziji gurluş?", ["Klawiatura", "Monitor", "Printer"], 0],
+  ["Haýsysy çykaryjy gurluş?", ["Syçan", "Printer", "Mikrofon"], 1],
+  ["Aýdym-saz maglumatyň haýsy görnüşine degişli?", ["Ýazgy", "Grafika", "Saz"], 2],
+  ["Skaner haýsy gurluşlara degişli?", ["Giriziji", "Çykaryjy", "Saklaýjy"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+flow(); bins();
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uzynlyk: garyş, ädim — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .strip { background: #f7fafd; border-radius: 12px; padding: 10px; }
+  .obj { background: #c9dbf5; border-radius: 7px; height: 22px; }
+  .marks { display: flex; gap: 3px; margin-top: 7px; flex-wrap: wrap; }
+  .marks span { background: #4a7fd4; color: #fff; border-radius: 6px; font-size: 12px; padding: 3px 0; text-align: center; }
+  .who { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .who button { min-height: 54px; font-size: 14.5px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Uzynlyk: garyş, ädim</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def"><b>Garyş</b> – açylan eliň başam barmagy bilen külembikäniň arasy.
+      <b>Ädim</b> – bir gezek ätlenilende geçilen aralyk. Olar her adamda dürli-dürli bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Partany ölç</h3>
+    <div class="goal">Kimiň garşy bilen ölçemeli?</div>
+    <div class="who">
+      <button class="btn" data-w="0">👦 Okuwçynyň garşy (kiçi)</button>
+      <button class="btn" data-w="1">🧑‍🏫 Mugallymyň garşy (uly)</button>
+    </div>
+    <div class="strip" style="margin-top:9px">
+      <div class="obj"></div>
+      <div class="marks" id="marks"></div>
+    </div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Otagy ädimläp geç</h3>
+    <div class="goal">Her basyşda bir ädim ädilýär.</div>
+    <div class="strip"><div class="obj" id="path" style="width:100%"></div>
+      <div class="marks" id="steps"></div></div>
+    <div class="row">
+      <button class="btn primary" id="step">Bir ädim</button>
+      <button class="btn ghost" id="sr">Başdan</button>
+    </div>
+    <div class="msg" id="smsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, II kitap · 42–43-nji sahypalar</div>
+</div>
+
+<script>
+var W = [["Okuwçynyň garşy", 6, 42], ["Mugallymyň garşy", 4, 64]];
+var wb = document.getElementsByClassName("who")[0].getElementsByTagName("button");
+for (var i = 0; i < wb.length; i++) {
+  wb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-w"), 10), w = W[k], h = "";
+    for (var j = 0; j < w[1]; j++) h += '<span style="width:' + w[2] + 'px">' + (j + 1) + "</span>";
+    document.getElementById("marks").innerHTML = h;
+    var m = document.getElementById("mmsg");
+    m.className = "msg ok";
+    m.textContent = w[0] + " bilen ölçelende parta " + w[1] + " garyş boldy. " +
+      "Garyş uly bolsa – sany az, kiçi bolsa – sany köp çykýar.";
+  };
+}
+
+var st = 0;
+function showSt() {
+  var h = "";
+  for (var j = 0; j < st; j++) h += '<span style="width:34px">' + (j + 1) + "</span>";
+  document.getElementById("steps").innerHTML = h;
+  var m = document.getElementById("smsg");
+  m.className = "msg" + (st >= 8 ? " ok" : "");
+  m.textContent = st === 0 ? "Ädim ätmäge başla." :
+    (st >= 8 ? "Otagyň ini " + st + " ädim boldy. Ölçemek gutardy." : "Häzir " + st + " ädim ädildi.");
+}
+document.getElementById("step").onclick = function () { if (st < 8) st++; showSt(); };
+document.getElementById("sr").onclick = function () { st = 0; showSt(); };
+showSt();
+
+var Q = [
+  ["Bir gezek ätlenende geçilen aralyga näme diýilýär?", ["Ädim", "Garyş", "Santimetr"], 0],
+  ["Näme üçin garyş takyk ölçeg däl?", ["Her adamda dürli bolýar", "Ölçäp bolmaýar", "Ol san däl"], 0],
+  ["Otagyň uzynlygyny nämeden peýdalanyp ölçemek amatly?", ["Ädim", "Garyş", "Litr"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

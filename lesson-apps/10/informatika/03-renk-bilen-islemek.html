@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reňk bilen işlemek — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 14px; display: flex;
+           justify-content: center; }
+  .pal { display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; }
+  .pal i { display: block; padding-top: 100%; border-radius: 3px; cursor: pointer; }
+  .pal i.on { outline: 2px solid #1e2a3a; outline-offset: 1px; }
+  .hex { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; }
+  .targets { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .sw { width: 26px; height: 26px; border-radius: 7px; border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #cfdcee; display: inline-block; vertical-align: middle;
+        margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Reňk bilen işlemek</h1>
+  <div class="sub">Sudur çyzygy, boýag we gradiýent · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Forma <b>sudurdan</b> we <b>boýagdan</b> durýar. Haýsysyny reňklejegiňi saýla,
+      soňra reňki üýtget.</div>
+    <div class="stage">
+      <svg id="art" width="260" height="170" viewBox="0 0 260 170">
+        <defs>
+          <linearGradient id="lin" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" id="l0"/><stop offset="1" id="l1"/>
+          </linearGradient>
+          <radialGradient id="rad" cx="0.4" cy="0.35" r="0.75">
+            <stop offset="0" id="r0"/><stop offset="1" id="r1"/>
+          </radialGradient>
+        </defs>
+        <ellipse id="ell" cx="130" cy="85" rx="100" ry="62"/>
+      </svg>
+    </div>
+    <div class="targets" style="margin-top:12px">
+      <button class="btn sel" data-t="fill">Boýag reňki</button>
+      <button class="btn" data-t="stroke">Sudur çyzygyň reňki</button>
+      <button class="btn" data-t="fill2">Gradiýentiň 2-nji reňki</button>
+    </div>
+    <div class="slider"><span class="lbl">R gyzyl</span>
+      <input type="range" id="R" min="0" max="255"><span class="out" id="Ro"></span></div>
+    <div class="slider"><span class="lbl">G ýaşyl</span>
+      <input type="range" id="G" min="0" max="255"><span class="out" id="Go"></span></div>
+    <div class="slider"><span class="lbl">B gök</span>
+      <input type="range" id="B" min="0" max="255"><span class="out" id="Bo"></span></div>
+    <div class="row"><span class="badge info hex" id="hx"></span>
+      <span class="score" id="who"></span></div>
+  </div>
+
+  <div class="card">
+    <h3>Boýagyň görnüşi</h3>
+    <div class="row tight">
+      <button class="btn sel" data-f="solid">Arassa reňk</button>
+      <button class="btn" data-f="lin">Çyzykly gradiýent</button>
+      <button class="btn" data-f="rad">Radius gradiýent</button>
+      <button class="btn warn" data-f="none">Boýag ýok</button>
+    </div>
+    <div class="note" id="fx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Palitra – 216 reňk</h3>
+    <div class="goal">Reňkler panelindäki taýýar palitra 216 reňkden durýar. Islendigine bas.</div>
+    <div class="pal" id="pal"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Suratyň daşyndan aýlanýan çyzyga <b>sudur çyzygy</b>, onuň içini dolduran reňke bolsa
+      <b>boýag</b> diýilýär. Bir reňkiň beýleki reňke akgynly geçmegine <b>gradiýent boýag</b>
+      diýilýär – ol çyzykly ýa-da radius boýunça gönükdirilen bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const hex = c => "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
+
+const C = { fill: [0, 145, 226], fill2: [230, 0, 125], stroke: [30, 42, 58] };
+let target = "fill", mode = "solid";
+
+const LABEL = { fill: "boýagyň reňki", fill2: "gradiýentiň 2-nji reňki", stroke: "sudur çyzygyň reňki" };
+
+function apply() {
+  const e = $("ell");
+  $("l0").setAttribute("stop-color", hex(C.fill));
+  $("l1").setAttribute("stop-color", hex(C.fill2));
+  $("r0").setAttribute("stop-color", hex(C.fill));
+  $("r1").setAttribute("stop-color", hex(C.fill2));
+  e.setAttribute("fill",
+    mode === "solid" ? hex(C.fill) :
+    mode === "lin" ? "url(#lin)" :
+    mode === "rad" ? "url(#rad)" : "none");
+  e.setAttribute("stroke", hex(C.stroke));
+  e.setAttribute("stroke-width", 5);
+
+  const c = C[target];
+  ["R", "G", "B"].forEach((k, i) => { $(k).value = c[i]; $(k + "o").textContent = c[i]; });
+  $("hx").innerHTML = `<span class="sw" style="background:${hex(c)}"></span>${hex(c).toUpperCase()}`;
+  $("who").textContent = `R=${c[0]} G=${c[1]} B=${c[2]} — ${LABEL[target]}`;
+
+  document.querySelectorAll("[data-t]").forEach(b =>
+    b.className = "btn" + (b.dataset.t === target ? " sel" : ""));
+  document.querySelectorAll("[data-f]").forEach(b =>
+    b.className = "btn" + (b.dataset.f === "none" ? " warn" : "") + (b.dataset.f === mode ? " sel" : ""));
+
+  $("fx").innerHTML =
+    mode === "solid" ? "Bir reňkli boýag. Gradiýentiň 2-nji reňki häzir ulanylmaýar."
+    : mode === "lin" ? "Çyzykly gradiýent: reňk çepden saga akgynly geçýär."
+    : mode === "rad" ? "Radius gradiýent: reňk merkezden gyra akgynly geçýär."
+    : "Boýag aýryldy. Diňe sudur çyzygy galdy – obýekt içi boş görünýär.";
+}
+
+["R", "G", "B"].forEach((k, i) =>
+  $(k).addEventListener("input", () => { C[target][i] = +$(k).value; apply(); }));
+document.querySelectorAll("[data-t]").forEach(b =>
+  b.onclick = () => { target = b.dataset.t; apply(); });
+document.querySelectorAll("[data-f]").forEach(b =>
+  b.onclick = () => { mode = b.dataset.f; apply(); });
+
+// 6×6×6 = 216 reňkli palitra
+const L = [0, 51, 102, 153, 204, 255];
+const P = $("pal");
+L.forEach(r => L.forEach(g => L.forEach(b => {
+  const i = document.createElement("i");
+  i.style.background = hex([r, g, b]);
+  i.onclick = () => {
+    C[target] = [r, g, b];
+    [...P.children].forEach(x => x.classList.remove("on"));
+    i.classList.add("on");
+    apply();
+  };
+  P.appendChild(i);
+})));
+
+apply();
+</script>
+</body>
+</html>

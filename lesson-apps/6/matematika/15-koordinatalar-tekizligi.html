@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koordinatalar tekizligi — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; overflow-x: auto; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .qua { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .qua div { background: #f7fafd; border-radius: 11px; padding: 9px 11px; font-size: 13px;
+             line-height: 1.6; }
+  .qua b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tekizlikde gönüburçly koordinatalar sistemasy</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Bir-birine perpendikulýar iki koordinata göni çyzygy <b>koordinatalar
+      sistemasyny</b> emele getirýär. Keseligine ýerleşen ok – <b>abssissa</b> (x),
+      dikligine ýerleşen ok – <b>ordinata</b> (y). Tekizlige bas – nokat bellenýär.</div>
+    <div class="stage" id="pl"></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="info"></span>
+      <button class="btn ghost" id="clr">Arassala</button>
+    </div>
+    <div class="calc" id="calc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Dört çärýek</h3>
+    <div class="qua">
+      <div><b>II çärýek</b> (−; +)<br>abssissa otrisatel, ordinata položitel</div>
+      <div><b>I çärýek</b> (+; +)<br>iki koordinata hem položitel</div>
+      <div><b>III çärýek</b> (−; −)<br>iki koordinata hem otrisatel</div>
+      <div><b>IV çärýek</b> (+; −)<br>abssissa položitel, ordinata otrisatel</div>
+    </div>
+    <div class="hint">Oklaryň üstündäki nokatlar hiç bir çärýege degişli däldir:
+      K(3; 0) abssissa okunda, N(0; −2) ordinata okunda ýatýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Nokady gur</h3>
+    <div class="goal">Görkezilen koordinataly nokady tapyp, tekizlige bas.</div>
+    <div class="stage" id="pl2"></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge purple" id="task"></span>
+      <button class="btn ghost" id="next">Indiki</button>
+    </div>
+    <div class="msg" id="tmsg"></div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Orny çalyşsaň – başga nokat</h3>
+    <div class="goal">A(3; −2) we B(−2; 3) – bular <b>dürli</b> nokatlardyr. Düwmelere basyp gör.</div>
+    <div class="row tight" id="sw"></div>
+    <div class="calc" id="swc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Şu usul şahmat tagtasyndaky ýazgy bilen meňzeşdir: e2 – e sütüni we 2-nji setir.
+      Tapawudy – matematikada iki tarapda hem otrisatel sanlar ulanylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §25</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+const S = 340, C = S / 2, U = 30, LIM = 5;   // U – bir birligiň piksel ölçegi
+const X = v => C + v * U, Y = v => C - v * U;
+const unX = p => Math.round((p - C) / U), unY = p => Math.round((C - p) / U);
+
+function grid() {
+  let g = "";
+  for (let v = -LIM; v <= LIM; v++) {
+    g += `<line x1="${X(v)}" y1="${Y(-LIM)}" x2="${X(v)}" y2="${Y(LIM)}" stroke="#e6edf6"/>
+          <line x1="${X(-LIM)}" y1="${Y(v)}" x2="${X(LIM)}" y2="${Y(v)}" stroke="#e6edf6"/>`;
+  }
+  for (let v = -LIM; v <= LIM; v++) {
+    if (!v) continue;
+    g += `<line x1="${X(v)}" y1="${C - 4}" x2="${X(v)}" y2="${C + 4}" stroke="#5b6b80"
+            stroke-width="1.5"/>
+          <text x="${X(v)}" y="${C + 16}" text-anchor="middle" font-size="10"
+            fill="#93a2b5">${N(v)}</text>
+          <line x1="${C - 4}" y1="${Y(v)}" x2="${C + 4}" y2="${Y(v)}" stroke="#5b6b80"
+            stroke-width="1.5"/>
+          <text x="${C - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="10"
+            fill="#93a2b5">${N(v)}</text>`;
+  }
+  return `${g}
+    <line x1="${X(-LIM) - 8}" y1="${C}" x2="${X(LIM) + 14}" y2="${C}" stroke="#5b6b80"
+      stroke-width="2"/>
+    <polygon points="${X(LIM) + 20},${C} ${X(LIM) + 8},${C - 5} ${X(LIM) + 8},${C + 5}"
+      fill="#5b6b80"/>
+    <line x1="${C}" y1="${Y(-LIM) + 8}" x2="${C}" y2="${Y(LIM) - 14}" stroke="#5b6b80"
+      stroke-width="2"/>
+    <polygon points="${C},${Y(LIM) - 20} ${C - 5},${Y(LIM) - 8} ${C + 5},${Y(LIM) - 8}"
+      fill="#5b6b80"/>
+    <text x="${X(LIM) + 12}" y="${C + 18}" font-size="12" font-weight="700" fill="#2456b0">x</text>
+    <text x="${C + 8}" y="${Y(LIM) - 14}" font-size="12" font-weight="700" fill="#2456b0">y</text>
+    <text x="${C - 12}" y="${C + 16}" font-size="12" fill="#1e2a3a">O</text>`;
+}
+
+function plane(id, pts, onclick) {
+  const marks = pts.map(p => `
+    <line x1="${X(p.x)}" y1="${C}" x2="${X(p.x)}" y2="${Y(p.y)}" stroke="${p.color}"
+      stroke-width="1.5" stroke-dasharray="4 3"/>
+    <line x1="${C}" y1="${Y(p.y)}" x2="${X(p.x)}" y2="${Y(p.y)}" stroke="${p.color}"
+      stroke-width="1.5" stroke-dasharray="4 3"/>
+    <circle cx="${X(p.x)}" cy="${Y(p.y)}" r="6" fill="${p.color}"/>
+    <text x="${X(p.x) + 9}" y="${Y(p.y) - 7}" font-size="12" font-weight="700"
+      fill="${p.color}">${p.label}</text>`).join("");
+  $(id).innerHTML = `<svg viewBox="0 0 ${S} ${S}" width="${S}"
+    xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif"
+    style="cursor:crosshair">${grid()}${marks}</svg>`;
+  if (onclick) {
+    const svg = $(id).querySelector("svg");
+    svg.onclick = e => {
+      const r = svg.getBoundingClientRect();
+      const k = S / r.width;
+      const x = unX((e.clientX - r.left) * k), y = unY((e.clientY - r.top) * k);
+      if (Math.abs(x) <= LIM && Math.abs(y) <= LIM) onclick(x, y);
+    };
+  }
+}
+
+const quarter = (x, y) =>
+  x === 0 || y === 0
+    ? (x === 0 && y === 0 ? "koordinatalar başlangyjy" :
+       x === 0 ? "ordinata okunda ýatýar" : "abssissa okunda ýatýar")
+    : x > 0 && y > 0 ? "I çärýek" : x < 0 && y > 0 ? "II çärýek"
+      : x < 0 ? "III çärýek" : "IV çärýek";
+
+/* ---------------- erkin bellemek ---------------- */
+let pts = [];
+const LET = "ABCDMN";
+function draw() {
+  plane("pl", pts, (x, y) => {
+    if (pts.length >= 5) pts.shift();
+    pts.push({x, y, label: LET[pts.length % LET.length], color: "#e5007d"});
+    draw();
+  });
+  $("info").textContent = pts.length ? `${pts.length} nokat bellenen`
+                                     : "Tekizlige bas – nokat belle";
+  $("calc").innerHTML = pts.length
+    ? pts.map(p => `<b>${p.label}(${N(p.x)}; ${N(p.y)})</b> – abssissasy ${N(p.x)}, ` +
+        `ordinatasy ${N(p.y)}; ${quarter(p.x, p.y)}`).join("<br>")
+    : "Nokadyň koordinatalary ýazylanda ilki abssissa, soňra ordinata ýazylýar: A(x; y).";
+}
+$("clr").onclick = () => { pts = []; draw(); };
+
+/* ---------------- nokady gur ---------------- */
+let tx = 0, ty = 0, done = 0, right = 0;
+function newTask() {
+  do {
+    tx = Math.round(Math.random() * 8) - 4;
+    ty = Math.round(Math.random() * 8) - 4;
+  } while (tx === 0 && ty === 0);
+  $("task").textContent = `Gur: M(${N(tx)}; ${N(ty)})`;
+  $("tmsg").textContent = ""; $("tmsg").className = "msg";
+  plane("pl2", [], check);
+}
+function check(x, y) {
+  if ($("tmsg").textContent) return;
+  const good = x === tx && y === ty;
+  done++; if (good) right++;
+  plane("pl2", [
+    {x: tx, y: ty, label: "M", color: "#1d7a3d"},
+    ...(good ? [] : [{x, y, label: "sen", color: "#b4232a"}])
+  ]);
+  $("tmsg").textContent = good
+    ? `Dogry! M(${N(tx)}; ${N(ty)}) – ${quarter(tx, ty)}.`
+    : `Nädogry. Sen (${N(x)}; ${N(y)}) nokady bellediň, gerek nokat bolsa ` +
+      `M(${N(tx)}; ${N(ty)}) – ${quarter(tx, ty)}.`;
+  $("tmsg").className = good ? "msg ok" : "msg bad";
+  $("tsc").textContent = `${right} / ${done}`;
+}
+$("next").onclick = newTask;
+
+/* ---------------- orun çalyşmak ---------------- */
+const SW = [[3, -2], [-2, 3], [-5, 7], [7, -5]];
+$("sw").innerHTML = SW.map((p, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">(${N(p[0])}; ${N(p[1])})</button>`).join("");
+$("sw").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("sw").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const [x, y] = SW[+b.dataset.i];
+  $("swc").innerHTML =
+    `nokat: <b>(${N(x)}; ${N(y)})</b><br>abssissa = ${N(x)}, ordinata = ${N(y)}<br>` +
+    `ýerleşýän ýeri: <b>${quarter(x, y)}</b><br>` +
+    `orny çalşyrylan nokat: <b>(${N(y)}; ${N(x)})</b> – ${quarter(y, x)}`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["A(−5; 7) nokat haýsy çärýekde?", ["I", "II", "III", "IV"], 1],
+  ["K(3; 0) nokat nirede ýatýar?", ["Ordinata okunda", "Abssissa okunda",
+                                    "I çärýekde", "IV çärýekde"], 1],
+  ["A(x; y) ýazgyda x näme?", ["Ordinata", "Abssissa", "Çärýek", "Birlik kesim"], 1],
+  ["III çärýekdäki nokadyň koordinatalary", ["(+; +)", "(−; +)", "(−; −)", "(+; −)"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+draw(); newTask();
+$("sw").querySelector("button").click();
+</script>
+</body>
+</html>

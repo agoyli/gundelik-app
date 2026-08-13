@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beýik Hun döwleti — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 14px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Oguz türkmenleriniň Beýik Hun döwleti</h1>
+  <div class="sub">Türkmenistanyň taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Mete han b.e. öňki 209-njy ýylda tagta çykyp, özüni <b>«Şanýuý» – «Beýikleriň beýigi»</b> diýip yglan edipdir.</div>
+    <div class="tbl" style="margin-top:8px">Mete han: b.e. öňki 209–174 ý.&nbsp;&nbsp;|&nbsp;&nbsp; 26 döwlet · 84 welaýat&nbsp;&nbsp;|&nbsp;&nbsp; 1 tümen = 10 müň öý</div>
+  </div>
+
+  <div class="card">
+    <h3>Dogrumy ýa-da nädogry?</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Tassyklamany barla.</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="dogry">Dogry</button><button class="btn" data-k="nadogry">Nädogry</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sany saýla</h3>
+    <div class="task" id="task" style="margin-top:8px"></div>
+    <div class="goal">Dogry sany ýa-da ýyly saýla.</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row"><button class="btn ghost" id="next">Indiki sorag</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Türkmenistanyň taryhy 7 · 26–29-njy sahypalar</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Hun döwletinde gul söwdasy bolmandyr.", "dogry", "Hunlar öz ýurdunda hiç haçan gulçulyga sezewar edilmändir."], ["Halk döwlete salgyt tölemändir.", "dogry", "Salgyt diňe tabyn edilen taýpalardan ýygnalypdyr."], ["Oguzlar köp hudaýlylyga uýupdyrlar.", "nadogry", "Oguzlar bir taňra uýup, göge taňry diýip düşünipdirler."], ["Ogurlyk ownuk günä hasaplanypdyr.", "nadogry", "Ogurlyk iň bir ýigrenilýän jenaýat bolupdyr."], ["Ähli wezipeler nesilden-nesle geçipdir.", "dogry", "Hökümdar we kazylykdan başga wezipeleri şazadalar eýeläpdir."], ["Mete han ýurdy 84 welaýata bölüpdir.", "dogry", "Şeýdip ägirt uly döwleti bir merkezden dolandyrypdyr."]];
+var KN = {"dogry": "dogry tassyklama", "nadogry": "nädogry tassyklama"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+// [sorag, jogap, düşündiriş]
+var T = [["Mete han haýsy ýylda tagta çykypdyr?", "B.e. öňki 209 ý.", "Kakasy Duman Beýik ölenden soň tagta çykypdyr."], ["Mete han näçenji ýyla çenli dolandyrypdyr?", "B.e. öňki 174 ý.", "Onuň dolandyran döwri döwletiň gülläp ösen döwrüdir."], ["Döwletiň düzümine näçe döwlet girizilipdir?", "26", "Ownukly-irili 26 döwlet birleşdirilipdir."], ["Ýurt näçe welaýata bölünipdir?", "84", "Olaryň başynda hanyň öz adamlary durupdyr."], ["Bir tümen näçe öýli ilaty aňladýar?", "10 müň", "Duman Beýik ogluna bir tümeni dolandyrmaga beripdir."]];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+function show() {
+  document.getElementById("task").textContent = T[ti][0];
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  tlock = 0;
+}
+var VALS = ["B.e. öňki 209 ý.", "B.e. öňki 174 ý.", "B.e. öňki 200 ý.", "26", "84", "10 müň", "120 müň", "3", "2"];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + i + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = VALS[parseInt(this.getAttribute("data-n"), 10)], t = T[ti], m = document.getElementById("msg");
+    if (v === t[1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogrusy: " + t[1] + ". " + t[2]; }
+    document.getElementById("sc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+show();
+
+var Q = [["«Şanýuý» näme diýmekdir?", ["Beýikleriň beýigi", "Şalaryň şasy", "Emir"], 0], ["Hunlarda begzadalaryň näçe görnüşi bolupdyr?", ["3", "2", "5"], 0], ["Urug serdarlarynyň ýygnagy ýylda näçe gezek geçirilipdir?", ["Iki gezek", "Bir gezek", "Dört gezek"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Köpeltmek we bölmek — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .tbl div { background: #f7fafd; border-radius: 10px; padding: 8px; text-align: center; font-size: 16px; font-weight: 700; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 28px; font-weight: 800; }
+  .nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 17px; font-weight: 700; }
+  .opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .opts button { min-height: 50px; font-size: 17px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Köpeltmek we bölmek</h1>
+  <div class="sub">Matematika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="def">Islendik san <b>1-e</b> köpeldilse, şol sanyň özi alynýar.
+      Noly islendik sana köpeltseň, <b>nol</b> alynýar. <b>Sany 0-a bölüp bolmaýar.</b>
+      2-ä bölünýän sanlara <b>jübüt</b>, bölünmeýänlerine <b>täk</b> sanlar diýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>2-ni köpeltmek tablisasy</h3>
+    <div class="tbl" id="tbl"></div>
+    <div class="row"><button class="btn ghost" id="tgl">Jogaplary gizle</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Mysaly çöz</h3>
+    <div class="eq" id="eq"></div>
+    <div class="nums" id="nums" style="margin-top:8px"></div>
+    <div class="msg" id="emsg"></div>
+    <div class="row"><button class="btn primary" id="enext">Indiki mysal</button></div>
+    <div class="score" id="esc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Jübütmi ýa-da täk?</h3>
+    <div class="eq" id="jn"></div>
+    <div class="opts">
+      <button class="btn" id="bj">Jübüt</button>
+      <button class="btn" id="bt">Täk</button>
+    </div>
+    <div class="msg" id="jmsg"></div>
+    <div class="row"><button class="btn ghost" id="jnext">Indiki san</button></div>
+    <div class="score" id="jsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 2, II kitap · 55–81, 112–113-nji sahypalar</div>
+</div>
+
+<script>
+var showAns = 1;
+function drawTbl() {
+  var h = "";
+  for (var i = 1; i <= 10; i++) h += "<div>2 · " + i + " = " + (showAns ? (2 * i) : "?") + "</div>";
+  document.getElementById("tbl").innerHTML = h;
+  document.getElementById("tgl").textContent = showAns ? "Jogaplary gizle" : "Jogaplary görkez";
+}
+document.getElementById("tgl").onclick = function () { showAns = showAns ? 0 : 1; drawTbl(); };
+drawTbl();
+
+// [a, amal, b]
+var T = [[2, "·", 8], [18, ":", 2], [2, "·", 9], [16, ":", 2], [7, "·", 1], [14, ":", 2], [6, "·", 0]];
+var ti = 0, ed = 0, eok = 0, elock = 0;
+function res() { var t = T[ti]; return t[1] === "·" ? t[0] * t[2] : t[0] / t[2]; }
+function showE() {
+  var t = T[ti];
+  document.getElementById("eq").textContent = t[0] + " " + t[1] + " " + t[2] + " = ?";
+  document.getElementById("emsg").className = "msg";
+  document.getElementById("emsg").textContent = "";
+  elock = 0;
+}
+var h = "";
+for (var i = 0; i <= 20; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (elock) return;
+    elock = 1; ed++;
+    var v = parseInt(this.getAttribute("data-n"), 10), r = res(), t = T[ti], m = document.getElementById("emsg");
+    var why = t[2] === 1 ? " Islendik san 1-e köpeldilende şol sanyň özi alynýar." :
+      (t[2] === 0 ? " Noly islendik sana köpeltseň, nol alynýar." :
+        (t[1] === ":" ? " Sebäbi " + r + " · 2 = " + t[0] + "." : ""));
+    if (v === r) { eok++; m.className = "msg ok"; m.textContent = "Dogry!" + why; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + r + "." + why; }
+    document.getElementById("esc").textContent = "Netije: " + eok + " / " + ed;
+  };
+}
+document.getElementById("enext").onclick = function () { ti = (ti + 1) % T.length; showE(); };
+showE();
+
+var J = [8, 7, 12, 15, 20, 9], ji = 0, jd = 0, jok = 0, jlock = 0;
+function showJ() {
+  document.getElementById("jn").textContent = J[ji];
+  document.getElementById("jmsg").className = "msg";
+  document.getElementById("jmsg").textContent = "";
+  jlock = 0;
+}
+function jclick(kind) {
+  if (jlock) return;
+  jlock = 1; jd++;
+  var n = J[ji], even = n % 2 === 0, m = document.getElementById("jmsg");
+  var right = (kind === "j") === even;
+  if (right) {
+    jok++; m.className = "msg ok";
+    m.textContent = even ? ("Dogry! " + n + " : 2 = " + (n / 2) + ", ýagny jübüt san.") :
+      ("Dogry! " + n + " 2-ä bölünmeýär, ýagny täk san.");
+  } else {
+    m.className = "msg bad";
+    m.textContent = even ? (n + " – jübüt san, sebäbi 2-ä bölünýär.") : (n + " – täk san, sebäbi 2-ä bölünmeýär.");
+  }
+  document.getElementById("jsc").textContent = "Netije: " + jok + " / " + jd;
+}
+document.getElementById("bj").onclick = function () { jclick("j"); };
+document.getElementById("bt").onclick = function () { jclick("t"); };
+document.getElementById("jnext").onclick = function () { ji = (ji + 1) % J.length; showJ(); };
+showJ();
+
+var Q = [
+  ["2 · 8 näçe bolar?", ["16", "10", "18"], 0],
+  ["Islendik sany 1-e köpeltseň näme alynýar?", ["Şol sanyň özi", "Nol", "Bir"], 0],
+  ["18 : 2 näçe bolar?", ["9", "8", "16"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

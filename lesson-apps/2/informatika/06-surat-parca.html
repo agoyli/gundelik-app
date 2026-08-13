@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suratyň parçalary we klawiatura — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 23px; }
+  .stage { background: #eef2f8; border-radius: 16px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 12px;
+               max-width: 100%; height: auto; }
+  .buf { background: #f2edfd; border-radius: 14px; padding: 10px; font-size: 14.5px;
+         min-height: 46px; display: flex; align-items: center; gap: 8px; }
+  .kb { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 8px; }
+  .kb div { background: #f7fafd; border-radius: 12px; padding: 9px 11px; font-size: 13.5px;
+            line-height: 1.5; }
+  .kb b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 15.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Suratyň parçasy bilen işlemek</h1>
+  <div class="sub">Informatika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Grafiki redaktorda <b>tapawutlandyrylan</b> parçany <b>nusgalap</b>
+      ýa-da <b>kesip alyp</b>, başga ýere <b>goýup</b> bolýar.</div>
+    <div class="hint"><b>Palitra</b> – grafiki redaktordaky taýýar reňkleriň toplumy.
+      <b>Sudurlar</b> – şekiliň formasyny we ölçegini anyklaýan çyzyklar; suduryň içinde
+      reňklenýän <b>içki ýer</b> bolýar. Paint programmasy şu ýol bilen açylýar:
+      <b>Пуск – Все Программы – Стандартные – Paint</b>.</div>
+  </div>
+
+  <div class="card">
+    <div class="goal">Suratdaky güle bas – ol bellenýär. Soňra <b>Nusgala</b> ýa-da
+      <b>Kes</b> diý, boş öýjüge basyp <b>Goý</b> diý.</div>
+    <div class="stage" id="st"></div>
+    <div class="buf" id="buf" style="margin-top:9px"></div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn" id="copy">📄 Nusgalamak (Копировать)</button>
+      <button class="btn warn" id="cut">✂️ Kes</button>
+      <button class="btn primary" id="paste">📌 Goýmak (Вставка)</button>
+      <button class="btn ghost" id="rst">🔄 Başdan</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="hint">Nusgalanda parça öňki ýerinde <b>galýar</b>, kesilende bolsa
+      <b>aýrylýar</b>.</div>
+  </div>
+
+  <div class="card">
+    <h3>Klawiaturanyň düzüm bölekleri</h3>
+    <div class="kb">
+      <div><b>Harp düwmeleri</b><br>A, B, Ç, D … – söz ýazmak üçin</div>
+      <div><b>San düwmeleri</b><br>0–9 – sanlary girizmek üçin</div>
+      <div><b>Boşluk (Probel)</b><br>Iň uzyn düwme – sözleri aýyrýar</div>
+      <div><b>Enter</b><br>Täze setire geçirýär</div>
+      <div><b>Backspace</b><br>Çepdäki belgini aýyrýar</div>
+      <div><b>Ok düwmeleri</b><br>Kursory dört tarapa süýşürýär</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 2-nji synp · V–VI bölüm, sah. 63–89</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const R = 2, C = 3, CELL = 96;
+let cells = [["🌸", null, null], [null, null, null]];
+let sel = null, target = null, clip = null, cutFrom = null;
+
+function draw() {
+  let g = "";
+  for (let r = 0; r < R; r++)
+    for (let c = 0; c < C; c++) {
+      const isSel = sel && sel[0] === r && sel[1] === c;
+      const isTgt = target && target[0] === r && target[1] === c;
+      g += `<g class="hit" data-r="${r}" data-c="${c}" style="cursor:pointer">
+        <rect x="${c * CELL + 4}" y="${r * CELL + 4}" width="${CELL - 8}" height="${CELL - 8}"
+          rx="10" fill="${isSel ? "#ffe3f1" : isTgt ? "#dbe7ff" : "#fff"}"
+          stroke="${isSel ? "#e5007d" : isTgt ? "#2456b0" : "#dbe7ff"}"
+          stroke-width="${isSel || isTgt ? 3 : 2}"
+          stroke-dasharray="${isSel ? "6 4" : "0"}"/>
+        ${cells[r][c] ? `<text x="${c * CELL + CELL / 2}" y="${r * CELL + CELL / 2 + 15}"
+           text-anchor="middle" font-size="42">${cells[r][c]}</text>` : ""}
+      </g>`;
+    }
+  $("st").innerHTML = `<svg viewBox="0 0 ${C * CELL} ${R * CELL}" width="${C * CELL}"
+    xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+  $("st").querySelectorAll(".hit").forEach(el => el.onclick = () => {
+    const r = +el.dataset.r, c = +el.dataset.c;
+    if (cells[r][c]) { sel = [r, c]; target = null; say("Parça bellendi.", "ok"); }
+    else { target = [r, c]; say("Boş ýer saýlandy – indi «Goý» diý.", "ok"); }
+    draw();
+  });
+  $("buf").innerHTML = clip
+    ? `<b>Aralyk ýat:</b> <span style="font-size:26px">${clip}</span>`
+    : `<b>Aralyk ýat:</b> <span style="color:#93a2b5">boş</span>`;
+}
+function say(t, c) { $("msg").textContent = t; $("msg").className = "msg " + (c || ""); }
+
+$("copy").onclick = () => {
+  if (!sel) return say("Ilki parçany belle.", "bad");
+  clip = cells[sel[0]][sel[1]]; cutFrom = null;
+  say("Nusgalandy. Parça öňki ýerinde galdy.", "ok");
+  draw();
+};
+$("cut").onclick = () => {
+  if (!sel) return say("Ilki parçany belle.", "bad");
+  clip = cells[sel[0]][sel[1]];
+  cells[sel[0]][sel[1]] = null;
+  cutFrom = sel.slice(); sel = null;
+  say("Kesilip alyndy. Parça öňki ýerinden aýryldy.", "ok");
+  draw();
+};
+$("paste").onclick = () => {
+  if (!clip) return say("Aralyk ýat boş – ilki nusgala ýa-da kes.", "bad");
+  if (!target) return say("Boş öýjüge basyp, ýerini görkez.", "bad");
+  cells[target[0]][target[1]] = clip;
+  say("Goýuldy! Aralyk ýatdaky parça täze ýerde peýda boldy.", "ok");
+  target = null;
+  draw();
+};
+$("rst").onclick = () => {
+  cells = [["🌸", null, null], [null, null, null]];
+  sel = null; target = null; clip = null; cutFrom = null;
+  say("", ""); draw();
+};
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Suratyň bölegini saýlamak üçin näme gerek?",
+   ["Bellemek guraly", "Öçürgiç", "Printer"], 0],
+  ["Kesip alnan parça öňki ýerinde galýarmy?", ["Hemişe galýar", "Galmaýar", "Iki bolýar"], 1],
+  ["Sözleri biri-birinden haýsy düwme aýyrýar?", ["Enter", "Backspace", "Boşluk"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+draw();
+</script>
+</body>
+</html>

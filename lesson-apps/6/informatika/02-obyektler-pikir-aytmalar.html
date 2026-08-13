@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obýektler we pikir aýtmalar — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .obj { background: #f7fafd; border-radius: 12px; padding: 12px; text-align: center;
+         font-size: 17px; font-weight: 700; color: #1e2a3a; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex;
+           justify-content: center; overflow-x: auto; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .lamp { display: flex; align-items: center; gap: 12px; justify-content: center;
+          background: #eef2f8; border-radius: 12px; padding: 12px; flex-wrap: wrap; }
+  .sw { text-align: center; }
+  .sw button { width: 62px; height: 44px; border-radius: 11px; border: 2px solid #c3d2e6;
+               background: #fff; font-size: 17px; font-weight: 800; color: #93a2b5; cursor: pointer; }
+  .sw button.on { background: #1d7a3d; border-color: #1d7a3d; color: #fff; }
+  .sw small { display: block; font-size: 12px; color: #5b6b80; margin-top: 4px; font-weight: 700; }
+  .expr { font-size: 16px; font-weight: 800; color: #2456b0; }
+  .bulb { width: 54px; height: 54px; border-radius: 50%; border: 3px solid #c3d2e6;
+          background: #eceff4; display: grid; place-items: center; font-size: 22px; }
+  .bulb.on { background: #ffe9a8; border-color: #e0a800; }
+  table.tt { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  table.tt th, table.tt td { text-align: center; padding: 6px 8px; }
+  table.tt thead th { background: #eef2f8; color: #5b6b80; }
+  table.tt td.v1 { color: #1d7a3d; font-weight: 800; }
+  table.tt td.v0 { color: #b02424; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Obýektler, toparlar we pikir aýtmalar</h1>
+  <div class="sub">Pikir aýtmalar we netijeler · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Obýektler üç görnüşde bolýar: <b>predmet</b>, <b>iş (proses)</b> we
+      <b>hadysa</b>. Görkezilen obýektiň görnüşini saýla.</div>
+    <div class="obj" id="obj"></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn" data-k="predmet">Predmet</button>
+      <button class="btn" data-k="proses">Iş (proses)</button>
+      <button class="btn" data-k="hadysa">Hadysa</button>
+    </div>
+    <div class="msg" id="omsg"></div>
+    <div class="row"><span class="score" id="osc"></span>
+      <button class="btn ghost" id="oagain">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Dürli görnüşlilik shemasy</h3>
+    <div class="goal">Köplügi saýla – onuň bölek köplükleri shemada peýda bolar. Köplügiň ady
+      hemişe bölek köplükleriň adyndan ýokarda durýar.</div>
+    <div class="row tight" id="sets"></div>
+    <div class="stage" style="margin-top:8px"><svg id="tree" width="440" height="150" viewBox="0 0 440 150"></svg></div>
+  </div>
+
+  <div class="card">
+    <h3>Çyn ýa-da ýalan?</h3>
+    <div class="goal">Pikir aýtma diňe <b>habar sözleminde</b> aňladylýar we onuň bahasy
+      1 («çyn») ýa-da 0 («ýalan») bolýar.</div>
+    <div class="obj" id="st" style="font-size:15.5px;font-weight:600"></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn" data-s="1">Çyn (1)</button>
+      <button class="btn" data-s="0">Ýalan (0)</button>
+      <button class="btn" data-s="x">Pikir aýtma däl</button>
+    </div>
+    <div class="msg" id="smsg"></div>
+    <div class="row"><span class="score" id="ssc"></span>
+      <button class="btn ghost" id="sagain">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <h3>«däl», «we», «ýa-da» baglaýjylar</h3>
+    <div class="row tight" id="pick"></div>
+    <div class="lamp" style="margin-top:8px">
+      <div class="sw"><button id="ga">0</button><small>G – güneş</small></div>
+      <div class="expr" id="ex"></div>
+      <div class="sw"><button id="gb">0</button><small>B – bulut</small></div>
+      <div class="bulb" id="bulb">💡</div>
+    </div>
+    <div class="note" id="lx"></div>
+    <div style="overflow-x:auto;margin-top:8px"><table class="tt" id="tt"></table></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Obýekt</b> – adamyň ünsi gönükdirilen predmet, iş ýa-da hadysa. Umumy nyşanlary bolan
+      obýektleriň bölek köplügine <b>topar</b> diýilýär. Bir zady tassyklaýan ýa-da inkär edýän
+      sözleme <b>pikir aýtma</b> diýilýär, onuň çynlygy diňe <b>1</b> ýa-da <b>0</b> bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- obýektiň görnüşi ---------------- */
+const OBJ = [
+  ["Telefon", "predmet"], ["Stol", "predmet"], ["Kitap", "predmet"],
+  ["Awtoulag", "predmet"], ["Kompýuter", "predmet"],
+  ["Okuw", "proses"], ["Okamak", "proses"], ["Gezelenç", "proses"],
+  ["Ýyldyrymyň çakmagy", "hadysa"], ["Günüň tutulmagy", "hadysa"],
+  ["Garyň ýagmagy", "hadysa"], ["Ýeliň öwüsmegi", "hadysa"]
+];
+let oi = 0, ok1 = 0, oq = [];
+function objNext() {
+  if (!oq.length) oq = OBJ.map((_, i) => i).sort(() => Math.random() - 0.5).slice(0, 8);
+  if (oi >= oq.length) {
+    $("obj").textContent = "Tamamlandy";
+    $("omsg").textContent = `Netije: ${ok1} / ${oq.length}`;
+    $("omsg").className = "msg ok";
+    return;
+  }
+  $("obj").textContent = OBJ[oq[oi]][0];
+  $("osc").textContent = `${oi} / ${oq.length}`;
+}
+document.querySelectorAll("[data-k]").forEach(b => b.onclick = () => {
+  if (oi >= oq.length) return;
+  const good = OBJ[oq[oi]][1] === b.dataset.k;
+  if (good) ok1++;
+  $("omsg").textContent = good ? "Dogry." : `Ýalňyş. Bu – ${OBJ[oq[oi]][1]} obýekti.`;
+  $("omsg").className = good ? "msg ok" : "msg bad";
+  oi++; objNext();
+});
+$("oagain").onclick = () => { oi = 0; ok1 = 0; oq = []; $("omsg").textContent = ""; objNext(); };
+
+/* ---------------- dürli görnüşlilik ---------------- */
+const SETS = {
+  "Ösümlikler": ["Otlar", "Gyrymsy ösümlikler", "Agaçlar"],
+  "Öý haýwanlar": ["Pişik", "Goýun", "Geçi"],
+  "Windows obýektleri": ["Ýörite obýektler", "Esasy obýektler", "Daşky gurluşlar"],
+  "Sanlar": ["Bitin sanlar", "Natural sanlar", "Jübüt sanlar"]
+};
+let cur = "Ösümlikler";
+$("sets").innerHTML = Object.keys(SETS).map(k =>
+  `<button class="btn" data-set="${k}">${k}</button>`).join("");
+function tree() {
+  const kids = SETS[cur];
+  const W = 440, top = 26, y2 = 104;
+  const step = W / kids.length;
+  let s = `<rect x="${W / 2 - 92}" y="10" width="184" height="34" rx="8" fill="#e3edfd" stroke="#2456b0" stroke-width="2"/>
+    <text x="${W / 2}" y="32" font-size="13.5" font-weight="700" fill="#2456b0" text-anchor="middle">${cur}</text>`;
+  kids.forEach((k, i) => {
+    const x = step * i + step / 2;
+    s += `<path d="M${W / 2},44 L${W / 2},74 L${x},74 L${x},${y2}" stroke="#93a2b5" stroke-width="2" fill="none"/>
+      <path d="M${x},${y2 - 8} l-4,-8 h8 z" fill="#93a2b5"/>
+      <rect x="${x - step / 2 + 8}" y="${y2}" width="${step - 16}" height="34" rx="8" fill="#e0f5e6" stroke="#1d7a3d" stroke-width="2"/>
+      <text x="${x}" y="${y2 + 22}" font-size="12" font-weight="700" fill="#1d7a3d" text-anchor="middle">${k}</text>`;
+  });
+  $("tree").innerHTML = s;
+  document.querySelectorAll("[data-set]").forEach(b =>
+    b.className = "btn" + (b.dataset.set === cur ? " sel" : ""));
+}
+document.querySelectorAll("[data-set]").forEach(b =>
+  b.onclick = () => { cur = b.dataset.set; tree(); });
+
+/* ---------------- çyn / ýalan ---------------- */
+const ST = [
+  ["Türkmenistan Garaşsyz, hemişelik Bitarap döwlet.", "1"],
+  ["2 + 2 = 5", "0"],
+  ["Sagat näçe boldy?", "x"],
+  ["Gapyny ýapmagyňyzy haýyş edýärin!", "x"],
+  ["Gyşda sowuk, tomusda yssy bolýar.", "1"],
+  ["Guş uçýar, balyk ýüzýär.", "1"],
+  ["Sygryň şahy, düýäniň bolsa örküji bar.", "1"],
+  ["Iýul aýynda gar ýagar.", "0"]
+];
+let si = 0, sok = 0;
+function stNext() {
+  if (si >= ST.length) {
+    $("st").textContent = "Tamamlandy";
+    $("smsg").textContent = `Netije: ${sok} / ${ST.length}`;
+    $("smsg").className = "msg ok";
+    return;
+  }
+  $("st").textContent = "«" + ST[si][0] + "»";
+  $("ssc").textContent = `${si} / ${ST.length}`;
+}
+document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+  if (si >= ST.length) return;
+  const good = ST[si][1] === b.dataset.s;
+  if (good) sok++;
+  $("smsg").textContent = good ? "Dogry."
+    : ST[si][1] === "x" ? "Ýalňyş. Sorag we ýüzlenme sözlemler pikir aýtma bolmaýar."
+    : `Ýalňyş. Bu pikir aýtmanyň bahasy ${ST[si][1]}.`;
+  $("smsg").className = good ? "msg ok" : "msg bad";
+  si++; stNext();
+});
+$("sagain").onclick = () => { si = 0; sok = 0; $("smsg").textContent = ""; stNext(); };
+
+/* ---------------- baglaýjylar ---------------- */
+const OPS = [
+  ["G däl", g => g ? 0 : 1, "«däl» baglaýjy bahany garşylykly baha öwürýär."],
+  ["G we B", (g, b) => g && b ? 1 : 0, "«we» baglaýjyly aňlatma diňe iki ululyk hem çyn bolanda çyn bolýar."],
+  ["G ýa-da B", (g, b) => g || b ? 1 : 0, "«ýa-da» baglaýjyly aňlatma iň bolmanda biri çyn bolsa çyn bolýar."],
+  ["G däl we B", (g, b) => !g && b ? 1 : 0, "Ilki inkär, soň «we» ýerine ýetirilýär."]
+];
+let op = 1, ga = 0, gb = 0;
+$("pick").innerHTML = OPS.map((o, i) => `<button class="btn" data-op="${i}">${o[0]}</button>`).join("");
+function lamp() {
+  const v = OPS[op][1](ga, gb);
+  $("ex").textContent = OPS[op][0];
+  $("ga").textContent = ga; $("ga").className = ga ? "on" : "";
+  $("gb").textContent = gb; $("gb").className = gb ? "on" : "";
+  $("bulb").className = "bulb" + (v ? " on" : "");
+  $("lx").innerHTML = `${OPS[op][2]} Häzirki baha: <b>${v} – «${v ? "çyn" : "ýalan"}»</b>.`;
+  document.querySelectorAll("[data-op]").forEach(b =>
+    b.className = "btn" + (+b.dataset.op === op ? " sel" : ""));
+  const rows = [[0, 0], [0, 1], [1, 0], [1, 1]];
+  $("tt").innerHTML = "<thead><tr><th>G</th><th>B</th><th>" + OPS[op][0] + "</th></tr></thead><tbody>" +
+    rows.map(([a, b]) => {
+      const r = OPS[op][1](a, b);
+      const on = a === ga && b === gb;
+      return `<tr style="${on ? "background:#e3edfd" : ""}"><td>${a}</td><td>${b}</td>` +
+             `<td class="v${r}">${r}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+$("ga").onclick = () => { ga = ga ? 0 : 1; lamp(); };
+$("gb").onclick = () => { gb = gb ? 0 : 1; lamp(); };
+document.querySelectorAll("[data-op]").forEach(b =>
+  b.onclick = () => { op = +b.dataset.op; lamp(); });
+
+objNext(); tree(); stNext(); lamp();
+</script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web serwer we salgylar sistemasy — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  input[type=text] { width: 100%; padding: 12px; font-size: 15px; border-radius: 12px;
+                     border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  input[type=text]:focus { outline: none; border-color: #2456b0; }
+  .url { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .part { flex: 1; min-width: 120px; }
+  .part b { display: block; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px;
+            font-weight: 800; border-radius: 9px; padding: 9px 10px; word-break: break-all; }
+  .part span { display: block; font-size: 11px; color: #93a2b5; margin-top: 4px; font-weight: 700; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .srv { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .srv div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px; cursor: pointer; }
+  .srv div.on { background: #e3edfd; }
+  .srv small { display: block; font-size: 12px; color: #93a2b5; margin-top: 3px; line-height: 1.4; }
+  .srv div.on small { color: #5b6b80; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Web serwer we salgylar sistemasy</h1>
+  <div class="sub">URL, TCP/IP we HTTP · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Salgyny ýaz. <b>URL</b> protokolyň adyndan, kompýuteriň domen adyndan
+      we faýla barýan ýoldan durýar.</div>
+    <input type="text" id="u" value="http://www.mail.ru/ftp.html" spellcheck="false">
+    <div class="url" id="parts"></div>
+    <div class="row tight">
+      <button class="btn" data-u="http://www.mail.ru/ftp.html">mail.ru</button>
+      <button class="btn" data-u="https://www.science.gov.tm/habarlar/index.html">science.gov.tm</button>
+      <button class="btn" data-u="http://katalog.iot.ru">katalog.iot.ru</button>
+    </div>
+    <div class="note" id="ux"></div>
+  </div>
+
+  <div class="card">
+    <h3>Habar bukjalara bölünýär</h3>
+    <div class="goal">TCP protokoly habary bukjalara bölýär, IP protokoly bolsa her bukjany
+      bellenen salga eltýär.</div>
+    <div class="stage">
+      <svg id="net" width="300" height="150" viewBox="0 0 300 150"></svg>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="send">Habary ibermek</button>
+      <button class="btn warn" id="lossy">Bir bukja näsaz geçsin: ýok</button>
+    </div>
+    <div class="msg" id="nx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Serweriň görnüşleri</h3>
+    <div class="srv" id="srv"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Gipertekst dokumentleri geçirmek üçin <b>HTTP</b> protokoly ulanylýar. Internetiň esasy
+      protokoly bolsa <b>TCP/IP</b>. Salgyda protokolyň ady bilen kompýuteriň salgysynyň arasy
+      «://» belgisi bilen, ýoluň bölekleri bolsa «/» belgisi bilen bölünýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- URL ---------------- */
+function parse() {
+  const v = $("u").value.trim();
+  const m = v.match(/^([a-z]+):\/\/([^/]+)(\/.*)?$/i);
+  const P = $("parts");
+  if (!m) {
+    P.innerHTML = "";
+    $("ux").textContent = "Salgy doly däl. Ol [protokol]://[domen ady]/[faýla barýan ýol] "
+      + "görnüşinde bolmalydyr.";
+    return;
+  }
+  const [, prot, dom, path] = m;
+  P.innerHTML =
+    `<div class="part"><b style="background:#fdeee0">${prot}</b><span>PROTOKOLYŇ ADY</span></div>` +
+    `<div class="part"><b style="background:#e3edfd">${dom}</b><span>DOMEN ADY (KOMPÝUTERIŇ SALGYSY)</span></div>` +
+    `<div class="part"><b style="background:#e0f5e6">${(path || "/").slice(1) || "—"}</b><span>FAÝLA BARÝAN ÝOL</span></div>`;
+  $("ux").innerHTML =
+    `<b>${prot}</b> – geçirmegiň protokoly. <b>${dom}</b> – haýsy kompýuterden alynýandygyny görkezýär. ` +
+    (path && path !== "/"
+      ? `<b>${path.slice(1)}</b> – şol kompýuterdäki faýlyň ýoly.`
+      : "Faýlyň ady görkezilmedik – serwer başlangyç sahypany berýär.");
+}
+$("u").addEventListener("input", parse);
+document.querySelectorAll("[data-u]").forEach(b =>
+  b.onclick = () => { $("u").value = b.dataset.u; parse(); });
+
+/* ---------------- bukjalar ---------------- */
+const svg = $("net");
+const N = 6;
+let pk = [], timer = null, lossy = false, resent = false, arrived = 0;
+
+function scene() {
+  const boxes =
+    `<rect x="6" y="52" width="66" height="46" rx="10" fill="#e3edfd" stroke="#b9cdf0" stroke-width="2"/>
+     <text x="39" y="72" font-size="11" font-weight="700" fill="#2456b0" text-anchor="middle">Müşderi</text>
+     <text x="39" y="86" font-size="10" fill="#5b6b80" text-anchor="middle">brauzer</text>
+     <rect x="228" y="52" width="66" height="46" rx="10" fill="#e0f5e6" stroke="#a8ddb9" stroke-width="2"/>
+     <text x="261" y="72" font-size="11" font-weight="700" fill="#1d7a3d" text-anchor="middle">Serwer</text>
+     <text x="261" y="86" font-size="10" fill="#5b6b80" text-anchor="middle">web sahypa</text>
+     <line x1="72" y1="75" x2="228" y2="75" stroke="#eef2f8" stroke-width="26" stroke-linecap="round"/>`;
+  const dots = pk.map(p => {
+    const c = p.state === "bad" ? "#b02424" : p.state === "done" ? "#1d7a3d" : "#2456b0";
+    return `<g><rect x="${p.x.toFixed(1)}" y="${(p.y - 9).toFixed(1)}" width="20" height="18" rx="5" fill="${c}"/>
+      <text x="${(p.x + 10).toFixed(1)}" y="${(p.y + 4).toFixed(1)}" font-size="10" font-weight="800"
+        fill="#fff" text-anchor="middle">${p.n}</text></g>`;
+  }).join("");
+  svg.innerHTML = boxes + dots;
+}
+
+function start() {
+  if (timer) return;
+  resent = false; arrived = 0;
+  pk = Array.from({ length: N }, (_, i) => ({
+    n: i + 1, x: 74, y: 44 + (i % 3) * 22, state: "go", delay: i * 9
+  }));
+  $("nx").textContent = `Habar ${N} sany bukja bölündi. Her bukja aýratyn ýol bilen gidýär.`;
+  $("nx").className = "msg ok";
+  timer = setInterval(tick, 40);
+}
+
+function tick() {
+  let moving = 0;
+  pk.forEach(p => {
+    if (p.state === "done") return;
+    if (p.delay > 0) { p.delay--; moving++; return; }
+    p.x += 3.4;
+    if (lossy && !resent && p.n === 3 && p.x > 150) {
+      p.state = "bad"; p.x = 74; p.delay = 12; resent = true;
+      $("nx").textContent = "3-nji bukja näsaz geçdi. TCP muny duýup, diňe şol bukjany täzeden soraýar.";
+      $("nx").className = "msg bad";
+    }
+    if (p.x >= 226) { p.x = 226; p.state = "done"; arrived++; }
+    else moving++;
+  });
+  scene();
+  if (!moving) {
+    clearInterval(timer); timer = null;
+    $("nx").innerHTML = `Ähli ${N} bukja geldi we serwerde habar täzeden bir bitewi görnüşe getirildi.` +
+      (resent ? " Näsaz bukja diňe özi gaýtadan iberildi – tutuş faýl däl." : "");
+    $("nx").className = "msg ok";
+  }
+}
+
+$("send").onclick = start;
+$("lossy").onclick = () => {
+  lossy = !lossy;
+  $("lossy").textContent = "Bir bukja näsaz geçsin: " + (lossy ? "hawa" : "ýok");
+  $("lossy").className = "btn " + (lossy ? "sel" : "warn");
+};
+
+/* ---------------- serwerler ---------------- */
+const SRV = [
+  ["Poçta serweri", "Elektron hatlary kabul edýär, saklaýar we ýollaýar."],
+  ["Neşir ediji serwer", "Web sahypalary köpçülige elýeterli edýär."],
+  ["Aragatnaşyk serweri", "Ulanyjylaryň arasyndaky habarlaşmagy dolandyrýar."],
+  ["Faýl serweri", "Umumy faýllary saklaýar we paýlaýar."],
+  ["Telefon serweri", "Internet arkaly telefon aragatnaşygyny üpjün edýär."],
+  ["Host-uzel serweri", "Torda beýleki kompýuterlere baş nokat bolup hyzmat edýär."]
+];
+$("srv").innerHTML = SRV.map(([n], i) =>
+  `<div data-i="${i}">${n}<small>? basyp gör</small></div>`).join("");
+$("srv").querySelectorAll("div").forEach(d => d.onclick = () => {
+  const [n, t] = SRV[+d.dataset.i];
+  d.className = "on";
+  d.innerHTML = `${n}<small>${t}</small>`;
+});
+
+parse();
+pk = Array.from({ length: N }, (_, i) => ({ n: i + 1, x: 74, y: 44 + (i % 3) * 22, state: "go", delay: 0 }));
+scene();
+</script>
+</body>
+</html>

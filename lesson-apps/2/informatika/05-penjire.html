@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Penjiräni dolandyrmak — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 23px; }
+  .desk { background: #cfe0fb; border-radius: 16px; padding: 10px; min-height: 260px;
+          position: relative; overflow: hidden; }
+  .win { position: absolute; background: #fff; border-radius: 10px; overflow: hidden;
+         box-shadow: 0 4px 14px rgba(30,42,58,.22); }
+  .win .bar { background: #2456b0; color: #fff; padding: 7px 8px; font-size: 13px;
+              font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .win .bar .ttl { flex: 1; }
+  .win .bar button { width: 26px; height: 26px; border-radius: 7px; background: #ffffff33;
+                     color: #fff; font-size: 14px; font-weight: 800; line-height: 1; }
+  .win .bar button.x { background: #e04141; }
+  .win .body { padding: 10px; font-size: 13px; color: #5b6b80; line-height: 1.5; }
+  .taskbar { background: #1e2a3a; border-radius: 10px; padding: 6px; display: flex; gap: 6px;
+             position: absolute; left: 10px; right: 10px; bottom: 10px; min-height: 44px;
+             align-items: center; flex-wrap: wrap; }
+  .taskbar button { background: #38506b; color: #fff; border-radius: 8px; padding: 8px 10px;
+                    font-size: 12.5px; font-weight: 700; }
+  .taskbar .start { background: #1d7a3d; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 15.5px; line-height: 1.6; }
+  .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .legend div { background: #f7fafd; border-radius: 12px; padding: 9px 11px; font-size: 13.5px;
+                line-height: 1.5; }
+  .legend b { color: #2456b0; }
+  .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
+           gap: 7px; }
+  .parts button { min-height: 48px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Penjiräni dolandyrmak</h1>
+  <div class="sub">Informatika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Penjiräniň sag ýokarky burçundaky üç düwmä bas. Sürgi bilen penjiräniň
+      ölçegini hem üýtgedip bolýar.</div>
+    <div class="desk" id="dk"></div>
+    <div class="slider" style="margin-top:9px"><span class="lbl">Penjiräniň ini</span>
+      <input type="range" id="w" min="120" max="300" value="200"><span class="out" id="wo"></span></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Üç düwme</h3>
+    <div class="legend">
+      <div><b>─ Düýrlemek</b><br>Penjire programmany ýapmazdan meseleler paneline düşýär.</div>
+      <div><b>▢ Ýaýmak</b><br>Penjire ekrany tutar ýaly ýaýraýar. Şol düwmä ýene bassaň, penjire öňki ýagdaýyna gelýär.</div>
+      <div><b>× Ýapmak (Закрыть)</b><br>Programma ýapylýar we penjire ýitýär.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy düwmä basmaly?</h3>
+    <div id="task"></div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Penjire nämelerden durýar?</h3>
+    <div class="goal">Kitap boýunça penjiräniň <b>bäş</b> bölegi bar. Her bölege bas.</div>
+    <div class="parts" id="pp"></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 2-nji synp · IV bölüm, sah. 55–62</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let st = {open: true, min: false, max: false, w: 200};
+function desk() {
+  const w = st.max ? "calc(100% - 20px)" : st.w + "px";
+  const h = st.max ? "192px" : "128px";
+  const win = st.open && !st.min ? `
+    <div class="win" style="left:10px;top:10px;width:${w};height:${h}">
+      <div class="bar"><span class="ttl">📝 Depder</span>
+        <button data-a="min">─</button><button data-a="max">▢</button>
+        <button class="x" data-a="close">×</button></div>
+      <div class="body">Bu programmanyň penjiresi. Ýokardaky zolakda onuň ady ýazylýar.
+        Sag tarapdaky üç düwme penjiräni dolandyrýar.</div>
+    </div>` : "";
+  const tb = `<div class="taskbar">
+      <button class="start" data-a="open">⊞ Başlat</button>
+      ${st.open ? `<button data-a="restore">📝 Depder</button>` : ""}
+      <span style="color:#93a2b5;font-size:12px;margin-left:auto">🕐 09:15</span>
+    </div>`;
+  $("dk").innerHTML = win + tb;
+  $("dk").querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a === "min") { st.min = true; say("Penjire kiçeldildi – ol meseleler panelinde galdy."); }
+    if (a === "max") { st.max = !st.max; say(st.max ? "Penjire tutuş ekrany tutdy."
+                                                    : "Penjire öňki ölçegine dolandy."); }
+    if (a === "close") { st.open = false; say("Programma ýapyldy. Ony gaýtadan açmaly bolar."); }
+    if (a === "restore") { st.min = false; say("Penjire meseleler panelinden gaýdyp geldi."); }
+    // Başlat düwmesi ýapylan programmany gaýtadan açýar
+    if (a === "open") {
+      if (st.open && !st.min) { say("Programma eýýäm açyk."); }
+      else { st.open = true; st.min = false; say("Programma Başlat menýusyndan açyldy."); }
+    }
+    desk();
+  });
+  $("wo").textContent = st.w + " px";
+}
+function say(t) { $("msg").textContent = t; $("msg").className = "msg ok"; }
+$("w").addEventListener("input", () => { st.w = +$("w").value; st.max = false; desk(); });
+
+/* ---------------- ýumuşlar ---------------- */
+const T = [
+  ["Penjiräni programmany ýapmazdan aýyrmaly.", "min", "─ Düýrlemek"],
+  ["Penjiräni ekrany tutar ýaly ýaýmaly.", "max", "▢ Ýaýmak"],
+  ["Programmany düýbünden ýapmaly.", "close", "× Ýapmak"],
+];
+let td = 0, tr = 0;
+$("task").innerHTML = T.map((t, i) =>
+  `<div class="qa"><b>${i + 1}. ${t[0]}</b><div class="row tight" style="margin-top:7px">
+     <button class="btn" data-i="${i}" data-a="min">─</button>
+     <button class="btn" data-i="${i}" data-a="max">▢</button>
+     <button class="btn" data-i="${i}" data-a="close">×</button>
+     <span class="expl" id="te${i}"></span></div></div>`).join("");
+$("task").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("te" + i).textContent) return;
+  const good = b.dataset.a === T[i][1];
+  b.classList.add("sel");
+  $("te" + i).textContent = good ? "✅ Dogry!" : `❌ Dogrusy: ${T[i][2]}.`;
+  td++; if (good) tr++;
+  $("tsc").textContent = `${tr} / ${td}` + (td === T.length ? " – tamam 🎉" : "");
+});
+
+/* ---------------- penjiräniň bäş bölegi (sah. 56) ---------------- */
+const PARTS5 = [
+  ["Sözbaşy setiri", "Ýokarky zolak: programmanyň ady, nyşanjygy we dolandyryş düwmeleri."],
+  ["Menýu setiri", "Programmanyň buýruklary şu setirde toparlanan."],
+  ["Gurallar paneli", "Ýygy ulanylýan buýruklaryň düwmeleri."],
+  ["Iş meýdany", "Resminamanyň ýa-da papkanyň mazmuny görünýän esasy bölek."],
+  ["Ýagdaýlar setiri", "Aşaky setir: programmanyň häzirki ýagdaýy barada maglumat."],
+];
+let pdone = 0;
+$("pp").innerHTML = PARTS5.map((x, i) =>
+  `<button class="btn" data-i="${i}">${x[0]}</button>`).join("");
+$("pp").querySelectorAll("button").forEach(b => b.onclick = () => {
+  if (b.classList.contains("sel")) return;
+  const x = PARTS5[+b.dataset.i];
+  b.classList.add("sel");
+  pdone++;
+  $("pmsg").innerHTML = `<b>${x[0]}</b> – ${x[1]}`;
+  $("pmsg").className = "msg ok";
+  $("psc").textContent = `${pdone} / ${PARTS5.length}`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["«×» düwmesi näme edýär?", ["Penjiräni ýapýar", "Penjiräni ýaýýar", "Sesi artdyrýar"], 0],
+  ["Programmanyň ady nirede ýazylýar?",
+   ["Ýagdaýlar setirinde", "Sözbaşy setirinde", "Klawiaturada"], 1],
+  ["Düýrlenen penjire nirä düşýär?",
+   ["Ýok bolýar", "Printere", "Meseleler paneline"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+desk();
+</script>
+</body>
+</html>

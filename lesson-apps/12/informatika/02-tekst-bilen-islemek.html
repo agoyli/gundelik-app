@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tekst bilen işlemek — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .brow { border: 2px solid #d6e0ee; border-radius: 12px; background: #fff; padding: 12px 14px;
+          min-height: 130px; }
+  .brow p { margin: .45em 0; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #2456b0;
+          background: #f7fafd; border-radius: 10px; padding: 10px 12px; line-height: 1.7;
+          overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+  .qa { padding: 10px 0; border-bottom: 1px solid #edf1f7; }
+  .qa:last-child { border-bottom: none; }
+  .qa .q { font-weight: 700; margin-bottom: 7px; font-size: 15px; }
+  .hs { display: flex; flex-wrap: wrap; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tekst bilen işlemek</h1>
+  <div class="sub">Sözbaşylar · BASEFONT · FONT SIZE · abzas we deňleme · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Sözbaşynyň derejesini saýla. <b>n</b> näçe uly bolsa, şrift şonça kiçi bolýar.</div>
+    <div class="row tight hs" id="hbtn"></div>
+    <div class="brow" id="hprev"></div>
+    <div class="code" id="hcode"></div>
+  </div>
+
+  <div class="card">
+    <h3>BASEFONT we FONT SIZE</h3>
+    <div class="slider">
+      <span class="lbl">BASEFONT n</span>
+      <input type="range" id="bf" min="1" max="7" value="3">
+      <span class="out" id="bfo">3</span>
+    </div>
+    <div class="slider">
+      <span class="lbl">FONT SIZE m</span>
+      <input type="range" id="fs" min="-6" max="6" value="0">
+      <span class="out" id="fso">+0</span>
+    </div>
+    <div class="brow">
+      <span id="base">Adaty tekst</span> —
+      <span id="frag">tapawutlandyrylan bölek</span>
+    </div>
+    <div class="code" id="fcode"></div>
+    <div class="msg" id="fm"></div>
+  </div>
+
+  <div class="card">
+    <h3>Abzas we deňleme</h3>
+    <div class="row tight" id="alb"></div>
+    <div class="row tight">
+      <button class="btn" id="pmode">Bölüji: &lt;P&gt;</button>
+      <button class="btn ghost" id="rst">Başdan</button>
+    </div>
+    <div class="brow" id="aprev"></div>
+    <div class="code" id="acode"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="sc">0 / 3</div>
+  </div>
+
+  <div class="card">
+    <div class="note">Ölçegleriň jemi <b>n + m</b> hemişe 1-den 7-ä çenli aralykda bolmalydyr.
+      Bu aralygy ätlese, brauzer iň ýakyn çäk ölçegi alýar.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §4</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const PX = { 1: 10, 2: 13, 3: 16, 4: 18, 5: 24, 6: 32, 7: 48 };
+
+/* ------------------------------------------------------------- sözbaşylar */
+let hl = 1;
+for (let i = 1; i <= 6; i++) {
+  const b = document.createElement("button");
+  b.className = "btn" + (i === 1 ? " sel" : ""); b.textContent = "H" + i;
+  b.onclick = () => { hl = i; drawH(); };
+  $("hbtn").appendChild(b);
+}
+function drawH() {
+  $("hbtn").querySelectorAll(".btn").forEach((b, i) => b.classList.toggle("sel", i + 1 === hl));
+  $("hprev").innerHTML = "";
+  const h = document.createElement("h" + hl);
+  h.textContent = "Türkmenistan – Bitaraplygyň mekany";
+  h.style.margin = ".3em 0";
+  $("hprev").appendChild(h);
+  $("hcode").textContent = "<H" + hl + ">Türkmenistan – Bitaraplygyň mekany</H" + hl + ">";
+}
+
+/* --------------------------------------------------------- BASEFONT / FONT */
+function drawF() {
+  const n = +$("bf").value, m = +$("fs").value;
+  $("bfo").textContent = n;
+  $("fso").textContent = (m >= 0 ? "+" : "") + m;
+  const s = n + m;
+  $("base").style.fontSize = PX[n] + "px";
+  $("frag").style.fontSize = PX[Math.min(7, Math.max(1, s))] + "px";
+  $("fcode").textContent =
+    "<BASEFONT SIZE=" + n + ">\nAdaty tekst\n<FONT SIZE=" + (m >= 0 ? "+" : "") + m +
+    ">tapawutlandyrylan bölek</FONT>";
+  if (s < 1 || s > 7) {
+    $("fm").className = "msg bad";
+    $("fm").textContent = "n + m = " + s + " – bu 1…7 aralygyndan çykýar, netije çäk bahasy bolýar.";
+  } else {
+    $("fm").className = "msg ok";
+    $("fm").textContent = "n + m = " + s + " – dogry aralykda.";
+  }
+}
+
+/* --------------------------------------------------------- abzas we deňleme */
+const ALS = [["left", "Çepe"], ["center", "Ortada"], ["right", "Saga"], ["justify", "Giňlige"]];
+let al = "left", useP = true;
+ALS.forEach(a => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = a[1]; b.dataset.a = a[0];
+  b.onclick = () => { al = a[0]; drawA(); };
+  $("alb").appendChild(b);
+});
+const TXT = ["Web-sahypada tekstiň ýerleşişi ýörite parametr bilen dolandyrylýar.",
+             "Bu ikinji bölek. Ony <P> aýry abzas edýär, <BR> bolsa diňe setire böleýär."];
+function drawA() {
+  $("alb").querySelectorAll(".btn").forEach(b => b.classList.toggle("sel", b.dataset.a === al));
+  $("pmode").textContent = "Bölüji: " + (useP ? "<P>" : "<BR>");
+  const p = $("aprev"); p.innerHTML = "";
+  if (useP) {
+    TXT.forEach(t => {
+      const e = document.createElement("p"); e.textContent = t; e.style.textAlign = al;
+      p.appendChild(e);
+    });
+  } else {
+    const e = document.createElement("p"); e.style.textAlign = al;
+    e.textContent = TXT[0]; e.appendChild(document.createElement("br"));
+    e.appendChild(document.createTextNode(TXT[1]));
+    p.appendChild(e);
+  }
+  $("acode").textContent = useP
+    ? "<P align=" + al + ">" + TXT[0] + "\n<P align=" + al + ">" + TXT[1]
+    : "<P align=" + al + ">" + TXT[0] + "<BR>" + TXT[1];
+}
+$("pmode").onclick = () => { useP = !useP; drawA(); };
+$("rst").onclick = () => { al = "left"; useP = true; hl = 1; $("bf").value = 3; $("fs").value = 0;
+                           drawA(); drawH(); drawF(); };
+
+/* ------------------------------------------------------------------- quiz */
+const Q = [
+  { q: "Sözbaşylaryň näçe derejesi ulanylýar?", o: ["Üç", "Alty", "Ýedi"], a: 1 },
+  { q: "Abzasy üzmän täze setire geçirýän teg haýsy?", o: ["<P>", "<BR>", "<HR>"], a: 1 },
+  { q: "align=justify näme berýär?",
+    o: ["Ekranyň giňligine deňlemek", "Saga deňlemek", "Şrifti ulaltmak"], a: 0 }
+];
+let done = 0;
+Q.forEach((x, i) => {
+  const d = document.createElement("div"); d.className = "qa";
+  d.innerHTML = '<div class="q">' + (i + 1) + ". " + x.q + "</div>";
+  const r = document.createElement("div"); r.className = "row tight";
+  x.o.forEach((t, j) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = t;
+    b.onclick = () => {
+      if (b.disabled) return;
+      r.querySelectorAll(".btn").forEach(z => z.disabled = true);
+      b.classList.add(j === x.a ? "primary" : "warn");
+      if (j !== x.a) r.querySelectorAll(".btn")[x.a].classList.add("primary");
+      if (j === x.a) done++;
+      $("sc").textContent = done + " / " + Q.length;
+    };
+    r.appendChild(b);
+  });
+  d.appendChild(r); $("quiz").appendChild(d);
+});
+
+drawH(); drawF(); drawA();
+$("bf").oninput = drawF; $("fs").oninput = drawF;
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bakteriýalar — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bakteriýalar</h1>
+  <div class="sub">Biologiýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Bakteriýalar – ýadrosy we plastidleri bolmadyk, deň ikä bölünip köpelýän biröýjükli mikroorganizmlerdir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bölünip köpelmek</h3>
+    <div class="goal">Wagty süýşür – bir öýjükden näçe öýjük emele gelýändigini gör.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="0" max="5" step="0.5" value="0">
+    <div class="info" id="siro1"></div>
+    <div class="note">Her ýarym sagatda öýjük deň ikä bölünýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bakteriýalaryň şekilleri</h3>
+    <div class="goal">Şekile degip, adyny we alamatyny gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 190"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Biologiýa 7 · 8-nji tema</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { 
+        var n = Math.pow(2, 2 * v), show = Math.min(n, 60);
+        var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+        s += '<rect x="18" y="16" width="284" height="132" fill="#eef5fb" stroke="#4a6b39" stroke-width="2"/>';
+        for (var i = 0; i < show; i++) {
+          var x = 34 + (i % 12) * 24, y = 32 + Math.floor(i / 12) * 22;
+          s += '<ellipse cx="' + x + '" cy="' + y + '" rx="8" ry="5" fill="#7aa35c" stroke="#3d5a2b" stroke-width="1.5"/>';
+        }
+        s += '<text x="160" y="172" font-size="12" fill="#23381a" text-anchor="middle">' +
+             n + ' öýjük' + (n > 60 ? ' (60-sy görkezilýär)' : '') + '</text>';
+        return s;
+       }
+  function readout(v) { 
+        var n = Math.pow(2, 2 * v);
+        return '<b>' + v + ' sagatdan soň: ' + n + ' öýjük</b><br>' +
+               (v === 5 ? 'Kitapdaky mysal: 5 sagadyň dowamynda 1024 täze öýjük emele gelýär.' :
+                'Her bölünmede öýjükleriň sany iki esse artýar.');
+       }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Wagt" + ": " + String(v).replace(".", ",") + " " + "sagat";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var SP = [["taýajyk", "M24 26 H150 V62 H24 Z", 87, 48, "Taýajyk şekilli bakteriýalar – iň giň ýaýran görnüşleriň biri."], ["togalak", "M170 26 H296 V62 H170 Z", 233, 48, "Togalak şekillilere kokklar hem diýilýär."], ["uzynja turba", "M24 72 H150 V108 H24 Z", 87, 94, "Uzyn turba şekilli bakteriýalar."], ["towlanan", "M170 72 H296 V108 H170 Z", 233, 94, "Towlanan (spiral) şekilli bakteriýalar."], ["sapajyk", "M24 118 H150 V154 H24 Z", 87, 140, "Sapajyk şekilliler uzyn sapak ýaly görünýär."], ["bogujyk (žgutik)", "M170 118 H296 V154 H170 Z", 233, 140, "Köpüsi bogujyklarynyň kömegi bilen hereket edýär."]], SW = 320, SH = 190;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["Bakteriýanyň öýjüginde näme ýok?", ["Ýadro we plastidler", "Sitoplazma", "Öýjük gabygy"], 0], ["5 sagatda näçe täze öýjük emele gelýär?", ["1024", "100", "10"], 0], ["Amatsyz şertde bakteriýa nämä öwrülýär?", ["Pugta spora", "Zoospora", "Gifa"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

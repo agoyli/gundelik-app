@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gatlaklar — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; display: flex; justify-content: center; }
+  .stage svg { background: #dff0fb; border-radius: 10px; }
+  .lay { display: flex; align-items: center; gap: 6px; background: #f7fafd; border-radius: 11px;
+         padding: 8px 9px; margin-bottom: 6px; }
+  .lay.act { background: #e3edfd; }
+  .lay .nm { flex: 1; font-size: 14.5px; font-weight: 700; min-width: 0; overflow: hidden;
+             text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+  .lay.hidden .nm { color: #b8c4d4; text-decoration: line-through; }
+  .lay button { width: 36px; height: 36px; border-radius: 9px; background: #e8eef7; font-size: 15px; }
+  .lay button.on { background: #2456b0; color: #fff; }
+  .lay .dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+  .hdr { display: flex; gap: 6px; font-size: 11.5px; color: #93a2b5; font-weight: 800;
+         padding: 0 9px 4px; }
+  .hdr span:first-child { flex: 1; }
+  .hdr span { width: 36px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Gatlaklar</h1>
+  <div class="sub">Dury perdeler we olaryň tertibi · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Gatlagy dury ýukajyk perde hökmünde göz öňüne getir. Sanawda haýsy gatlak
+      ýokarda bolsa, onuň obýekti <b>öňde</b> durýar.</div>
+    <div class="stage">
+      <svg id="scene" width="300" height="190" viewBox="0 0 300 190"></svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Gatlaklar sanawy</h3>
+    <div class="hdr"><span>Gatlak</span><span>👁</span><span>🔒</span><span>▲</span><span>▼</span></div>
+    <div id="list"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="add">+ Gatlagy goşmak</button>
+      <button class="btn warn" id="edit">Işjeň gatlagy redaktirlemek</button>
+      <button class="btn ghost" id="del">🗑 Ýok etmek</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Berlen wagtda mazmuny redaktirläp bolýan gatlaga <b>işjeň gatlak</b> diýilýär.
+      <b>Gulplanan</b> gatlakdaky obýektleri redaktirläp bolmaýar, <b>gizlenen</b> gatlak bolsa
+      ekranda görünmeýär. Täze obýekti hemişe aýratyn gatlakda döretmek amatlydyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const SHAPE = {
+  otluk: '<rect x="0" y="140" width="300" height="50" fill="#4c9a4c"/>' +
+         '<rect x="0" y="140" width="300" height="6" fill="#3f7a44"/>',
+  arca:  '<rect x="96" y="118" width="14" height="30" fill="#8a5a2b"/>' +
+         '<polygon points="103,26 148,88 58,88" fill="#2e7d32"/>' +
+         '<polygon points="103,58 158,126 48,126" fill="#388e3c"/>',
+  towsan:'<ellipse cx="120" cy="130" rx="26" ry="22" fill="#b9bfc7"/>' +
+         '<circle cx="120" cy="98" r="17" fill="#c9cfd6"/>' +
+         '<ellipse cx="112" cy="76" rx="5" ry="15" fill="#c9cfd6"/>' +
+         '<ellipse cx="128" cy="76" rx="5" ry="15" fill="#c9cfd6"/>' +
+         '<circle cx="114" cy="97" r="2.4" fill="#37414f"/>' +
+         '<circle cx="126" cy="97" r="2.4" fill="#37414f"/>',
+  bulut: '<g fill="#ffffff"><circle cx="222" cy="46" r="16"/><circle cx="244" cy="42" r="20"/>' +
+         '<circle cx="266" cy="50" r="14"/><rect x="222" y="46" width="46" height="18"/></g>'
+};
+const COLOR = { otluk: "#4c9a4c", arca: "#2e7d32", towsan: "#b9bfc7", bulut: "#8fb8e0" };
+
+// sanawyň başy = iň öňdäki gatlak
+let layers = [
+  { key: "towsan", name: "Towşan", vis: true, lock: false },
+  { key: "arca", name: "Arça", vis: true, lock: false },
+  { key: "otluk", name: "Otluk meýdan", vis: true, lock: false }
+];
+let act = 0;
+
+function draw() {
+  // yzdan öňe çyzýarys, şonuň üçin sanawy tersine aýlaýarys
+  $("scene").innerHTML = layers.slice().reverse()
+    .filter(l => l.vis).map(l => SHAPE[l.key]).join("");
+
+  $("list").innerHTML = "";
+  layers.forEach((l, i) => {
+    const d = document.createElement("div");
+    d.className = "lay" + (i === act ? " act" : "") + (l.vis ? "" : " hidden");
+    d.innerHTML =
+      `<span class="dot" style="background:${COLOR[l.key]}"></span>` +
+      `<span class="nm">${l.name}</span>` +
+      `<button class="${l.vis ? "" : "on"}" title="görkezmek/gizlemek">${l.vis ? "👁" : "🚫"}</button>` +
+      `<button class="${l.lock ? "on" : ""}" title="gulplamak">${l.lock ? "🔒" : "🔓"}</button>` +
+      `<button title="ýokary">▲</button><button title="aşak">▼</button>`;
+    const [eye, lock, up, dn] = d.querySelectorAll("button");
+    d.querySelector(".nm").onclick = () => { act = i; say(`«${l.name}» indi işjeň gatlak.`, true); draw(); };
+    eye.onclick = () => { l.vis = !l.vis; say(`«${l.name}» ${l.vis ? "görner ýaly edildi" : "gizlendi"}.`, true); draw(); };
+    lock.onclick = () => { l.lock = !l.lock; say(`«${l.name}» ${l.lock ? "gulplandy" : "gulpdan aýryldy"}.`, true); draw(); };
+    up.onclick = () => move(i, -1);
+    dn.onclick = () => move(i, 1);
+    $("list").appendChild(d);
+  });
+}
+
+function move(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= layers.length) { say("Gatlak sanawyň çetinde – ony beýläk süýşürip bolmaýar.", false); return; }
+  [layers[i], layers[j]] = [layers[j], layers[i]];
+  if (act === i) act = j; else if (act === j) act = i;
+  say(`«${layers[j].name}» we «${layers[i].name}» gatlaklaryň orny çalyşdy.`, true);
+  draw();
+}
+
+function say(t, ok) { $("msg").textContent = t; $("msg").className = "msg " + (ok ? "ok" : "bad"); }
+
+$("add").onclick = () => {
+  if (layers.some(l => l.key === "bulut")) { say("«Bulut» gatlagy eýýäm bar.", false); return; }
+  layers.unshift({ key: "bulut", name: "Bulut", vis: true, lock: false });
+  act = 0;
+  say("Täze gatlak goşuldy we ol iň ýokarda ýerleşdi.", true);
+  draw();
+};
+$("del").onclick = () => {
+  if (layers.length === 1) { say("Iň soňky gatlagy ýok edip bolmaýar.", false); return; }
+  const n = layers[act].name;
+  layers.splice(act, 1);
+  act = Math.min(act, layers.length - 1);
+  say(`«${n}» gatlagy ýok edildi.`, true);
+  draw();
+};
+$("edit").onclick = () => {
+  const l = layers[act];
+  if (l.lock) say(`«${l.name}» gulplanan – ondaky obýektleri redaktirläp bolmaýar.`, false);
+  else if (!l.vis) say(`«${l.name}» gizlenen – ilki ony görner ýaly etmeli.`, false);
+  else say(`«${l.name}» işjeň we açyk – ondaky obýekti redaktirläp bolýar.`, true);
+};
+
+draw();
+</script>
+</body>
+</html>

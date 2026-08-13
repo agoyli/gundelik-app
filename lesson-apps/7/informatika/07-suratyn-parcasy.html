@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suratyň parçasy — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: grid; place-items: center; }
+  canvas { background: #fff; border-radius: 10px; border: 2px solid #d6e0ee; touch-action: none;
+           max-width: 100%; }
+  #cv { cursor: crosshair; }
+  .mini { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .mini figure { margin: 0; text-align: center; }
+  .mini figcaption { font-size: 12.5px; color: #93a2b5; font-weight: 700; margin-top: 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Suratyň parçasy</h1>
+  <div class="sub">Tapawutlandyrmak, ýok etmek we geçirmek · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Suratyň üstünde syçany çekip, <b>parçany tapawutlandyr</b>. Soňra aşakdaky
+      amallaryň birini saýla.</div>
+    <div class="stage"><canvas id="cv" width="420" height="300"></canvas></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn" data-a="move">Geçirmek</button>
+      <button class="btn" data-a="copy">Nusgalamak</button>
+      <button class="btn" data-a="del">Ýok etmek</button>
+      <button class="btn" data-a="crop">Bölek boýunça kesip almak</button>
+    </div>
+    <div class="row tight">
+      <button class="btn ghost" data-a="none">Tapawutlandyrmany aýyrmak</button>
+      <button class="btn ghost" id="reset">Başdaky surat</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Şekili öwürmek</h3>
+    <div class="row tight">
+      <button class="btn" data-r="90">90°-a öwürmek</button>
+      <button class="btn" data-r="180">180°-a öwürmek</button>
+      <button class="btn" data-r="h">Keseligine serpikdirmek</button>
+      <button class="btn" data-r="v">Dikligine serpikdirmek</button>
+    </div>
+    <div class="note" id="rx">Amaly saýla. Öwürmek buýruklary <b>Şekil</b> menýusynda ýerleşýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ýarty nagyşdan bitin nagşy dikelt</h3>
+    <div class="goal">Türkmen halysynyň ýarty nagşy berlen. Ony nusgalap, dikligine serpikdirseň,
+      bitin nagyş alynýar.</div>
+    <div class="stage"><div class="mini">
+      <figure><canvas id="half" width="150" height="150"></canvas>
+        <figcaption>ýarty şekil</figcaption></figure>
+      <figure><canvas id="full" width="300" height="150"></canvas>
+        <figcaption>netije: bitin nagyş</figcaption></figure>
+    </div></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="mk">Nusgala we serpikdir</button>
+      <button class="btn ghost" id="mkr">Başdan</button>
+    </div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Ýörite usul bilen tapawutlandyrylyp alnan suratyň bölegine <b>suratyň parçasy</b> diýilýär.
+      <b>Ýok etmek</b> parçanyň reňkini dury reňk bilen arassalaýar. <b>Kesip geçirmek</b> parçany
+      surat çekilýän meýdanda täze ýere geçirýär. Tapawutlandyrmany aýyrmak üçin <b>Enter</b>
+      ýa-da <b>Ctrl+D</b> ulanylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $("cv"), cx = cv.getContext("2d", {willReadFrequently: true});
+let sel = null, drag = null, hold = null;
+
+function scene() {
+  cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+  // asman we ýer
+  cx.fillStyle = "#dceaf8"; cx.fillRect(0, 0, cv.width, 190);
+  cx.fillStyle = "#cbe6c6"; cx.fillRect(0, 190, cv.width, 110);
+  // gün
+  cx.fillStyle = "#ffd400"; cx.beginPath(); cx.arc(64, 58, 26, 0, 7); cx.fill();
+  // jaý
+  cx.fillStyle = "#e08a00"; cx.fillRect(150, 150, 120, 90);
+  cx.fillStyle = "#b02424";
+  cx.beginPath(); cx.moveTo(136, 150); cx.lineTo(210, 96); cx.lineTo(284, 150); cx.closePath(); cx.fill();
+  cx.fillStyle = "#fff"; cx.fillRect(180, 176, 34, 34);
+  cx.strokeStyle = "#8a6d00"; cx.lineWidth = 2; cx.strokeRect(180, 176, 34, 34);
+  cx.fillStyle = "#6a4bb8"; cx.fillRect(232, 186, 26, 54);
+  // agaç
+  cx.fillStyle = "#8a5a2b"; cx.fillRect(340, 176, 14, 64);
+  cx.fillStyle = "#1d7a3d"; cx.beginPath(); cx.arc(347, 156, 34, 0, 7); cx.fill();
+  sel = null; hold = null;
+}
+function redraw() {
+  if (hold) {
+    cx.putImageData(hold.img, hold.x, hold.y);
+  }
+  if (sel) {
+    cx.save();
+    cx.setLineDash([6, 4]); cx.strokeStyle = "#e5007d"; cx.lineWidth = 2;
+    cx.strokeRect(sel.x, sel.y, sel.w, sel.h);
+    cx.restore();
+  }
+}
+function pos(e) {
+  const r = cv.getBoundingClientRect(), p = e.touches ? e.touches[0] : e;
+  return [(p.clientX - r.left) * cv.width / r.width, (p.clientY - r.top) * cv.height / r.height];
+}
+let base = null;
+cv.addEventListener("mousedown", down); cv.addEventListener("touchstart", down, {passive: false});
+function down(e) {
+  e.preventDefault();
+  const [x, y] = pos(e);
+  if (hold && x > hold.x && x < hold.x + hold.img.width && y > hold.y && y < hold.y + hold.img.height) {
+    drag = {ox: x - hold.x, oy: y - hold.y, mode: "hold"};
+    return;
+  }
+  base = cx.getImageData(0, 0, cv.width, cv.height);
+  drag = {sx: x, sy: y, mode: "sel"};
+  sel = {x, y, w: 0, h: 0};
+}
+document.addEventListener("mousemove", mv); document.addEventListener("touchmove", mv, {passive: false});
+function mv(e) {
+  if (!drag) return;
+  const [x, y] = pos(e);
+  if (drag.mode === "sel") {
+    sel = {x: Math.min(drag.sx, x), y: Math.min(drag.sy, y),
+           w: Math.abs(x - drag.sx), h: Math.abs(y - drag.sy)};
+    cx.putImageData(base, 0, 0);
+    redraw();
+  } else {
+    cx.putImageData(base, 0, 0);
+    hold.x = x - drag.ox; hold.y = y - drag.oy;
+    redraw();
+  }
+}
+document.addEventListener("mouseup", () => drag = null);
+document.addEventListener("touchend", () => drag = null);
+
+function act(a) {
+  if (a === "none") {
+    if (base) cx.putImageData(base, 0, 0);
+    sel = null; hold = null;
+    $("msg").textContent = "Tapawutlandyrma aýryldy (Enter ýa-da Ctrl+D).";
+    $("msg").className = "msg";
+    return;
+  }
+  if (!sel || sel.w < 6 || sel.h < 6) {
+    $("msg").textContent = "Ilki suratyň üstünde syçany çekip, parçany tapawutlandyr.";
+    $("msg").className = "msg bad";
+    return;
+  }
+  const {x, y, w, h} = sel;
+  cx.putImageData(base, 0, 0);
+  const img = cx.getImageData(x | 0, y | 0, w | 0, h | 0);
+  if (a === "del") {
+    cx.clearRect(x, y, w, h);
+    base = cx.getImageData(0, 0, cv.width, cv.height);
+    sel = null;
+    $("msg").textContent = "Parça ýok edildi – onuň ýerinde dury reňk galdy.";
+  }
+  if (a === "crop") {
+    const tmp = document.createElement("canvas");
+    tmp.width = w; tmp.height = h;
+    tmp.getContext("2d").putImageData(img, 0, 0);
+    cx.clearRect(0, 0, cv.width, cv.height);
+    cx.drawImage(tmp, 0, 0, w, h, 0, 0, cv.width, cv.height);
+    base = cx.getImageData(0, 0, cv.width, cv.height);
+    sel = null;
+    $("msg").textContent = "Tapawutlandyrylan bölek boýunça kesilip alyndy (Обрезать по выделению).";
+  }
+  if (a === "move" || a === "copy") {
+    if (a === "move") cx.clearRect(x, y, w, h);
+    base = cx.getImageData(0, 0, cv.width, cv.height);
+    hold = {img, x: x + 24, y: y + 24};
+    redraw();
+    $("msg").textContent = a === "move"
+      ? "Parça kesilip alyndy. Indi ony syçan bilen tutup, islendik ýere süýşür."
+      : "Parçanyň nusgasy alyndy. Ony süýşürip, täze ýerde goý.";
+  }
+  $("msg").className = "msg ok";
+}
+document.querySelectorAll("[data-a]").forEach(b => b.onclick = () => act(b.dataset.a));
+$("reset").onclick = () => {
+  scene(); base = cx.getImageData(0, 0, cv.width, cv.height);
+  $("msg").textContent = ""; $("msg").className = "msg";
+};
+
+/* ---------------- öwürmek ---------------- */
+document.querySelectorAll("[data-r]").forEach(b => b.onclick = () => {
+  const r = b.dataset.r;
+  const tmp = document.createElement("canvas");
+  tmp.width = cv.width; tmp.height = cv.height;
+  tmp.getContext("2d").drawImage(cv, 0, 0);
+  cx.save();
+  cx.clearRect(0, 0, cv.width, cv.height);
+  cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+  cx.translate(cv.width / 2, cv.height / 2);
+  if (r === "90") { cx.rotate(Math.PI / 2); cx.scale(cv.height / cv.width, cv.width / cv.height); }
+  if (r === "180") cx.rotate(Math.PI);
+  if (r === "h") cx.scale(-1, 1);
+  if (r === "v") cx.scale(1, -1);
+  cx.drawImage(tmp, -cv.width / 2, -cv.height / 2);
+  cx.restore();
+  base = cx.getImageData(0, 0, cv.width, cv.height);
+  sel = null; hold = null;
+  $("rx").innerHTML = {
+    "90": "Şekil sagat diliniň ugruna <b>90°</b>-a öwrüldi. Ini bilen beýikligi ýerini çalyşdy.",
+    "180": "Şekil <b>180°</b>-a öwrüldi – ol düýbünden ters ýagdaýa geçdi.",
+    h: "Şekil <b>keseligine</b> serpikdirildi: çep bilen sag tarap çalyşdy.",
+    v: "Şekil <b>dikligine</b> serpikdirildi: ýokary bilen aşak çalyşdy."
+  }[r];
+});
+
+/* ---------------- nagyş ---------------- */
+const hf = $("half").getContext("2d"), fl = $("full").getContext("2d");
+function nagys() {
+  hf.fillStyle = "#f6f0e6"; hf.fillRect(0, 0, 150, 150);
+  hf.fillStyle = "#a32020";
+  hf.fillRect(10, 10, 65, 130);
+  hf.fillStyle = "#f6f0e6";
+  hf.beginPath(); hf.moveTo(75, 30); hf.lineTo(40, 60); hf.lineTo(75, 90); hf.closePath(); hf.fill();
+  hf.fillStyle = "#1d7a3d";
+  hf.beginPath(); hf.moveTo(75, 60); hf.lineTo(52, 75); hf.lineTo(75, 92); hf.closePath(); hf.fill();
+  hf.fillStyle = "#ffd400";
+  hf.fillRect(16, 100, 22, 22);
+  hf.fillStyle = "#a32020"; hf.fillRect(10, 10, 65, 6); hf.fillRect(10, 134, 65, 6);
+  fl.fillStyle = "#eef2f8"; fl.fillRect(0, 0, 300, 150);
+  fl.fillStyle = "#93a2b5"; fl.font = "13px system-ui, sans-serif"; fl.textAlign = "center";
+  fl.fillText("entek boş", 150, 78);
+  $("mmsg").textContent = "";
+}
+$("mk").onclick = () => {
+  fl.clearRect(0, 0, 300, 150);
+  fl.drawImage($("half"), 0, 0);
+  fl.save();
+  fl.translate(300, 0); fl.scale(-1, 1);
+  fl.drawImage($("half"), 0, 0);
+  fl.restore();
+  $("mmsg").textContent = "Ýarty şekil nusgalanyp, dikligine serpikdirildi we iki bölek " +
+    "birleşdirildi – bitin simmetrik nagyş alyndy.";
+  $("mmsg").className = "msg ok";
+};
+$("mkr").onclick = nagys;
+
+scene(); base = cx.getImageData(0, 0, cv.width, cv.height); nagys();
+</script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animasiýanyň netijeleri — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { position: relative; background: #0d1a2e; border-radius: 12px; height: 230px;
+           overflow: hidden; }
+  .atom { position: absolute; border-radius: 50%; display: flex; align-items: center;
+          justify-content: center; font-weight: 800; color: #fff; font-size: 14px; }
+  .o  { width: 62px; height: 62px; background: #e2574c; }
+  .h  { width: 38px; height: 38px; background: #2b8fd8; font-size: 12px; }
+  .cap { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center;
+         color: #9fb6d4; font-size: 12.5px; }
+  .track { display: flex; flex-direction: column; gap: 6px; }
+  .row2 { display: flex; align-items: center; gap: 8px; background: #f7fafd;
+          border-radius: 10px; padding: 8px 10px; }
+  .row2 .n { width: 22px; height: 22px; border-radius: 6px; background: #2456b0; color: #fff;
+             font-size: 12px; font-weight: 800; display: flex; align-items: center;
+             justify-content: center; flex: 0 0 auto; }
+  .row2 .nm { flex: 1; font-size: 13.5px; }
+  .row2 .tm { font-size: 12px; color: #93a2b5; font-variant-numeric: tabular-nums; }
+  .row2.run { background: #e0f5e6; }
+  .grp { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
+  .grp .btn { padding: 10px 6px; font-size: 13px; }
+  .warnbox { background: #fdeee0; color: #7a3f0c; border-radius: 12px; padding: 11px 13px;
+             font-size: 14px; line-height: 1.5; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Animasiýanyň netijeleri</h1>
+  <div class="sub">Анимация we Переходы menýulary · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Slaýdda suwuň molekulasy düzülýär. Effekt saýla, soňra
+      <b>Görkezişi başla</b> düwmesine bas – obýektler tertip boýunça hereket eder.</div>
+    <div class="stage" id="stage">
+      <div class="atom o" id="a0" style="left:170px;top:84px">O</div>
+      <div class="atom h" id="a1" style="left:70px;top:40px">H</div>
+      <div class="atom h" id="a2" style="left:70px;top:140px">H</div>
+      <div class="cap" id="cap">Suwuň molekulasy: H₂O</div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="play">▶ Görkezişi başla</button>
+      <button class="btn ghost" id="reset">Başlangyç ýagdaý</button>
+      <span class="score" id="state"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Obýekte effekt ber</h3>
+    <div class="goal">Ilki obýekti saýla, soňra effekt toparyndan birini ber.</div>
+    <div class="row">
+      <button class="btn sel" data-o="0" id="s0">O atomy</button>
+      <button class="btn" data-o="1" id="s1">1-nji H</button>
+      <button class="btn" data-o="2" id="s2">2-nji H</button>
+    </div>
+    <div class="grp" id="grp" style="margin-top:10px"></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Dowamlylyk</span>
+      <input type="range" id="dur" min="5" max="30" value="12"><span class="out" id="duro">1.2 s</span></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Область анимации</h3>
+    <div class="track" id="track"></div>
+    <div class="warnbox" id="warn" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Geçiş effektleri</b> bir slaýddan beýlekä geçilende ulanylýar (Переходы menýusy).
+      <b>Animasiýa effektleri</b> bolsa slaýdyň içindäki obýektlere berilýär (Анимация menýusy).
+      Effektleriň tertibini <b>Область анимации</b> penjiresinde görüp bolýar.
+      Effektler aşa köp ulanylsa, prezentasiýanyň mazmunyna düşünmäge päsgel berýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const HOME = [{ x: 170, y: 84 }, { x: 70, y: 40 }, { x: 70, y: 140 }];
+const NAMES = ["O atomy", "1-nji H", "2-nji H"];
+const EFFECTS = {
+  "Вход: Увеличение":   { grp: "Вход", kind: "zoom" },
+  "Вход: Выцветание":   { grp: "Вход", kind: "fade" },
+  "Выделение: Вращение": { grp: "Выделение", kind: "spin" },
+  "Пути: Дуги":         { grp: "Пути перемещения", kind: "arc" },
+  "Пути: Линии":        { grp: "Пути перемещения", kind: "line" },
+  "Выход: Исчезание":   { grp: "Выход", kind: "out" }
+};
+let cur = 0, plan = [null, null, null], durs = [1.2, 1.2, 1.2], playing = false;
+
+Object.keys(EFFECTS).forEach(k => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = k; b.dataset.k = k;
+  b.onclick = () => {
+    plan[cur] = k; durs[cur] = +$("dur").value / 10;
+    $("msg").textContent = `«${NAMES[cur]}» obýektine «${k}» effekti berildi.`;
+    $("msg").className = "msg ok";
+    render();
+  };
+  $("grp").appendChild(b);
+});
+
+[0, 1, 2].forEach(i => {
+  $("s" + i).onclick = () => {
+    cur = i;
+    [0, 1, 2].forEach(j => $("s" + j).className = "btn" + (j === i ? " sel" : ""));
+    if (plan[i]) $("dur").value = Math.round(durs[i] * 10);
+    $("duro").textContent = (+$("dur").value / 10).toFixed(1) + " s";
+    render();
+  };
+});
+
+$("dur").addEventListener("input", () => {
+  $("duro").textContent = (+$("dur").value / 10).toFixed(1) + " s";
+  if (plan[cur]) { durs[cur] = +$("dur").value / 10; render(); }
+});
+
+function render() {
+  const T = $("track"); T.innerHTML = "";
+  const set = plan.filter(Boolean).length;
+  if (!set) T.innerHTML = '<div style="color:#93a2b5;font-size:14px;padding:6px">Heniz effekt berilmedik.</div>';
+  let n = 0;
+  plan.forEach((p, i) => {
+    if (!p) return;
+    n++;
+    const d = document.createElement("div");
+    d.className = "row2"; d.id = "tr" + i;
+    d.innerHTML = `<span class="n">${n}</span>
+      <span class="nm"><b>${NAMES[i]}</b> — ${p}</span>
+      <span class="tm">${durs[i].toFixed(1)} s</span>`;
+    T.appendChild(d);
+  });
+  $("state").textContent = `Effekt berlen obýekt: ${set} / 3`;
+
+  const W = $("warn");
+  if (set === 3 && durs.every(d => d >= 2.5)) {
+    W.style.display = "block";
+    W.innerHTML = "⚠️ Ähli effektler örän uzyn. Effektler aşa köp we haýal bolsa, " +
+      "prezentasiýanyň <b>mazmunyna düşünmäge päsgel berýär</b>.";
+  } else W.style.display = "none";
+}
+
+function reset() {
+  HOME.forEach((h, i) => {
+    const a = $("a" + i);
+    a.style.transition = "none";
+    a.style.left = h.x + "px"; a.style.top = h.y + "px";
+    a.style.opacity = 1; a.style.transform = "none";
+  });
+  $("cap").textContent = "Suwuň molekulasy: H₂O";
+}
+
+$("reset").onclick = () => { if (!playing) reset(); };
+
+$("play").onclick = () => {
+  if (playing) return;
+  const order = [0, 1, 2].filter(i => plan[i]);
+  if (!order.length) { $("msg").textContent = "Ilki iň bolmanda bir obýekte effekt ber."; $("msg").className = "msg bad"; return; }
+  playing = true; reset();
+  order.forEach(i => { $("a" + i).style.opacity = 0; });
+  $("cap").textContent = "Görkeziş barýar…";
+
+  let t = 200;
+  order.forEach(i => {
+    setTimeout(() => {
+      document.querySelectorAll(".row2").forEach(r => r.classList.remove("run"));
+      const r = $("tr" + i); if (r) r.classList.add("run");
+      const a = $("a" + i), k = EFFECTS[plan[i]].kind, d = durs[i];
+      a.style.transition = `all ${d}s ease`;
+      a.style.opacity = 1;
+      if (k === "zoom") { a.style.transform = "scale(.2)"; requestAnimationFrame(() => a.style.transform = "scale(1)"); }
+      if (k === "spin") a.style.transform = "rotate(720deg)";
+      if (k === "out") { a.style.opacity = 1; setTimeout(() => a.style.opacity = 0, d * 500); }
+      if (k === "line") { a.style.left = (HOME[i].x + 60) + "px"; }
+      if (k === "arc") {
+        a.style.left = (i === 0 ? HOME[i].x : HOME[i].x + 62) + "px";
+        a.style.top = (i === 1 ? HOME[i].y + 22 : i === 2 ? HOME[i].y - 22 : HOME[i].y) + "px";
+      }
+    }, t);
+    t += durs[i] * 1000 + 250;
+  });
+
+  setTimeout(() => {
+    playing = false;
+    document.querySelectorAll(".row2").forEach(r => r.classList.remove("run"));
+    $("cap").textContent = "Görkeziş tamamlandy";
+  }, t);
+};
+
+render(); reset();
+</script>
+</body>
+</html>

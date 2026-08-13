@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Düzgünler we netijeleriň tablisasy — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .sent { background: #f7fafd; border-radius: 12px; padding: 12px; font-size: 15px; line-height: 1.8; }
+  .sent span.p { border-radius: 6px; padding: 2px 5px; cursor: pointer; border-bottom: 2px dotted #b9cdf0; }
+  .sent span.p.s { background: #e3edfd; border-bottom-color: #2456b0; }
+  .sent span.p.n { background: #e0f5e6; border-bottom-color: #1d7a3d; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: #5b6b80; margin-top: 8px; }
+  .legend b { display: inline-block; width: 14px; height: 12px; border-radius: 3px; vertical-align: -1px; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex;
+           justify-content: center; overflow-x: auto; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .stage svg g.node { cursor: pointer; }
+  table.rl { font-size: 13.5px; }
+  table.rl th, table.rl td { padding: 6px 9px; text-align: left; }
+  table.rl thead th { background: #eef2f8; color: #5b6b80; }
+  table.rl td.k { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; color: #2456b0; }
+  table.rl tr.used { background: #e0f5e6; }
+  .chain { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+           background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .chain b { color: #1d7a3d; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>«Eger – onda» düzgünleri</h1>
+  <div class="sub">Düzgünleriň sanawy we netijeleriň tablisasy · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sözlemiň böleklerine basyp, haýsysynyň <b>şert</b>, haýsysynyň
+      <b>netije</b> bolýandygyny belle.</div>
+    <div class="sent" id="sent"></div>
+    <div class="legend">
+      <span><b style="background:#e3edfd"></b> şert («eger»-den soň)</span>
+      <span><b style="background:#e0f5e6"></b> netije («onda»-dan soň)</span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="next">Indiki sözlem</button>
+      <span class="score" id="ssc"></span>
+    </div>
+    <div class="msg" id="smsg"></div>
+    <div class="note" id="short"></div>
+  </div>
+
+  <div class="card">
+    <h3>Pikir ýöretme shemasy</h3>
+    <div class="goal">Aşakdaky depelerden birine bas – ondan çykýan ähli düzgünler boýunça
+      netije çykarylar.</div>
+    <div class="stage"><svg id="g" width="460" height="230" viewBox="0 0 460 230"></svg></div>
+    <div class="chain" id="chain"></div>
+  </div>
+
+  <div class="card">
+    <h3>Düzgünleriň sanawy</h3>
+    <div style="overflow-x:auto"><table class="rl" id="rules"></table></div>
+    <div class="note">Belgilemeler: T – towuk, G – gaz, D – düýe, Gp – gaplaň,
+      Ç – çuşlar, Ö – öý haýwanlary, H – haýwanlar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Netije çykaryp bolýarmy?</h3>
+    <div class="sent" id="qz" style="font-size:14.5px"></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn" data-q="1">Hawa, netije çykarylýar</button>
+      <button class="btn" data-q="0">Ýok, çykaryp bolmaýar</button>
+    </div>
+    <div class="msg" id="qmsg"></div>
+    <div class="row"><span class="score" id="qsc"></span>
+      <button class="btn ghost" id="qagain">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      «Eger» sözünden soňky pikir aýtma düzgüniň <b>şerti</b>, «onda» sözünden soňkusy bolsa
+      <b>netijesi</b> bolýar. Netije diňe <b>şert çyn bolanda</b> çykarylýar. Şert nädogry bolsa
+      ýa-da onuň çynlygy barada belli zat bolmasa, netije çykarmak bolmaýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- şert / netije ---------------- */
+const SENT = [
+  {parts: [["Eger ", null], ["adam jaý gurýan bolsa", "s"], [", onda ", null],
+           ["ol – gurluşykçydyr", "n"], [".", null]], short: "J → Gu"},
+  {parts: [["Eger ", null], ["ülje süýji bolsa", "s"], [", onda ", null],
+           ["ol bişendir", "n"], [".", null]], short: "Ü → B"},
+  {parts: [["Eger ", null], ["ýagyş ýagýan bolsa", "s"], [", ", null],
+           ["ýollar öldür", "n"], [".", null]], short: "Ýagyş ýagýar → Ýol öl"},
+  {parts: [["Eger ", null], ["san 0 bilen gutarsa", "s"], [", onda ", null],
+           ["ol 5-e we 2-ä bölünýär", "n"], [".", null]], short: "0 → 5 we 2"},
+  {parts: [["Eger ", null], ["san 2-ä bölünýän bolsa", "s"], [", onda ", null],
+           ["ol san täk däldir", "n"], [".", null]], short: "2 → täk däl"}
+];
+let sx = 0, spick = {};
+function sent() {
+  const S = SENT[sx];
+  $("sent").innerHTML = S.parts.map(([t, k], i) =>
+    k ? `<span class="p ${spick[i] || ""}" data-i="${i}">${t}</span>` : t).join("");
+  $("sent").querySelectorAll(".p").forEach(el => el.onclick = () => {
+    const i = +el.dataset.i, order = ["", "s", "n"];
+    spick[i] = order[(order.indexOf(spick[i] || "") + 1) % 3];
+    sent();
+  });
+  const need = S.parts.map((p, i) => [i, p[1]]).filter(x => x[1]);
+  const ok = need.filter(([i, k]) => spick[i] === k).length;
+  $("ssc").textContent = `${ok} / ${need.length} bölek dogry`;
+  if (ok === need.length) {
+    $("smsg").textContent = "Dogry. Şert bilen netije tapyldy.";
+    $("smsg").className = "msg ok";
+    $("short").innerHTML = `Gysgaldylan ýazgysy: <b>${S.short}</b>`;
+  } else {
+    const bad = need.find(([i, k]) => spick[i] && spick[i] !== k);
+    $("smsg").textContent = bad ? "Bu bölek beýleki tarapy – ýene bir gezek bas." : "";
+    $("smsg").className = "msg bad";
+    $("short").textContent = "";
+  }
+}
+$("next").onclick = () => { sx = (sx + 1) % SENT.length; spick = {}; sent(); };
+
+/* ---------------- graf ---------------- */
+const NODES = {
+  T:  {t: "Towuk", x: 60,  y: 196}, G:  {t: "Gaz", x: 168, y: 196},
+  D:  {t: "Düýe", x: 276, y: 196}, Gp: {t: "Gaplaň", x: 388, y: 196},
+  "Ç": {t: "Çuşlar", x: 114, y: 124}, "Ö": {t: "Öý haýwanlary", x: 196, y: 62},
+  H:  {t: "Haýwanlar", x: 340, y: 20}
+};
+const RULES = [
+  ["T", "Ç"], ["G", "Ç"], ["Ç", "Ö"], ["D", "Ö"], ["Ö", "H"], ["Gp", "H"]
+];
+let used = [], start = null;
+function graph() {
+  let s = "";
+  RULES.forEach(([a, b], i) => {
+    const A = NODES[a], B = NODES[b];
+    const on = used.includes(i);
+    s += `<path d="M${A.x},${A.y - 14} L${B.x},${B.y + 16}" stroke="${on ? "#1d7a3d" : "#c3d2e6"}"
+          stroke-width="${on ? 3 : 2}" fill="none"/>`;
+  });
+  Object.entries(NODES).forEach(([k, n]) => {
+    const w = n.t.length * 7 + 20;
+    const active = used.some(i => RULES[i].includes(k)) || start === k;
+    s += `<g class="node" data-n="${k}">
+      <rect x="${n.x - w / 2}" y="${n.y - 14}" width="${w}" height="30" rx="8"
+        fill="${active ? "#e0f5e6" : "#e3edfd"}" stroke="${active ? "#1d7a3d" : "#2456b0"}" stroke-width="2"/>
+      <text x="${n.x}" y="${n.y + 6}" font-size="12.5" font-weight="700"
+        fill="${active ? "#1d7a3d" : "#2456b0"}" text-anchor="middle">${n.t}</text></g>`;
+  });
+  $("g").innerHTML = s;
+  $("g").querySelectorAll("g.node").forEach(el => el.onclick = () => infer(el.dataset.n));
+  $("rules").innerHTML =
+    "<thead><tr><th>T/b</th><th>Düzgün</th><th>Manysy</th></tr></thead><tbody>" +
+    RULES.map(([a, b], i) =>
+      `<tr class="${used.includes(i) ? "used" : ""}"><td>${i + 1}</td>` +
+      `<td class="k">${a} → ${b}</td>` +
+      `<td>Eger ${NODES[a].t.toLowerCase()} bolsa, onda ol ${NODES[b].t.toLowerCase()}</td></tr>`).join("") +
+    "</tbody>";
+}
+function infer(k) {
+  start = k; used = [];
+  const chain = [NODES[k].t];
+  let cur = k, guard = 0;
+  while (guard++ < 10) {
+    const i = RULES.findIndex(r => r[0] === cur);
+    if (i < 0) break;
+    used.push(i);
+    cur = RULES[i][1];
+    chain.push(NODES[cur].t);
+  }
+  graph();
+  $("chain").innerHTML = used.length
+    ? chain.map((c, i) => i ? `<b>${c}</b>` : c).join(" → ") +
+      `<br>Ulanylan düzgünleriň sany: <b>${used.length}</b>. ` +
+      `Diýmek, ${NODES[k].t.toLowerCase()} – ${chain[chain.length - 1].toLowerCase()}.`
+    : `${NODES[k].t} – bu iň ýokarky depe, ondan çykýan düzgün ýok.`;
+}
+
+/* ---------------- netije çykyp bolýarmy ---------------- */
+const QZ = [
+  ["Düzgün: eger san 0 bilen gutarsa, onda ol 5-e bölünýär. Berlen san – 120.", 1,
+   "Şert çyn: 120 sany 0 bilen gutarýar. Diýmek, ol 5-e bölünýär."],
+  ["Düzgün: eger adam jaý gurýan bolsa, onda ol gurluşykçydyr. Haýsy-da bolsa bir adam.",
+   0, "Onuň jaý gurýandygy belli däl, şonuň üçin netije çykaryp bolmaýar."],
+  ["Düzgün: eger ýagyş ýagýan bolsa, onda ýollar öl. Häzir ýagyş ýagýar.", 1,
+   "Şert çyn, diýmek ýollar öl."],
+  ["Düzgün: eger ülje süýji bolsa, onda ol bişendir. Ülje süýji dälmi ýa-da süýjümi – belli däl.",
+   0, "Şertiň çynlygy barada belli zat ýok, netije çykarmak bolmaýar."],
+  ["Düzgün: eger san 2-ä bölünýän bolsa, onda ol täk däldir. Berlen san – 37.", 0,
+   "37 sany 2-ä bölünmeýär, ýagny şert ýalan. Ýalan şertden netije çykarmak bolmaýar."]
+];
+let qi = 0, qok = 0;
+function qz() {
+  if (qi >= QZ.length) {
+    $("qz").textContent = "Tamamlandy.";
+    $("qmsg").textContent = `Netije: ${qok} / ${QZ.length}`;
+    $("qmsg").className = "msg ok";
+    return;
+  }
+  $("qz").textContent = QZ[qi][0];
+  $("qsc").textContent = `${qi} / ${QZ.length}`;
+}
+document.querySelectorAll("[data-q]").forEach(b => b.onclick = () => {
+  if (qi >= QZ.length) return;
+  const good = +b.dataset.q === QZ[qi][1];
+  if (good) qok++;
+  $("qmsg").textContent = (good ? "Dogry. " : "Ýalňyş. ") + QZ[qi][2];
+  $("qmsg").className = good ? "msg ok" : "msg bad";
+  qi++; qz();
+});
+$("qagain").onclick = () => { qi = 0; qok = 0; $("qmsg").textContent = ""; qz(); };
+
+sent(); graph(); infer("T"); qz();
+</script>
+</body>
+</html>

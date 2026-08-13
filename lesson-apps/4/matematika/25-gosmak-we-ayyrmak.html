@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goşmak we aýyrmak — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .col { background: #fff6e0; border-radius: 13px; padding: 14px 10px; font-family: ui-monospace, Menlo, monospace; font-size: 24px; font-weight: 800; line-height: 1.5; text-align: right; }
+  .col .ln { border-bottom: 3px solid #1e2a3a; padding-bottom: 3px; }
+  .col .pad { padding-right: 16px; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Goşmak we aýyrmak</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def">Sütünleýin ýazanyňda deň derejeli öýjükler biri-biriniň aşagynda durmaly.
+      Goşmagy <b>aýyrmak</b> bilen, aýyrmagy <b>goşmak</b> bilen barlaýarys.</div>
+  </div>
+
+  <div class="card">
+    <h3>Hasapla we barla</h3>
+    <div class="col" id="col"></div>
+    <div class="goal" id="ask" style="margin-top:8px"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mysal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, II kitap · 124–127-nji sahypalar</div>
+</div>
+
+<script>
+// [a, amal, b]
+var T = [
+  [46528, "+", 13475],
+  [80300, "-", 25846],
+  [37649, "+", 52351],
+  [64000, "-", 18375],
+  [125478, "+", 34522]
+];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function res() { var t = T[ti]; return t[1] === "+" ? t[0] + t[2] : t[0] - t[2]; }
+function chk() { var t = T[ti]; return t[1] === "+" ? res() - t[2] : res() + t[2]; }
+function show() {
+  var t = T[ti];
+  var s = '<div class="pad">' + t[0] + "</div>";
+  s += '<div class="ln pad">' + (t[1] === "+" ? "+" : "−") + " " + t[2] + "</div>";
+  s += '<div class="pad">' + (stage >= 1 ? res() : "?") + "</div>";
+  if (stage >= 1) {
+    s += '<div class="pad" style="font-size:17px;color:#33506f">Barlag</div>';
+    s += '<div class="pad">' + res() + "</div>";
+    s += '<div class="ln pad">' + (t[1] === "+" ? "−" : "+") + " " + t[2] + "</div>";
+    s += '<div class="pad">' + (stage >= 2 ? chk() : "?") + "</div>";
+  }
+  document.getElementById("col").innerHTML = s;
+  document.getElementById("ask").textContent =
+    stage === 0 ? "1-nji ädim: netijäni saýla." :
+    stage === 1 ? "2-nji ädim: barlagyň netijesini saýla." : "Mysal çözüldi we barlanyldy.";
+  var m = document.getElementById("msg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ?
+    (t[0] + " " + (t[1] === "+" ? "+" : "−") + " " + t[2] + " = " + res() +
+      ", barlag: " + chk() + " ✓") : "";
+}
+var VALS = [];
+for (var i = 0; i < T.length; i++) {
+  var t = T[i], r = t[1] === "+" ? t[0] + t[2] : t[0] - t[2];
+  VALS.push(r, t[0], r + (t[1] === "+" ? 1000 : 100));
+}
+VALS.sort(function (p, q) { return p - q; });
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= 2) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("msg");
+    var w = stage === 0 ? res() : chk();
+    d++;
+    if (v === w) {
+      ok++; stage++; show();
+      if (stage === 1) { m.className = "msg ok"; m.textContent = "Dogry! Indi ters amal bilen barla."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = stage === 0 ? "Ýalňyş. Öýjükleri sagdan çepe hasapla." :
+        "Ýalňyş. Barlagda birinji goşulyjy (ýa-da kemeldiji) çykmaly.";
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["Goşmagy nähili barlamaly?", ["Jemden goşulyjyny aýyrmaly", "Jeme goşulyjyny goşmaly", "Jemi goşulyja bölmeli"], 0],
+  ["46 528 + 13 475 näçe bolar?", ["60 003", "59 003", "60 013"], 0],
+  ["80 300 − 25 846 näçe bolar?", ["54 454", "54 554", "55 454"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

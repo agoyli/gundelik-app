@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maglumaty kodlaşdyrmak — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tab { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tab div { background: #f7fafd; border-radius: 9px; padding: 6px 8px; font-size: 12.5px;
+             font-family: ui-monospace, Menlo, monospace; font-weight: 700; color: #2456b0;
+             min-width: 44px; text-align: center; }
+  .word { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+  .word button { min-width: 46px; min-height: 52px; font-size: 19px;
+                 font-family: ui-monospace, Menlo, monospace; }
+  .out { background: #f2edfd; border-radius: 13px; padding: 12px; font-size: 17px;
+         font-family: ui-monospace, Menlo, monospace; font-weight: 800; color: #6a4bb8;
+         text-align: center; min-height: 50px; letter-spacing: 1px; word-break: break-all; }
+  .usul { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .usul div { background: #f7fafd; border-radius: 12px; padding: 9px 11px; font-size: 13px;
+              line-height: 1.5; }
+  .usul b { color: #2456b0; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .modes button { font-size: 13.5px; }
+  .grid { display: grid; grid-template-columns: repeat(6, 34px); gap: 3px;
+          justify-content: center; }
+  .grid button { width: 34px; height: 34px; min-height: 34px; border-radius: 6px;
+                 background: #fff; border: 2px solid #cfd9e6; padding: 0; }
+  .grid button.on { background: #1e2a3a; border-color: #1e2a3a; }
+  .bits { font-family: ui-monospace, Menlo, monospace; font-size: 14px; text-align: center;
+          color: #2456b0; font-weight: 700; line-height: 1.7; margin-top: 9px; }
+  .signals { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+  .signals button { min-height: 72px; font-size: 13px; line-height: 1.35; }
+  .signals .em { display: block; font-size: 26px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maglumaty kodlaşdyrmak</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <h3>Kodlaşdyrmagyň üç usuly</h3>
+    <div class="goal">Kitap: «Maglumatlary üç usulda: grafiki, san belgisi we nyşan
+      görnüşinde kodlaşdyryp bolýar.»</div>
+    <div class="usul">
+      <div><b>Grafiki</b><br>Suratlar, shemalar, çyzgylar we kartalar.</div>
+      <div><b>San belgisi</b><br>Harplaryň ýerine sanlar; kompýuterde nol we birlik.</div>
+      <div><b>Nyşan</b><br>Notalar, Morze elipbiýi, baýdajyklaryň elipbiýi, el hereketleri.</div>
+    </div>
+    <div class="hint">Kod – maglumaty görkezmek üçin ulanylýan şertli belgileriň ulgamy.
+      Kodlamagyň düzgünine <b>açar</b> diýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Sözi kodla</h3>
+    <div class="modes" id="md"></div>
+    <div class="sub" style="margin:10px 0 5px">Açar (kod tablisasy):</div>
+    <div class="tab" id="tb"></div>
+    <div class="goal" style="margin-top:10px">Harplara yzygiderlikde bas – olar koda
+      öwrülýär.</div>
+    <div class="word" id="wd"></div>
+    <div class="out" id="out" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn ghost" id="clr">🧹 Arassala</button>
+      <button class="btn" id="newword">🔀 Başga söz</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Suratyň ikilik kody</h3>
+    <div class="goal">Kitap: ak-gara surat üçin <b>1 – gara</b>, <b>0 – ak</b> kwadraty
+      aňladýar. Öýjüklere basyp surat çek – kody özi ýazylýar.</div>
+    <div class="grid" id="gr"></div>
+    <div class="bits" id="bits"></div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn ghost" id="gclr">🧹 Arassala</button>
+      <button class="btn" id="gsample">📖 Kitapdaky nusga</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Belgiler adamlaryň durmuşynda</h3>
+    <div class="goal">Belgä bas – onuň habaryny gör.</div>
+    <div class="signals" id="sg"></div>
+    <div class="hint" id="say" style="min-height:44px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// türkmen elipbiýi – kitapdaky tertipde 30 harp (sah. 21)
+const LETTERS = [..."ABÇDEÄFGHIJŽKLMNŇOÖPRSŞTUÜWYÝZ"];
+const NYSAN = [..."★☆●○■□▲△◆◇♦♥♠♣✶✦✧✩✪✫✬✭✮✯✰✱✲✳✴✵"];
+const MODES = {
+  san:   {name: "🔢 Elipbiý sany", map: (L, i) => String(i + 1), sep: " ",
+          why: "Her harpa elipbiýdäki tertip sany berilýär: A – 1, B – 2."},
+  ikilik:{name: "💻 Ikilik kod", map: (L, i) => (i + 1).toString(2).padStart(8, "0"),
+          sep: " ",
+          why: "Kompýuterde her belgä noldan we birlikden düzülen sekiz belgi degişli."},
+  nysan: {name: "✳️ Nyşan", map: (L, i) => NYSAN[i], sep: " ",
+          why: "Her harpyň ýerine şertli nyşan goýulýar."},
+  calsyr:{name: "🔁 Çalşyrma", map: (L, i) => LETTERS[(i + 1) % LETTERS.length], sep: "",
+          why: "Her harp elipbiýde yzyndan gelýän harp bilen çalşyrylýar: DIL – EJM."},
+};
+let mode = "san";
+const WORDS = ["MEKDEP", "KITAP", "SALAM", "DOST", "MARY", "AGAÇ", "GÜL", "ÝYLDYZ"];
+let word = "MEKDEP", typed = [];
+
+function table() {
+  const m = MODES[mode];
+  $("tb").innerHTML = LETTERS.map((L, i) =>
+    `<div>${L} = ${m.map(L, i)}</div>`).join("");
+  $("md").innerHTML = Object.entries(MODES).map(([k, v]) =>
+    `<button class="btn ${k === mode ? "sel" : ""}" data-k="${k}">${v.name}</button>`).join("");
+  $("md").querySelectorAll("button").forEach(b => b.onclick = () => {
+    mode = b.dataset.k; typed = []; table(); render();
+    $("msg").textContent = MODES[mode].why;
+    $("msg").className = "msg ok";
+  });
+}
+function render() {
+  const up = word.toUpperCase();
+  $("wd").innerHTML = [...up].map((ch, i) =>
+    `<button class="btn ${typed.length > i ? "sel" : ""}" data-i="${i}">${ch}</button>`).join("");
+  $("wd").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if (i !== typed.length) {
+      $("msg").textContent = `❌ Tertibi bozma – indi «${up[typed.length]}» harpyna bas.`;
+      $("msg").className = "msg bad";
+      return;
+    }
+    const k = LETTERS.indexOf(up[i]);
+    typed.push(k >= 0 ? MODES[mode].map(up[i], k) : "?");
+    $("msg").textContent = typed.length === up.length
+      ? "🎉 Söz doly kodlandy!"
+      : `Kodlandy. Ýene ${up.length - typed.length} harp galdy.`;
+    $("msg").className = "msg ok";
+    render();
+  });
+  $("out").textContent = typed.length
+    ? typed.join(MODES[mode].sep)
+    : "kod şu ýerde peýda bolar";
+}
+$("clr").onclick = () => { typed = []; render(); };
+$("newword").onclick = () => {
+  word = WORDS[Math.floor(Math.random() * WORDS.length)];
+  typed = []; render();
+  $("msg").textContent = ""; $("msg").className = "msg";
+};
+
+/* ---------------- suratyň ikilik kody (sah. 33) ---------------- */
+const SAMPLE = [
+  [0, 0, 1, 1, 0, 0],
+  [0, 1, 0, 0, 1, 0],
+  [1, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 1],
+  [0, 1, 0, 0, 1, 0],
+  [0, 0, 1, 1, 0, 0],
+];
+let cells = Array.from({length: 6}, () => Array(6).fill(0));
+function grid() {
+  $("gr").innerHTML = cells.map((row, r) => row.map((v, c) =>
+    `<button class="${v ? "on" : ""}" data-r="${r}" data-c="${c}"
+       aria-label="${r + 1}-nji setir ${c + 1}-nji öýjük"></button>`).join("")).join("");
+  $("gr").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const r = +b.dataset.r, c = +b.dataset.c;
+    cells[r][c] = cells[r][c] ? 0 : 1;
+    grid();
+  });
+  $("bits").innerHTML = cells.map(row => row.join(" ")).join("<br>");
+}
+$("gclr").onclick = () => { cells = Array.from({length: 6}, () => Array(6).fill(0)); grid(); };
+$("gsample").onclick = () => { cells = SAMPLE.map(r => r.slice()); grid(); };
+
+/* ---------------- belgiler (sah. 18, 20) ---------------- */
+const SIG = [
+  ["🚩", "Baýdajyklaryň elipbiýi", "Deňizçiler baýdajyklaryň hereketi bilen habar berýärler."],
+  ["🚂", "Otlynyň sesi", "Otly ses bilen ýakynlaşýandygyny duýdurýar."],
+  ["🚦", "Ýolyşygyň çyralary", "Reňkiň üýtgemegi durmalydygyny ýa-da geçmelidigini aýdýar."],
+  ["🎼", "Dirižýoryň elleri", "El hereketleri sazandalara näme çalmalydygyny görkezýär."],
+  ["🔤", "Harplar we sanlar", "Ýazgy harplardan, sanlardan we dyngy belgilerden düzülýär."],
+  ["🔔", "Jaň sesi", "Mekdepde sapagyň başlanýandygyny ýa-da gutarýandygyny aňladýar."],
+];
+$("sg").innerHTML = SIG.map((s, i) =>
+  `<button class="btn" data-i="${i}"><span class="em">${s[0]}</span>${s[1]}</button>`).join("");
+$("sg").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("sg").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const s = SIG[+b.dataset.i];
+  $("say").innerHTML = `<b>${s[1]}</b> – ${s[2]}<br>Adamlar sesleri ýörite belgiler bilen ` +
+                       `çalyşmaga synanyşýarlar.`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Kod näme?",
+   ["Maglumaty görkezmek üçin şertli belgileriň ulgamy", "Suratyň ölçegi",
+    "Penjiräniň bölegi"], 0],
+  ["Kodlamagyň düzgünine näme diýilýär?", ["Fonema", "Açar", "Piktogramma"], 1],
+  ["Bir belgä näçe ikilik belgi degişli?", ["Iki", "Dört", "Sekiz"], 2],
+  ["Ak-gara suratyň kodunda 1 näme aňladýar?",
+   ["Gara kwadraty", "Ak kwadraty", "Boş setiri"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+table(); render(); grid();
+$("sg").querySelector("button").click();
+</script>
+</body>
+</html>

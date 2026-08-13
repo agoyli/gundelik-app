@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Köplükler — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .venn { position: relative; height: 262px; margin: 4px 0 8px; }
+  .venn svg { position: absolute; left: 0; top: 0; width: 100%; height: 200px; }
+  .outlbl { position: absolute; left: 0; top: 202px; width: 100%; text-align: center; font-size: 12px; font-weight: 700; color: #5b6b80; }
+  .zone {
+    position: absolute; display: flex; flex-wrap: wrap; gap: 4px; align-content: center;
+    justify-content: center; border-radius: 12px; padding: 4px;
+  }
+  .zone.hot { outline: 3px dashed #2456b0; }
+  #zA { left: 6%; top: 62px; width: 24%; height: 78px; }
+  #zAB { left: 38%; top: 62px; width: 24%; height: 78px; }
+  #zB { left: 70%; top: 62px; width: 24%; height: 78px; }
+  #zOut { left: 2%; top: 220px; width: 96%; height: 40px; background: #f4f7fb; }
+  .chip {
+    background: #fff; border: 2px solid #5b6b80; border-radius: 8px;
+    min-width: 30px; padding: 3px 6px; font-size: 14px; font-weight: 800; text-align: center;
+    cursor: pointer;
+  }
+  .chip.sel { background: #ffb340; border-color: #b25b12; }
+  .chip.ok { border-color: #1d7a3d; background: #e0f5e6; color: #1d7a3d; }
+  .pool { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .zones-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+  .sets { font-size: 15px; line-height: 1.8; }
+  .sets b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Köplükler</h1>
+  <div class="sub">Kesişme ∩, birikme ∪ we bölek köplükler · Informatika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal" id="goal"></div>
+    <div class="venn">
+      <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+        <ellipse cx="150" cy="95" rx="130" ry="80" fill="#cfe6d3" fill-opacity=".65" stroke="#1d7a3d" stroke-width="3"/>
+        <ellipse cx="250" cy="95" rx="130" ry="80" fill="#dfe9fb" fill-opacity=".65" stroke="#2456b0" stroke-width="3"/>
+        <text x="40" y="34" font-size="15" font-weight="800" fill="#1d7a3d">A</text>
+        <text x="352" y="34" font-size="15" font-weight="800" fill="#2456b0">B</text>
+      </svg>
+      <div class="zone" id="zA" data-z="A"></div>
+      <div class="zone" id="zAB" data-z="AB"></div>
+      <div class="zone" id="zB" data-z="B"></div>
+      <div class="outlbl">hiç birine degişli däl</div>
+      <div class="zone" id="zOut" data-z="OUT"></div>
+    </div>
+    <div class="pool" id="pool"></div>
+    <div class="zones-btns" id="zbtns"></div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="score"></div>
+  </div>
+
+  <div class="card">
+    <h3>Netije</h3>
+    <div class="sets" id="sets"></div>
+    <div class="note">
+      A we B köplüklere <b>bir wagtda</b> degişli elementlerden ybarat köplüge <b>kesişme</b> diýilýär (∩).
+      Haýsy-da bolsa birine degişli elementlerden ybarat köplüge <b>birikme</b> diýilýär (∪).
+      Umumy elementi bolmadyk köplükleriň kesişmesi — <b>boş köplük ∅</b>.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const N1 = 12, N2 = 18;
+const NUMS = Array.from({ length: 18 }, (_, i) => i + 1);
+const place = {};        // num -> zone
+let selected = null;
+
+function trueZone(n) {
+  const a = N1 % n === 0, b = N2 % n === 0;
+  if (a && b) return "AB";
+  if (a) return "A";
+  if (b) return "B";
+  return "OUT";
+}
+
+const ZLABEL = {
+  A: "diňe A (12-niň bölüjileri)",
+  AB: "A ∩ B (umumy bölüjiler)",
+  B: "diňe B (18-iň bölüjileri)",
+  OUT: "hiç birine degişli däl"
+};
+
+function render() {
+  document.getElementById("goal").innerHTML =
+    `A — <b>12-niň bölüjileri</b>, B — <b>18-iň bölüjileri</b>. Aşakdaky sany saýla, soň onuň ýerini saýla.`;
+  ["zA", "zAB", "zB", "zOut"].forEach(id => document.getElementById(id).innerHTML = "");
+  const pool = document.getElementById("pool");
+  pool.innerHTML = "";
+  NUMS.forEach(n => {
+    const c = document.createElement("div");
+    c.className = "chip" + (selected === n ? " sel" : "") + (place[n] ? " ok" : "");
+    c.textContent = n;
+    c.onclick = () => { selected = selected === n ? null : n; render(); };
+    if (place[n]) {
+      const zid = { A: "zA", AB: "zAB", B: "zB", OUT: "zOut" }[place[n]];
+      document.getElementById(zid).appendChild(c);
+    } else pool.appendChild(c);
+  });
+
+  const zb = document.getElementById("zbtns");
+  zb.innerHTML = "";
+  ["A", "AB", "B", "OUT"].forEach(z => {
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = ZLABEL[z];
+    b.onclick = () => put(z);
+    b.disabled = selected === null;
+    zb.appendChild(b);
+  });
+
+  const placed = Object.keys(place).length;
+  document.getElementById("score").textContent = `Ýerleşdirilen: ${placed} / ${NUMS.length}`;
+  renderSets();
+}
+
+function put(z) {
+  if (selected === null) return;
+  const n = selected;
+  const t = trueZone(n);
+  const m = document.getElementById("msg");
+  if (z === t) {
+    place[n] = z;
+    m.textContent = `${n} dogry ýerleşdirildi ✓ ` +
+      (t === "AB" ? `(${n} hem 12-ni, hem 18-i galyndysyz bölýär)` :
+        t === "A" ? `(12 : ${n} = ${12 / n}, emma 18 ${n}-e bölünmeýär)` :
+          t === "B" ? `(18 : ${n} = ${18 / n}, emma 12 ${n}-e bölünmeýär)` :
+            `(${n} ne 12-ni, ne-de 18-i galyndysyz bölmeýär)`);
+    m.className = "msg ok";
+    selected = null;
+  } else {
+    m.textContent = `${n} bu ýere degişli däl. 12 : ${n} ${12 % n === 0 ? "galyndysyz bölünýär" : "galyndyly"}; 18 : ${n} ${18 % n === 0 ? "galyndysyz bölünýär" : "galyndyly"}.`;
+    m.className = "msg bad";
+  }
+  render();
+}
+
+function renderSets() {
+  const A = NUMS.filter(n => N1 % n === 0);
+  const B = NUMS.filter(n => N2 % n === 0);
+  const inter = A.filter(n => B.includes(n));
+  const uni = [...new Set([...A, ...B])].sort((x, y) => x - y);
+  document.getElementById("sets").innerHTML =
+    `A = {${A.join(", ")}}<br>B = {${B.join(", ")}}<br>` +
+    `<b>A ∩ B</b> = {${inter.join(", ")}} — umumy bölüjiler<br>` +
+    `<b>A ∪ B</b> = {${uni.join(", ")}} — birikmesi`;
+}
+
+render();
+</script>
+</body>
+</html>

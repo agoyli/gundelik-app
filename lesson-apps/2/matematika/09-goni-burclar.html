@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Göni we göni bolmadyk burçlar — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .angles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .angles button { min-height: 96px; padding: 6px; }
+  .angles svg { width: 100%; height: 70px; }
+  .fold { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .fold svg { display: block; width: 100%; height: auto; max-height: 150px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Göni we göni bolmadyk burçlar</h1>
+  <div class="sub">Matematika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="def">Iki taýajygyň uçlary birikdirilse <b>burç</b> emele gelýär.
+      Kagyz bölegi dört eplenende alynýan çyzyklaryň emele getiren burçlaryna
+      <b>göni burç</b> diýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Kagyzy epläp gör</h3>
+    <div class="fold"><svg id="fd" viewBox="0 0 300 140"></svg></div>
+    <div class="msg" id="fmsg"></div>
+    <div class="row"><button class="btn primary" id="fbtn">Eple</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Göni burçlary tap</h3>
+    <div class="goal">Diňe <b>göni burçlara</b> bas. Ählisini tapsaň – ýeňiş!</div>
+    <div class="angles" id="ang"></div>
+    <div class="msg" id="amsg"></div>
+    <div class="row"><button class="btn ghost" id="areset">Täzeden</button></div>
+    <div class="score" id="asc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 2, II kitap · 84–85-nji sahypalar</div>
+</div>
+
+<script>
+var step = 0;
+function drawFold() {
+  var s = '<rect x="40" y="16" width="220" height="110" fill="#fdf6e6" stroke="#9a7a3a" stroke-width="2" rx="3"/>';
+  if (step >= 1) s += '<line x1="150" y1="16" x2="150" y2="126" stroke="#c1622a" stroke-width="3" stroke-dasharray="7 5"/>';
+  if (step >= 2) s += '<line x1="40" y1="71" x2="260" y2="71" stroke="#c1622a" stroke-width="3" stroke-dasharray="7 5"/>';
+  if (step >= 3) {
+    s += '<path d="M150 71 L150 46 L175 46 L175 71 Z" fill="#dff0e4" stroke="#2b7a4a" stroke-width="2"/>';
+    s += '<text x="205" y="42" font-size="14" fill="#2b7a4a">göni burç</text>';
+  }
+  document.getElementById("fd").innerHTML = s;
+  var m = document.getElementById("fmsg");
+  m.className = step >= 3 ? "msg ok" : "msg";
+  m.textContent = ["Kagyz bölegi taýýar. «Eple» düwmesine bas.",
+    "Birinji epleniş çyzygy.",
+    "Ikinji epleniş çyzygy. Indi burçlary gör.",
+    "Bu çyzyklaryň emele getiren burçy – göni burç."][step];
+  document.getElementById("fbtn").textContent = step >= 3 ? "Täzeden" : "Eple";
+}
+document.getElementById("fbtn").onclick = function () { step = step >= 3 ? 0 : step + 1; drawFold(); };
+drawFold();
+
+// [ady, göni burçmy, svg]
+var A = [
+  ["göni", 1, '<svg viewBox="0 0 80 70"><polyline points="16,10 16,56 68,56" fill="none" stroke="#2456b0" stroke-width="4"/><rect x="16" y="44" width="12" height="12" fill="none" stroke="#2b7a4a" stroke-width="2"/></svg>'],
+  ["ýiti", 0, '<svg viewBox="0 0 80 70"><polyline points="62,18 14,56 68,56" fill="none" stroke="#c1622a" stroke-width="4"/></svg>'],
+  ["ýaýbaň", 0, '<svg viewBox="0 0 80 70"><polyline points="12,24 40,56 72,26" fill="none" stroke="#c1622a" stroke-width="4"/></svg>'],
+  ["göni", 1, '<svg viewBox="0 0 80 70"><polyline points="64,10 64,56 12,56" fill="none" stroke="#2456b0" stroke-width="4"/><rect x="52" y="44" width="12" height="12" fill="none" stroke="#2b7a4a" stroke-width="2"/></svg>'],
+  ["ýiti", 0, '<svg viewBox="0 0 80 70"><polyline points="20,14 62,52 12,54" fill="none" stroke="#c1622a" stroke-width="4"/></svg>'],
+  ["göni", 1, '<svg viewBox="0 0 80 70"><polyline points="14,14 14,52 66,52" fill="none" stroke="#2456b0" stroke-width="4"/><rect x="14" y="40" width="12" height="12" fill="none" stroke="#2b7a4a" stroke-width="2"/></svg>']
+];
+var found = 0, ad = 0, aok = 0;
+function drawAng() {
+  var h = "";
+  for (var i = 0; i < A.length; i++) h += '<button class="btn" data-i="' + i + '">' + A[i][2] + "</button>";
+  document.getElementById("ang").innerHTML = h;
+  var bs = document.getElementById("ang").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = aclick;
+  document.getElementById("amsg").className = "msg";
+  document.getElementById("amsg").textContent = "";
+  found = 0;
+}
+function aclick() {
+  var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("amsg");
+  if (this.getAttribute("data-done")) return;
+  this.setAttribute("data-done", "1"); ad++;
+  if (A[i][1]) {
+    aok++; found++;
+    this.className = "btn sel";
+    m.className = "msg ok";
+    m.textContent = found === 3 ? "Ähli göni burçlar tapyldy! 🎉" : "Dogry! Bu göni burç.";
+  } else {
+    m.className = "msg bad";
+    m.textContent = "Ýalňyş. Bu " + A[i][0] + " burç, göni däl.";
+  }
+  document.getElementById("asc").textContent = "Netije: " + aok + " / " + ad;
+}
+document.getElementById("areset").onclick = drawAng;
+drawAng();
+
+var Q = [
+  ["Kagyz dört eplenende emele gelýän burç nähili?", ["Göni burç", "Göni däl burç", "Kesim"], 0],
+  ["Burç näme bilen emele gelýär?", ["Iki taýajygyň uçlary birikdirilende", "Bir nokat goýlanda", "Tegelek çyzylanda"], 0],
+  ["Depderiň burçy nähili burç?", ["Göni burç", "Göni däl burç", "Burç däl"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

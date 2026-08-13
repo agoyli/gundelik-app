@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Üçburçluk — 5-nji synp</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #f0f6ff;
+    color: #1e2a3a;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #5b6b80; font-size: 14px; margin-bottom: 14px; }
+  .card {
+    background: #fff; border-radius: 16px; padding: 14px;
+    box-shadow: 0 2px 8px rgba(30,42,58,.08); margin-bottom: 14px;
+  }
+  svg { width: 100%; height: auto; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .vertex { cursor: grab; }
+  .badge {
+    display: inline-block; padding: 8px 16px; border-radius: 999px;
+    font-weight: 700; font-size: 16px;
+  }
+  .badge.yiti { background: #e0f5e6; color: #1d7a3d; }
+  .badge.kutek { background: #fdeee0; color: #b25b12; }
+  .badge.goni { background: #e3edfd; color: #2456b0; }
+  .badge.yok { background: #fbe3e3; color: #b02424; }
+  .info { font-size: 15px; line-height: 1.6; margin-top: 8px; }
+  .tasks { display: flex; gap: 8px; flex-wrap: wrap; }
+  .task {
+    padding: 8px 12px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    background: #e8eef7; color: #5b6b80;
+  }
+  .task.done { background: #e0f5e6; color: #1d7a3d; }
+  .tasks-title { font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+  .congrats { margin-top: 10px; font-weight: 700; color: #1d7a3d; display: none; }
+  .footer { text-align: center; color: #93a2b5; font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Üçburçluk</h1>
+  <div class="sub">Depeleri (A, B, C) süýşür — burçlaryna seret! · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <svg id="board" viewBox="0 0 440 320" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="card">
+    <div id="badge"></div>
+    <div class="info" id="info"></div>
+  </div>
+
+  <div class="card">
+    <div class="tasks-title">Ýumuşlar: her görnüşden bir üçburçluk ýasa</div>
+    <div class="tasks">
+      <span class="task" id="task-yiti">Ýitiburçly</span>
+      <span class="task" id="task-goni">Gönüburçly</span>
+      <span class="task" id="task-kutek">Kütekburçly</span>
+    </div>
+    <div class="congrats" id="congrats">Berekella! Üç görnüşiň üçüsini-de ýasadyň! 🎉</div>
+  </div>
+
+  <div class="footer">1 öýjük = 1 sm · Okuw kitaby: Matematika 5 (2017)</div>
+</div>
+
+<script>
+const SVG = document.getElementById("board");
+const NS = "http://www.w3.org/2000/svg";
+const CELL = 40;                      // 1 sm
+const W = 440, H = 320;
+const PAD = 20;                       // grid margin inside viewBox
+
+// grid coordinates (in sm), snapped to 0.5
+let pts = { A: { x: 2, y: 6 }, B: { x: 8, y: 6 }, C: { x: 4, y: 2 } };
+const done = { yiti: false, goni: false, kutek: false };
+
+function px(p) { return { x: PAD + p.x * CELL, y: PAD + p.y * CELL }; }
+
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function dist(p, q) { return Math.hypot(p.x - q.x, p.y - q.y); }
+
+function angleAt(v, p, q) { // angle at vertex v between rays v->p, v->q, degrees
+  const a = { x: p.x - v.x, y: p.y - v.y }, b = { x: q.x - v.x, y: q.y - v.y };
+  const la = Math.hypot(a.x, a.y), lb = Math.hypot(b.x, b.y);
+  if (la === 0 || lb === 0) return 0;
+  let c = (a.x * b.x + a.y * b.y) / (la * lb);
+  c = Math.max(-1, Math.min(1, c));
+  return Math.acos(c) * 180 / Math.PI;
+}
+
+function fmt(n) { const r = Math.round(n * 10) / 10; return (r % 1 === 0 ? r.toFixed(0) : r.toFixed(1)); }
+
+function render() {
+  SVG.innerHTML = "";
+
+  // grid
+  for (let x = 0; x <= (W - 2 * PAD) / CELL; x++)
+    SVG.appendChild(el("line", { x1: PAD + x * CELL, y1: PAD, x2: PAD + x * CELL, y2: H - PAD, stroke: "#e3ebf5", "stroke-width": 1 }));
+  for (let y = 0; y <= (H - 2 * PAD) / CELL; y++)
+    SVG.appendChild(el("line", { x1: PAD, y1: PAD + y * CELL, x2: W - PAD, y2: PAD + y * CELL, stroke: "#e3ebf5", "stroke-width": 1 }));
+
+  const A = px(pts.A), B = px(pts.B), C = px(pts.C);
+  const angA = angleAt(pts.A, pts.B, pts.C);
+  const angB = angleAt(pts.B, pts.A, pts.C);
+  const angC = angleAt(pts.C, pts.A, pts.B);
+  const degenerate = angA < 1 || angB < 1 || angC < 1 || (angA + angB + angC) < 178;
+
+  // triangle fill
+  SVG.appendChild(el("polygon", {
+    points: `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`,
+    fill: degenerate ? "#f5d9d9" : "#dceafc", stroke: "#2456b0", "stroke-width": 2.5, "stroke-linejoin": "round"
+  }));
+
+  // side length labels at midpoints
+  const sides = [
+    ["AB", pts.A, pts.B], ["BC", pts.B, pts.C], ["AC", pts.A, pts.C]
+  ];
+  for (const [name, p, q] of sides) {
+    const mp = px({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
+    const t = el("text", { x: mp.x, y: mp.y - 6, "text-anchor": "middle", "font-size": 13, fill: "#5b6b80", "font-weight": 600 });
+    t.textContent = `${fmt(dist(p, q))} sm`;
+    SVG.appendChild(t);
+  }
+
+  // vertices + angle labels
+  const angles = { A: angA, B: angB, C: angC };
+  for (const name of ["A", "B", "C"]) {
+    const p = px(pts[name]);
+    const g = el("g", { class: "vertex", "data-v": name });
+    g.appendChild(el("circle", { cx: p.x, cy: p.y, r: 14, fill: "#fff", stroke: "#e2574c", "stroke-width": 3 }));
+    const lbl = el("text", { x: p.x, y: p.y + 5, "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#e2574c" });
+    lbl.textContent = name;
+    g.appendChild(lbl);
+    const ang = el("text", { x: p.x, y: p.y - 20, "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: "#2456b0" });
+    ang.textContent = degenerate ? "" : `${Math.round(angles[name])}°`;
+    g.appendChild(ang);
+    SVG.appendChild(g);
+  }
+
+  // classification
+  const badge = document.getElementById("badge");
+  const info = document.getElementById("info");
+  if (degenerate) {
+    badge.innerHTML = `<span class="badge yok">Üçburçluk däl</span>`;
+    info.textContent = "Üç nokat bir göni çyzygyň üstünde diýen ýaly — üçburçluk emele gelmeýär. Nokatlaryň birini süýşür!";
+    return;
+  }
+
+  const mx = Math.max(angA, angB, angC);
+  let cls, key, why;
+  if (Math.abs(mx - 90) <= 1.5) {
+    cls = "Gönüburçly üçburçluk"; key = "goni";
+    why = "bir burçy göni (90°)";
+  } else if (mx > 90) {
+    cls = "Kütekburçly üçburçluk"; key = "kutek";
+    why = `bir burçy kütek (${Math.round(mx)}° > 90°)`;
+  } else {
+    cls = "Ýitiburçly üçburçluk"; key = "yiti";
+    why = "ähli burçlary ýiti (90°-dan kiçi)";
+  }
+  badge.innerHTML = `<span class="badge ${key}">${cls}</span>`;
+
+  const ab = dist(pts.A, pts.B), bc = dist(pts.B, pts.C), ac = dist(pts.A, pts.C);
+  info.innerHTML =
+    `∆ABC — ${why}.<br>` +
+    `Perimetri: AB + BC + AC = ${fmt(ab)} + ${fmt(bc)} + ${fmt(ac)} = <b>${fmt(ab + bc + ac)} sm</b>`;
+
+  if (!done[key]) {
+    done[key] = true;
+    document.getElementById("task-" + key).classList.add("done");
+    document.getElementById("task-" + key).textContent += " ✓";
+    if (done.yiti && done.goni && done.kutek)
+      document.getElementById("congrats").style.display = "block";
+  }
+}
+
+// dragging
+let dragging = null;
+function toGrid(evt) {
+  const r = SVG.getBoundingClientRect();
+  const sx = (evt.clientX - r.left) * (W / r.width);
+  const sy = (evt.clientY - r.top) * (H / r.height);
+  let gx = Math.round((sx - PAD) / CELL * 2) / 2;   // snap to 0.5 sm
+  let gy = Math.round((sy - PAD) / CELL * 2) / 2;
+  gx = Math.max(0, Math.min((W - 2 * PAD) / CELL, gx));
+  gy = Math.max(0, Math.min((H - 2 * PAD) / CELL, gy));
+  return { x: gx, y: gy };
+}
+
+SVG.addEventListener("pointerdown", e => {
+  const g = e.target.closest(".vertex");
+  if (!g) return;
+  dragging = g.getAttribute("data-v");
+  SVG.setPointerCapture(e.pointerId);
+});
+SVG.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  pts[dragging] = toGrid(e);
+  render();
+});
+SVG.addEventListener("pointerup", () => { dragging = null; });
+
+render();
+</script>
+</body>
+</html>

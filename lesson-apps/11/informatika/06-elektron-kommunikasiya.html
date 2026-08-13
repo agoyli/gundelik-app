@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elektron kommunikasiýalar — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .bins { display: flex; gap: 8px; flex-wrap: wrap; }
+  .bin { flex: 1; min-width: 150px; background: #f7fafd; border-radius: 12px; padding: 10px; min-height: 92px; }
+  .bin h4 { font-size: 12px; color: #93a2b5; margin-bottom: 6px; font-weight: 800; }
+  .chip { display: inline-block; background: #e0f5e6; color: #1d7a3d; border-radius: 999px;
+          padding: 6px 11px; font-size: 13px; font-weight: 700; margin: 0 4px 4px 0; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; line-height: 1.85;
+          background: #f7fafd; border-radius: 11px; padding: 11px; }
+  .calc b { color: #2456b0; }
+  .fld { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .fld label { width: 96px; font-size: 13.5px; font-weight: 700; color: #5b6b80; flex: 0 0 auto; }
+  .fld input { width: 116px; padding: 10px; font-size: 15px; border-radius: 10px;
+               border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .fld select { padding: 10px; font-size: 14px; border-radius: 10px; border: 2px solid #d6e0ee; }
+  .conn div { background: #f7fafd; border-radius: 11px; padding: 10px 11px; font-size: 14px;
+              margin-bottom: 5px; cursor: pointer; }
+  .conn b { color: #2456b0; }
+  .conn small { display: block; font-size: 12.5px; color: #93a2b5; margin-top: 3px; line-height: 1.45; }
+  .conn div.on small { color: #5b6b80; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Elektron kommunikasiýalar</h1>
+  <div class="sub">Asinhron we sinhron aragatnaşyk, geçiriş tizligi · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Hyzmat haýsy topara degişli? Habar ýazylyp soň okalýan bolsa – asinhron,
+      şol bada alşylýan bolsa – sinhron.</div>
+    <div class="bins">
+      <div class="bin"><h4>ASINHRON</h4><div id="b1"></div></div>
+      <div class="bin"><h4>SINHRON</h4><div id="b2"></div></div>
+    </div>
+    <div class="row" style="margin-top:10px"><span class="badge purple" id="item"></span></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" data-b="1">Asinhron</button>
+      <button class="btn" data-b="2">Sinhron</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="msg" id="qx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Geçiriş tizligi boýunça hasaplama</h3>
+    <div class="goal">Iki bahany ýaz – üçünjisi hasaplanýar. Nämäni tapmalydygyny saýla.</div>
+    <div class="row tight" style="margin-bottom:10px">
+      <button class="btn" data-w="I">Maglumatyň möçberini</button>
+      <button class="btn sel" data-w="t">Wagty</button>
+      <button class="btn" data-w="v">Tizligi</button>
+    </div>
+    <div class="fld"><label>Möçberi</label><input id="I" value="61440">
+      <select id="Iu"><option value="1">bit</option><option value="1024">Kbit</option>
+        <option value="1048576">Mbit</option></select></div>
+    <div class="fld"><label>Tizlik</label><input id="v" value="50">
+      <select id="vu"><option value="1">bit/s</option><option value="1024" selected>Kbit/s</option>
+        <option value="1048576">Mbit/s</option></select></div>
+    <div class="fld"><label>Wagt</label><input id="t" value="1,2">
+      <select id="tu"><option value="1">sekunt</option><option value="60">minut</option></select></div>
+    <div class="calc" id="calc"></div>
+    <div class="note">1 Kbit/s = 1024 bit/s;  1 Mbit/s = 1024 Kbit/s;  1 Gbit/s = 1024 Mbit/s.
+      Telekommunikasiýada käte 1 Kbit/s = 1000 bit/s hem alynýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Tora birikdirmegiň usullary</h3>
+    <div class="conn" id="conn"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Habary geçirmek üçin ulanylýan tehniki serişdeleriň ulgamyna <b>maglumaty geçirmegiň
+      kanaly</b> diýilýär. Toruň häsiýetli aýratynlyklarynyň biri – <b>geçiriş tizligi</b>,
+      ýagny kanalyň geçirip bilijilik ukybydyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- toparlara bölmek ---------------- */
+const ITEMS = [
+  ["Elektron poçta", 1], ["Internet forumlar", 1], ["Elektron tagtalar", 1],
+  ["Täzelikleriň topary", 1], ["Bloglar", 1],
+  ["Çatlar", 2], ["Wideokonferensiýalar", 2], ["Sesli konferensiýalar", 2],
+  ["Çalt habarlar alyşmak (IMS)", 2]
+];
+let queue = [], wrong = 0;
+function nextItem() {
+  if (!queue.length) {
+    $("item").textContent = "Hemmesi ýerleşdirildi";
+    document.querySelectorAll("[data-b]").forEach(b => b.disabled = true);
+    $("qx").textContent = wrong === 0 ? "Ählisi birinji synanyşykda dogry ýerleşdirildi."
+      : `Tamamlandy. ${wrong} sany ýalňyşlyk goýberildi.`;
+    $("qx").className = "msg " + (wrong ? "bad" : "ok");
+    return;
+  }
+  $("item").textContent = queue[0][0];
+  document.querySelectorAll("[data-b]").forEach(b => b.disabled = false);
+}
+function answer(k) {
+  const [n, want] = queue[0];
+  if (k !== want) {
+    wrong++;
+    $("qx").textContent = want === 1
+      ? `«${n}» – habar ýazylyp, jogap soň gelýär. Bu asinhron aragatnaşykdyr.`
+      : `«${n}» – habar hakyky wagt kadasynda alşylýar. Bu sinhron aragatnaşykdyr.`;
+    $("qx").className = "msg bad"; return;
+  }
+  queue.shift();
+  const c = document.createElement("span");
+  c.className = "chip"; c.textContent = n;
+  $("b" + k).appendChild(c);
+  $("qx").textContent = "Dogry."; $("qx").className = "msg ok";
+  nextItem();
+}
+function resetQ() {
+  queue = ITEMS.slice(); wrong = 0;
+  $("b1").innerHTML = ""; $("b2").innerHTML = "";
+  $("qx").textContent = ""; nextItem();
+}
+document.querySelectorAll("[data-b]").forEach(b => b.onclick = () => answer(+b.dataset.b));
+$("again").onclick = resetQ;
+
+/* ---------------- hasaplama ---------------- */
+let want = "t";
+const num = x => {
+  const r = Math.round(x * 10000) / 10000;
+  return String(r).replace(".", ",");
+};
+const val = id => parseFloat($(id).value.replace(",", ".")) || 0;
+
+function calc() {
+  const Iu = +$("Iu").value, vu = +$("vu").value, tu = +$("tu").value;
+  const I = val("I") * Iu, v = val("v") * vu, t = val("t") * tu;
+  let out = "";
+  if (want === "t") {
+    const r = v ? I / v : 0;
+    $("t").value = num(r / tu);
+    out = `t = I : v = ${num(I)} bit : ${num(v)} bit/s = <b>${num(r)} sekunt</b>`;
+  } else if (want === "I") {
+    const r = v * t;
+    $("I").value = num(r / Iu);
+    out = `I = v · t = ${num(v)} bit/s · ${num(t)} s = <b>${num(r)} bit</b>` +
+          `<br>= ${num(r / 8)} baýt = ${num(r / 1024)} Kbit`;
+  } else {
+    const r = t ? I / t : 0;
+    $("v").value = num(r / vu);
+    out = `v = I : t = ${num(I)} bit : ${num(t)} s = <b>${num(r)} bit/s</b>` +
+          `<br>= ${num(r / 1024)} Kbit/s`;
+  }
+  $("calc").innerHTML =
+    `I = ${num(I)} bit,  v = ${num(v)} bit/s,  t = ${num(t)} s<br>` + out;
+}
+document.querySelectorAll("[data-w]").forEach(b => b.onclick = () => {
+  want = b.dataset.w;
+  document.querySelectorAll("[data-w]").forEach(x => x.className = "btn" + (x.dataset.w === want ? " sel" : ""));
+  ["I", "v", "t"].forEach(id => $(id).disabled = (id === want));
+  calc();
+});
+["I", "v", "t"].forEach(id => $(id).addEventListener("input", calc));
+["Iu", "vu", "tu"].forEach(id => $(id).addEventListener("change", calc));
+
+/* ---------------- birikdirmek ---------------- */
+const CONN = [
+  ["USB kabeli", "Dört simden durýar: ikisi tok bilen iýmitlendirýär, beýleki ikisi berlenleri geçirýär."],
+  ["Ethernet kabeli", "Lokal tora birikdirmegiň standarty. Gönüleýin kabel kompýuteri kommutator bilen, " +
+    "çatryklaýyn kabel bolsa iki kompýuteri gönüden-göni birikdirýär."],
+  ["Bluetooth", "Simsiz personal tor. Oňa sekiz sany kompýuteri ýa-da mobil gurluşy birikdirip bolýar."],
+  ["Wi-Fi", "IEEE Wireless 802.11b/g protokoly boýunça işleýän simsiz lokal tor."],
+  ["Süýümli-optiki kabel", "Ýagtylygyň tizligine ýakyn tizlik berýär, 1 Gbit/s we ondan ýokary. " +
+    "Elektromagnit tolkunlaryň täsirine durnuklydyr."]
+];
+$("conn").innerHTML = CONN.map(([n], i) =>
+  `<div data-i="${i}"><b>${n}</b><small>? basyp gör</small></div>`).join("");
+$("conn").querySelectorAll("div").forEach(d => d.onclick = () => {
+  const [n, t] = CONN[+d.dataset.i];
+  d.className = "on";
+  d.innerHTML = `<b>${n}</b><small>${t}</small>`;
+});
+
+resetQ();
+$("t").disabled = true;
+calc();
+</script>
+</body>
+</html>

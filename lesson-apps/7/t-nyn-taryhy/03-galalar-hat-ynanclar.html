@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şäherler-galalar. Hat-ýazuw. Dini ynançlar — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .board { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .board svg { display: block; width: 100%; height: auto; max-height: 230px; }
+  .gals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .gals button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Şäherler-galalar. Goýungyrlan galasy. Hat-ýazuw. Dini ynançlar</h1>
+  <div class="sub">Türkmenistanyň taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Gadymy Horezmiň galalary <b>syýasy, medeni we hojalyk merkezleri</b>
+      bolupdyr. Olar palçykdan-pagsadan hem-de çig kerpiçden salnypdyr.</div>
+  </div>
+
+  <div class="card">
+    <h3>Galany saýla – meýilnamasyny gör</h3>
+    <div class="board"><svg id="bd" viewBox="0 0 320 230"></svg></div>
+    <div class="goal" id="goal"></div>
+    <div class="gals" id="gals">
+      <button class="btn" data-g="galalygyr">Galalygyr</button>
+      <button class="btn" data-g="kuyzeligyr">Küýzeligyr</button>
+      <button class="btn" data-g="toprakgala">Toprakgala</button>
+      <button class="btn" data-g="goyungyrlan">Goýungyrlan</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Hat-ýazuw we dini ynançlar</h3>
+    <div class="task" id="task"></div>
+    <div class="kinds" id="kinds">
+      <button class="btn" data-k="hat">Hat-ýazuw</button>
+      <button class="btn" data-k="din">Dini ynanç</button>
+      <button class="btn" data-k="bina">Binagärlik</button>
+    </div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Türkmenistanyň taryhy 7 · 12–18-nji sahypalar</div>
+</div>
+
+<script>
+// [ady, uzynlyk m, in m, asyr, düşündiriş, görnüş]
+var G = {
+  galalygyr: ["Galalygyr", 1000, 720, "b.e. öňki V–IV asyr",
+    "«Ýaşaýyş jaý diwarly gala»: dört tarapy öwrümli diwarlar bilen gurşalypdyr.", "rect"],
+  kuyzeligyr: ["Küýzeligyr", 1000, 400, "b.e. öňki VI–IV asyr",
+    "Belentlige utgaşyp gider ýaly salnypdyr.", "rect"],
+  toprakgala: ["Toprakgala", 400, 300, "giçki Kuşan döwri",
+    "12 gektara golaý meýdan; demirgazyk-günbatar burçunda üç diňli köşk bolupdyr.", "rect"],
+  goyungyrlan: ["Goýungyrlan", 87.5, 87.5, "b.e. öňki IV – b.e. IV asyr",
+    "Ortasyndaky tegelek ymaratyň içki diametri 42 m, daşkysy 87,5 m.", "round"]
+};
+var cur = "", seen = {}, d = 0;
+function draw() {
+  var s = '<rect x="0" y="0" width="320" height="230" fill="#f2ead9"/>';
+  if (!cur) {
+    s += '<text x="60" y="120" font-size="16" fill="#33506f">Galany saýla</text>';
+    document.getElementById("bd").innerHTML = s;
+    document.getElementById("goal").textContent =
+      "Galalar b.e. öňki IV asyrdan başlap Horezmiň merkezleri bolupdyr.";
+    return;
+  }
+  var g = G[cur], w = g[1], h = g[2];
+  var scale = 240 / 1000;
+  if (g[5] === "round") scale = 150 / 87.5;
+  var pw = Math.max(28, w * scale), ph = Math.max(28, h * scale);
+  var x = (320 - pw) / 2, y = (200 - ph) / 2 + 10;
+  if (g[5] === "round") {
+    s += '<circle cx="160" cy="110" r="' + (pw / 2) + '" fill="#e0cfa8" stroke="#7a5c1e" stroke-width="4"/>';
+    s += '<circle cx="160" cy="110" r="' + (pw / 2 * 42 / 87.5) + '" fill="#cbb489" stroke="#7a5c1e" stroke-width="3"/>';
+    for (var k = 0; k < 4; k++) {
+      var a = Math.PI / 4 + k * Math.PI / 2;
+      s += '<circle cx="' + (160 + Math.cos(a) * pw / 2).toFixed(1) + '" cy="' +
+        (110 + Math.sin(a) * pw / 2).toFixed(1) + '" r="9" fill="#a8875a" stroke="#7a5c1e" stroke-width="2"/>';
+    }
+    s += '<text x="122" y="115" font-size="13" fill="#3b2c10">42 m</text>';
+    s += '<text x="150" y="' + (110 - pw / 2 - 8) + '" font-size="13" fill="#3b2c10">87,5 m</text>';
+  } else {
+    s += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + pw.toFixed(1) +
+      '" height="' + ph.toFixed(1) + '" fill="#e0cfa8" stroke="#7a5c1e" stroke-width="4"/>';
+    var n = 5;
+    for (var k = 0; k <= n; k++) {
+      var px = x + pw * k / n;
+      s += '<rect x="' + (px - 5).toFixed(1) + '" y="' + (y - 5).toFixed(1) +
+        '" width="10" height="10" fill="#a8875a" stroke="#7a5c1e" stroke-width="2"/>';
+      s += '<rect x="' + (px - 5).toFixed(1) + '" y="' + (y + ph - 5).toFixed(1) +
+        '" width="10" height="10" fill="#a8875a" stroke="#7a5c1e" stroke-width="2"/>';
+    }
+    s += '<text x="' + (x + pw / 2 - 26) + '" y="' + (y - 12) + '" font-size="13" fill="#3b2c10">' +
+      w + " m</text>";
+    s += '<text x="' + (x + pw + 6) + '" y="' + (y + ph / 2) + '" font-size="13" fill="#3b2c10">' +
+      h + " m</text>";
+  }
+  s += '<text x="10" y="222" font-size="14" fill="#3b2c10">' + g[0] + " · " + g[3] + "</text>";
+  document.getElementById("bd").innerHTML = s;
+  document.getElementById("goal").textContent = g[0] + ": " + g[4];
+}
+var gb = document.getElementById("gals").getElementsByTagName("button");
+for (var i = 0; i < gb.length; i++) {
+  gb[i].onclick = function () {
+    cur = this.getAttribute("data-g");
+    draw();
+    var m = document.getElementById("msg");
+    m.className = "msg ok";
+    m.textContent = G[cur][0] + " – " + G[cur][3] + ".";
+    if (!seen[cur]) { seen[cur] = 1; d++; }
+    document.getElementById("sc").textContent = "Görlen galalar: " + d + " / 4";
+  };
+}
+draw();
+
+// [maglumat, dogry açar, düşündiriş]
+var P = [
+  ["Tapylan ýazgylara «Arabaçylaryň haty» diýlipdir.", "hat",
+   "Ol arabaçylar döwrüne degişli galadan tapylandygy üçin şeýle atlandyrylypdyr."],
+  ["Asman baş hudaý hasaplanyp, Güne we Aýa sežde edilipdir.", "din",
+   "Ýyldyzlara-da bil baglanypdyr."],
+  ["Galalar palçykdan-pagsadan we çig kerpiçden salnypdyr.", "bina",
+   "Möçberi-de, görnüşi-de dürli-dürli bolupdyr."],
+  ["Hat kese ýazylyp, dik hytaý hatyndan tapawutlanypdyr.", "hat",
+   "Ol arameý hatyna ýakyn elipbiýde ýazylypdyr."],
+  ["Ýedigen haýyr-sogap işiniň dörän mekany hasaplanypdyr.", "din",
+   "Ülker bolsa adamzadyň ilki dörän mekany hasaplanypdyr."],
+  ["Toprakgalada üç diňli köşk we ot ybadathanasy bolupdyr.", "bina",
+   "Şäheriň ýeke-täk derwezesi bolupdyr."],
+  ["Toprakgaladan pergamente we agaç gabygyna ýazylan arhiw tapyldy.", "hat",
+   "Köşk arhiwi arameý hatyna ýakyn bolupdyr."],
+  ["B.e. öňki VI asyrda otparazçylyk agalyk ediji dine öwrülipdir.", "din",
+   "Köp hudaýlylyk kem-kemden ýitipdir."]
+];
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("task").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), m = document.getElementById("pmsg");
+    if (k === P[pi][1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + P[pi][2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + P[pi][2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+var Q = [
+  ["Goýungyrlandaky tegelek ymaratyň içki diametri näçe?", ["42 m", "87,5 m", "720 m"], 0],
+  ["Toprakgala näçe gektar meýdany tutýar?", ["12 gektara golaý", "120 gektar", "1 gektar"], 0],
+  ["Arabaçylaryň haty nähili ýazylypdyr?", ["Kese", "Dik", "Tegelek"], 0]
+];
+var qd = 0, qok = 0, hq = "";
+for (var i = 0; i < Q.length; i++) {
+  hq += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hq += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hq += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hq;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

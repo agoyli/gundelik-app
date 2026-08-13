@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multimedia elementleri — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { position: relative; background: linear-gradient(135deg,#eaf2ff,#dbe8fb);
+           border: 2px solid #d6e0ee; border-radius: 12px; height: 260px; overflow: hidden; }
+  .obj { position: absolute; cursor: grab; user-select: none; -webkit-user-select: none;
+         border-radius: 8px; touch-action: none; }
+  .obj.sel { outline: 3px solid #2456b0; outline-offset: 2px; }
+  .obj.txt { font-weight: 800; color: #1e2a3a; padding: 5px 8px; background: rgba(255,255,255,.75); }
+  .obj.pic { display: flex; align-items: center; justify-content: center; font-size: 34px;
+             background: #fff; box-shadow: 0 2px 6px rgba(30,42,58,.12); }
+  .obj.fig { display: flex; align-items: center; justify-content: center; color: #fff;
+             font-weight: 700; font-size: 12.5px; text-align: center; padding: 4px; }
+  .obj.snd { background: #fdeee0; color: #b25b12; font-weight: 700; font-size: 12.5px;
+             padding: 6px 9px; }
+  .adds { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
+  .adds .btn { padding: 11px 6px; font-size: 13.5px; }
+  .kinds { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .kind { font-size: 12.5px; padding: 6px 11px; border-radius: 999px; background: #eef2f8; color: #93a2b5; }
+  .kind.on { background: #e0f5e6; color: #1d7a3d; font-weight: 700; }
+  .bar { height: 8px; border-radius: 999px; background: #f0d9c1; overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; background: #e2884c; width: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Multimedia elementleri</h1>
+  <div class="sub">Tekst, grafika, ses we wideo bilen slaýd döretmek · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Slaýda dört görnüşiň hemmesini goş: <b>tekst</b>, <b>grafika</b>,
+      <b>ses</b> we <b>wideo</b>. Obýektleri barmak ýa-da syçan bilen süýşürip bolýar.</div>
+    <div class="stage" id="stage"></div>
+    <div class="kinds" id="kinds"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Вставка menýusy</h3>
+    <div class="adds" id="adds"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn warn" id="del">Saýlanany aýyr</button>
+      <button class="btn ghost" id="clear">Slaýdy arassala</button>
+      <button class="btn primary" id="play">▶ Sesi goýber</button>
+    </div>
+    <div class="bar"><i id="prog"></i></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Tekstiň, grafikanyň, sesiň, animasiýanyň we wideonyň bile ulanylmagyny üpjün edýän
+      kompýuter tehnologiýasyna <b>multimedia</b> diýilýär. Surat
+      <b>Вставка → Рисунок</b>, ses <b>Вставка → Звук</b> bilen goýulýar.
+      Suratyň ölçegini <b>markerleriň</b> kömegi bilen üýtgedip bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const stage = $("stage");
+const KINDS = { tekst: "tekst", grafika: "grafika", ses: "ses", wideo: "wideo" };
+let objs = [], sel = null, seq = 0, timer = null;
+
+const CATALOG = [
+  { l: "Надпись (ýazgy)", kind: "tekst", make: () => ({ cls: "txt", html: "Tebigatyň gözelligi", w: 168, h: 30, fs: 15 }) },
+  { l: "Рисунок (surat)", kind: "grafika", make: () => ({ cls: "pic", html: "🏔", w: 92, h: 72 }) },
+  { l: "Рисунок (haýwan)", kind: "grafika", make: () => ({ cls: "pic", html: "🐆", w: 78, h: 66 }) },
+  { l: "Фигуры (strelka)", kind: "grafika", make: () => ({ cls: "fig", html: "Möhüm ➜", w: 96, h: 40, bg: "#2456b0" }) },
+  { l: "Фигуры (ýyldyz)", kind: "grafika", make: () => ({ cls: "fig", html: "★ Bellik", w: 88, h: 46, bg: "#6a4bb8" }) },
+  { l: "Звук (ses)", kind: "ses", make: () => ({ cls: "snd", html: "🔊 guşlaryň sesi", w: 130, h: 32 }) },
+  { l: "Видео (wideo)", kind: "wideo", make: () => ({ cls: "pic", html: "🎬", w: 104, h: 68 }) }
+];
+
+CATALOG.forEach(c => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = c.l;
+  b.onclick = () => add(c);
+  $("adds").appendChild(b);
+});
+
+function add(c) {
+  const o = c.make();
+  o.id = ++seq; o.kind = c.kind;
+  o.x = 16 + (objs.length * 26) % 190;
+  o.y = 16 + (objs.length * 34) % 150;
+  objs.push(o); sel = o.id;
+  msg(`«${c.l}» slaýda goýuldy. Ony süýşürip ýerini üýtgedip bilersiň.`, "ok");
+  render();
+}
+
+function msg(t, cls) { $("msg").textContent = t; $("msg").className = "msg" + (cls ? " " + cls : ""); }
+
+function render() {
+  stage.innerHTML = "";
+  objs.forEach(o => {
+    const d = document.createElement("div");
+    d.className = "obj " + o.cls + (sel === o.id ? " sel" : "");
+    d.style.left = o.x + "px"; d.style.top = o.y + "px";
+    d.style.width = o.w + "px"; d.style.height = o.h + "px";
+    if (o.bg) d.style.background = o.bg;
+    if (o.fs) d.style.fontSize = o.fs + "px";
+    d.innerHTML = o.html;
+    d.addEventListener("pointerdown", e => {
+      sel = o.id; render();
+      const r = stage.getBoundingClientRect();
+      const dx = e.clientX - r.left - o.x, dy = e.clientY - r.top - o.y;
+      const move = ev => {
+        o.x = Math.max(0, Math.min(r.width - o.w, ev.clientX - r.left - dx));
+        o.y = Math.max(0, Math.min(r.height - o.h, ev.clientY - r.top - dy));
+        const n = stage.querySelector(".obj.sel");
+        if (n) { n.style.left = o.x + "px"; n.style.top = o.y + "px"; }
+      };
+      const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+      window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+    });
+    stage.appendChild(d);
+  });
+  if (!objs.length) stage.innerHTML = '<div style="padding:18px;color:#93a2b5;font-size:14px">Slaýd boş. Aşakdan element goş.</div>';
+
+  const have = new Set(objs.map(o => o.kind));
+  const K = $("kinds"); K.innerHTML = "";
+  Object.values(KINDS).forEach(k => {
+    const s = document.createElement("span");
+    s.className = "kind" + (have.has(k) ? " on" : "");
+    s.textContent = (have.has(k) ? "✅ " : "○ ") + k;
+    K.appendChild(s);
+  });
+  if (have.size === 4) {
+    const s = document.createElement("span");
+    s.className = "kind on"; s.textContent = "🎉 Bu – multimedia slaýdy!";
+    K.appendChild(s);
+  }
+}
+
+$("del").onclick = () => {
+  if (sel === null) { msg("Ilki obýekti saýla.", "bad"); return; }
+  objs = objs.filter(o => o.id !== sel); sel = null; msg("Obýekt aýryldy.", "ok"); render();
+};
+$("clear").onclick = () => { objs = []; sel = null; msg(""); render(); };
+
+$("play").onclick = () => {
+  if (!objs.some(o => o.kind === "ses")) { msg("Ilki slaýda ses goý.", "bad"); return; }
+  clearInterval(timer);
+  let t = 0;
+  msg("Ses goýberilýär… (7 sekunt)", "ok");
+  timer = setInterval(() => {
+    t += 0.1;
+    $("prog").style.width = Math.min(100, t / 7 * 100) + "%";
+    if (t >= 7) { clearInterval(timer); msg("Ses tamamlandy.", "ok"); $("prog").style.width = "0"; }
+  }, 100);
+};
+
+render();
+</script>
+</body>
+</html>

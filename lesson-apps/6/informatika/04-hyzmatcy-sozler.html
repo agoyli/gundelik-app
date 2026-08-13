@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritmiň hyzmatçy sözleri — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .words { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 6px; }
+  .words button { background: #f7fafd; border: 2px solid #e2e9f2; border-radius: 11px;
+                  padding: 10px 6px; font-size: 14px; font-weight: 800; color: #2456b0;
+                  cursor: pointer; min-height: 44px; }
+  .words button.on { background: #e3edfd; border-color: #2456b0; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 12px; line-height: 1.9;
+          white-space: pre-wrap; }
+  .code b { color: #2456b0; }
+  .code i { color: #93a2b5; font-style: normal; }
+  .slots { display: flex; flex-direction: column; gap: 5px; }
+  .slot { display: flex; gap: 9px; align-items: center; background: #f7fafd; border-radius: 11px;
+          padding: 9px 11px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
+  .slot .gap { min-width: 76px; text-align: center; border-bottom: 2px dashed #b9cdf0;
+               font-weight: 800; color: #2456b0; padding: 2px 6px; }
+  .slot.ok { background: #e0f5e6; }
+  .slot .gap.ok { border-bottom-color: #1d7a3d; color: #1d7a3d; }
+  .bank { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bank button { min-height: 44px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Algoritmik dil we hyzmatçy sözler</h1>
+  <div class="sub">Algoritmi birmeňzeş ýazmak · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">6-njy tablisadaky <b>21 sany</b> hyzmatçy söz. Islendigine bas –
+      onuň manysy ýazylar.</div>
+    <div class="words" id="words"></div>
+    <div class="note" id="wx">Söze bas.</div>
+  </div>
+
+  <div class="card">
+    <h3>Algoritmiň gurluşy</h3>
+    <div class="code" id="skel"></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn sel" data-v="bos">Boş nusga</button>
+      <button class="btn" data-v="kub">Kubuň göwrümi</button>
+      <button class="btn" data-v="gon">Gönüburçlugyň uzynlygy</button>
+      <button class="btn" data-v="agac">Agaç oturtmak</button>
+    </div>
+    <div class="note" id="sx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Boş ýerleri doldur</h3>
+    <div class="goal">Aşakdaky sözlerden birine bas, soň boş ýere bas.</div>
+    <div class="bank" id="bank"></div>
+    <div class="slots" id="slots" style="margin-top:9px"></div>
+    <div class="row"><span class="score" id="fsc"></span>
+      <button class="btn ghost" id="fr">Täzeden</button></div>
+    <div class="msg" id="fmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Hyzmatçy sözmi ýa-da däl?</h3>
+    <div class="code" id="qw" style="text-align:center;font-size:20px;font-weight:800"></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn" data-h="1">Hyzmatçy söz</button>
+      <button class="btn" data-h="0">Hyzmatçy söz däl</button>
+    </div>
+    <div class="msg" id="qmsg"></div>
+    <div class="row"><span class="score" id="qsc"></span>
+      <button class="btn ghost" id="qr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Algoritmik dil</b> – algoritmleri birmeňzeş ýazmak üçin belgilemeleriň we düzgünleriň
+      ulgamydyr. Algoritm <b>alg</b>-dan <b>başl</b>-a çenli sözbaşydan, <b>başl</b>-dan
+      <b>soň</b>-a çenli bolsa özenden durýar. Hyzmatçy sözler çap edilýän tekstde goýy şriftde
+      ýazylýar, golýazmalarda bolsa aşagy çyzylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- 21 hyzmatçy söz ---------------- */
+const W = [
+  ["alg", "algoritm – algoritmiň sözbaşysyny başlaýar"],
+  ["arg", "argument – algoritme girizilýän ululyk"],
+  ["net", "netije – algoritmiň berýän ululygy"],
+  ["başl", "başlangyjy – algoritmiň özeni şundan başlanýar"],
+  ["soň", "soňy – algoritmiň özeni şu ýerde tamamlanýar"],
+  ["bit", "bitin san görnüşli ululyk"],
+  ["hak", "hakyky san görnüşli ululyk"],
+  ["berlen", "algoritmiň şertini ýazmakda ulanylýar"],
+  ["eger", "şerti başlaýan söz: eger ... onda ..."],
+  ["giriz", "berlenleri girizmek buýrugy"],
+  ["bolmasa", "şert ýerine ýetmedik ýagdaýdaky buýrugy görkezýär"],
+  ["tamam", "şahalanmanyň tamamlanýandygyny görkezýär"],
+  ["häzirlikçe", "şertli gaýtalanmanyň hyzmatçy sözi"],
+  ["gerek", "algoritmi ýerine ýetirmegiň maksadyny ýazýar"],
+  ["üçin", "parametrli gaýtalanmada ulanylýar"],
+  ["-dan (-den)", "gaýtalanmanyň başlangyç bahasyny görkezýär"],
+  ["çenli", "gaýtalanmanyň soňky bahasyny görkezýär"],
+  ["bahasy", "ululygyň alýan bahasyny aňladýar"],
+  ["we", "logiki baglaýjy: iki şert hem çyn bolmaly"],
+  ["ýa-da", "logiki baglaýjy: iň bolmanda biri çyn bolmaly"],
+  ["çykar", "netijäni ekrana çykarmak buýrugy"]
+];
+$("words").innerHTML = W.map(([w], i) => `<button data-i="${i}">${w}</button>`).join("");
+$("words").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("words").querySelectorAll("button").forEach(x => x.className = "");
+  b.className = "on";
+  const [w, m] = W[+b.dataset.i];
+  $("wx").innerHTML = `<b>${w}</b> — ${m}`;
+});
+
+/* ---------------- gurluş ---------------- */
+const SKEL = {
+  bos: [`<b>alg</b> <i>algoritmiň ady</i> (<b>arg</b> <i>argumentler</i>, <b>net</b> <i>netijeler</i>)
+  <b>berlen</b> <i>algoritmiň şerti</i>
+  <b>gerek</b> <i>ýerine ýetirmegiň maksady</i>
+<b>başl</b> <i>ululyklaryň beýany</i>
+  <i>buýruklaryň yzygiderligi – algoritmiň özeni</i>
+<b>soň.</b>`,
+   "alg-dan başl-a çenli – sözbaşy, başl-dan soň-a çenli – algoritmiň özeni. " +
+   "berlen we gerek sözlerini ýazmak hökman däl."],
+  kub: [`<b>alg</b> Kubuň göwrümi (<b>arg</b> a <b>hak</b>, <b>net</b> V <b>hak</b>)
+<b>başl</b>
+  <b>giriz</b> a;
+  V := a * a * a;
+  <b>çykar</b> "V = ", V;
+<b>soň.</b>`,
+   "Argument a – kubuň gapyrgasy, netije V – onuň göwrümi. Ikisi hem hakyky san görnüşli."],
+  gon: [`<b>alg</b> Gönüburçlugyň uzynlygy (<b>arg hak</b> a, P, <b>net hak</b> b)
+<b>başl</b>
+  <b>giriz</b> a, P;
+  a := 5; P := 30;
+  b := P / 2 - a;
+  <b>çykar</b> "b = ", b;
+<b>soň.</b>`,
+   "Ini a = 5 sm, perimetri P = 30 sm bolanda uzynlygy b = 30 / 2 - 5 = 10 sm bolýar."],
+  agac: [`<b>Başlangyjy</b>
+  Çukury taýýarlamaly
+  Agajyň köküni çukurda ýerleşdirmeli
+  Çukury toprak bilen doldurmaly
+  Agajyň düýbüne suw guýmaly
+<b>Soňy.</b>`,
+   "Söz arkaly beýan ediliş: her buýruk täze setirden ýazylýar, soňunda dyngy belgisi goýulmaýar."]
+};
+function skel(v) {
+  $("skel").innerHTML = SKEL[v][0];
+  $("sx").textContent = SKEL[v][1];
+  document.querySelectorAll("[data-v]").forEach(b =>
+    b.className = "btn" + (b.dataset.v === v ? " sel" : ""));
+}
+document.querySelectorAll("[data-v]").forEach(b => b.onclick = () => skel(b.dataset.v));
+
+/* ---------------- boş ýerleri doldur ---------------- */
+const FILL = [
+  ["", " Kwadratyň meýdany (", "alg", "arg hak a, net hak S)"],
+  ["", "", "başl", ""],
+  ["  ", "", "giriz", " a;"],
+  ["  ", "S := a * a;", "", ""],
+  ["  ", "", "çykar", " \"S = \", S;"],
+  ["", "", "soň", "."]
+];
+const BANK = ["alg", "başl", "giriz", "çykar", "soň", "net", "eger", "häzirlikçe"];
+let sel = null, filled = {};
+function fill() {
+  $("bank").innerHTML = BANK.map(w =>
+    `<button class="btn${sel === w ? " sel" : ""}" data-w="${w}">${w}</button>`).join("");
+  $("bank").querySelectorAll("button").forEach(b =>
+    b.onclick = () => { sel = b.dataset.w; fill(); });
+  $("slots").innerHTML = FILL.map(([pre, mid, need, post], i) => {
+    if (!need) return `<div class="slot">${pre}${mid}${post}</div>`;
+    const v = filled[i], good = v === need;
+    return `<div class="slot${good ? " ok" : ""}">${pre}${mid}` +
+      `<span class="gap${good ? " ok" : ""}" data-i="${i}">${v || "___"}</span>${post}</div>`;
+  }).join("");
+  $("slots").querySelectorAll(".gap").forEach(g => g.onclick = () => {
+    if (!sel) { $("fmsg").textContent = "Ilki ýokardan bir söz saýla."; $("fmsg").className = "msg bad"; return; }
+    filled[+g.dataset.i] = sel; fill();
+  });
+  const need = FILL.filter(f => f[2]).length;
+  const ok = FILL.filter((f, i) => f[2] && filled[i] === f[2]).length;
+  $("fsc").textContent = `${ok} / ${need}`;
+  if (ok === need) {
+    $("fmsg").textContent = "Algoritm doly. Sözbaşy alg bilen, özeni bolsa başl bilen başlanýar.";
+    $("fmsg").className = "msg ok";
+  } else if (Object.keys(filled).length) {
+    $("fmsg").textContent = "Käbir boş ýer nädogry doldurlan – üstüne täzeden bas.";
+    $("fmsg").className = "msg bad";
+  }
+}
+$("fr").onclick = () => { filled = {}; sel = null; $("fmsg").textContent = ""; fill(); };
+
+/* ---------------- hyzmatçy sözmi ---------------- */
+const QW = [["alg", 1], ["kwadrat", 0], ["başl", 1], ["san", 0], ["çykar", 1],
+            ["galam", 0], ["häzirlikçe", 1], ["meýdan", 0], ["eger", 1], ["ekran", 0]];
+let qi = 0, qok = 0, ord = [];
+function qw() {
+  if (!ord.length) ord = QW.map((_, i) => i).sort(() => Math.random() - 0.5);
+  if (qi >= ord.length) {
+    $("qw").textContent = "✓";
+    $("qmsg").textContent = `Netije: ${qok} / ${ord.length}`;
+    $("qmsg").className = "msg ok";
+    return;
+  }
+  $("qw").textContent = QW[ord[qi]][0];
+  $("qsc").textContent = `${qi} / ${ord.length}`;
+}
+document.querySelectorAll("[data-h]").forEach(b => b.onclick = () => {
+  if (qi >= ord.length) return;
+  const good = +b.dataset.h === QW[ord[qi]][1];
+  if (good) qok++;
+  $("qmsg").textContent = good ? "Dogry."
+    : QW[ord[qi]][1] ? "Bu hyzmatçy söz – ol algoritmiň gurluşyny ýazýar."
+    : "Bu adaty söz, hyzmatçy söz däl.";
+  $("qmsg").className = good ? "msg ok" : "msg bad";
+  qi++; qw();
+});
+$("qr").onclick = () => { qi = 0; qok = 0; ord = []; $("qmsg").textContent = ""; qw(); };
+
+skel("bos"); fill(); qw();
+</script>
+</body>
+</html>

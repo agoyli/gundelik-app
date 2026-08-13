@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meseleler paneli — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .desk { background: #cfe0fb; border-radius: 14px; padding: 10px; min-height: 240px;
+          position: relative; overflow: hidden; }
+  .win { position: absolute; left: 14px; top: 12px; width: 200px; background: #fff;
+         border-radius: 10px; overflow: hidden; box-shadow: 0 4px 14px rgba(30,42,58,.22); }
+  .win .bar { background: #2456b0; color: #fff; padding: 7px 8px; font-size: 12.5px;
+              font-weight: 700; display: flex; gap: 6px; }
+  .win .bar .ttl { flex: 1; }
+  .win .bar button { width: 24px; height: 24px; border-radius: 6px; background: #ffffff33;
+                     color: #fff; font-size: 13px; font-weight: 800; }
+  .win .body { padding: 9px; font-size: 12.5px; color: #5b6b80; line-height: 1.5; }
+  .taskbar { background: #1e2a3a; border-radius: 9px; padding: 6px; display: flex; gap: 6px;
+             position: absolute; left: 10px; right: 10px; bottom: 10px; min-height: 44px;
+             align-items: center; }
+  .taskbar button { background: #38506b; color: #fff; border-radius: 7px; padding: 8px 10px;
+                    font-size: 12px; font-weight: 700; }
+  .taskbar .start { background: #1d7a3d; }
+  .taskbar .tray { margin-left: auto; display: flex; gap: 8px; align-items: center;
+                   color: #cfe0fb; font-size: 12px; }
+  .taskbar .tray span { cursor: pointer; padding: 5px 7px; border-radius: 6px;
+                        background: #ffffff1a; }
+  .menu { position: absolute; left: 14px; bottom: 60px; background: #fff; border-radius: 10px;
+          padding: 8px; box-shadow: 0 6px 18px rgba(30,42,58,.3); width: 176px; }
+  .menu button { display: block; width: 100%; text-align: left; padding: 9px 10px;
+                 border-radius: 8px; font-size: 13px; font-weight: 700; background: #f7fafd;
+                 color: #1e2a3a; margin-bottom: 5px; }
+  .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .legend div { background: #f7fafd; border-radius: 12px; padding: 9px 11px; font-size: 13px;
+                line-height: 1.5; }
+  .legend b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Meseleler paneli</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Kitap: «Meseleler paneli – bu iş stolunyň aşaky böleginde
+      ýerleşen gök zolak.» Esasy menýu düwmesine, programma düwmelerine we sag
+      böleginiň nyşanlaryna basyp gör.</div>
+    <div class="desk" id="dk"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Paneliň bölekleri</h3>
+    <div class="legend">
+      <div><b>Çep bölegi</b><br>Esasy menýunyň, Ýolbeledin (Проводник) we
+        Proigrywateliň nyşanlary.</div>
+      <div><b>Ortasy</b><br>Düýrlenen we goýberilen programmalaryň düwmeleri.</div>
+      <div><b>Sag bölegi</b><br>Dil paneli, antiwirusyň, toruň we sesi sazlaýjynyň
+        nyşanlary, Sene we Wagt.</div>
+      <div><b>Esasy wezipesi</b><br>Goýberilen programmalary düwme we nyşan görnüşde
+        görkezmek, aralarynda ugruny çalt üýtgetmek.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const APPS = [
+  {k: "kalk", n: "🧮 Kalkulýator", b: "Esasy menýunyň kömegi bilen işe goýberilýän hasaplaýjy."},
+  {k: "ekkl", n: "⌨️ Ekran klawiaturasy", b: "Esasy menýunyň gözleg setirinde ady ýazylyp tapylýar."},
+  {k: "wp", n: "📝 WordPad", b: "Ýönekeý ýazgy redaktory – ýazgy ýazmak üçin."},
+  {k: "paint", n: "🎨 Paint", b: "Grafiki redaktor – surat çekmek üçin."},
+];
+const LANGS = ["TU", "RU", "EN"];
+let open = [], act = null, minim = [], menu = false, li = 0;
+
+function desk() {
+  const w = act && !minim.includes(act) ? APPS.find(a => a.k === act) : null;
+  const win = w ? `<div class="win">
+      <div class="bar"><span class="ttl">${w.n}</span>
+        <button data-a="min">─</button><button data-a="close">×</button></div>
+      <div class="body">${w.b}</div></div>` : "";
+  const mn = menu ? `<div class="menu">
+      ${APPS.map(a => `<button data-a="open" data-k="${a.k}">${a.n}</button>`).join("")}
+      <button data-a="off" style="background:#fbe3e3;color:#b02424">⏻ Işi tamamlamak</button>
+    </div>` : "";
+  const tb = `<div class="taskbar">
+      <button class="start" data-a="menu">⊞ Esasy menýu</button>
+      <button data-a="yol">📂</button>
+      <button data-a="proig">▶️</button>
+      ${open.map(k => {
+        const a = APPS.find(x => x.k === k);
+        return `<button data-a="focus" data-k="${k}"
+          style="${k === act && !minim.includes(k) ? "background:#2456b0" : ""}">${a.n}</button>`;
+      }).join("")}
+      <span class="tray"><span data-a="lang">${LANGS[li]}</span>
+        <span data-a="anti">🛡</span><span data-a="tor">📶</span><span data-a="ses">🔊</span>
+        <span data-a="clock">🕐 09:15<br>23.06.2019</span></span>
+    </div>`;
+  $("dk").innerHTML = win + mn + tb;
+  $("dk").querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+    const a = b.dataset.a, k = b.dataset.k;
+    if (a === "menu") { menu = !menu; say(menu ? "Esasy menýu açyldy – programmalaryň sanawy." : "Menýu ýapyldy."); }
+    else if (a === "open") {
+      if (!open.includes(k)) open.push(k);
+      act = k; minim = minim.filter(x => x !== k); menu = false;
+      say(`«${APPS.find(x => x.k === k).n}» açyldy we panelde düwmesi peýda boldy.`);
+    }
+    else if (a === "min") { minim.push(act);
+      say("Penjire düýrlendi – düýrlenen programma paneliň ortasynda galýar."); }
+    else if (a === "close") {
+      open = open.filter(x => x !== act); minim = minim.filter(x => x !== act);
+      say("Programma ýapyldy – düwmesi hem panelden aýryldy.");
+      act = open[open.length - 1] || null;
+    }
+    else if (a === "focus") {
+      act = k; minim = minim.filter(x => x !== k);
+      say(`«${APPS.find(x => x.k === k).n}» penjiresi öňe çykdy.`);
+    }
+    else if (a === "lang") {
+      li = (li + 1) % LANGS.length;
+      const full = {TU: "Türkmen (Türkmenistan)", RU: "Rus (Russiýa)",
+                    EN: "Iňlis (ABŞ)"}[LANGS[li]];
+      say(`Dil paneli: ${LANGS[li]} – ${full}. Ondan gerek däl dili aýryp we zerur dili ` +
+          `goşup bolýar.`);
+    }
+    else if (a === "clock") say("Sene we wagta basylanda, olary üýtgedip bolýan penjire açylýar.");
+    else if (a === "anti") say("Bu antiwirusyň nyşany – ol kompýuteri gorap saklaýar.");
+    else if (a === "tor") say("Bu toruň nyşany – ol birikmäniň ýagdaýyny görkezýär.");
+    else if (a === "ses") say("Bu sesi sazlaýjynyň nyşany – ses güýjüni üýtgedýär.");
+    else if (a === "yol") say("Bu Ýolbeled (Проводник) – ol faýllar we papkalar bilen işleýär.");
+    else if (a === "proig") say("Bu Proigrywatel – ol aýdym we wideo faýllary açýar.");
+    else if (a === "off") { open = []; act = null; minim = []; menu = false;
+      say("Kompýuter dogry tertipde öçürildi."); }
+    desk();
+  });
+}
+function say(t) { $("msg").textContent = t; $("msg").className = "msg ok"; }
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Meseleler paneli nirede ýerleşýär?",
+   ["Iş stolunyň aşaky böleginde", "Klawiaturada", "Penjiräniň içinde"], 0],
+  ["Dil paneli paneliň haýsy böleginde ýerleşýär?", ["Çepinde", "Sagynda", "Ortasynda"], 1],
+  ["Düýrlenen programmalar nirede görünýär?",
+   ["Sebetde", "Sag burçda", "Paneliň ortasynda"], 2],
+  ["Paneliň çep böleginde näme ýerleşen?",
+   ["Esasy menýu, Ýolbeled we Proigrywatel", "Sene we wagt", "Antiwirus"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+desk();
+</script>
+</body>
+</html>

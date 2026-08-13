@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maglumat bilen işlemek — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .card-item {
+    background: #fff3d6; border: 2px solid #ffb340; border-radius: 12px;
+    padding: 14px; font-size: 16px; font-weight: 700; text-align: center; min-height: 70px;
+    display: flex; align-items: center; justify-content: center; line-height: 1.4;
+  }
+  .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .zone {
+    padding: 14px 8px; border-radius: 12px; font-size: 14.5px; font-weight: 800;
+    background: #e3edfd; color: #2456b0; text-align: center; line-height: 1.35;
+  }
+  .zone:active { background: #cfe0fb; }
+  .zone .ico { display: block; font-size: 22px; margin-bottom: 3px; }
+  .progress { display: flex; gap: 4px; margin-top: 10px; }
+  .dot { flex: 1; height: 7px; border-radius: 4px; background: #e3ebf5; }
+  .dot.ok { background: #1d7a3d; }
+  .dot.bad { background: #e2574c; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maglumat bilen işlemek</h1>
+  <div class="sub">Kompýuter — maglumatlary awtomatiki işläp taýýarlaýan gurluş · Informatika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Adam maglumaty <b>alýar</b>, <b>geçirýär</b>, <b>saklaýar</b> we <b>täzeden işleýär</b>. Kartda görkezilen iş — haýsysy?</div>
+    <div class="card-item" id="item"></div>
+    <div class="zones" id="zones"></div>
+    <div class="msg" id="msg"></div>
+    <div class="progress" id="prog"></div>
+    <div class="score" id="score" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ýatda sakla</h3>
+    <div class="expl">
+      Informatika — maglumaty saklamagyň, täzeden işlemegiň we geçirmegiň tärlerini öwrenýän ylymdyr.<br>
+      «Computer» sözi iňlisçeden «hasaplaýjy» diýip terjime edilýär.<br>
+      Kompýuteriň hemme hereketlerini adam tarapyndan döredilen programmalar dolandyrýar.
+    </div>
+    <div class="note">Kompýuterde adamdaky ýaly akyl ýetirijilik ukyby ýokdur.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const ZONES = [
+  { k: "al", ico: "👂", label: "Maglumaty almak" },
+  { k: "gec", ico: "🗣", label: "Maglumaty geçirmek" },
+  { k: "sakla", ico: "📓", label: "Maglumaty saklamak" },
+  { k: "isle", ico: "🧠", label: "Täzeden işlemek" }
+];
+const ITEMS = [
+  { t: "Radioda habarlary diňleýäris", k: "al" },
+  { t: "Kitap okaýarys", k: "al" },
+  { t: "Mugallymyň düşündirişine gulak asýarys", k: "al" },
+  { t: "Gören filmimizi synpdaşlarymyza gürrüň berýäris", k: "gec" },
+  { t: "Dostumyza hat ýazýarys", k: "gec" },
+  { t: "Mugallym sapagy düşündirýär", k: "gec" },
+  { t: "Ýan depderçämize ýazyp alýarys", k: "sakla" },
+  { t: "Telefonda surata düşürýäris", k: "sakla" },
+  { t: "Faýly kompýuterde ýatda saklaýarys", k: "sakla" },
+  { t: "Meseläni çözüp, jogabyny tapýarys", k: "isle" },
+  { t: "Sanlary goşup, jemini hasaplaýarys", k: "isle" },
+  { t: "Okan kitabymyz barada netije çykarýarys", k: "isle" }
+];
+let order = [], idx = 0, right = 0, results = [];
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function start() {
+  order = shuffle([...ITEMS]).slice(0, 8);
+  idx = 0; right = 0; results = [];
+  render();
+}
+
+function render() {
+  if (idx >= order.length) {
+    document.getElementById("item").textContent = right === order.length
+      ? "Ähli jogaplar dogry! Berekella! 🎉"
+      : `Tamamlandy: ${right} / ${order.length} dogry`;
+    document.getElementById("msg").textContent = "";
+    document.getElementById("zones").innerHTML =
+      `<button class="zone" id="again" style="grid-column:1/-1">↻ Täzeden başla</button>`;
+    document.getElementById("again").onclick = start;
+    renderProg();
+    return;
+  }
+  document.getElementById("item").textContent = order[idx].t;
+  const z = document.getElementById("zones");
+  z.innerHTML = "";
+  ZONES.forEach(zn => {
+    const b = document.createElement("button");
+    b.className = "zone";
+    b.innerHTML = `<span class="ico">${zn.ico}</span>${zn.label}`;
+    b.onclick = () => answer(zn.k);
+    z.appendChild(b);
+  });
+  renderProg();
+}
+
+function renderProg() {
+  const p = document.getElementById("prog");
+  p.innerHTML = "";
+  for (let i = 0; i < order.length; i++) {
+    const d = document.createElement("div");
+    d.className = "dot" + (results[i] === true ? " ok" : results[i] === false ? " bad" : "");
+    p.appendChild(d);
+  }
+  document.getElementById("score").textContent = `Dogry: ${right} / ${results.length}`;
+}
+
+function answer(k) {
+  const it = order[idx];
+  const ok = k === it.k;
+  results[idx] = ok;
+  if (ok) right++;
+  const m = document.getElementById("msg");
+  const zn = ZONES.find(z => z.k === it.k);
+  m.textContent = ok ? "Dogry! ✓" : `Ýalňyş. Bu — «${zn.label}» mysalydyr.`;
+  m.className = "msg " + (ok ? "ok" : "bad");
+  idx++;
+  setTimeout(render, 850);
+}
+
+start();
+</script>
+</body>
+</html>

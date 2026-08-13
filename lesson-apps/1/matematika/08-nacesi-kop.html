@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Näçesi köp, näçesi az? — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .rowset { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .rowset .r { display: flex; gap: 5px; min-height: 40px; align-items: center; flex-wrap: wrap; }
+  .rowset .r span { font-size: 26px; }
+  .rowset .r span.pair { opacity: .35; }
+  .rowset h4 { margin: 4px 0; font-size: 13px; color: #4a5a6a; }
+  .nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 18px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Näçesi köp, näçesi az?</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def">Iki topary <b>jübütläp</b> deňeşdirýäris. Jübüde ýetmedik zatlaryň
+      sany näçesiniň köpdügini görkezýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Jübütläp deňeşdir</h3>
+    <div class="rowset">
+      <h4>Birinji topar</h4><div class="r" id="r1"></div>
+      <h4>Ikinji topar</h4><div class="r" id="r2"></div>
+    </div>
+    <div class="row"><button class="btn primary" id="pair">Jübütle</button>
+      <button class="btn ghost" id="new">Täze mysal</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="goal" style="margin-top:8px">Näçesi köp? Sana bas:</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="nmsg"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, I kitap · 29–31-nji sahypalar</div>
+</div>
+
+<script>
+var SETS = [[5, 3, "🐓", "🐔"], [4, 6, "🐇", "🥕"], [7, 4, "🍎", "🍐"], [3, 3, "🐝", "🌸"], [6, 2, "⚽", "🥅"]];
+var si = 0, d = 0, ok = 0, lock = 0;
+function draw() {
+  var s = SETS[si], h1 = "", h2 = "";
+  for (var i = 0; i < s[0]; i++) h1 += "<span>" + s[2] + "</span>";
+  for (var i = 0; i < s[1]; i++) h2 += "<span>" + s[3] + "</span>";
+  document.getElementById("r1").innerHTML = h1;
+  document.getElementById("r2").innerHTML = h2;
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  document.getElementById("nmsg").className = "msg";
+  document.getElementById("nmsg").textContent = "";
+  lock = 0;
+}
+document.getElementById("pair").onclick = function () {
+  var s = SETS[si], n = Math.min(s[0], s[1]);
+  var a = document.getElementById("r1").getElementsByTagName("span");
+  var b = document.getElementById("r2").getElementsByTagName("span");
+  for (var i = 0; i < n; i++) { a[i].className = "pair"; b[i].className = "pair"; }
+  var m = document.getElementById("pmsg");
+  m.className = "msg ok";
+  if (s[0] === s[1]) m.textContent = "Hemmesi jübüt tapdy – toparlaryň sany deň.";
+  else m.textContent = "Jübütsiz galanlary sana – şol san näçesiniň köpdügini görkezýär.";
+};
+document.getElementById("new").onclick = function () { si = (si + 1) % SETS.length; draw(); };
+var h = "";
+for (var i = 0; i <= 4; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (lock) return;
+    lock = 1; d++;
+    var n = parseInt(this.getAttribute("data-n"), 10), s = SETS[si];
+    var diff = Math.abs(s[0] - s[1]), m = document.getElementById("nmsg");
+    if (n === diff) {
+      ok++; m.className = "msg ok";
+      m.textContent = diff === 0 ? "Dogry! Toparlaryň sany deň." :
+        "Dogry! " + (s[0] > s[1] ? s[2] : s[3]) + " " + diff + " sany köp.";
+    } else {
+      m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + diff + ".";
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+draw();
+
+var Q = [
+  ["Bäş alma we üç armyt bar. Almalar näçe sany köp?", ["Iki", "Bir", "Üç"], 0],
+  ["Toparlary deňeşdirmegiň iň aňsat ýoly haýsy?", ["Zatlary jübütlemek", "Reňkine seretmek", "Agramyny çekmek"], 0],
+  ["Dört towşan we dört käşir bar. Olar nähili?", ["Sanlary deň", "Towşanlar köp", "Käşirler köp"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

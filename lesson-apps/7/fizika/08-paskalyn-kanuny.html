@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paskalyň kanuny — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Paskalyň kanuny</h1>
+  <div class="sub">Fizika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Daşky güýçleriň suwuklygyň ýa-da gazyň üstüne edýän basyşy hemme ugurlara deň derejede geçirilýär. p = ρgh, p = F : S.</div>
+  </div>
+
+  <div class="card">
+    <h3>Çuňluga görä basyş</h3>
+    <div class="goal">Çuňlugy süýşür – basyşyň nähili artýandygyny gör.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="0" max="3" step="0.1" value="2">
+    <div class="info" id="siro1"></div>
+    <div class="note">ρ = 1000 kg/m³, g = 9,8 N/kg.</div>
+  </div>
+
+  <div class="card">
+    <h3>p = F : S</h3>
+    <div class="goal">Daýanç meýdanyny süýşür – basyşyň nähili üýtgeýändigini gör.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="0.01" max="1" step="0.01" value="0.07">
+    <div class="info" id="cout"></div>
+    <div class="note">Massasy 500 g, meýdany 700 sm² ýük: p = 0,5 · 9,8 : 0,07 = 70 Pa.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 7 · 8-nji tema</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { 
+        var y = 34 + v / 3 * 118;
+        var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+        s += '<rect x="60" y="30" width="200" height="126" fill="#bcd7ee" stroke="#4a6b39" stroke-width="2"/>';
+        s += '<line x1="60" y1="30" x2="260" y2="30" stroke="#2f6f8f" stroke-width="3"/>';
+        s += '<line x1="46" y1="30" x2="46" y2="' + y.toFixed(1) + '" stroke="#1d6f3c" stroke-width="2" stroke-dasharray="4 3"/>';
+        s += '<text x="30" y="' + ((30 + y) / 2).toFixed(1) + '" font-size="10" fill="#14522b">h</text>';
+        for (var k = 0; k < 8; k++) {
+          var a = k * Math.PI / 4, L = 10 + v * 7;
+          s += '<line x1="160" y1="' + y.toFixed(1) + '" x2="' + (160 + L * Math.cos(a)).toFixed(1) +
+               '" y2="' + (y + L * Math.sin(a)).toFixed(1) + '" stroke="#c0392b" stroke-width="2.5"/>';
+        }
+        s += '<circle cx="160" cy="' + y.toFixed(1) + '" r="4" fill="#8c2a1e"/>';
+        return s;
+       }
+  function readout(v) { 
+        var p = 1000 * 9.8 * v;
+        return '<b>p = ρgh = 1000 · 9,8 · ' + v + ' = ' + Math.round(p) + ' Pa</b><br>' +
+               'Basyş hemme ugurlara deň – oklaryň uzynlygy çuňluk bilen artýar.';
+       }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Çuňluk" + ": " + String(v).replace(".", ",") + " " + "m";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var CO = [["Basyş (F = 4,9 N)", "4.9 / v", "Pa"]], CU = "m²", CL = "Daýanç meýdany";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["1 Pa näme?", ["1 N/m²", "1 N/kg", "1 kg/m³"], 0], ["Beýikligi 200 sm gabyň düýbündäki basyş?", ["19600 Pa", "1960 Pa", "200 Pa"], 0], ["Paskalyň kanuny basyşy nähili geçirýär?", ["Hemme ugurlara deň", "Diňe aşak", "Diňe gapdala"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

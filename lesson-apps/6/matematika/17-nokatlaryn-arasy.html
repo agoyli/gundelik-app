@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iki nokadyň arasyndaky uzaklyk — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px 6px; overflow-x: auto; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .big3 { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 26px;
+          font-weight: 800; text-align: center; color: #2456b0; margin: 4px 0; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Iki nokadyň arasyndaky uzaklyk</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Koordinata göni çyzygyndaky iki nokadyň arasyndaky uzaklyk – olaryň
+      koordinatalarynyň tapawudynyň <b>moduludyr</b>: d = |a − b|. Sürgüleri süýşürip gör.</div>
+    <div class="stage" id="ax"></div>
+    <div class="slider"><span class="lbl">A nokat</span>
+      <input type="range" id="a" min="-9" max="9" value="-3"><span class="out" id="ao"></span></div>
+    <div class="slider"><span class="lbl">B nokat</span>
+      <input type="range" id="b" min="-9" max="9" value="5"><span class="out" id="bo"></span></div>
+    <div class="big3" id="big"></div>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Tertip üýtgese-de, uzaklyk üýtgemeýär</h3>
+    <div class="goal">|a − b| we |b − a| hemişe deňdir – uzaklyk otrisatel bolmaýar.</div>
+    <div class="calc" id="sym"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kitapdaky meseleler</h3>
+    <div class="row tight" id="tasks"></div>
+    <div class="calc" id="tc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüň hasapla</h3>
+    <div class="goal">Berlen iki nokadyň arasyndaky uzaklygy tap.</div>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+    <button class="btn ghost" id="again">Täze soraglar</button>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Nokadyň <b>noldan</b> uzaklygy – onuň koordinatasynyň moduly: d = |a − 0| = |a|.
+      Şonuň üçin modul barada öwrenen düzgünimiz uzaklygyň ýörite ýagdaýydyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, II kitap (2018), §30</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+const LO = -10, HI = 10, W = 640, PAD = 28;
+const px = v => PAD + ((v - LO) / (HI - LO)) * (W - 2 * PAD);
+// otrisatel san ýaýyň içinde ýazylýar, položitel bolsa ýaýsyz
+const P = v => v < 0 ? `(${N(v)})` : N(v);
+
+function axis() {
+  const a = +$("a").value, b = +$("b").value, d = Math.abs(a - b);
+  $("ao").textContent = N(a); $("bo").textContent = N(b);
+  const y = 78;
+  let ticks = "";
+  for (let v = LO; v <= HI; v++) {
+    const x = px(v), big = v === 0;
+    ticks += `<line x1="${x}" y1="${y - (big ? 11 : 6)}" x2="${x}" y2="${y + (big ? 11 : 6)}"
+                stroke="${big ? "#1e2a3a" : "#93a2b5"}" stroke-width="${big ? 2.5 : 1.2}"/>
+              <text x="${x}" y="${y + 26}" text-anchor="middle" font-size="10"
+                fill="#5b6b80">${N(v)}</text>`;
+  }
+  const x1 = px(Math.min(a, b)), x2 = px(Math.max(a, b));
+  const span = a === b ? "" : `
+    <line x1="${x1}" y1="${y - 30}" x2="${x2}" y2="${y - 30}" stroke="#e5007d" stroke-width="4"
+      stroke-linecap="round"/>
+    <line x1="${x1}" y1="${y - 36}" x2="${x1}" y2="${y - 24}" stroke="#e5007d" stroke-width="3"/>
+    <line x1="${x2}" y1="${y - 36}" x2="${x2}" y2="${y - 24}" stroke="#e5007d" stroke-width="3"/>
+    <text x="${(x1 + x2) / 2}" y="${y - 42}" text-anchor="middle" font-size="14"
+      font-weight="700" fill="#e5007d">${N(d)} birlik kesim</text>`;
+  $("ax").innerHTML = `
+    <svg viewBox="0 0 ${W} 130" width="${W}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      <line x1="${PAD - 14}" y1="${y}" x2="${W - PAD + 8}" y2="${y}" stroke="#5b6b80"
+        stroke-width="2"/>
+      ${ticks}${span}
+      <circle cx="${px(a)}" cy="${y}" r="7" fill="#2456b0"/>
+      <circle cx="${px(b)}" cy="${y}" r="7" fill="#1d7a3d"/>
+      <text x="${px(a)}" y="${y + 44}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="#2456b0">A(${N(a)})</text>
+      <text x="${px(b)}" y="${y + 44}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="#1d7a3d">B(${N(b)})</text>
+    </svg>`;
+  $("big").textContent = `AB = |${N(a)} − ${P(b)}| = |${N(a - b)}| = ${N(d)}`;
+  $("calc").innerHTML = a === b
+    ? `Iki nokat gabat gelýär, şonuň üçin uzaklyk <b>0</b>-a deňdir.`
+    : `birinji koordinatadan ikinjisini aýyrýarys: ${N(a)} − ${P(b)} = <b>${N(a - b)}</b><br>` +
+      `alnan sanyň modulyny tapýarys: |${N(a - b)}| = <b>${N(d)}</b><br>` +
+      `nokatlaryň arasy <b>${N(d)}</b> birlik kesime deňdir`;
+  $("sym").innerHTML =
+    `|a − b| = |${N(a)} − ${P(b)}| = |${N(a - b)}| = <b>${N(d)}</b><br>` +
+    `|b − a| = |${N(b)} − ${P(a)}| = |${N(b - a)}| = <b>${N(d)}</b><br>` +
+    `iki netije hem deň – <b>uzaklyk otrisatel bolmaýar</b>`;
+}
+["a", "b"].forEach(k => $(k).addEventListener("input", axis));
+
+/* ---------------- kitap meseleleri ---------------- */
+const T = [[-3, 5], [-3, 8], [-12, -9], [-22, -18], [0, -7]];
+$("tasks").innerHTML = T.map((t, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">A(${N(t[0])}), B(${N(t[1])})</button>`
+).join("");
+$("tasks").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("tasks").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const [a, c] = T[+b.dataset.i];
+  $("tc").innerHTML =
+    `d = |a − b| = |${N(a)} − ${P(c)}|<br>= |${N(a - c)}|<br>` +
+    `= <b>${N(Math.abs(a - c))}</b> birlik kesim<br>` +
+    `barlag: |${N(c)} − ${P(a)}| = |${N(c - a)}| = ${N(Math.abs(a - c))} – deň çykdy`;
+});
+
+/* ---------------- test ---------------- */
+let d = 0, r = 0;
+function make() {
+  d = 0; r = 0; $("sc").textContent = "";
+  const items = [];
+  while (items.length < 5) {
+    const a = Math.round(Math.random() * 30) - 15;
+    const b = Math.round(Math.random() * 30) - 15;
+    if (a === b) continue;
+    const ans = Math.abs(a - b);
+    const opts = new Set([ans]);
+    for (const alt of [Math.abs(a + b), ans - 2, ans + 1, ans + 3, Math.abs(a) + 1]) {
+      if (opts.size === 4) break;
+      if (alt >= 0 && alt !== ans) opts.add(alt);
+    }
+    const arr = [...opts].sort(() => Math.random() - 0.5);
+    items.push({a, b, arr, ans});
+  }
+  $("q").innerHTML = items.map((it, i) =>
+    `<div class="qa"><b>${i + 1}. A(${N(it.a)}) we B(${N(it.b)}) nokatlaryň arasy?</b>` +
+    `<div class="row tight" style="margin-top:6px">` +
+    it.arr.map(o => `<button class="btn" data-i="${i}" data-v="${o}">${N(o)}</button>`).join("") +
+    `</div><div class="expl" id="e${i}"></div></div>`).join("");
+  $("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if ($("e" + i).textContent) return;
+    const it = items[i], good = +b.dataset.v === it.ans;
+    b.classList.add("sel");
+    $("e" + i).textContent = good
+      ? `Dogry: |${N(it.a)} − ${P(it.b)}| = ${N(it.ans)}.`
+      : `Nädogry. |${N(it.a)} − ${P(it.b)}| = |${N(it.a - it.b)}| = ${N(it.ans)}.`;
+    d++; if (good) r++;
+    $("sc").textContent = `${r} / ${d}` + (d === items.length ? " – tamam" : "");
+  });
+}
+$("again").onclick = make;
+
+axis(); make();
+$("tasks").querySelector("button").click();
+</script>
+</body>
+</html>

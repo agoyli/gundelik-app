@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şekilleri döretmek we redaktirlemek — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .paint { display: flex; gap: 8px; background: #eef2f8; border-radius: 12px; padding: 8px;
+           flex-wrap: wrap; }
+  .tools { display: grid; grid-template-columns: repeat(2, 46px); gap: 4px; align-content: start; }
+  .tools button { width: 46px; height: 46px; border-radius: 9px; border: 2px solid #d6e0ee;
+                  background: #fff; font-size: 18px; cursor: pointer; }
+  .tools button.sel { border-color: #2456b0; background: #e3edfd; }
+  .cvwrap { flex: 1; min-width: 260px; display: grid; place-items: center; }
+  canvas#cv { background: #fff; border-radius: 10px; border: 2px solid #d6e0ee;
+              touch-action: none; max-width: 100%; cursor: crosshair; }
+  .pal { display: grid; grid-template-columns: repeat(4, 26px); gap: 4px; align-content: start; }
+  .pal button { width: 26px; height: 26px; border-radius: 6px; border: 2px solid #d6e0ee;
+                cursor: pointer; }
+  .pal button.a { border-color: #1e2a3a; border-width: 3px; }
+  .cur { display: flex; gap: 6px; align-items: center; font-size: 12px; color: #5b6b80; }
+  .cur i { width: 24px; height: 24px; border-radius: 6px; border: 2px solid #93a2b5;
+           display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Şekilleri döretmek we redaktirlemek</h1>
+  <div class="sub">Grafiki redaktoryň gurallary · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Ilki <b>gural</b> we <b>reňk</b> saýla, soň iş meýdanynda syçanyň çep
+      gulagyny basyp sakla. <b>Shift</b> basylanda gönüburçluk kwadrada, ellips bolsa töwerege
+      öwrülýär.</div>
+    <div class="paint">
+      <div class="tools" id="tools"></div>
+      <div class="cvwrap"><canvas id="cv" width="440" height="330"></canvas></div>
+      <div>
+        <div class="pal" id="pal"></div>
+        <div class="cur" style="margin-top:8px">
+          <i id="c1"></i><span>esasy</span><i id="c2"></i><span>ikinji</span>
+        </div>
+      </div>
+    </div>
+    <div class="slider" style="margin-top:9px"><span class="lbl">Guralyň ini</span>
+      <input type="range" id="wd" min="1" max="40" value="5"><span class="out" id="wdo">5</span></div>
+    <div class="row">
+      <button class="btn" id="undo">↶ Ýatyrmak (Ctrl+Z)</button>
+      <button class="btn ghost" id="clr">Arassalamak</button>
+      <label class="row tight" style="gap:6px;font-size:13.5px;color:#5b6b80">
+        <input type="checkbox" id="sh" style="width:20px;height:20px"> Shift (kwadrat/töwerek)
+      </label>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Gurallaryň sanawy</h3>
+    <div class="note" id="tx">Ýokardan gural saýla.</div>
+    <div class="row"><span class="badge info">Paint.net-iň gurallar panelinde 19 sany gural bar</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy gural gerek?</h3>
+    <div class="row" style="margin-bottom:8px"><span class="badge purple" id="task"></span></div>
+    <div class="row tight" id="opts"></div>
+    <div class="msg" id="qmsg"></div>
+    <div class="row"><span class="score" id="qsc"></span>
+      <button class="btn ghost" id="qr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Surat çekmezden öň <b>esasy we ikinji reňk</b> saýlanýar. Syçanyň çep gulagyna
+      basylanda işjeň reňkde, sag gulagyna basylanda bolsa düşegiň reňkinde surat çekilýär.
+      Bozguç bilen arassalanan bölek <b>dury reňke</b> eýe bolýar. Iň soňky ýerine ýetirilen
+      buýrugy goýbolsun etmek üçin <b>Ýatyrmak (Ctrl+Z)</b> buýrugy ulanylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $("cv"), cx = cv.getContext("2d", {willReadFrequently: true});
+
+const TOOLS = [
+  ["cotga", "🖌", "Çotga", "Surat çekmekde esasy gurallaryň biri. Onuň ini kese panelde sazlanýar."],
+  ["galam", "✏️", "Galam", "Kagyza surat çekýän galam ýaly. Köplenç ulaldylan şekili redaktirlände ulanylýar."],
+  ["cyzyk", "📏", "Çyzyk", "Göni çyzyklary şekillendirmek üçin ulanylýar."],
+  ["gonu", "▭", "Gönüburçluk", "Shift basylanda kwadrat çekilýär."],
+  ["ellips", "◯", "Ellips", "Shift basylanda töwerek çekilýär."],
+  ["boyag", "🪣", "Boýag", "Işjeň gatlakdaky çäklenen bölegi reňkleýär (boýaýar)."],
+  ["bozguc", "🩹", "Bozguç", "Gerek bolmadyk elementleri bozýar, arassalanan bölek dury reňke eýe bolýar."],
+  ["pipetka", "💧", "Reňk saýlamak", "Işjeň gatlakdan gerekli reňki esasy reňk hökmünde saýlaýar."],
+  ["gradient", "🌈", "Gradiýent", "Iki reňkiň kem-kemden garyşmagynyň netijesini berýär."],
+  ["tekst", "🅰", "Tekst", "Şekile teksti girizmek üçin ulanylýar."]
+];
+const COLS = ["#1e2a3a", "#b02424", "#e5007d", "#e08a00", "#ffd400", "#1d7a3d",
+              "#2456b0", "#6a4bb8", "#8a5a2b", "#93a2b5", "#ffffff", "#00a0a0"];
+let tool = "cotga", c1 = "#1e2a3a", c2 = "#ffffff", W = 5;
+let drawing = false, sx = 0, sy = 0, snap = null, stack = [];
+
+function tools() {
+  $("tools").innerHTML = TOOLS.map(([k, i]) =>
+    `<button class="${tool === k ? "sel" : ""}" data-t="${k}" title="${k}">${i}</button>`).join("");
+  $("tools").querySelectorAll("button").forEach(b => b.onclick = () => {
+    tool = b.dataset.t; tools();
+    const t = TOOLS.find(x => x[0] === tool);
+    $("tx").innerHTML = `<b>${t[2]}</b> — ${t[3]}`;
+  });
+}
+function pal() {
+  $("pal").innerHTML = COLS.map(c =>
+    `<button class="${c === c1 ? "a" : ""}" style="background:${c}" data-c="${c}"></button>`).join("");
+  $("pal").querySelectorAll("button").forEach(b => {
+    b.onclick = () => { c1 = b.dataset.c; pal(); };
+    b.oncontextmenu = e => { e.preventDefault(); c2 = b.dataset.c; pal(); };
+  });
+  $("c1").style.background = c1; $("c2").style.background = c2;
+}
+function push() {
+  stack.push(cx.getImageData(0, 0, cv.width, cv.height));
+  if (stack.length > 24) stack.shift();
+}
+function pos(e) {
+  const r = cv.getBoundingClientRect(), p = e.touches ? e.touches[0] : e;
+  return [(p.clientX - r.left) * cv.width / r.width, (p.clientY - r.top) * cv.height / r.height];
+}
+function flood(x, y, hex) {
+  x = x | 0; y = y | 0;
+  const img = cx.getImageData(0, 0, cv.width, cv.height), d = img.data;
+  const at = (X, Y) => (Y * cv.width + X) * 4;
+  const t = d.slice(at(x, y), at(x, y) + 4);
+  const rgb = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  if (t[0] === rgb[0] && t[1] === rgb[1] && t[2] === rgb[2]) return;
+  const st = [[x, y]];
+  while (st.length) {
+    const [cxx, cyy] = st.pop();
+    if (cxx < 0 || cyy < 0 || cxx >= cv.width || cyy >= cv.height) continue;
+    const i = at(cxx, cyy);
+    if (Math.abs(d[i] - t[0]) > 12 || Math.abs(d[i + 1] - t[1]) > 12 || Math.abs(d[i + 2] - t[2]) > 12) continue;
+    d[i] = rgb[0]; d[i + 1] = rgb[1]; d[i + 2] = rgb[2]; d[i + 3] = 255;
+    st.push([cxx + 1, cyy], [cxx - 1, cyy], [cxx, cyy + 1], [cxx, cyy - 1]);
+  }
+  cx.putImageData(img, 0, 0);
+}
+function start(e) {
+  e.preventDefault();
+  const [x, y] = pos(e);
+  push();
+  const right = e.button === 2;
+  const col = right ? c2 : c1;
+  if (tool === "boyag") { flood(x, y, col); return; }
+  if (tool === "pipetka") {
+    const p = cx.getImageData(x | 0, y | 0, 1, 1).data;
+    c1 = "#" + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, "0")).join("");
+    pal();
+    $("msg").textContent = `Reňk saýlandy: ${c1}`; $("msg").className = "msg ok";
+    return;
+  }
+  if (tool === "tekst") {
+    cx.fillStyle = col; cx.font = `bold ${Math.max(12, W * 4)}px Georgia`;
+    cx.fillText("Türkmenistan", x, y);
+    return;
+  }
+  drawing = true; sx = x; sy = y;
+  snap = cx.getImageData(0, 0, cv.width, cv.height);
+  cx.lineCap = "round"; cx.lineJoin = "round";
+  cx.strokeStyle = tool === "bozguc" ? "#ffffff" : col;
+  cx.fillStyle = col;
+  cx.lineWidth = tool === "galam" ? 1 : W;
+  if (tool === "cotga" || tool === "galam" || tool === "bozguc") {
+    cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + .01, y); cx.stroke();
+  }
+}
+function move(e) {
+  if (!drawing) return;
+  e.preventDefault();
+  const [x, y] = pos(e);
+  if (tool === "cotga" || tool === "galam" || tool === "bozguc") {
+    cx.lineTo(x, y); cx.stroke();
+    return;
+  }
+  cx.putImageData(snap, 0, 0);
+  let w = x - sx, h = y - sy;
+  if ($("sh").checked && (tool === "gonu" || tool === "ellips")) {
+    const m = Math.min(Math.abs(w), Math.abs(h));
+    w = Math.sign(w) * m; h = Math.sign(h) * m;
+  }
+  cx.beginPath();
+  if (tool === "cyzyk") { cx.moveTo(sx, sy); cx.lineTo(x, y); }
+  if (tool === "gonu") cx.rect(sx, sy, w, h);
+  if (tool === "ellips") cx.ellipse(sx + w / 2, sy + h / 2, Math.abs(w / 2), Math.abs(h / 2), 0, 0, 7);
+  if (tool === "gradient") {
+    const g = cx.createLinearGradient(sx, sy, x, y);
+    g.addColorStop(0, c1); g.addColorStop(1, c2);
+    cx.fillStyle = g; cx.fillRect(0, 0, cv.width, cv.height);
+    return;
+  }
+  cx.stroke();
+}
+function end() { drawing = false; }
+cv.addEventListener("mousedown", start); cv.addEventListener("touchstart", start, {passive: false});
+cv.addEventListener("mousemove", move); cv.addEventListener("touchmove", move, {passive: false});
+document.addEventListener("mouseup", end); document.addEventListener("touchend", end);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+$("wd").addEventListener("input", () => { W = +$("wd").value; $("wdo").textContent = W; });
+$("undo").onclick = () => {
+  if (!stack.length) { $("msg").textContent = "Ýatyrmaga amal ýok."; $("msg").className = "msg bad"; return; }
+  cx.putImageData(stack.pop(), 0, 0);
+  $("msg").textContent = "Soňky amal ýatyryldy.";
+  $("msg").className = "msg ok";
+};
+$("clr").onclick = () => { push(); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); };
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); $("undo").click(); }
+});
+
+/* ---------------- haýsy gural ---------------- */
+const Q = [
+  ["Töweregiň suratyny çekmeli.", "ellips"],
+  ["Ýapyk çägi bir reňk bilen doldurmaly.", "boyag"],
+  ["Suratdaky artykmaç bölegi aýyrmaly.", "bozguc"],
+  ["Suratdaky reňki alyp, şol reňk bilen dowam etmeli.", "pipetka"],
+  ["Iki reňkiň kem-kemden garyşmagyny almaly.", "gradient"],
+  ["Suratyň üstünde ýazgy ýazmaly.", "tekst"],
+  ["Kwadraty çekmeli.", "gonu"],
+  ["Göni çyzyk çekmeli.", "cyzyk"]
+];
+let qi = 0, qok = 0;
+function q() {
+  if (qi >= Q.length) {
+    $("task").textContent = "Tamamlandy";
+    $("opts").innerHTML = "";
+    $("qmsg").textContent = `Netije: ${qok} / ${Q.length}`;
+    $("qmsg").className = "msg ok";
+    return;
+  }
+  $("task").textContent = Q[qi][0];
+  const right = Q[qi][1];
+  const opts = TOOLS.map(t => t[0]).filter(k => k !== right)
+    .sort(() => Math.random() - 0.5).slice(0, 3).concat(right).sort(() => Math.random() - 0.5);
+  $("opts").innerHTML = opts.map(k =>
+    `<button class="btn" data-o="${k}">${TOOLS.find(t => t[0] === k)[2]}</button>`).join("");
+  $("opts").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const good = b.dataset.o === right;
+    if (good) qok++;
+    $("qmsg").textContent = good ? "Dogry."
+      : `Ýalňyş. Bu iş üçin «${TOOLS.find(t => t[0] === right)[2]}» guraly gerek.`;
+    $("qmsg").className = good ? "msg ok" : "msg bad";
+    qi++; q();
+  });
+  $("qsc").textContent = `${qi} / ${Q.length}`;
+}
+$("qr").onclick = () => { qi = 0; qok = 0; $("qmsg").textContent = ""; q(); };
+
+cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+tools(); pal(); q();
+</script>
+</body>
+</html>

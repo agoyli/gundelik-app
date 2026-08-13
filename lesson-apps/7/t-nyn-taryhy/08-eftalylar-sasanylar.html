@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eftaly-sasany bäsdeşligi — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Horasany eýelemek ugrunda eftaly-sasany bäsdeşligi</h1>
+  <div class="sub">Türkmenistanyň taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">IV asyrda hionitler bilen abdallar (eftalylar) birleşip, Sasany döwletine garşy göreşi güýçlendiripdirler.</div>
+    <div class="tbl" style="margin-top:8px">«ak hunlar» · «hionitler» · «kidarlylar» · «abdallar»&nbsp;&nbsp;|&nbsp;&nbsp; Peroz diwary – 300 km-e golaý</div>
+  </div>
+
+  <div class="card">
+    <h3>Kime degişli?</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Maglumat haýsy tarapa degişli?</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="ef">Eftalylar</button><button class="btn" data-k="sa">Sasanylar</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Türkmenistanyň taryhy 7 · 38–51-nji sahypalar</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Paýtagty Peýkent ýa-da Balh şäheri bolupdyr.", "ef", "Taryhy çeşmelerde iki çaklama berilýär."], ["Peroz Gürgenden demirgazyga uzyn diwar saldyrypdyr.", "sa", "Diwar eftalylaryň ýoluny baglamak üçin gurlupdyr."], ["«Ak hunlar» diýlip hem atlandyrylypdyr.", "ef", "Rim we Wizantiýa çeşmelerinde şeýle at berlipdir."], ["Resmi dini otparazçylyk bolupdyr.", "sa", "Hormizd IV beýleki dinlere-de garaşyk edipdir."], ["Esasan göge we oda çokunypdyrlar, irden Güne sežde edipdirler.", "ef", "Olaryň arasynda buddizm we hristiançylyk hem ýaýrapdyr."], ["Söwdada pehlewi hatly manatlar ulanylypdyr.", "ef", "Olarda goşmaça abdal ýazgylary hem bolupdyr."], ["Wizantiýany öz esasy bäsdeşi hasaplapdyrlar.", "sa", "Şonuň üçin ýüpek söwdasyny çäklendirmäge çalşypdyrlar."]];
+var KN = {"ef": "eftalylara degişli", "sa": "sasanylara degişli"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+var Q = [["«Abdallar» ady haýsy türkmen taýpalarynda saklanypdyr?", ["Çowdur we saryk", "Ýomut we teke", "Ärsary we salyr"], 0], ["Peroz näçe kilometre golaý diwar saldyrypdyr?", ["300", "30", "3000"], 0], ["568-nji ýylda Göktürkmen döwleti kim bilen şertnama baglaşypdyr?", ["Wizantiýa bilen", "Hytaý bilen", "Hindistan bilen"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

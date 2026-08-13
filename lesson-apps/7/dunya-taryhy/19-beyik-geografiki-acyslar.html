@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beýik geografiki açyşlar — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .map { background: #dceffb; border-radius: 13px; padding: 6px; }
+  .map svg { display: block; width: 100%; height: auto; max-height: 210px; }
+  .who { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .who button { min-height: 48px; font-size: 14.5px; font-weight: 700; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 14.5px; font-weight: 700; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Beýik geografiki açyşlar we onuň netijeleri</h1>
+  <div class="sub">Dünýä taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Türkmenleriň söwda ýollaryny eýelemegi ýewropalylary Hindistana
+      <b>täze ýol</b> gözlemäge mejbur edipdir. Şeýdip <b>Amerika</b> açylyp,
+      dünýäniň daşyna ilkinji syýahat amala aşyrylypdyr.</div>
+  </div>
+
+  <div class="card">
+    <h3>Syýahatçynyň ýoluny gör</h3>
+    <div class="who" id="who">
+      <button class="btn" data-w="0">Kolumb</button>
+      <button class="btn" data-w="1">Wasko da Gama</button>
+      <button class="btn" data-w="2">Magellan</button>
+    </div>
+    <div class="map"><svg id="mp" viewBox="0 0 320 200"></svg></div>
+    <div class="info" id="info"></div>
+  </div>
+
+  <div class="card">
+    <h3>Syýahatçyny tap</h3>
+    <div class="task" id="task"></div>
+    <div class="goal">Bu iş kime degişli?</div>
+    <div class="kinds" id="kinds">
+      <button class="btn" data-k="ko">Kolumb</button>
+      <button class="btn" data-k="wa">Wasko da Gama</button>
+      <button class="btn" data-k="ma">Magellan</button>
+    </div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Senäni tap</h3>
+    <div class="task" id="ctask"></div>
+    <div class="goal">Dogry sany saýla.</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><button class="btn ghost" id="cnext">Indiki sorag</button></div>
+    <div class="score" id="csc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Dünýä taryhy 7 · 19-njy tema</div>
+</div>
+
+<script>
+var BASE =
+  '<rect x="0" y="0" width="320" height="200" fill="#dceffb"/>' +
+  '<path d="M 62 40 L 96 34 L 104 62 L 84 96 L 66 78 Z" fill="#cfe3c4" stroke="#6f8a5e" stroke-width="1.5"/>' +
+  '<path d="M 88 108 L 110 104 L 116 142 L 96 176 L 84 140 Z" fill="#cfe3c4" stroke="#6f8a5e" stroke-width="1.5"/>' +
+  '<path d="M 150 30 L 186 26 L 196 52 L 170 62 L 148 50 Z" fill="#cfe3c4" stroke="#6f8a5e" stroke-width="1.5"/>' +
+  '<path d="M 156 66 L 194 62 L 200 112 L 174 154 L 156 108 Z" fill="#cfe3c4" stroke="#6f8a5e" stroke-width="1.5"/>' +
+  '<path d="M 208 44 L 268 38 L 286 70 L 244 92 L 210 74 Z" fill="#cfe3c4" stroke="#6f8a5e" stroke-width="1.5"/>' +
+  '<text x="80" y="66" font-size="9" fill="#3b4a2e" text-anchor="middle">Demirgazyk</text>' +
+  '<text x="80" y="76" font-size="9" fill="#3b4a2e" text-anchor="middle">Amerika</text>' +
+  '<text x="99" y="140" font-size="9" fill="#3b4a2e" text-anchor="middle">Günorta</text>' +
+  '<text x="99" y="150" font-size="9" fill="#3b4a2e" text-anchor="middle">Amerika</text>' +
+  '<text x="170" y="44" font-size="9" fill="#3b4a2e" text-anchor="middle">Ýewropa</text>' +
+  '<text x="176" y="100" font-size="9" fill="#3b4a2e" text-anchor="middle">Afrika</text>' +
+  '<text x="248" y="66" font-size="9" fill="#3b4a2e" text-anchor="middle">Aziýa</text>';
+
+var W = [
+  ["Kolumb (1492 ý.)",
+   '<path d="M 154 48 C 128 58, 106 62, 92 68" stroke="#c0392b" stroke-width="3" fill="none" stroke-dasharray="6 4"/>' +
+   '<circle cx="154" cy="48" r="4" fill="#c0392b"/><circle cx="92" cy="68" r="4" fill="#c0392b"/>' +
+   '<text x="120" y="40" font-size="10" fill="#8e2b21" text-anchor="middle">1492 · 70 gün</text>',
+   "1492-nji ýylyň tomsunda 3 karawella we 90 adam bilen Ispaniýadan ugrap, 70 günden " +
+   "soň Kuba we Gaiti adalaryna baryp ýetipdir. Açan ýerine «Hindistan», ilatyna " +
+   "«indeýler» diýip at beripdir."],
+  ["Wasko da Gama (1498 ý.)",
+   '<path d="M 160 52 C 150 110, 176 168, 200 140 C 226 110, 244 92, 252 80" stroke="#1e6f3c" stroke-width="3" fill="none" stroke-dasharray="6 4"/>' +
+   '<circle cx="160" cy="52" r="4" fill="#1e6f3c"/><circle cx="252" cy="80" r="4" fill="#1e6f3c"/>' +
+   '<text x="214" y="164" font-size="10" fill="#14522b" text-anchor="middle">1498 · Kalikut</text>',
+   "Afrikanyň günorta ujundan aýlanyp, 4,5 aýdan soň 1498-nji ýylyň ýazynda " +
+   "Hindistanyň Kalikut şäherine ýetipdir. Şeýdip Hindistana deňiz ýoly açylypdyr."],
+  ["Magellan (1519–1522 ý.)",
+   '<path d="M 158 54 C 120 92, 104 160, 130 176 C 190 196, 250 150, 258 86" stroke="#7a3fb0" stroke-width="3" fill="none" stroke-dasharray="6 4"/>' +
+   '<circle cx="158" cy="54" r="4" fill="#7a3fb0"/><circle cx="258" cy="86" r="4" fill="#7a3fb0"/>' +
+   '<text x="150" y="192" font-size="10" fill="#57277e" text-anchor="middle">1519–1522 · dünýäniň daşyna</text>',
+   "1519–1522-nji ýyllarda dünýäniň daşyna ilkinji syýahaty amala aşyrypdyr. " +
+   "Magellanyň özi Filippin adalarynda ýerli ilat bilen bolan çaknyşykda ölüpdir."]
+];
+var wi = -1;
+function drawW(k) {
+  wi = k;
+  document.getElementById("mp").innerHTML = BASE + (k < 0 ? "" : W[k][1]);
+  document.getElementById("info").innerHTML = k < 0 ?
+    "Ýokardaky düwmeleriň birini saýla – onuň ýoly kartada görkeziler." :
+    "<b>" + W[k][0] + "</b><br>" + W[k][2];
+}
+var wb = document.getElementById("who").getElementsByTagName("button");
+for (var i = 0; i < wb.length; i++) {
+  wb[i].onclick = function () {
+    for (var j = 0; j < wb.length; j++) wb[j].className = "btn";
+    this.className = "btn sel";
+    drawW(parseInt(this.getAttribute("data-w"), 10));
+  };
+}
+drawW(-1);
+
+// [beýan, dogry açar, düşündiriş]
+var P = [
+  ["3 karawella we 90 adam bilen ugrap, 70 günde ada ýetdi.", "ko",
+   "1492-nji ýylda Kuba we Gaiti açylypdyr."],
+  ["Hindistanyň Kalikut şäherine 4,5 aýdan soň ýetdi.", "wa",
+   "1498-nji ýylyň ýazynda bolupdyr."],
+  ["Dünýäniň daşyna ilkinji syýahaty amala aşyrdy.", "ma", "1519–1522-nji ýyllarda."],
+  ["Filippin adalarynda çaknyşykda öldi.", "ma", "Syýahaty onuň ýoldaşlary tamamlapdyr."],
+  ["Açan ýerine «Hindistan», ilatyna «indeýler» diýdi.", "ko",
+   "Ol Aziýa baryldy öýdüpdir."],
+  ["Afrikany aýlanyp, Hindistana deňiz ýoluny açdy.", "wa", "Portugaliýa üçin uly üstünlikdi."]
+];
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("task").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), m = document.getElementById("pmsg");
+    if (k === P[pi][1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + P[pi][2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + P[pi][2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+var VALS = ["1492", "1498", "1519", "1522", "1588", "1600", "3", "90", "70", "130"];
+var T = [
+  ["Kolumb haýsy ýylda ýüzüşe ugrapdyr?", "1492", "Ol 3 karawella bilen ugrapdyr."],
+  ["Kolumbyň näçe karawellasy bolupdyr?", "3", "Olarda 90 adam bolupdyr."],
+  ["Kolumb näçe gün ýüzüpdir?", "70", "Şondan soň Kuba we Gaiti açylypdyr."],
+  ["Wasko da Gama Kalikuta haýsy ýylda ýetipdir?", "1498", "Syýahat 4,5 aý dowam edipdir."],
+  ["Magellanyň syýahaty haýsy ýylda başlanypdyr?", "1519", "1522-nji ýylda tamamlanypdyr."],
+  ["«Ýeňilmez armada» haýsy ýylda ýeňlipdir?", "1588", "Ol 130 gämiden ybaratdy."],
+  ["«Ýeňilmez armadada» näçe gämi bolupdyr?", "130", "Ispaniýanyň deňiz güýjüdir."],
+  ["Ost-Hindistan kompaniýasy haýsy ýylda döredilipdir?", "1600", "Angliýada döredilipdir."]
+];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+function showT() {
+  document.getElementById("ctask").textContent = T[ti][0];
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  tlock = 0;
+}
+var hn = "";
+for (var i = 0; i < VALS.length; i++) hn += '<button class="btn" data-n="' + i + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = hn;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = VALS[parseInt(this.getAttribute("data-n"), 10)], m = document.getElementById("cmsg");
+    if (v === T[ti][1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + T[ti][2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogrusy: " + T[ti][1] + ". " + T[ti][2]; }
+    document.getElementById("csc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("cnext").onclick = function () { ti = (ti + 1) % T.length; showT(); };
+showT();
+
+var Q = [
+  ["Täze materigiň açylandygyny kim subut edipdir?",
+   ["Amerigo Wespuççi", "Hristofor Kolumb", "Frensis Dreýk"], 0],
+  ["Dünýäniň daşyna ikinji syýahaty kim amala aşyrypdyr?",
+   ["Frensis Dreýk", "Magellan", "Wasko da Gama"], 0],
+  ["Açyşlaryň esasy sebäbi näme bolupdyr?",
+   ["Hindistana täze ýol gözlemek", "Ylmy gözegçilik", "Haçly ýörişleri dowam etdirmek"], 0]
+];
+var qd = 0, qok = 0, hq = "";
+for (var i = 0; i < Q.length; i++) {
+  hq += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hq += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hq += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hq;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>
