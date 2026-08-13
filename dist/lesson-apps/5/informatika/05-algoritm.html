@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritm — Robot ýerine ýetiriji</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #f0f6ff;
+    color: #1e2a3a;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #5b6b80; font-size: 14px; margin-bottom: 14px; }
+  .card {
+    background: #fff; border-radius: 16px; padding: 14px;
+    box-shadow: 0 2px 8px rgba(30,42,58,.08); margin-bottom: 14px;
+  }
+  .levels { display: flex; gap: 8px; margin-bottom: 14px; }
+  .lvl {
+    flex: 1; padding: 10px; border-radius: 12px; font-size: 14px; font-weight: 700;
+    background: #e8eef7; color: #5b6b80; border: none; cursor: pointer; font-family: inherit;
+  }
+  .lvl.active { background: #2456b0; color: #fff; }
+  .lvl.locked { opacity: .45; cursor: not-allowed; }
+  .goal { font-size: 14px; color: #5b6b80; margin-bottom: 10px; }
+  .grid-box { display: flex; justify-content: center; }
+  .grid {
+    position: relative;
+    display: grid; gap: 3px;
+    background: #dbe6f3; padding: 3px; border-radius: 12px;
+  }
+  .cell { width: 46px; height: 46px; background: #fff; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .robot {
+    position: absolute; width: 46px; height: 46px;
+    display: flex; align-items: center; justify-content: center;
+    transition: left .35s ease, top .35s ease, transform .35s ease;
+    pointer-events: none; z-index: 2;
+  }
+  .robot .body {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #ffb340; border: 3px solid #1e2a3a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900; color: #1e2a3a;
+  }
+  .robot.crash .body { background: #e2574c; }
+  .cols { display: flex; gap: 14px; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 240px; }
+  .col h3 { font-size: 15px; margin-bottom: 8px; }
+  .yybs { display: flex; flex-direction: column; gap: 8px; }
+  .cmd-btn {
+    padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 700;
+    background: #e3edfd; color: #2456b0; border: none; cursor: pointer; font-family: inherit;
+    text-align: left;
+  }
+  .cmd-btn:active { background: #cfe0fb; }
+  .cmd-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .rep-row { display: flex; gap: 8px; align-items: center; }
+  .rep-row select {
+    font-family: inherit; font-size: 15px; font-weight: 700; padding: 10px;
+    border-radius: 12px; border: 2px solid #e3edfd; background: #fff; color: #2456b0;
+  }
+  .rep-row .cmd-btn { flex: 1; }
+  .prog { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .prog li {
+    padding: 10px 12px; border-radius: 10px; font-size: 15px; font-weight: 600;
+    background: #f4f7fb; display: flex; justify-content: space-between; align-items: center;
+  }
+  .prog li.fixed { background: #efe9fb; color: #6a4bb8; font-weight: 700; }
+  .prog li.current { background: #fff3d6; outline: 2px solid #ffb340; }
+  .prog li .del {
+    border: none; background: none; color: #b02424; font-size: 16px; cursor: pointer;
+    font-family: inherit; padding: 0 2px;
+  }
+  .runrow { display: flex; gap: 8px; margin-top: 12px; }
+  .run {
+    flex: 1; padding: 13px; border-radius: 12px; font-size: 16px; font-weight: 800;
+    background: #1d7a3d; color: #fff; border: none; cursor: pointer; font-family: inherit;
+  }
+  .run:disabled { opacity: .5; }
+  .reset {
+    padding: 13px 18px; border-radius: 12px; font-size: 15px; font-weight: 700;
+    background: #e8eef7; color: #1e2a3a; border: none; cursor: pointer; font-family: inherit;
+  }
+  .msg { margin-top: 10px; font-size: 15px; font-weight: 700; min-height: 22px; }
+  .msg.ok { color: #1d7a3d; }
+  .msg.bad { color: #b02424; }
+  .note { font-size: 13.5px; color: #5b6b80; line-height: 1.5; margin-top: 10px; }
+  .footer { text-align: center; color: #93a2b5; font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Robot — ýerine ýetiriji</h1>
+  <div class="sub">Algoritm düz, Robot ony ýerine ýetirsin! · Informatika · 5-nji synp</div>
+
+  <div class="levels" id="levels"></div>
+
+  <div class="card">
+    <div class="goal" id="goal"></div>
+    <div class="grid-box"><div class="grid" id="grid"></div></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="cols">
+      <div class="col">
+        <h3>Robotyň ÝÝBS-i (buýruklar ulgamy)</h3>
+        <div class="yybs" id="yybs"></div>
+        <div class="note">Ýerine ýetirijiniň düşünýän buýruklarynyň toplumyna <b>ÝÝBS</b> diýilýär. Robot diňe şu buýruklara düşünýär.</div>
+      </div>
+      <div class="col">
+        <h3>Algoritm</h3>
+        <ul class="prog" id="prog"></ul>
+        <div class="runrow">
+          <button class="run" id="runBtn">▶ Ýerine ýetir</button>
+          <button class="reset" id="resetBtn">Täzeden</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const LEVELS = [
+  {
+    name: "1-nji dereje",
+    goal: "Çyzykly algoritm: Roboty baýdaga ýetir. Buýruklar berk tertipde, biri-biriniň yzyndan ýerine ýetirilýär.",
+    w: 6, h: 3, start: { x: 0, y: 1, dir: 0 }, flag: { x: 4, y: 1 },
+    repeat: false
+  },
+  {
+    name: "2-nji dereje",
+    goal: "Öwrümli ýol: Robot başda saga bakyp dur. Baýdaga ýetmek üçin öwrülmeli bolar!",
+    w: 6, h: 5, start: { x: 0, y: 4, dir: 0 }, flag: { x: 4, y: 1 },
+    repeat: false
+  },
+  {
+    name: "3-nji dereje",
+    goal: "Gaýtalanma algoritmi: ýol uzyn — «Gaýtala» buýrugyny ulanyp, algoritmi gysga ýaz!",
+    w: 7, h: 5, start: { x: 0, y: 4, dir: 0 }, flag: { x: 6, y: 0 },
+    repeat: true
+  }
+];
+
+let levelIdx = 0;
+let unlocked = 1;
+let program = [];        // {t:'fwd'|'left'|'right'|'rep', n?}
+let robot = null;        // {x,y,dir} dir: 0 right,1 down,2 left,3 up
+let running = false;
+
+const gridEl = document.getElementById("grid");
+const progEl = document.getElementById("prog");
+const msgEl = document.getElementById("msg");
+
+const CMD_LABEL = {
+  fwd: "öňe ýöre",
+  left: "çepe öwrül",
+  right: "saga öwrül"
+};
+function label(c) {
+  return c.t === "rep" ? `Gaýtala ${c.n} gezek: öňe ýöre` : CMD_LABEL[c.t];
+}
+
+function lv() { return LEVELS[levelIdx]; }
+
+function renderLevels() {
+  const box = document.getElementById("levels");
+  box.innerHTML = "";
+  LEVELS.forEach((L, i) => {
+    const b = document.createElement("button");
+    b.className = "lvl" + (i === levelIdx ? " active" : "") + (i >= unlocked ? " locked" : "");
+    b.textContent = L.name + (i >= unlocked ? " 🔒" : "");
+    b.onclick = () => { if (i < unlocked && !running) { levelIdx = i; loadLevel(); } };
+    box.appendChild(b);
+  });
+}
+
+function renderGrid() {
+  const L = lv();
+  gridEl.style.gridTemplateColumns = `repeat(${L.w}, 46px)`;
+  gridEl.innerHTML = "";
+  for (let y = 0; y < L.h; y++) {
+    for (let x = 0; x < L.w; x++) {
+      const c = document.createElement("div");
+      c.className = "cell";
+      if (x === L.flag.x && y === L.flag.y) c.textContent = "🚩";
+      gridEl.appendChild(c);
+    }
+  }
+  const r = document.createElement("div");
+  r.className = "robot";
+  r.id = "robot";
+  r.innerHTML = `<div class="body">➤</div>`;
+  gridEl.appendChild(r);
+  placeRobot(false);
+}
+
+function placeRobot(animate) {
+  const el = document.getElementById("robot");
+  if (!animate) el.style.transition = "none";
+  el.style.left = (3 + robot.x * 49) + "px";
+  el.style.top = (3 + robot.y * 49) + "px";
+  el.style.transform = `rotate(${robot.dir * 90}deg)`;
+  if (!animate) { el.offsetHeight; el.style.transition = ""; }
+}
+
+function renderYYBS() {
+  const L = lv();
+  const box = document.getElementById("yybs");
+  box.innerHTML = "";
+  for (const t of ["fwd", "left", "right"]) {
+    const b = document.createElement("button");
+    b.className = "cmd-btn";
+    b.textContent = CMD_LABEL[t];
+    b.onclick = () => addCmd({ t });
+    box.appendChild(b);
+  }
+  if (L.repeat) {
+    const row = document.createElement("div");
+    row.className = "rep-row";
+    const sel = document.createElement("select");
+    for (let n = 2; n <= 6; n++) {
+      const o = document.createElement("option");
+      o.value = n; o.textContent = "×" + n;
+      sel.appendChild(o);
+    }
+    sel.value = 4;
+    const b = document.createElement("button");
+    b.className = "cmd-btn";
+    b.textContent = "Gaýtala: öňe ýöre";
+    b.onclick = () => addCmd({ t: "rep", n: +sel.value });
+    row.appendChild(sel);
+    row.appendChild(b);
+    box.appendChild(row);
+  }
+}
+
+function renderProgram(currentIdx) {
+  progEl.innerHTML = "";
+  const start = document.createElement("li");
+  start.className = "fixed";
+  start.textContent = "Başlangyjy";
+  progEl.appendChild(start);
+  program.forEach((c, i) => {
+    const li = document.createElement("li");
+    if (i === currentIdx) li.className = "current";
+    const span = document.createElement("span");
+    span.textContent = (i + 1) + ". " + label(c);
+    li.appendChild(span);
+    if (!running) {
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.onclick = () => { program.splice(i, 1); renderProgram(); };
+      li.appendChild(del);
+    }
+    progEl.appendChild(li);
+  });
+  const end = document.createElement("li");
+  end.className = "fixed";
+  end.textContent = "Soňy";
+  progEl.appendChild(end);
+}
+
+function addCmd(c) {
+  if (running || program.length >= 15) return;
+  program.push(c);
+  msg("");
+  renderProgram();
+}
+
+function msg(text, cls) {
+  msgEl.textContent = text;
+  msgEl.className = "msg" + (cls ? " " + cls : "");
+}
+
+const DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];
+
+function expand() {
+  const steps = [];
+  program.forEach((c, i) => {
+    if (c.t === "rep") for (let k = 0; k < c.n; k++) steps.push({ t: "fwd", src: i });
+    else steps.push({ t: c.t, src: i });
+  });
+  return steps;
+}
+
+async function run() {
+  if (running || program.length === 0) {
+    if (program.length === 0) msg("Ilki algoritm düz — buýruklara bas!", "bad");
+    return;
+  }
+  running = true;
+  document.getElementById("runBtn").disabled = true;
+  const L = lv();
+  robot = { ...L.start };
+  placeRobot(false);
+  msg("");
+  renderProgram();
+  await sleep(350);
+
+  const steps = expand();
+  for (const s of steps) {
+    renderProgram(s.src);
+    if (s.t === "left") robot.dir = (robot.dir + 3) % 4;
+    else if (s.t === "right") robot.dir = (robot.dir + 1) % 4;
+    else {
+      const nx = robot.x + DX[robot.dir], ny = robot.y + DY[robot.dir];
+      if (nx < 0 || ny < 0 || nx >= L.w || ny >= L.h) {
+        document.getElementById("robot").classList.add("crash");
+        msg("Robot diwara degdi! Algoritmi düzedip, täzeden synanyş.", "bad");
+        running = false;
+        document.getElementById("runBtn").disabled = false;
+        renderProgram();
+        return;
+      }
+      robot.x = nx; robot.y = ny;
+    }
+    placeRobot(true);
+    await sleep(420);
+  }
+
+  running = false;
+  document.getElementById("runBtn").disabled = false;
+  renderProgram();
+  if (robot.x === L.flag.x && robot.y === L.flag.y) {
+    const kind = program.some(c => c.t === "rep") ? "Gaýtalanma algoritmi" : "Çyzykly algoritm";
+    msg(`Berekella! 🎉 ${kind} dogry ýerine ýetirildi (${program.length} buýruk).`, "ok");
+    if (levelIdx + 1 > unlocked - 1 && unlocked < LEVELS.length) {
+      unlocked = Math.max(unlocked, levelIdx + 2);
+      renderLevels();
+    }
+  } else {
+    msg("Robot baýdaga ýetmedi. Algoritme täzeden seret!", "bad");
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function loadLevel() {
+  const L = lv();
+  program = [];
+  robot = { ...L.start };
+  running = false;
+  document.getElementById("runBtn").disabled = false;
+  document.getElementById("goal").textContent = L.goal;
+  msg("");
+  renderLevels();
+  renderGrid();
+  renderYYBS();
+  renderProgram();
+}
+
+document.getElementById("runBtn").onclick = run;
+document.getElementById("resetBtn").onclick = () => {
+  if (running) return;
+  const keep = program;
+  loadLevel();
+  program = keep;
+  renderProgram();
+};
+
+loadLevel();
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Köpeltmek tablisasy — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .pick { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+  .pick button { min-height: 44px; font-size: 17px; font-weight: 800; padding: 0; }
+  .tbl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .tbl div { background: #f7fafd; border-radius: 10px; padding: 8px; text-align: center; font-size: 16px; font-weight: 700; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 28px; font-weight: 800; }
+  .nums { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Köpeltmek tablisasy</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def">Köpelijileriň orunlary çalşyrylanda hasyl üýtgemeýär: 7 · 8 = 8 · 7.
+      Sany <b>10-a köpeltmek</b> üçin sagynda bir nol ýazylýar, <b>10-a bölmek</b> üçin
+      bir nol taşlanýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Tablisany saýla</h3>
+    <div class="pick" id="pick"></div>
+    <div class="tbl" id="tbl" style="margin-top:8px"></div>
+    <div class="row"><button class="btn ghost" id="tgl">Jogaplary gizle</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Türgenleşik</h3>
+    <div class="eq" id="eq"></div>
+    <div class="nums" id="nums" style="margin-top:8px"></div>
+    <div class="msg" id="emsg"></div>
+    <div class="row"><button class="btn primary" id="enext">Indiki mysal</button></div>
+    <div class="score" id="esc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, I kitap · 23–110-njy sahypalar</div>
+</div>
+
+<script>
+var base = 7, showAns = 1;
+function drawPick() {
+  var h = "";
+  for (var i = 2; i <= 9; i++) h += '<button class="btn' + (i === base ? " sel" : "") + '" data-b="' + i + '">' + i + "</button>";
+  document.getElementById("pick").innerHTML = h;
+  var bs = document.getElementById("pick").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) {
+    bs[j].onclick = function () { base = parseInt(this.getAttribute("data-b"), 10); drawPick(); drawTbl(); };
+  }
+}
+function drawTbl() {
+  var h = "";
+  for (var i = 1; i <= 10; i++) h += "<div>" + base + " · " + i + " = " + (showAns ? (base * i) : "?") + "</div>";
+  document.getElementById("tbl").innerHTML = h;
+  document.getElementById("tgl").textContent = showAns ? "Jogaplary gizle" : "Jogaplary görkez";
+}
+document.getElementById("tgl").onclick = function () { showAns = showAns ? 0 : 1; drawTbl(); };
+drawPick(); drawTbl();
+
+// [a, amal, b]
+var E = [[7, "·", 8], [56, ":", 7], [9, "·", 6], [54, ":", 6], [6, "·", 10],
+         [80, ":", 10], [8, "·", 4], [63, ":", 9], [87, ":", 87]];
+var ei = 0, ed = 0, eok = 0, elock = 0;
+function res() { var e = E[ei]; return e[1] === "·" ? e[0] * e[2] : e[0] / e[2]; }
+function showE() {
+  document.getElementById("eq").textContent = E[ei][0] + " " + E[ei][1] + " " + E[ei][2] + " = ?";
+  document.getElementById("emsg").className = "msg";
+  document.getElementById("emsg").textContent = "";
+  elock = 0;
+}
+var PAD = [];
+for (var i = 1; i <= 12; i++) PAD.push(i);
+var EX = [14, 18, 24, 27, 28, 32, 36, 42, 45, 48, 54, 56, 60, 63, 72, 80];
+for (var i = 0; i < EX.length; i++) PAD.push(EX[i]);
+var h = "";
+for (var i = 0; i < PAD.length; i++) h += '<button class="btn" data-n="' + PAD[i] + '">' + PAD[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (elock) return;
+    elock = 1; ed++;
+    var v = parseInt(this.getAttribute("data-n"), 10), r = res(), e = E[ei], m = document.getElementById("emsg");
+    var why = e[1] === ":" ? (" Sebäbi " + r + " · " + e[2] + " = " + e[0] + ".") :
+      (e[2] === 10 ? " 10-a köpeldeniňde sagynda bir nol ýazylýar." : "");
+    if (v === r) { eok++; m.className = "msg ok"; m.textContent = "Dogry!" + why; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + r + "." + why; }
+    document.getElementById("esc").textContent = "Netije: " + eok + " / " + ed;
+  };
+}
+document.getElementById("enext").onclick = function () { ei = (ei + 1) % E.length; showE(); };
+showE();
+
+var Q = [
+  ["7 · 8 näçe bolar?", ["56", "54", "63"], 0],
+  ["Sany 10-a köpeltmek üçin näme etmeli?", ["Sagynda bir nol ýazmaly", "Bir noly taşlamaly", "10 goşmaly"], 0],
+  ["87 : 87 näçe bolar?", ["1", "0", "87"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

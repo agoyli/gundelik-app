@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perpendikulýar we parallel — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex;
+           justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; max-width: 100%; height: auto; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .fg { background: #f7fafd; border-radius: 11px; padding: 9px; text-align: center;
+        font-size: 12.5px; cursor: pointer; border: 2px solid transparent; }
+  .fg.on { border-color: #2456b0; }
+  .fg svg { display: block; margin: 0 auto 5px; background: #fff; border-radius: 7px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Perpendikulýar we parallel göni çyzyklar</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sürgüji süýşürip, ikinji göni çyzygyň burçuny üýtget. Burç <b>90°</b>
+      bolanda çyzyklar perpendikulýar, çyzyklar kesişmese bolsa paralleldir.</div>
+    <div class="stage" id="fig"></div>
+    <div class="slider"><span class="lbl">Burç</span>
+      <input type="range" id="ang" min="0" max="180" value="90"><span class="out" id="ao"></span></div>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Nusgalar</h3>
+    <div class="goal">Suratlara bas – haýsy ýagdaýda perpendikulýar, haýsysynda parallel?</div>
+    <div class="figs" id="figs"></div>
+    <div class="msg" id="fmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Gönüburçlukda</h3>
+    <div class="goal">Gönüburçlugyň taraplaryna bas – olaryň özara ýerleşişi görkeziler.</div>
+    <div class="stage" id="rect"></div>
+    <div class="msg" id="rmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Bir göni çyzyga perpendikulýar bolan iki göni çyzyk <b>özara paralleldir</b>. Şonuň üçin
+      hem gönüburçlugyň garşylykly taraplary parallel, goňşy taraplary bolsa perpendikulýardyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §24</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- interaktiw burç ---------------- */
+function fig() {
+  const a = +$("ang").value;
+  $("ao").textContent = a + "°";
+  const S = 320, c = S / 2, L = 120;
+  const rad = a * Math.PI / 180;
+  const dx = L * Math.cos(rad), dy = -L * Math.sin(rad);
+  const perp = Math.abs(a - 90) < 0.5;
+  const par = a === 0 || a === 180;
+  // parallel ýagdaýynda ikinji çyzygy aşak süýşürýäris
+  const off = par ? 46 : 0;
+  const mark = perp
+    ? `<path d="M${c + 22} ${c} L${c + 22} ${c - 22} L${c} ${c - 22}" fill="none"
+         stroke="#1d7a3d" stroke-width="2.5"/>`
+    : `<path d="M${c + 34} ${c} A34 34 0 0 0 ${(c + 34 * Math.cos(rad)).toFixed(1)}
+         ${(c - 34 * Math.sin(rad)).toFixed(1)}" fill="none" stroke="#e08b00" stroke-width="2.5"/>
+       <text x="${c + 46}" y="${c - 18}" fill="#e08b00" font-size="13"
+         font-weight="700">${a}°</text>`;
+  $("fig").innerHTML = `
+    <svg viewBox="0 0 ${S} ${S}" width="${S}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      <line x1="${c - L - 30}" y1="${c}" x2="${c + L + 30}" y2="${c}" stroke="#2456b0"
+        stroke-width="3"/>
+      <text x="${c + L + 22}" y="${c - 10}" fill="#2456b0" font-size="14"
+        font-weight="700">a</text>
+      <line x1="${(c - dx).toFixed(1)}" y1="${(c - dy + off).toFixed(1)}"
+            x2="${(c + dx).toFixed(1)}" y2="${(c + dy + off).toFixed(1)}"
+        stroke="#e5007d" stroke-width="3"/>
+      <text x="${(c + dx + 10).toFixed(1)}" y="${(c + dy + off - 8).toFixed(1)}" fill="#e5007d"
+        font-size="14" font-weight="700">b</text>
+      ${par ? "" : mark}
+      <circle cx="${c}" cy="${c}" r="4" fill="#1e2a3a"/>
+    </svg>`;
+  $("calc").innerHTML = perp
+    ? `Burç <b>90°</b> – çyzyklar <b>perpendikulýardyr</b>: a ⊥ b.<br>` +
+      `Eger a ⊥ b bolsa, b ⊥ a hem bolýar.`
+    : par
+      ? `Çyzyklar <b>kesişmeýär</b> – olar <b>paralleldir</b>: a ∥ b.<br>` +
+        `Eger a ∥ b bolsa, b ∥ a hem bolýar.`
+      : `Burç <b>${a}°</b> – çyzyklar kesişýär, ýöne göni burç emele gelmedi. ` +
+        `Perpendikulýar bolmagy üçin burç 90° bolmaly.`;
+}
+$("ang").addEventListener("input", fig);
+
+/* ---------------- nusgalar ---------------- */
+const FIGS = [
+  ["Kesişýän göni çyzyklar", "kesisyar",
+   `<line x1="14" y1="52" x2="86" y2="14" stroke="#2456b0" stroke-width="3"/>
+    <line x1="14" y1="14" x2="86" y2="52" stroke="#e5007d" stroke-width="3"/>`,
+   "Çyzyklar kesişýär, ýöne göni burç emele getirmeýär – ne perpendikulýar, ne parallel."],
+  ["Perpendikulýar", "perp",
+   `<line x1="10" y1="34" x2="90" y2="34" stroke="#2456b0" stroke-width="3"/>
+    <line x1="50" y1="8" x2="50" y2="60" stroke="#e5007d" stroke-width="3"/>
+    <path d="M62 34 L62 22 L50 22" fill="none" stroke="#1d7a3d" stroke-width="2"/>`,
+   "Çyzyklar 90° burç emele getirip kesişýär: AB ⊥ CD."],
+  ["Parallel", "par",
+   `<line x1="10" y1="22" x2="90" y2="22" stroke="#2456b0" stroke-width="3"/>
+    <line x1="10" y1="46" x2="90" y2="46" stroke="#e5007d" stroke-width="3"/>`,
+   "Çyzyklar tekizlikde hiç haçan kesişmeýär: MN ∥ KP."],
+  ["Üçünji çyzyga perpendikulýar", "iki",
+   `<line x1="26" y1="8" x2="26" y2="60" stroke="#2456b0" stroke-width="3"/>
+    <line x1="66" y1="8" x2="66" y2="60" stroke="#2456b0" stroke-width="3"/>
+    <line x1="8" y1="40" x2="90" y2="40" stroke="#e5007d" stroke-width="3"/>`,
+   "a ⊥ c we b ⊥ c bolsa, a ∥ b bolýar – iki çyzyk özara paralleldir."],
+];
+$("figs").innerHTML = FIGS.map((f, i) =>
+  `<div class="fg" data-i="${i}">
+     <svg width="100" height="68" viewBox="0 0 100 68"
+       xmlns="http://www.w3.org/2000/svg">${f[2]}</svg>${f[0]}</div>`).join("");
+$("figs").querySelectorAll(".fg").forEach(d => d.onclick = () => {
+  $("figs").querySelectorAll(".fg").forEach(x => x.classList.remove("on"));
+  d.classList.add("on");
+  $("fmsg").textContent = FIGS[+d.dataset.i][3];
+  $("fmsg").className = "msg ok";
+});
+
+/* ---------------- gönüburçluk ---------------- */
+const SIDES = [["AB", "ýokarky"], ["BC", "sag"], ["CD", "aşaky"], ["DA", "çep"]];
+let picked = [];
+function rect() {
+  const on = s => picked.includes(s) ? "#e5007d" : "#2456b0";
+  $("rect").innerHTML = `
+    <svg viewBox="0 0 300 200" width="300" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif" font-size="14" font-weight="700">
+      <line id="AB" x1="50" y1="40" x2="250" y2="40" stroke="${on("AB")}" stroke-width="5"
+        style="cursor:pointer"/>
+      <line id="BC" x1="250" y1="40" x2="250" y2="160" stroke="${on("BC")}" stroke-width="5"
+        style="cursor:pointer"/>
+      <line id="CD" x1="250" y1="160" x2="50" y2="160" stroke="${on("CD")}" stroke-width="5"
+        style="cursor:pointer"/>
+      <line id="DA" x1="50" y1="160" x2="50" y2="40" stroke="${on("DA")}" stroke-width="5"
+        style="cursor:pointer"/>
+      <text x="42" y="32" fill="#1e2a3a">A</text><text x="252" y="32" fill="#1e2a3a">B</text>
+      <text x="252" y="180" fill="#1e2a3a">C</text><text x="38" y="180" fill="#1e2a3a">D</text>
+    </svg>`;
+  SIDES.forEach(([id]) => {
+    $(id).onclick = () => {
+      if (picked.includes(id)) picked = picked.filter(x => x !== id);
+      else picked.push(id);
+      if (picked.length > 2) picked = picked.slice(-2);
+      rect();
+      if (picked.length === 2) {
+        const [p, q] = picked;
+        const opp = (p === "AB" && q === "CD") || (p === "CD" && q === "AB") ||
+                    (p === "BC" && q === "DA") || (p === "DA" && q === "BC");
+        $("rmsg").innerHTML = opp
+          ? `<b>${p} ∥ ${q}</b> – garşylykly taraplar <b>paralleldir</b>.`
+          : `<b>${p} ⊥ ${q}</b> – goňşy taraplar <b>perpendikulýardyr</b>, ` +
+            `olar göni burç emele getirýär.`;
+        $("rmsg").className = "msg ok";
+      } else {
+        $("rmsg").textContent = "Ýene bir tarapa bas.";
+        $("rmsg").className = "msg";
+      }
+    };
+  });
+}
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Perpendikulýar göni çyzyklar näçe gradus burç emele getirýär?",
+   ["45°", "60°", "90°", "180°"], 2],
+  ["Parallel göni çyzyklar näçe nokatda kesişýär?",
+   ["Bir nokatda", "Iki nokatda", "Kesişmeýär", "Tükeniksiz köp nokatda"], 2],
+  ["Gönüburçlugyň garşylykly taraplary nähili?",
+   ["Perpendikulýar", "Parallel", "Kesişýär", "Deň däl"], 1],
+  ["a ⊥ c we b ⊥ c bolsa, a we b nähili?", ["Perpendikulýar", "Parallel",
+                                            "Kesişýär", "Bilip bolmaýar"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+fig(); rect();
+</script>
+</body>
+</html>

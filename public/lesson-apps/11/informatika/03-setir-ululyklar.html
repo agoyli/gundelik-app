@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simwol we setir ululyklar — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  input[type=text] { width: 100%; padding: 12px; font-size: 16px; border-radius: 12px;
+                     border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  input[type=text]:focus { outline: none; border-color: #2456b0; }
+  .chars { display: flex; gap: 3px; flex-wrap: wrap; margin: 10px 0; }
+  .ch { width: 30px; text-align: center; }
+  .ch b { display: block; height: 32px; line-height: 32px; border-radius: 8px; font-size: 16px;
+          font-family: ui-monospace, Menlo, Consolas, monospace; background: #eef2f8; }
+  .ch span { display: block; font-size: 10px; color: #93a2b5; margin-top: 2px; }
+  .ch.hit b { background: #2456b0; color: #fff; }
+  .ch.up b { background: #dce9fb; color: #123a76; }
+  .ch.low b { background: #e0f5e6; color: #1d6b3a; }
+  .ch.dig b { background: #fdeee0; color: #93500f; }
+  .args { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  .args label { font-size: 13.5px; font-weight: 700; color: #5b6b80; }
+  .args input { width: 74px; padding: 9px; font-size: 15px; border-radius: 10px;
+                border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.7; }
+  .code b { color: #2456b0; }
+  .out { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 800;
+         color: #1d7a3d; margin-top: 8px; word-break: break-all; }
+  .tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; }
+  .tally div { border-radius: 11px; padding: 9px; text-align: center; font-size: 13px; font-weight: 700; }
+  .tally .n { display: block; font-size: 21px; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Simwol we setir ululyklar</h1>
+  <div class="sub">char, string we standart funksiýalar · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Setiri ýaz. Aşakda her simwolyň orny (indeksi) we ASCII kody görkezilýär.</div>
+    <input type="text" id="s" value="Informatika" spellcheck="false" maxlength="40">
+    <div class="chars" id="chars"></div>
+    <div class="row"><span class="badge info" id="len"></span>
+      <span class="score">s[i] – setiriň i-nji simwoly</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Standart funksiýalar</h3>
+    <div class="row tight" id="fns"></div>
+    <div class="args" id="args"></div>
+    <div class="code" id="code"></div>
+    <div class="out" id="out"></div>
+    <div class="note" id="fx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Simwollary sanamak</h3>
+    <div class="goal">ASCII tablisasynda baş harplaryň kodlary 65–90, setir harplaryňky
+      97–122, sifrleriňki bolsa 48–57 aralykdadyr.</div>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="card">
+    <h3>ord we chr</h3>
+    <div class="slider"><span class="lbl">Kod</span>
+      <input type="range" id="code0" min="32" max="126" value="65"><span class="out" id="co" style="font-size:16px">65</span></div>
+    <div class="code" id="ordx"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>String</b> tipli ululyk 1-den <b>255</b>-e çenli simwoly saklap bilýär.
+      <b>String[N]</b> ýazgy N sany simwol saklaýan setiri aňladýar – artykmaç simwollar
+      taşlanýar. Setir harpyň kody baş harpyň kodundan <b>32</b> birlik uludyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const FNS = {
+  Length: { args: [], call: s => s.length,
+    code: s => `write(Length(s));`, fx: "Setiriň uzynlygyny, ýagny simwollaryň sanyny berýär." },
+  Copy: { args: [["index", 3], ["count", 3]], call: (s, i, c) => s.substr(i - 1, c),
+    code: (s, i, c) => `s1 := Copy(s, ${i}, ${c});`,
+    fx: "st setirden index orundan başlap, count sany simwolyň nusgasyny alýar." },
+  Delete: { args: [["index", 1], ["count", 2]], call: (s, i, c) => s.slice(0, i - 1) + s.slice(i - 1 + c),
+    code: (s, i, c) => `Delete(s, ${i}, ${c});`,
+    fx: "st setirden index orundan başlap, count sany simwoly öçürýär." },
+  Insert: { args: [["subst", "for"], ["index", 3]], call: (s, t, i) => s.slice(0, i - 1) + t + s.slice(i - 1),
+    code: (s, t, i) => `Insert('${t}', s, ${i});`,
+    fx: "subst bölek setiri st setire Index orundan başlap goýýar." },
+  Pos: { args: [["subst", "for"]], call: (s, t) => s.indexOf(t) + 1,
+    code: (s, t) => `write(Pos('${t}', s));`,
+    fx: "Bölek setiriň ilkinji başlanýan ornuny berýär. Tapylmasa 0 berilýär." },
+  Concat: { args: [["s2", " pascal"]], call: (s, t) => s + t,
+    code: (s, t) => `s := Concat(s, '${t}');`, fx: "Argumentlerindäki setirleri birleşdirýär." },
+  UpCase: { args: [], call: s => s.replace(/[a-z]/g, c => c.toUpperCase()),
+    code: () => `for i:=1 to Length(s) do s[i] := UpCase(s[i]);`,
+    fx: "Setir latyn harplaryny baş harplara öwürýär, beýleki simwollary üýtgetmeýär." },
+  Tersine: { args: [], call: s => [...s].reverse().join(""),
+    code: () => `t := ''; for i := Length(s) downto 1 do t := t + s[i];`,
+    fx: "Gaýtalanma operatory bilen setir tersine öwrülýär." }
+};
+let fn = "Copy", vals = {};
+
+$("fns").innerHTML = Object.keys(FNS).map(k =>
+  `<button class="btn${k === fn ? " sel" : ""}" data-f="${k}">${k}</button>`).join("");
+document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => {
+  fn = b.dataset.f;
+  document.querySelectorAll("[data-f]").forEach(x => x.className = "btn" + (x.dataset.f === fn ? " sel" : ""));
+  vals = {};
+  buildArgs();
+});
+
+function buildArgs() {
+  const f = FNS[fn];
+  $("args").innerHTML = f.args.map(([n, d]) =>
+    `<label>${n}</label><input data-a="${n}" value="${vals[n] !== undefined ? vals[n] : d}">`).join("");
+  $("args").querySelectorAll("input").forEach(inp =>
+    inp.addEventListener("input", () => { vals[inp.dataset.a] = inp.value; run(); }));
+  run();
+}
+
+function run() {
+  const s = $("s").value;
+  const f = FNS[fn];
+  const a = f.args.map(([n, d]) => {
+    const v = vals[n] !== undefined ? vals[n] : d;
+    return typeof d === "number" ? Math.max(1, parseInt(v) || 1) : v;
+  });
+  let res;
+  try { res = f.call(s, ...a); } catch (e) { res = "#ÝALŇYŞ"; }
+  $("code").innerHTML = `<b>var</b> s : string;<br>s := '${s}';<br>` + f.code(s, ...a);
+  $("out").textContent = "netije: " + (typeof res === "string" ? `'${res}'` : res);
+  $("fx").textContent = f.fx;
+  chars(fn === "Pos" ? { start: s.indexOf(a[0]), len: a[0].length }
+       : fn === "Copy" ? { start: a[0] - 1, len: a[1] }
+       : fn === "Delete" ? { start: a[0] - 1, len: a[1] } : null);
+}
+
+function chars(hit) {
+  const s = $("s").value;
+  $("chars").innerHTML = [...s].map((c, i) => {
+    const code = c.charCodeAt(0);
+    let cls = "ch";
+    if (code >= 65 && code <= 90) cls += " up";
+    else if (code >= 97 && code <= 122) cls += " low";
+    else if (code >= 48 && code <= 57) cls += " dig";
+    if (hit && hit.start >= 0 && i >= hit.start && i < hit.start + hit.len) cls = "ch hit";
+    return `<div class="${cls}"><b>${c === " " ? "␣" : c}</b><span>${i + 1}</span></div>`;
+  }).join("");
+  $("len").textContent = `Length(s) = ${s.length}`;
+  tally();
+}
+
+function tally() {
+  const s = $("s").value;
+  let up = 0, low = 0, dig = 0;
+  [...s].forEach(c => {
+    const k = c.charCodeAt(0);
+    if (k >= 65 && k <= 90) up++;
+    else if (k >= 97 && k <= 122) low++;
+    else if (k >= 48 && k <= 57) dig++;
+  });
+  const other = s.length - up - low - dig;
+  $("tally").innerHTML = [
+    ["Baş harp", up, "#dce9fb", "#123a76"],
+    ["Setir harp", low, "#e0f5e6", "#1d6b3a"],
+    ["Sifr", dig, "#fdeee0", "#93500f"],
+    ["Beýleki", other, "#eef2f8", "#5b6b80"]
+  ].map(([n, v, bg, fg]) =>
+    `<div style="background:${bg};color:${fg}"><span class="n">${v}</span>${n}</div>`).join("");
+}
+
+$("s").addEventListener("input", run);
+$("code0").addEventListener("input", () => {
+  const n = +$("code0").value;
+  $("co").textContent = n;
+  const c = String.fromCharCode(n);
+  const pair = (n >= 65 && n <= 90) ? `chr(${n} + 32) = '${String.fromCharCode(n + 32)}'`
+    : (n >= 97 && n <= 122) ? `chr(${n} − 32) = '${String.fromCharCode(n - 32)}'`
+    : "harp däl";
+  $("ordx").innerHTML =
+    `chr(${n}) = '<b>${c === " " ? "␣" : c}</b>'<br>ord('${c === " " ? "␣" : c}') = <b>${n}</b><br>` +
+    `harpyň jübüti: ${pair}`;
+});
+
+buildArgs();
+$("code0").dispatchEvent(new Event("input"));
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuşan döwleti — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .list { display: grid; gap: 7px; }
+  .list button { min-height: 50px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .board { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .board svg { display: block; width: 100%; height: auto; max-height: 120px; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Günorta Horezm we Lebap welaýatynyň ýerleri Kuşan döwletiniň düzüminde</h1>
+  <div class="sub">Türkmenistanyň taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Kuşan döwleti <b>I–IV asyrlarda</b> häzirki Owganystanyň ýerlerinde
+      döräp, Horezmi we Lebap welaýatynyň ýerlerini öz içine alypdyr.</div>
+    <div class="tbl" style="margin-top:8px">dili – baktriýa dili&nbsp;&nbsp;|&nbsp;&nbsp;
+      dini – budda&nbsp;&nbsp;|&nbsp;&nbsp; merkezi: Kabul → Peşewar</div>
+  </div>
+
+  <div class="card">
+    <h3>Patyşalary tertibe düz</h3>
+    <div class="board"><svg id="bd" viewBox="0 0 320 120"></svg></div>
+    <div class="goal" id="goal"></div>
+    <div class="list" id="list"></div>
+    <div class="msg" id="msg"></div>
+    <div class="done" id="done" style="display:none"></div>
+    <div class="row"><button class="btn ghost" id="reset">Täzeden başla</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kim edipdir?</h3>
+    <div class="task" id="task"></div>
+    <div class="kinds" id="kinds">
+      <button class="btn" data-k="kadfiz2">Kadfiz II</button>
+      <button class="btn" data-k="kaniska">Kanişka</button>
+    </div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Türkmenistanyň taryhy 7 · 19–21-nji sahypalar</div>
+</div>
+
+<script>
+var S = [
+  "Kudzula Kadfiz (Kadfiz I) – döwleti esaslandyrýar, 85 ýaşynda aradan çykýar",
+  "Wima Kadfiz (Kadfiz II) – 30 ýyl töweregi dolandyrýar, pul özgertmesini geçirýär",
+  "Kanişka (b.e. 78–123 ý.) – döwlet gülläp ösýär, «şalaryň şasy»"
+];
+var next = 0, tries = 0, order = [2, 0, 1];
+function drawBar() {
+  var s = '<line x1="20" y1="70" x2="300" y2="70" stroke="#7a5c1e" stroke-width="4"/>';
+  var labels = ["Kadfiz I", "Kadfiz II", "Kanişka"];
+  for (var i = 0; i < 3; i++) {
+    var x = 60 + i * 100;
+    var on = i < next;
+    s += '<circle cx="' + x + '" cy="70" r="' + (on ? 14 : 10) + '" fill="' +
+      (on ? "#2b7a4a" : "#cbb489") + '" stroke="#3b2c10" stroke-width="2"/>';
+    s += '<text x="' + (x - 30) + '" y="40" font-size="13" fill="#3b2c10">' +
+      (on ? labels[i] : "?") + "</text>";
+  }
+  s += '<text x="16" y="100" font-size="12" fill="#7a5c1e">I asyr</text>';
+  s += '<text x="252" y="100" font-size="12" fill="#7a5c1e">II asyr</text>';
+  document.getElementById("bd").innerHTML = s;
+}
+function render() {
+  var h = "";
+  for (var k = 0; k < order.length; k++) {
+    var i = order[k];
+    if (i < next) continue;
+    h += '<button class="btn" data-i="' + i + '">' + S[i] + "</button>";
+  }
+  document.getElementById("list").innerHTML = h;
+  var lb = document.getElementById("list").getElementsByTagName("button");
+  for (var k = 0; k < lb.length; k++) lb[k].onclick = pick;
+  document.getElementById("goal").textContent = next < S.length ?
+    ((next + 1) + "-nji patyşany saýla.") : "Üç patyşa hem dogry tertipde ýygnaldy!";
+  var dv = document.getElementById("done");
+  if (next > 0) {
+    var dh = "";
+    for (var i = 0; i < next; i++) dh += (i + 1) + ". " + S[i] + "<br>";
+    dv.innerHTML = dh;
+    dv.style.display = "block";
+  } else {
+    dv.style.display = "none";
+    dv.innerHTML = "";
+  }
+  document.getElementById("sc").textContent = "Ädim: " + next + " / 3 · synanyşyk: " + tries;
+  drawBar();
+}
+function pick() {
+  var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("msg");
+  tries++;
+  if (i === next) {
+    next++;
+    m.className = "msg ok";
+    m.textContent = next === S.length ? "Tertip dogry!" : "Dogry!";
+  } else {
+    m.className = "msg bad";
+    m.textContent = "Ilki " + (next + 1) + "-nji patyşa gelmeli.";
+  }
+  render();
+}
+document.getElementById("reset").onclick = function () {
+  next = 0; tries = 0;
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  render();
+};
+render();
+
+// [waka, dogry açar, düşündiriş]
+var P = [
+  ["Welaýat dolandyryş ulgamyny girizipdir.", "kadfiz2",
+   "Kadfiz II döwründe döwlet dolandyryşy özgerdilipdir."],
+  ["«Şalaryň şasy» diýen belent ada eýe bolupdyr.", "kaniska",
+   "Onuň döwründe döwlet Hindistandan Aral deňzine çenli giňäpdir."],
+  ["Pul özgertmesini geçirip, öz pulyny zikgeledipdir.", "kadfiz2",
+   "Pullaryň ýüzüne hindi-grek, hindi-sak we hindi-parfiýa hatlary ýazylypdyr."],
+  ["Adyndan zikge edilen altyn pullaryň 200 töweregi saklanyp galypdyr.", "kaniska",
+   "Olar dünýäniň muzeýlerinde saklanýar."],
+  ["Ýerli häkimlere öz pullaryny zikgelemäge hukuk beripdir.", "kadfiz2",
+   "Bu pul dolanyşygynyň giňelmegine getiripdir."],
+  ["Onuň döwründe Türkmenistanyň günorta-gündogar etraplary döwletiň düzüminde bolupdyr.",
+   "kaniska", "Kerki – Türkmenabat aralygyndan şol döwrüň tapyndylary tapyldy."]
+];
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("task").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), m = document.getElementById("pmsg");
+    if (k === P[pi][1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + P[pi][2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + P[pi][2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+var Q = [
+  ["Kuşan döwletiniň dini haýsy bolupdyr?", ["Budda", "Otparazçylyk", "Hristiançylyk"], 0],
+  ["Kanişka haýsy ýyllarda dolandyrypdyr?", ["78–123", "209–174", "632–651"], 0],
+  ["Amul şäheri Kuşan döwründe näçe gektar bolupdyr?", ["150–175", "12", "42"], 0]
+];
+var qd = 0, qok = 0, hq = "";
+for (var i = 0; i < Q.length; i++) {
+  hq += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hq += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hq += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hq;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

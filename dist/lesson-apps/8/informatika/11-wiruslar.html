@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kompýuter wiruslary — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .case { background: #f7fafd; border-radius: 12px; padding: 13px 14px; font-size: 15px;
+          line-height: 1.55; min-height: 84px; }
+  .case .who { font-size: 12.5px; color: #93a2b5; font-weight: 700; margin-bottom: 5px; }
+  .kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); gap: 8px; }
+  .kinds .btn { padding: 12px 8px; font-size: 14px; }
+  .spread { display: flex; gap: 4px; margin-top: 10px; }
+  .pc { flex: 1; height: 42px; border-radius: 9px; background: #e8eef7; display: flex;
+        align-items: center; justify-content: center; font-size: 19px; transition: background .3s; }
+  .pc.sick { background: #fbe3e3; }
+  .facts { display: flex; flex-direction: column; gap: 7px; }
+  .fact { display: flex; gap: 9px; align-items: flex-start; background: #f7fafd;
+          border-radius: 11px; padding: 10px 12px; font-size: 14px; line-height: 1.5; }
+  .fact .n { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; background: #b02424;
+             color: #fff; font-size: 12px; font-weight: 800; display: flex;
+             align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kompýuter wiruslary</h1>
+  <div class="sub">Zyýanly programmalaryň görnüşleri · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Ýagdaýy oka we haýsy görnüşdäki wirusdygyny kesgitle.</div>
+    <div class="case" id="case"></div>
+    <div class="kinds" id="kinds" style="margin-top:10px"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost" id="next">Indiki ýagdaý</button>
+      <span class="score" id="score"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Wirus nähili ýaýraýar</h3>
+    <div class="goal">Zäherlenen programma işe goýberilende wirus goňşy kompýuterlere geçýär.
+      Tizligi üýtget we ýaýramagy gör.</div>
+    <div class="spread" id="spread"></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Ýaýramak</span>
+      <input type="range" id="sp" min="1" max="10" value="4"><span class="out" id="spo">4</span></div>
+    <div class="row">
+      <button class="btn warn" id="infect">Zäherlenen faýly aç</button>
+      <button class="btn primary" id="cure">Antiwirus bilen arassala</button>
+      <span class="score" id="cnt"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Wirusyň köpeliş döwürleri</h3>
+    <div class="facts" id="facts"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Kompýuter wiruslary</b> – öz nusgalaryny döretmäge we olary kompýuteriň faýllaryna
+      ornaşdyrmaga ukyby bolan zyýanly programmalardyr. <b>Rezident</b> wiruslar kompýuter
+      öçürilýänçä ýatda saklanýar. Aldaw bilen şahsy maglumatlary almaga gönükdirilen hüjüme
+      <b>fişing</b> (balyk tutma) diýilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const KINDS = ["Faýl wirusy", "Ýükleýji wirus", "Tor wirusy", "Makrowirus", "Fişing"];
+const CASES = [
+  { who: "Ýagdaý 1", t: "Okuwçy fleş diskden oýun.exe faýlyny işe goýberdi. Şondan soň kompýuterdäki beýleki .exe we .com faýllar hem işlemesini bes etdi.", k: "Faýl wirusy",
+    w: "Faýl wiruslary ýerine ýetirilýän faýllara – .exe we .com giňeltmedäkilere zyýan ýetirýär." },
+  { who: "Ýagdaý 2", t: "Kompýuter işe goýberilende operasion sistema ýüklenmeýär, ekranda nätanyş habar çykýar.", k: "Ýükleýji wirus",
+    w: "Ýükleýji wiruslar özüni diskiň ýükleýji sektoryna ýazdyrýar we kompýuter işe başlanda hereket edýär." },
+  { who: "Ýagdaý 3", t: "Synp otagyndaky bir kompýuter zäherlendi, birnäçe minutdan soň lokal tordaky beýleki kompýuterler hem zäherlendi.", k: "Tor wirusy",
+    w: "Tor wiruslary kompýuter tory boýunça ýaýraýar." },
+  { who: "Ýagdaý 4", t: "Word-da hasabat faýly açylanda tekstiň bölekleri özbaşdak pozulyp başlady.", k: "Makrowirus",
+    w: "Makrowiruslar makrobuýruklaryň kömegi bilen ýazylýar we Microsoft Office faýllaryna zyýan ýetirýär." },
+  { who: "Ýagdaý 5", t: "Poçta gutusyna hat geldi: «Hasabyňyz ýapylýar, paroluňyzy şu salga iberiň».", k: "Fişing",
+    w: "Aldaw maksady bilen möhüm şahsy maglumatlary almaga gönükdirilen hüjüme fişing diýilýär." },
+  { who: "Ýagdaý 6", t: "Awtorun ady bilen özbaşdak işe başlaýan programma CD we DVD diskler arkaly geçip, kompýuteri zäherleýär.", k: "Faýl wirusy",
+    w: "Awtorun görnüşli wiruslar hem ýerine ýetirilýän faýllar arkaly geçýär." }
+];
+let order = CASES.map((c, i) => i).sort(() => Math.random() - .5), idx = 0, right = 0, total = 0, locked = false;
+
+KINDS.forEach(k => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = k;
+  b.onclick = () => {
+    if (locked) return;
+    locked = true; total++;
+    const c = CASES[order[idx]];
+    if (k === c.k) { right++; $("msg").textContent = `Dogry! ✅ ${c.w}`; $("msg").className = "msg ok"; }
+    else { $("msg").textContent = `Nädogry. Bu – ${c.k}. ${c.w}`; $("msg").className = "msg bad"; }
+    $("score").textContent = `Dogry jogap: ${right} / ${total}`;
+  };
+  $("kinds").appendChild(b);
+});
+
+function ask() {
+  locked = false;
+  const c = CASES[order[idx % order.length]];
+  $("case").innerHTML = `<div class="who">${c.who}</div>${c.t}`;
+  $("msg").textContent = ""; $("msg").className = "msg";
+}
+$("next").onclick = () => { idx++; ask(); };
+
+// ---- spread simulation ----
+const N = 12;
+let sick = new Array(N).fill(false), timer = null;
+function drawPcs() {
+  const S = $("spread"); S.innerHTML = "";
+  sick.forEach(s => {
+    const d = document.createElement("div");
+    d.className = "pc" + (s ? " sick" : "");
+    d.textContent = s ? "🦠" : "🖥";
+    S.appendChild(d);
+  });
+  const n = sick.filter(Boolean).length;
+  $("cnt").textContent = `Zäherlenen: ${n} / ${N}`;
+}
+$("sp").addEventListener("input", () => $("spo").textContent = $("sp").value);
+$("infect").onclick = () => {
+  clearInterval(timer);
+  sick = new Array(N).fill(false); sick[0] = true; drawPcs();
+  timer = setInterval(() => {
+    const next = [...sick];
+    sick.forEach((s, i) => {
+      if (!s) return;
+      if (i + 1 < N) next[i + 1] = true;
+      if (Math.random() < +$("sp").value / 20) next[Math.floor(Math.random() * N)] = true;
+    });
+    sick = next; drawPcs();
+    if (sick.every(Boolean)) clearInterval(timer);
+  }, 1100 - +$("sp").value * 80);
+};
+$("cure").onclick = () => { clearInterval(timer); sick = new Array(N).fill(false); drawPcs(); };
+
+const STAGES = [
+  "Kompýutere girmek – zäherlenen programma ýa-da göteriji arkaly.",
+  "Işjeňleşmek – zäherlenen programma işe goýberilende wirus operatiw ýada geçýär.",
+  "Ýokuşdyrmak üçin obýektleri gözlemek.",
+  "Öz nusgalaryny taýýarlamak.",
+  "Nusgalary faýllara we sistema bölegine ornaşdyrmak."
+];
+STAGES.forEach((s, i) => {
+  $("facts").innerHTML += `<div class="fact"><span class="n">${i + 1}</span><span>${s}</span></div>`;
+});
+
+drawPcs(); ask();
+</script>
+</body>
+</html>

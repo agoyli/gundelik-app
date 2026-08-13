@@ -12,7 +12,7 @@ import type { DayInfo, Lesson, TabId } from '../types';
 import { useSwipeLock } from './SwipeLock';
 import {
   BackIcon, BookmarkFilledIcon, BookmarkIcon, CalendarIcon, CheckIcon, ChevronIcon, CoinIcon,
-  MedalIcon, NavChevronIcon, QuestionOutlineIcon,
+  LockIcon, MedalIcon, NavChevronIcon, QuestionOutlineIcon,
   TabBookIcon, TabChartIcon, TabGridIcon, TabPersonIcon, TrendUpIcon,
 } from './Icons';
 
@@ -31,7 +31,9 @@ import {
  */
 const GRADE_TONE: Record<number, string> = {
   5: tokens.greenText,
-  4: tokens.blue,
+  /* the Solid grade, not the brand blue: a 16px bold digit is not large text,
+     so the fill it sits on has to clear 4.5:1 against white */
+  4: tokens.blueSolid,
   3: tokens.orangeText,
   2: tokens.redText,
 };
@@ -43,7 +45,7 @@ export function GradeBadge({ grade }: { grade: number }) {
       aria-label={`Baha ${grade}`}
       sx={{
         display: 'grid', placeItems: 'center', flex: 'none',
-        width: 30, height: 28, borderRadius: '9px',
+        width: 30, height: 28, borderRadius: `${tokens.rCell}px`,
         bgcolor: GRADE_TONE[grade] ?? tokens.ink2,
         color: '#fff', fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
       }}
@@ -57,9 +59,9 @@ export const GradeSlot = ({ grade }: { grade: number | null }) => (
   grade ? <GradeBadge grade={grade} /> : (
     <Box role="img" aria-label="Baha goýulmadyk" sx={{
       display: 'grid', placeItems: 'center', flex: 'none',
-      width: 30, height: 28, borderRadius: '9px', bgcolor: tokens.surfacePress,
+      width: 30, height: 28, borderRadius: `${tokens.rCell}px`, bgcolor: tokens.surfacePress,
     }}>
-      <Box aria-hidden sx={{ width: 9, height: 2, borderRadius: 1, bgcolor: tokens.inkDisabled }} />
+      <Box aria-hidden sx={{ width: 9, height: 2, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.inkDisabled }} />
     </Box>
   )
 );
@@ -111,14 +113,14 @@ export function DateStrip({ days, selected, onSelect, onPick }: {
             sx={{
               position: 'relative', flex: '0 0 54px', height: 70,
               borderRadius: `${tokens.rCell}px`,
-              bgcolor: active ? tokens.blue : tokens.surface,
+              bgcolor: active ? tokens.blueSolid : tokens.surface,
               color: active ? '#fff' : d.disabled ? tokens.inkDisabled : tokens.ink,
               boxShadow: today && !active ? `inset 0 0 0 1.5px ${tokens.blue}` : 'none',
               display: 'flex', flexDirection: 'column', gap: '6px',
               transition: 'background .18s ease,color .18s ease',
             }}
           >
-            <Box sx={{ fontSize: 18, fontWeight: 600, lineHeight: 1 }}>{d.d}</Box>
+            <Box sx={{ fontSize: 17, fontWeight: 600, lineHeight: 1 }}>{d.d}</Box>
             <Box sx={{ fontSize: 14, lineHeight: 1 }}>{d.w}</Box>
             {/* one marker, one meaning: this day has been checked */}
             {d.checked && (
@@ -180,6 +182,69 @@ export function SurfaceRow({ icon, label, labelSx, sub, end, onClick }: {
   );
 }
 
+/*
+ * Choosing a subject — the one shape for it.
+ *
+ * Subjects were picked three different ways: a row with a progress bar under
+ * Sapaklar, a horizontally scrolled tinted card under Testler, and a deck row
+ * under Kartlar. Three pickers for one decision, and the carousel clipped its
+ * last subject besides. This is that decision, once: the subject's own colour
+ * in the badge, what the bank holds for it on the second line, and progress
+ * only where progress is real.
+ */
+export function SubjectRow({
+  icon, tint, accent, label, sub, progress, locked, lockNote, onClick,
+}: {
+  icon: ReactNode; tint: string; accent: string; label: string; sub: string;
+  progress?: { done: number; total: number };
+  locked?: boolean; lockNote?: string; onClick: () => void;
+}) {
+  return (
+    <ButtonBase
+      onClick={onClick}
+      aria-label={locked
+        ? `${label}, ${lockNote}`
+        : `${label}, ${sub}${progress ? `, ${progress.done}/${progress.total} sapak tamamlandy` : ''}`}
+      sx={{
+        display: 'flex', alignItems: 'center', gap: '14px', width: '100%', textAlign: 'left',
+        bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '14px 13px',
+        transition: 'background .15s ease', '&:active': { bgcolor: tokens.surfacePress },
+      }}
+    >
+      <IconBadge
+        bg={locked ? tokens.lockTile : tint}
+        color={locked ? tokens.lockInk : accent}
+      >{locked ? <LockIcon size={22} /> : icon}</IconBadge>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.2px' }} noWrap>{label}</Typography>
+        <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '3px' }} noWrap>
+          {locked ? lockNote : sub}
+        </Typography>
+        {/* progress belongs to subjects that have a path to walk, and only
+            when it is not behind a lock */}
+        {!locked && progress && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mt: '8px' }}>
+            <Box sx={{
+              flex: 1, height: 6, borderRadius: `${tokens.rPill}px`,
+              bgcolor: tokens.dividerSoft, overflow: 'hidden',
+            }}>
+              <Box sx={{
+                width: `${Math.round((progress.done / progress.total) * 100)}%`, height: '100%',
+                borderRadius: `${tokens.rPill}px`, bgcolor: accent,
+              }} />
+            </Box>
+            <Typography sx={{
+              fontSize: 12, fontWeight: 600, color: tokens.ink3, flex: 'none',
+              fontVariantNumeric: 'tabular-nums',
+            }}>{progress.done}/{progress.total}</Typography>
+          </Box>
+        )}
+      </Box>
+      <RowChevron />
+    </ButtonBase>
+  );
+}
+
 /* Red is the app's "unread" colour and nothing else. A count that is merely a
    quantity — how many notes a day holds — takes the quiet tone, so two stacked
    rows never both shout. */
@@ -187,7 +252,7 @@ export const CountPill = ({ n, tone = 'alert', label }: {
   n: number; tone?: 'alert' | 'quiet'; label?: string;
 }) => (
   <Box role="img" aria-label={label ?? `${n} täze`} sx={{
-    minWidth: 23, height: 20, px: '7px', borderRadius: '10px',
+    minWidth: 23, height: 20, px: '7px', borderRadius: `${tokens.rPill}px`,
     bgcolor: tone === 'alert' ? tokens.redText : tokens.surfacePress,
     color: tone === 'alert' ? '#fff' : tokens.ink2,
     fontSize: 13, fontWeight: 600, lineHeight: '20px', textAlign: 'center',
@@ -349,7 +414,7 @@ export function TabBar({ value, onChange }: { value: TabId; onChange: (t: TabId)
         })}
       </Box>
       <Box sx={{
-        width: 139, height: 5, borderRadius: '2.5px', bgcolor: tokens.ink,
+        width: 139, height: 5, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.ink,
         m: '12px auto', mb: 'calc(7px + env(safe-area-inset-bottom))',
       }} />
     </Box>
@@ -378,7 +443,7 @@ export function SheetDrawer({ open, onClose, children }: {
       }}
     >
       <Box sx={{ py: '10px', display: 'grid', placeItems: 'center' }} aria-hidden>
-        <Box sx={{ width: 38, height: 5, borderRadius: '2.5px', bgcolor: tokens.divider }} />
+        <Box sx={{ width: 38, height: 5, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.divider }} />
       </Box>
       <Box sx={{ overflowY: 'auto' }}>{children}</Box>
     </SwipeableDrawer>
@@ -489,7 +554,7 @@ export function HeaderIconButton({ label, onClick, pressed, count, children }: {
       {!!count && (
         <Box aria-hidden sx={{
           position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, px: '4px',
-          borderRadius: '9px', bgcolor: tokens.redText, color: '#fff',
+          borderRadius: `${tokens.rCell}px`, bgcolor: tokens.redText, color: '#fff',
           fontSize: 11, fontWeight: 700, lineHeight: '18px', textAlign: 'center',
           border: '2px solid #fff', boxSizing: 'content-box',
         }}>{count > 99 ? '99+' : count}</Box>
@@ -626,7 +691,7 @@ export function RankRow({ rank, name, sub, points, self }: {
           {self && (
             <Box sx={{
               flex: 'none', px: '7px', height: 19, borderRadius: `${tokens.rPill}px`,
-              bgcolor: tokens.blue, color: '#fff', fontSize: 11, fontWeight: 700,
+              bgcolor: tokens.blueSolid, color: '#fff', fontSize: 11, fontWeight: 700,
               display: 'grid', placeItems: 'center',
             }}>Siz</Box>
           )}
@@ -720,7 +785,7 @@ export function SubPage({ title, onBack, action, help, children }: {
       {help && (
         <SheetDrawer open={helpOpen} onClose={() => setHelpOpen(false)}>
           <Typography variant="h2">{title}</Typography>
-          <Typography sx={{ fontSize: 14.5, color: tokens.ink2, lineHeight: 1.55, mt: '10px' }}>
+          <Typography sx={{ fontSize: 15, color: tokens.ink2, lineHeight: 1.55, mt: '10px' }}>
             {help}
           </Typography>
           <Button
@@ -857,11 +922,11 @@ export const MeterTile = ({ value, label, pct, color }: {
       <Typography sx={{ fontSize: 11, color: tokens.inkMuted, mt: '1px' }} noWrap>{label}</Typography>
     </Box>
     <Box aria-hidden sx={{
-      height: 4, borderRadius: '2px', bgcolor: tokens.surfacePress, overflow: 'hidden',
+      height: 4, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.surfacePress, overflow: 'hidden',
     }}>
       <Box sx={{
         height: '100%', width: `${Math.max(0, Math.min(100, pct))}%`,
-        borderRadius: '2px', bgcolor: color,
+        borderRadius: `${tokens.rPill}px`, bgcolor: color,
       }} />
     </Box>
   </Box>
@@ -1040,10 +1105,10 @@ export function MonthCalendar({ month, selected, marked, onSelect }: {
               sx={{
                 position: 'relative', aspectRatio: '1', borderRadius: `${tokens.rCell}px`,
                 fontSize: 15, fontWeight: active || today ? 700 : 500,
-                bgcolor: active ? tokens.blue : 'transparent',
+                bgcolor: active ? tokens.blueSolid : 'transparent',
                 color: active ? '#fff' : off ? tokens.inkDisabled : tokens.ink,
                 boxShadow: today && !active ? `inset 0 0 0 1.5px ${tokens.blue}` : 'none',
-                '&:active': { bgcolor: active ? tokens.blue : tokens.surfacePress },
+                '&:active': { bgcolor: active ? tokens.blueSolid : tokens.surfacePress },
               }}
             >
               {i + 1}

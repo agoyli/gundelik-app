@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10 sanyň alnyşy we ýazylyşy — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .frame { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  .frame div { background: #f2f5fa; border-radius: 9px; min-height: 42px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .frame div.on { background: #d9ead9; }
+  .big2 { text-align: center; font-size: 40px; font-weight: 700; letter-spacing: 6px; }
+  .digits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; text-align: center; }
+  .digits div { background: #f7fafd; border-radius: 12px; padding: 10px; font-size: 30px; font-weight: 700; }
+  .digits small { display: block; font-size: 12px; font-weight: 400; color: #4a5a6a; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 18px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>10 sanyň alnyşy we ýazylyşy</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def"><b>9 + 1 = 10.</b> 10 – iki belgi bilen ýazylýan ilkinji san.
+      10 sany taýajyk daňylsa <b>bir onluk</b> emele gelýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Onlugy doldur</h3>
+    <div class="frame" id="frame"></div>
+    <div class="big2" id="cnt" style="margin-top:9px">0</div>
+    <div class="row">
+      <button class="btn primary" id="add">Bir taýajyk goş</button>
+      <button class="btn" id="sub">Bir taýajyk aýyr</button>
+      <button class="btn ghost" id="rs">Arassala</button>
+    </div>
+    <div class="msg" id="fmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>10 nähili ýazylýar?</h3>
+    <div class="digits">
+      <div>1<small>onluk</small></div>
+      <div>0<small>birlik</small></div>
+    </div>
+    <div class="hint">Ilki 1, soňra 0 ýazylýar – bilelikde <b>10</b>.</div>
+  </div>
+
+  <div class="card">
+    <h3>Näçe ýetenok?</h3>
+    <div class="big2" id="task"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="tmsg"></div>
+    <div class="row"><button class="btn primary" id="next">Indiki mysal</button></div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, I kitap · 82–84-nji sahypalar</div>
+</div>
+
+<script>
+var n = 9;
+function show() {
+  var h = "";
+  for (var i = 0; i < 10; i++) h += '<div class="' + (i < n ? "on" : "") + '">' + (i < n ? "▮" : "") + "</div>";
+  document.getElementById("frame").innerHTML = h;
+  document.getElementById("cnt").textContent = n;
+  var m = document.getElementById("fmsg");
+  if (n === 10) { m.className = "msg ok"; m.textContent = "Onluk doldy! 9 + 1 = 10. Bu – bir onluk."; }
+  else { m.className = "msg"; m.textContent = "Onluga ýene " + (10 - n) + " taýajyk gerek."; }
+}
+document.getElementById("add").onclick = function () { if (n < 10) n++; show(); };
+document.getElementById("sub").onclick = function () { if (n > 0) n--; show(); };
+document.getElementById("rs").onclick = function () { n = 0; show(); };
+show();
+
+var T = [7, 6, 8, 5, 9, 4], ti = 0, d = 0, ok = 0, lock = 0;
+function showT() {
+  document.getElementById("task").textContent = T[ti] + " + ? = 10";
+  document.getElementById("tmsg").className = "msg";
+  document.getElementById("tmsg").textContent = "";
+  lock = 0;
+}
+var h = "";
+for (var i = 1; i <= 8; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (lock) return;
+    lock = 1; d++;
+    var v = parseInt(this.getAttribute("data-n"), 10), need = 10 - T[ti], m = document.getElementById("tmsg");
+    if (v === need) { ok++; m.className = "msg ok"; m.textContent = "Dogry! " + T[ti] + " + " + need + " = 10."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + need + "."; }
+    document.getElementById("tsc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; showT(); };
+showT();
+
+var Q = [
+  ["9 + 1 näçe bolar?", ["10", "9", "11"], 0],
+  ["10 sany näçe belgiden durýar?", ["Iki", "Bir", "Üç"], 0],
+  ["10-dan 1 aýyrsak näçe galar?", ["9", "10", "11"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

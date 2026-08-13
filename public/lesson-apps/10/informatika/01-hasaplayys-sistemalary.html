@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hasaplaýyş sistemalary — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .num { font-family: ui-monospace, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .bases { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+  .bx { background: #f7fafd; border-radius: 12px; padding: 10px 11px; }
+  .bx .t { font-size: 12.5px; color: #93a2b5; font-weight: 700; margin-bottom: 3px; }
+  .bx .v { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 800;
+           color: #2456b0; word-break: break-all; }
+  .bx.sel { background: #e3edfd; }
+  .div { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px; line-height: 1.75; }
+  .div .r { color: #b25b12; font-weight: 700; }
+  .arrowup { color: #1d7a3d; font-weight: 700; font-size: 13.5px; margin-top: 6px; }
+  .bits { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0; }
+  .bit { width: 40px; text-align: center; cursor: pointer; }
+  .bit b { display: block; height: 40px; line-height: 40px; border-radius: 10px; font-size: 17px;
+           background: #eef2f8; color: #93a2b5; font-family: ui-monospace, Menlo, monospace; }
+  .bit.on b { background: #2456b0; color: #fff; }
+  .bit span { display: block; font-size: 10.5px; color: #93a2b5; margin-top: 3px; }
+  .bit.on span { color: #2456b0; font-weight: 700; }
+  .sum { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Hasaplaýyş sistemalary</h1>
+  <div class="sub">Onluk, ikilik, sekizlik, onaltylyk · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Onluk sany saýla. Ony beýleki sistemalara geçirmek üçin sany esasa bölüp,
+      galyndylary <b>ters tertipde</b> ýazýarys.</div>
+    <div class="slider"><span class="lbl">Onluk san</span>
+      <input type="range" id="n" min="0" max="1023" value="26"><span class="out num" id="no">26</span></div>
+    <div class="row tight" style="margin-bottom:10px">
+      <button class="btn" data-n="26">26</button>
+      <button class="btn" data-n="255">255</button>
+      <button class="btn" data-n="465">465</button>
+      <button class="btn" data-n="569">569</button>
+      <button class="btn" data-n="49">49</button>
+    </div>
+    <div class="bases" id="bases"></div>
+  </div>
+
+  <div class="card">
+    <h3>Bölmegiň ädimleri</h3>
+    <div class="row tight" style="margin-bottom:8px">
+      <button class="btn sel" data-b="2">2 esasly</button>
+      <button class="btn" data-b="8">8 esasly</button>
+      <button class="btn" data-b="16">16 esasly</button>
+    </div>
+    <div class="div" id="steps"></div>
+    <div class="arrowup" id="res"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ikilik sany onluga geçirmek</h3>
+    <div class="goal">Bitlere bas. Her bit 2-niň öz derejesini goşýar.</div>
+    <div class="bits" id="bits"></div>
+    <div class="sum" id="sum"></div>
+  </div>
+
+  <div class="card">
+    <h3>Hartliniň formulasy: 2<sup>i</sup> = N</h3>
+    <div class="goal">Elipbiýde N sany simwol bar. Bir belgini kodlamak üçin näçe bit gerek?</div>
+    <div class="slider"><span class="lbl">N simwol</span>
+      <input type="range" id="N" min="2" max="256" value="64"><span class="out num" id="No">64</span></div>
+    <div class="slider"><span class="lbl">K belgi</span>
+      <input type="range" id="K" min="1" max="200" value="5"><span class="out num" id="Ko">5</span></div>
+    <div class="row"><span class="badge info num" id="hi"></span><span class="badge purple num" id="hI"></span></div>
+    <div class="note" id="hx"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Sanlary ýazuw belgileriniň kömegi bilen ýazmak usulyna <b>hasaplaýyş sistemasy</b> diýilýär.
+      Sifriň bahasy onuň duran ornuna bagly bolsa, oňa <b>pozisiýalaýyn sistema</b> diýilýär.
+      Bir baýtda ýerleşýän iň uly ikilik san <b>11111111₂ = 255₁₀</b>.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const DIG = "0123456789ABCDEF";
+const SUB = { 2: "₂", 8: "₈", 10: "₁₀", 16: "₁₆" };
+let base = 2;
+
+function toBase(n, b) {
+  if (n === 0) return "0";
+  let s = "";
+  while (n > 0) { s = DIG[n % b] + s; n = Math.floor(n / b); }
+  return s;
+}
+
+function draw() {
+  const n = +$("n").value;
+  $("no").textContent = n;
+
+  $("bases").innerHTML = [10, 2, 8, 16].map(b => `
+    <div class="bx${b === base ? " sel" : ""}">
+      <div class="t">${b === 10 ? "onluk" : b === 2 ? "ikilik" : b === 8 ? "sekizlik" : "onaltylyk"}</div>
+      <div class="v">${toBase(n, b)}<small>${SUB[b]}</small></div>
+    </div>`).join("");
+
+  // division steps
+  const lines = [];
+  let x = n;
+  if (x === 0) lines.push("0 : " + base + " = 0, <span class='r'>galyndy 0</span>");
+  while (x > 0) {
+    const q = Math.floor(x / base), r = x % base;
+    lines.push(`${x} : ${base} = ${q}, <span class="r">galyndy ${DIG[r]}</span>`);
+    x = q;
+  }
+  $("steps").innerHTML = lines.join("<br>");
+  $("res").innerHTML = `Galyndylary aşakdan ýokarlygyna ýazýarys: <b>${n}${SUB[10]} = ${toBase(n, base)}${SUB[base]}</b>`;
+
+  hartli();
+}
+
+// ---- bit board ----
+let bits = [1, 1, 0, 1, 0]; // 11010 = 26
+function drawBits() {
+  const B = $("bits"); B.innerHTML = "";
+  bits.forEach((v, i) => {
+    const p = bits.length - 1 - i;
+    const d = document.createElement("div");
+    d.className = "bit" + (v ? " on" : "");
+    d.innerHTML = `<b>${v}</b><span>2<sup>${p}</sup></span>`;
+    d.onclick = () => { bits[i] = v ? 0 : 1; drawBits(); };
+    B.appendChild(d);
+  });
+  const parts = [], terms = [];
+  bits.forEach((v, i) => {
+    const p = bits.length - 1 - i;
+    parts.push(`${v}·2<sup>${p}</sup>`);
+    if (v) terms.push(Math.pow(2, p));
+  });
+  const total = terms.reduce((a, b) => a + b, 0);
+  $("sum").innerHTML =
+    `${bits.join("")}<sub>2</sub> = ${parts.join(" + ")}<br>` +
+    `= ${terms.length ? terms.join(" + ") : "0"} = <b>${total}<sub>10</sub></b>`;
+}
+
+// ---- Hartli ----
+function hartli() {
+  const N = +$("N").value, K = +$("K").value;
+  $("No").textContent = N; $("Ko").textContent = K;
+  const i = Math.log2(N);
+  const exact = Number.isInteger(i);
+  const num = v => String(Math.round(v * 100) / 100).replace(".", ",");  // kitapdaky ýaly otur
+  const ir = num(i);
+  const need = Math.ceil(i);
+  $("hi").textContent = `i = ${ir} bit`;
+  $("hI").textContent = `I = ${K} · ${ir} = ${num(K * Math.round(i * 100) / 100)} bit`;
+  $("hx").innerHTML = exact
+    ? `2<sup>${i}</sup> = ${N}, diýmek bir belgi <b>${i} bit</b> göterýär.
+       ${K} belgili habar ${K} · ${i} = <b>${K * i} bit</b> = ${(K * i / 8) % 1 === 0 ? (K * i / 8) + " baýt" : "…"} eýeleýär.`
+    : `2<sup>i</sup> = ${N} deňlik bitin çözgüt bermeýär, i ≈ <b>${ir} bit</b>.
+       Hakyky kodlamak üçin iň bolmanda <b>${need} razrýad</b> gerek, sebäbi 2<sup>${need}</sup> = ${Math.pow(2, need)}.`;
+}
+
+$("n").addEventListener("input", draw);
+["N", "K"].forEach(id => $(id).addEventListener("input", hartli));
+document.querySelectorAll("[data-n]").forEach(b =>
+  b.onclick = () => { $("n").value = b.dataset.n; draw(); });
+document.querySelectorAll("[data-b]").forEach(b =>
+  b.onclick = () => {
+    base = +b.dataset.b;
+    document.querySelectorAll("[data-b]").forEach(x => x.className = "btn" + (+x.dataset.b === base ? " sel" : ""));
+    draw();
+  });
+
+draw(); drawBits();
+</script>
+</body>
+</html>

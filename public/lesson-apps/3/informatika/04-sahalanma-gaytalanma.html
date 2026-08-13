@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şahalanma we gaýtalanma — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 14px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 11px;
+               max-width: 100%; height: auto; }
+  .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .fig { background: #f7fafd; border-radius: 12px; padding: 9px; text-align: center;
+         font-size: 12.5px; }
+  .fig svg { display: block; margin: 0 auto 5px; }
+  .fig b { color: #2456b0; }
+  .prog { background: #f7fafd; border-radius: 13px; padding: 10px; font-size: 14px;
+          font-family: ui-monospace, Menlo, monospace; line-height: 1.9; }
+  .prog .now { background: #dbe7ff; border-radius: 6px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Şahalanma we gaýtalanma</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <h3>Şahalanma: şert barlanýar</h3>
+    <div class="goal">Şahalanma algoritmi <b>EGER … ONDA … BOLMASA</b> sözleri bilen
+      ýazylýar. Şerti üýtget – ýerine ýetiriji başga şahany saýlaýar.</div>
+    <div class="row tight" id="task"></div>
+    <div class="row tight" id="cond" style="margin-top:6px"></div>
+    <div class="stage" id="bs" style="margin-top:9px"></div>
+    <div class="msg" id="bmsg"></div>
+    <div class="hint">Blok-shemada şert rombuň içinde ýazylýar. <b>Rombuň çepinde
+      HAWA, sagynda ÝOK</b> ýazylýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Gaýtalanmanyň üç görnüşi</h3>
+    <div class="figs" id="loops"></div>
+  </div>
+
+  <div class="card">
+    <h3>ÜÇIN … ÝERINE ÝETIRMELI: şekil çyzýarys</h3>
+    <div class="goal">Bu aýlawda gaýtalanmalaryň sany öňünden belli. Sany saýla-da,
+      «Işlet» diý.</div>
+    <div class="slider"><span class="lbl">Gaýtalanmanyň sany</span>
+      <input type="range" id="n" min="2" max="8" value="4"><span class="out" id="no"></span></div>
+    <div class="prog" id="pg"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="run">▶️ Işlet</button>
+      <button class="btn ghost" id="clr">🧹 Arassala</button>
+    </div>
+    <div class="stage" id="cv" style="margin-top:9px"></div>
+    <div class="msg" id="rmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Blok-shemanyň figuralary</h3>
+    <div class="figs" id="figs"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- şahalanma (kitap: sah. 34–39) ---------------- */
+const TASKS = [
+  {q1: "Ýagyş", q2: "ýagýarmy?", yes: "Saýawan al", no: "Saýawansyz git",
+   on: "☔️ Ýagyş ýagýar", off: "☀️ Howa aç",
+   word: "<b>Eger</b> ýagyş ýagýan bolsa, <b>onda</b> saýawan al."},
+  {q1: "Sirk", q2: "işleýärmi?", yes: "Sirke petek al", no: "Teatra petek al",
+   on: "🎪 Sirk işleýär", off: "🚪 Sirk ýapyk",
+   word: "<b>Eger</b> sirk işleýän bolsa, <b>onda</b> sirke petek al, " +
+         "<b>bolmasa</b> teatra petek al."},
+  {q1: "Turba", q2: "barmy?", yes: "Üçegi ýaşyl reňkle", no: "Üçegi gyzyl reňkle",
+   on: "🏠 Jaýda turba bar", off: "🏚 Jaýda turba ýok",
+   word: "<b>Eger</b> jaýda turba bar bolsa, <b>onda</b> üçegi ýaşyl galam bilen " +
+         "reňkle, <b>bolmasa</b> gyzyl galam bilen reňkle."},
+];
+let ti = 0, val = true;
+function branch() {
+  const T = TASKS[ti];
+  // kitap: rombuň çepinde HAWA, sagynda ÝOK
+  const on = val ? "#1d7a3d" : "#93a2b5", off = val ? "#93a2b5" : "#1d7a3d";
+  $("bs").innerHTML = `<svg viewBox="0 0 320 226" width="320"
+    xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif"
+    font-size="12" font-weight="700" text-anchor="middle">
+    <rect x="110" y="8" width="100" height="30" rx="15" fill="#dbe7ff" stroke="#2456b0"
+      stroke-width="2"/>
+    <text x="160" y="28" fill="#2456b0">Başlangyjy</text>
+    <line x1="160" y1="38" x2="160" y2="56" stroke="#5b6b80" stroke-width="2"/>
+    <polygon points="160,56 246,104 160,152 74,104" fill="#f2edfd" stroke="#6a4bb8"
+      stroke-width="2.5"/>
+    <text x="160" y="100" fill="#6a4bb8">${T.q1}</text>
+    <text x="160" y="116" fill="#6a4bb8">${T.q2}</text>
+    <text x="48" y="96" fill="${on}">Hawa</text>
+    <text x="272" y="96" fill="${off}">Ýok</text>
+    <line x1="74" y1="104" x2="34" y2="104" stroke="${on}" stroke-width="2.5"/>
+    <line x1="34" y1="104" x2="34" y2="170" stroke="${on}" stroke-width="2.5"/>
+    <line x1="246" y1="104" x2="286" y2="104" stroke="${off}" stroke-width="2.5"/>
+    <line x1="286" y1="104" x2="286" y2="170" stroke="${off}" stroke-width="2.5"/>
+    <rect x="4" y="170" width="92" height="34" rx="6" fill="${val ? "#e0f5e6" : "#f0f4f9"}"
+      stroke="${on}" stroke-width="2.5"/>
+    <text x="50" y="191" fill="${on}">${T.yes}</text>
+    <rect x="224" y="170" width="92" height="34" rx="6" fill="${val ? "#f0f4f9" : "#e0f5e6"}"
+      stroke="${off}" stroke-width="2.5"/>
+    <text x="270" y="191" fill="${off}">${T.no}</text>
+  </svg>`;
+  $("bmsg").innerHTML = T.word + "<br>" + (val
+    ? "Şert ýerine ýetirildi – hereket <b>HAWA</b> şahasynda bolup geçýär: " + T.yes + "."
+    : "Şert ýerine ýetirilmedi – hereket <b>ÝOK</b> şahasynda bolup geçýär: " + T.no + ".");
+  $("bmsg").className = "msg ok";
+  $("task").innerHTML = TASKS.map((t, i) =>
+    `<button class="btn${i === ti ? " sel" : ""}" data-t="${i}">${t.q1} ${t.q2}</button>`).join("");
+  $("task").querySelectorAll("button").forEach(b => b.onclick = () => {
+    ti = +b.dataset.t; branch();
+  });
+  $("cond").innerHTML =
+    `<button class="btn${val ? " sel" : ""}" data-v="1">${T.on}</button>` +
+    `<button class="btn${val ? "" : " sel"}" data-v="0">${T.off}</button>`;
+  $("cond").querySelectorAll("button").forEach(b => b.onclick = () => {
+    val = b.dataset.v === "1"; branch();
+  });
+}
+
+/* ---------------- gaýtalanmanyň görnüşleri (sah. 40–47) ---------------- */
+const LOOPS = [
+  ["GAÝTALA … ŞOL WAGTA ÇENLI",
+   "Hereket berlen şert ýerine ýetirilýänçä gaýtalanýar.",
+   "Gaýtala düzgüni oka, şol wagta çenli – düzgüni öwrenýänçäň."],
+  ["HÄZIRLIKÇE … ÝERINE ÝETIRMELI",
+   "Şert berjaý edilýän wagty hereket gaýtalanýar.",
+   "Häzirlikçe sebet boş, ýerine ýetirmeli – agaçdan almalary ýygyber."],
+  ["ÜÇIN … ÝERINE ÝETIRMELI",
+   "Gaýtalanmalaryň sany öňünden belli, blok-shemada altyburçluk çyzylýar.",
+   "Üçin 1-den 6-a çenli, ýerine ýetirmeli – basgançakdan ýöre."],
+];
+$("loops").innerHTML = LOOPS.map(l =>
+  `<div class="fig" style="text-align:left"><b>${l[0]}</b><br>${l[1]}
+   <div class="prog" style="margin-top:6px;font-size:12.5px;line-height:1.6">${l[2]}</div>
+   </div>`).join("");
+
+/* ---------------- gaýtalanma ---------------- */
+let path = [];
+function prog() {
+  const n = +$("n").value;
+  $("no").textContent = n;
+  const ang = Math.round(360 / n);
+  $("pg").innerHTML =
+    `<div><b>Başlangyjy</b></div>` +
+    `<div><b>Üçin</b> 1-den <b>${n}</b>-a çenli</div>` +
+    `<div><b>Ýerine ýetirmeli</b></div>` +
+    `<div style="padding-left:18px">öňe 60 ädim;</div>` +
+    `<div style="padding-left:18px">saga ${ang}° öwrül;</div>` +
+    `<div><b>Soňy.</b></div>`;
+  return {n, ang};
+}
+function drawPath() {
+  const pts = path.map(p => `${p[0]},${p[1]}`).join(" ");
+  $("cv").innerHTML = `<svg viewBox="0 0 300 220" width="300"
+    xmlns="http://www.w3.org/2000/svg">
+    ${path.length > 1 ? `<polyline points="${pts}" fill="none" stroke="#2456b0"
+      stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>` : ""}
+    ${path.length ? `<circle cx="${path[path.length - 1][0]}" cy="${path[path.length - 1][1]}"
+      r="6" fill="#e5007d"/>` : ""}
+  </svg>`;
+}
+$("run").onclick = () => {
+  const {n, ang} = prog();
+  let x = 150, y = 178, dir = -90;
+  path = [[x, y]];
+  const L = 300 / n + 22;
+  let i = 0;
+  const t = setInterval(() => {
+    x += L * Math.cos(dir * Math.PI / 180);
+    y += L * Math.sin(dir * Math.PI / 180);
+    path.push([Math.round(x), Math.round(y)]);
+    dir += ang;
+    drawPath();
+    if (++i >= n) {
+      clearInterval(t);
+      $("rmsg").textContent =
+        `🎉 ${n} gezek gaýtalandy – ${n} taraply şekil çyzyldy. Jemi ${n * 2} buýruk ýerine ýetirildi.`;
+      $("rmsg").className = "msg ok";
+    }
+  }, 260);
+};
+$("clr").onclick = () => { path = []; drawPath(); $("rmsg").textContent = ""; };
+$("n").addEventListener("input", () => { prog(); path = []; drawPath(); });
+
+/* ---------------- blok-shema ---------------- */
+const FIGS = [
+  ["Başlangyjy / Soňy", `<rect x="6" y="10" width="92" height="30" rx="15" fill="#dbe7ff"
+     stroke="#2456b0" stroke-width="2"/>`, "Algoritmiň başy we soňy"],
+  ["Hereket", `<rect x="6" y="10" width="92" height="30" fill="#e0f5e6" stroke="#1d7a3d"
+     stroke-width="2"/>`, "Ýerine ýetirilýän buýruk"],
+  ["Şert – romb", `<polygon points="52,6 98,25 52,44 6,25" fill="#f2edfd" stroke="#6a4bb8"
+     stroke-width="2"/>`, "Çepinde Hawa, sagynda Ýok"],
+  ["Giriş / Çykyş", `<polygon points="20,10 98,10 84,40 6,40" fill="#fdeee0" stroke="#b25b12"
+     stroke-width="2"/>`, "Maglumat girizilýär ýa-da çykarylýar"],
+  ["Altyburçluk", `<polygon points="18,10 86,10 98,25 86,40 18,40 6,25" fill="#fdf3d6"
+     stroke="#b28712" stroke-width="2"/>`, "ÜÇIN aýlawynyň gaýtalanma sany"],
+];
+$("figs").innerHTML = FIGS.map(f =>
+  `<div class="fig"><svg width="104" height="50" viewBox="0 0 104 50">${f[1]}</svg>
+     <b>${f[0]}</b><br>${f[2]}</div>`).join("");
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Şahalanma algoritmi haýsy sözler bilen ýazylýar?",
+   ["Eger … onda … bolmasa", "Üçin … ýerine ýetirmeli", "Başlangyjy … Soňy"], 0],
+  ["Blok-shemada şert haýsy figura bilen görkezilýär?",
+   ["Gönüburçluk", "Romb", "Tegelek"], 1],
+  ["Rombuň çepinde näme ýazylýar?", ["Ýok", "Soňy", "Hawa"], 2],
+  ["Haýsy aýlawda gaýtalanmalaryň sany öňünden belli?",
+   ["Gaýtala … şol wagta çenli", "Häzirlikçe … ýerine ýetirmeli",
+    "Üçin … ýerine ýetirmeli"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+branch(); prog(); drawPath();
+</script>
+</body>
+</html>

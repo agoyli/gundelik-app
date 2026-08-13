@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahypalary belgilemek — 9-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .sheet { background: #fff; border: 2px solid #d6e0ee; border-radius: 8px; margin: 0 auto;
+           position: relative; transition: width .2s, height .2s; }
+  .marg { position: absolute; inset: 0; border: 1px dashed #cfdcee; transition: inset .2s; }
+  .text { position: absolute; overflow: hidden; font-size: 7px; line-height: 1.5; color: #8fa1b8;
+          transition: all .2s; }
+  .text i { display: block; height: 3px; background: #dbe4f0; border-radius: 2px; margin-bottom: 4px; }
+  .pn { position: absolute; font-size: 9px; font-weight: 800; color: #2456b0; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 16px; display: flex;
+           justify-content: center; align-items: center; min-height: 300px; }
+  .places { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 7px; }
+  .places .btn { font-size: 13px; padding: 10px 6px; }
+  .fmt { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dims { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sahypalary belgilemek</h1>
+  <div class="sub">Kolontitul we sahypanyň parametrleri · Informatika · 9-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sahypa belgisiniň ýerini saýla. Belgi – <b>kolontitulyň</b> iň giň
+      ýaýran görnüşidir.</div>
+    <div class="stage"><div class="sheet" id="sheet">
+      <div class="marg" id="marg"></div>
+      <div class="text" id="text"></div>
+      <div class="pn" id="pn"></div>
+    </div></div>
+    <div class="places" id="places" style="margin-top:12px"></div>
+    <div class="row" style="margin-top:8px">
+      <span class="score" id="where"></span>
+      <button class="btn warn" id="del">Удалить номера страниц</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Sahypanyň belgisiniň formaty</h3>
+    <div class="fmt" id="fmt"></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Sahypa</span>
+      <input type="range" id="pg" min="1" max="12" value="3"><span class="out" id="pgo">3</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Параметры страницы</h3>
+    <div class="slider"><span class="lbl">Ýokardan</span>
+      <input type="range" id="mt" min="0" max="50" value="20"><span class="out" id="mto">2,0</span></div>
+    <div class="slider"><span class="lbl">Aşakdan</span>
+      <input type="range" id="mb" min="0" max="50" value="20"><span class="out" id="mbo">2,0</span></div>
+    <div class="slider"><span class="lbl">Çepden</span>
+      <input type="range" id="ml" min="0" max="50" value="30"><span class="out" id="mlo">3,0</span></div>
+    <div class="slider"><span class="lbl">Sagdan</span>
+      <input type="range" id="mr" min="0" max="50" value="15"><span class="out" id="mro">1,5</span></div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn" id="por">Книжная</button>
+      <button class="btn" id="alb">Альбомная</button>
+      <select id="size" class="btn" style="padding:11px">
+        <option value="210,297">A4 — 210 × 297 mm</option>
+        <option value="148,210">A5 — 148 × 210 mm</option>
+        <option value="176,250">B5 — 176 × 250 mm</option>
+      </select>
+    </div>
+    <div class="note dims" id="info"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Sahypalaryň ýokarsynda ýa-da aşagynda gaýtalanyp gelýän tekste <b>kolontitul</b> diýilýär.
+      Sahypanyň gyralarynda goýulýan boş meýdança <b>Поля</b> diýilýär – ol tekstiň gyra çenli
+      çap edilmezligi üçin gerek. Iň köp ulanylýan format – <b>A4, 210 × 297 mm</b>.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 9 (2021)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const PLACES = {
+  "Вверху страницы (sag)":   { v: "top", h: "right" },
+  "Вверху страницы (orta)":  { v: "top", h: "center" },
+  "Внизу страницы (orta)":   { v: "bottom", h: "center" },
+  "На полях (sag gyra)":     { v: "mid", h: "edge" },
+  "Текущее положение":       { v: "top", h: "left" }
+};
+const FORMATS = { "1, 2, 3": n => n, "- 1 -": n => "- " + n + " -", "I, II, III": n => rom(n), "a, b, c": n => "abcdefghijkl"[n - 1] };
+function rom(n) { const m = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"]; return m[n] || n; }
+
+let place = "Вверху страницы (sag)", fmt = "1, 2, 3", shown = true;
+let W = 210, H = 297, landscape = false;
+
+Object.keys(PLACES).forEach(k => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = k; b.dataset.k = k;
+  b.onclick = () => { place = k; shown = true; draw(); };
+  $("places").appendChild(b);
+});
+Object.keys(FORMATS).forEach(k => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = k; b.dataset.f = k;
+  b.onclick = () => { fmt = k; draw(); };
+  $("fmt").appendChild(b);
+});
+
+function draw() {
+  const w = landscape ? H : W, h = landscape ? W : H;
+  const scale = 250 / Math.max(w, h);
+  const pw = w * scale, ph = h * scale;
+  const S = $("sheet");
+  S.style.width = pw + "px"; S.style.height = ph + "px";
+
+  const mt = +$("mt").value / 10, mb = +$("mb").value / 10,
+        ml = +$("ml").value / 10, mr = +$("mr").value / 10;
+  ["mt", "mb", "ml", "mr"].forEach(id => $(id + "o").textContent = (+$(id).value / 10).toFixed(1));
+
+  const t = mt * 10 * scale, b = mb * 10 * scale, l = ml * 10 * scale, r = mr * 10 * scale;
+  $("marg").style.inset = `${t}px ${r}px ${b}px ${l}px`;
+
+  const T = $("text");
+  T.style.top = t + "px"; T.style.left = l + "px";
+  T.style.right = r + "px"; T.style.bottom = b + "px";
+  T.style.width = (pw - l - r) + "px"; T.style.height = (ph - t - b) + "px";
+  const rows = Math.max(0, Math.floor((ph - t - b) / 7));
+  T.innerHTML = Array.from({ length: rows }, (_, i) =>
+    `<i style="width:${i % 5 === 4 ? 55 : 100}%"></i>`).join("");
+
+  const n = +$("pg").value;
+  $("pgo").textContent = n;
+  const P = $("pn"), pl = PLACES[place];
+  if (!shown) { P.style.display = "none"; }
+  else {
+    P.style.display = "block";
+    P.textContent = FORMATS[fmt](n);
+    P.style.top = P.style.bottom = P.style.left = P.style.right = "auto";
+    P.style.transform = "none";
+    if (pl.v === "top") P.style.top = Math.max(3, t / 2 - 5) + "px";
+    if (pl.v === "bottom") P.style.bottom = Math.max(3, b / 2 - 5) + "px";
+    if (pl.v === "mid") { P.style.top = "50%"; P.style.transform = "translateY(-50%)"; }
+    if (pl.h === "left") P.style.left = l + "px";
+    if (pl.h === "right") P.style.right = r + "px";
+    if (pl.h === "edge") P.style.right = "3px";
+    if (pl.h === "center") { P.style.left = "50%";
+      P.style.transform = (pl.v === "mid" ? "translate(-50%,-50%)" : "translateX(-50%)"); }
+  }
+
+  $("where").textContent = shown ? `Belgi: ${place} · format ${fmt}` : "Sahypa belgisi aýryldy";
+  [...$("places").children].forEach(x => x.className = "btn" + (x.dataset.k === place && shown ? " sel" : ""));
+  [...$("fmt").children].forEach(x => x.className = "btn" + (x.dataset.f === fmt ? " sel" : ""));
+  $("por").className = "btn" + (landscape ? "" : " sel");
+  $("alb").className = "btn" + (landscape ? " sel" : "");
+
+  const tw = (w - ml * 10 - mr * 10) / 10, th = (h - mt * 10 - mb * 10) / 10;
+  $("info").innerHTML = `Kagyz: <b>${w} × ${h} mm</b> (${landscape ? "Альбомная" : "Книжная"}).
+    Boş meýdançalardan soň tekste galýan ýer: <b>${tw.toFixed(1)} × ${th.toFixed(1)} sm</b>.` +
+    (tw < 8 || th < 8 ? " ⚠️ Boş meýdança aşa uly – tekste ýer az galdy." : "");
+}
+
+$("del").onclick = () => { shown = false; draw(); };
+$("por").onclick = () => { landscape = false; draw(); };
+$("alb").onclick = () => { landscape = true; draw(); };
+$("size").onchange = e => { [W, H] = e.target.value.split(",").map(Number); draw(); };
+["mt", "mb", "ml", "mr", "pg"].forEach(id => $(id).addEventListener("input", draw));
+draw();
+</script>
+</body>
+</html>

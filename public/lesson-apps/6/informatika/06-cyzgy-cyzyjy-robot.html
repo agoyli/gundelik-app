@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çyzgy çyzyjy we Robot — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
+  .stage canvas { background: #fff; border-radius: 10px; max-width: 100%; height: auto; }
+  textarea { width: 100%; min-height: 168px; padding: 11px; font-size: 13.5px; border-radius: 12px;
+             border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace;
+             line-height: 1.7; resize: vertical; }
+  textarea:focus { outline: none; border-color: #2456b0; }
+  .cmds { display: grid; grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); gap: 5px; }
+  .cmds div { background: #f7fafd; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; }
+  .cmds b { color: #2456b0; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .state { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #5b6b80; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Çyzgy çyzyjy we Robot</h1>
+  <div class="sub">PascalABC ýerine ýetirijileri üçin programma ýazmak · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="row tight">
+      <button class="btn sel" id="tD">Çyzgy çyzyjy</button>
+      <button class="btn" id="tR">Robot</button>
+    </div>
+    <div class="goal" id="goal"></div>
+    <div class="stage"><canvas id="cv" width="640" height="440"></canvas></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="st"></span><span class="badge purple" id="cnt"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Programma</h3>
+    <textarea id="src" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="run">Işe goýber</button>
+      <button class="btn" id="step">Bir ädim</button>
+      <button class="btn ghost" id="rst">Başdan</button>
+    </div>
+    <div class="row tight" style="margin-top:6px" id="presets"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Buýruklar</h3>
+    <div class="cmds" id="cmds"></div>
+  </div>
+
+  <div class="card">
+    <div class="note" id="theory"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $("cv"), cx = cv.getContext("2d");
+
+/* ============================ terjimeçi ============================ */
+function atoms(src) {
+  return src.replace(/\r/g, "").replace(/\{[^}]*\}/g, "")
+    .split(/;|\n/).map(s => s.trim()).filter(Boolean);
+}
+// sözbaşydan soňky özen: «... do begin», aýry setirdäki «begin» ýa-da ýeke buýruk
+function block(A, i, inline) {
+  if (inline) return parse(A, i + 1);
+  if ((A[i + 1] || "").toLowerCase() === "begin") return parse(A, i + 2);
+  return [[{cmd: A[i + 1]}], i + 2];
+}
+function parse(A, i) {
+  const out = [];
+  while (i < A.length) {
+    const raw = A[i], low = raw.toLowerCase();
+    if (low === "end" || low === "end.") return [out, i + 1];
+    let m, body;
+    if ((m = low.match(/^for\s+(\w+)\s*:?=\s*(-?\d+)\s+to\s+(-?\d+)\s+do(\s+begin)?$/))) {
+      [body, i] = block(A, i, !!m[4]);
+      out.push({kind: "for", v: m[1], from: +m[2], to: +m[3], body});
+      continue;
+    }
+    if ((m = low.match(/^while\s+(.+?)\s+do(\s+begin)?$/))) {
+      [body, i] = block(A, i, !!m[2]);
+      out.push({kind: "while", cond: m[1], body});
+      continue;
+    }
+    if ((m = low.match(/^if\s+(.+?)\s+then(\s+begin)?$/))) {
+      [body, i] = block(A, i, !!m[2]);
+      let els = null;
+      if (i < A.length && A[i].toLowerCase().startsWith("else")) {
+        const e = A[i].toLowerCase();
+        [els, i] = e === "else"
+          ? block(A, i, false)
+          : e.endsWith("begin") ? parse(A, i + 1) : [[{cmd: A[i].slice(4).trim()}], i + 1];
+      }
+      out.push({kind: "if", cond: m[1], body, els});
+      continue;
+    }
+    if (low === "begin" || low.startsWith("uses ") || low.startsWith("var ") ||
+        low.startsWith("program ") || low.startsWith("task")) { i++; continue; }
+    out.push({cmd: raw});
+    i++;
+  }
+  return [out, i];
+}
+
+/* ---------- üýtgeýänler we aňlatmalar ---------- */
+let V = {};
+function evalExpr(src) {
+  const s = src.replace(/\s+/g, "");
+  let p = 0;
+  const peek = () => s[p];
+  function num() {
+    if (peek() === "(") { p++; const v = sum(); if (peek() === ")") p++; return v; }
+    if (peek() === "-") { p++; return -num(); }
+    if (peek() === "+") { p++; return num(); }
+    let m = /^\d+/.exec(s.slice(p));
+    if (m) { p += m[0].length; return +m[0]; }
+    m = /^[A-Za-zÄäŇňÖöŞşÜüÝýŽž_]\w*/.exec(s.slice(p));
+    if (m) {
+      p += m[0].length;
+      const k = m[0].toLowerCase();
+      if (!(k in V)) throw new Error("näbelli üýtgeýän: " + m[0]);
+      return V[k];
+    }
+    throw new Error("aňlatmany okap bolmady: " + src);
+  }
+  function mul() {
+    let v = num();
+    while ("*/".includes(peek())) { const o = s[p++]; const r = num(); v = o === "*" ? v * r : Math.trunc(v / r); }
+    return v;
+  }
+  function sum() {
+    let v = mul();
+    while ("+-".includes(peek())) { const o = s[p++]; const r = mul(); v = o === "+" ? v + r : v - r; }
+    return v;
+  }
+  const v = sum();
+  if (p < s.length) throw new Error("aňlatmany okap bolmady: " + src);
+  return v;
+}
+// «Field(10, k+1)» ýaly buýrugy ada we hasaplanan argumentlere bölýär
+function callOf(cmd) {
+  const m = cmd.trim().match(/^([A-Za-zÄäŇňÖöŞşÜüÝýŽž_]\w*)\s*(?:\(([^)]*)\))?\s*$/);
+  if (!m) return null;
+  const args = (m[2] || "").trim() ? m[2].split(",").map(a => evalExpr(a)) : [];
+  return {name: m[1].toLowerCase(), args};
+}
+
+/* ============================ Çyzgy çyzyjy ============================ */
+const D = {w: 14, h: 10, x: 0, y: 0, pen: false, segs: []};
+function dReset(w, h) { D.w = w || D.w; D.h = h || D.h; D.x = 0; D.y = 0; D.pen = false; D.segs = []; }
+function dRun(cmd) {
+  const c = callOf(cmd);
+  if (!c) throw new Error("näbelli buýruk: " + cmd);
+  const [a, b] = c.args;
+  if (c.name === "field") { dReset(a, b); return true; }
+  if (c.name === "standardfield") { dReset(20, 30); return true; }
+  if (c.name === "pendown") { D.pen = true; return true; }
+  if (c.name === "penup") { D.pen = false; return true; }
+  if (c.name === "topoint" || c.name === "onvector") {
+    const nx = c.name === "topoint" ? a : D.x + a;
+    const ny = c.name === "topoint" ? b : D.y + b;
+    if (D.pen) D.segs.push([D.x, D.y, nx, ny]);
+    D.x = nx; D.y = ny; return true;
+  }
+  throw new Error("näbelli buýruk: " + cmd);
+}
+function dDraw() {
+  const W = cv.width, H = cv.height, pad = 34;
+  const k = Math.min((W - pad * 2) / D.w, (H - pad * 2) / D.h);
+  const ox = pad, oy = H - pad;
+  const P = (x, y) => [ox + x * k, oy - y * k];
+  cx.clearRect(0, 0, W, H);
+  cx.fillStyle = "#fff"; cx.fillRect(0, 0, W, H);
+  cx.strokeStyle = "#e2e9f2"; cx.lineWidth = 1;
+  for (let i = 0; i <= D.w; i++) { const [x, y] = P(i, 0); cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x, oy - D.h * k); cx.stroke(); }
+  for (let j = 0; j <= D.h; j++) { const [x, y] = P(0, j); cx.beginPath(); cx.moveTo(x, y); cx.lineTo(ox + D.w * k, y); cx.stroke(); }
+  cx.strokeStyle = "#93a2b5"; cx.lineWidth = 1.6;
+  cx.beginPath(); cx.moveTo(ox, oy); cx.lineTo(ox + D.w * k, oy);
+  cx.moveTo(ox, oy); cx.lineTo(ox, oy - D.h * k); cx.stroke();
+  cx.fillStyle = "#93a2b5"; cx.font = "12px system-ui, sans-serif"; cx.textAlign = "center";
+  for (let i = 0; i <= D.w; i += 2) { const [x] = P(i, 0); cx.fillText(i, x, oy + 17); }
+  cx.textAlign = "right";
+  for (let j = 0; j <= D.h; j += 2) { const [, y] = P(0, j); cx.fillText(j, ox - 7, y + 4); }
+  cx.strokeStyle = "#e5007d"; cx.lineWidth = 3; cx.lineCap = "round";
+  D.segs.forEach(([x1, y1, x2, y2]) => {
+    const [a, b] = P(x1, y1), [c2, d2] = P(x2, y2);
+    cx.beginPath(); cx.moveTo(a, b); cx.lineTo(c2, d2); cx.stroke();
+  });
+  const [px, py] = P(D.x, D.y);
+  cx.fillStyle = D.pen ? "#1d7a3d" : "#fff";
+  cx.strokeStyle = "#1e2a3a"; cx.lineWidth = 2;
+  cx.fillRect(px - 7, py - 7, 14, 14); cx.strokeRect(px - 7, py - 7, 14, 14);
+  $("st").textContent = `galam: (${D.x}, ${D.y}) · ${D.pen ? "aşak" : "ýokary"}`;
+  $("cnt").textContent = `${D.segs.length} kesim çyzyldy`;
+}
+
+/* ============================ Robot ============================ */
+const R = {w: 11, h: 9, c: 0, r: 0, paint: new Set(), walls: new Set(), start: [0, 0]};
+function wkey(r, c, s) { return `${r},${c},${s}`; }
+function rReset(cfg) {
+  Object.assign(R, {w: cfg.w, h: cfg.h, c: cfg.c, r: cfg.r, start: [cfg.r, cfg.c],
+                    paint: new Set(cfg.paint || []), walls: new Set(cfg.walls || [])});
+}
+function wall(r, c, s) {
+  if (R.walls.has(wkey(r, c, s))) return true;
+  if (s === "u") return r === 0 || R.walls.has(wkey(r - 1, c, "d"));
+  if (s === "d") return r === R.h - 1 || R.walls.has(wkey(r + 1, c, "u"));
+  if (s === "l") return c === 0 || R.walls.has(wkey(r, c - 1, "r"));
+  return c === R.w - 1 || R.walls.has(wkey(r, c + 1, "l"));
+}
+function rCond(c) {
+  const k = c.toLowerCase().replace(/\s+/g, "");
+  const map = {wallfromleft: "l", wallfromright: "r", wallfromup: "u", wallfromdown: "d"};
+  const free = {freefromleft: "l", freefromright: "r", freefromup: "u", freefromdown: "d"};
+  if (k in map) return wall(R.r, R.c, map[k]);
+  if (k in free) return !wall(R.r, R.c, free[k]);
+  if (k === "cellispainted") return R.paint.has(`${R.r},${R.c}`);
+  if (k === "cellisfree") return !R.paint.has(`${R.r},${R.c}`);
+  throw new Error("näbelli şert: " + c);
+}
+function rRun(cmd) {
+  const c = callOf(cmd);
+  if (!c) throw new Error("näbelli buýruk: " + cmd);
+  if (c.name === "field") {
+    rReset({w: c.args[0], h: c.args[1], r: R.r, c: R.c, walls: [...R.walls]}); return true;
+  }
+  const mv = {right: [0, 1, "r"], left: [0, -1, "l"], up: [-1, 0, "u"], down: [1, 0, "d"]};
+  if (c.name in mv) {
+    const [dr, dc, s] = mv[c.name];
+    if (wall(R.r, R.c, s)) throw new Error("Robot diwara degdi: " + cmd);
+    R.r += dr; R.c += dc; return true;
+  }
+  if (c.name === "paint") { R.paint.add(`${R.r},${R.c}`); return true; }
+  throw new Error("näbelli buýruk: " + cmd);
+}
+function rDraw() {
+  const W = cv.width, H = cv.height, pad = 22;
+  const k = Math.min((W - pad * 2) / R.w, (H - pad * 2) / R.h);
+  const ox = (W - R.w * k) / 2, oy = (H - R.h * k) / 2;
+  cx.clearRect(0, 0, W, H); cx.fillStyle = "#fff"; cx.fillRect(0, 0, W, H);
+  for (let r = 0; r < R.h; r++) for (let c = 0; c < R.w; c++) {
+    cx.fillStyle = R.paint.has(`${r},${c}`) ? "#7bc99a" : "#fff";
+    cx.fillRect(ox + c * k, oy + r * k, k, k);
+    cx.strokeStyle = "#d6e0ee"; cx.lineWidth = 1;
+    cx.strokeRect(ox + c * k, oy + r * k, k, k);
+  }
+  cx.strokeStyle = "#1e2a3a"; cx.lineWidth = 4; cx.lineCap = "square";
+  R.walls.forEach(w => {
+    const [r, c, s] = w.split(",");
+    const x = ox + +c * k, y = oy + +r * k;
+    cx.beginPath();
+    if (s === "u") { cx.moveTo(x, y); cx.lineTo(x + k, y); }
+    if (s === "d") { cx.moveTo(x, y + k); cx.lineTo(x + k, y + k); }
+    if (s === "l") { cx.moveTo(x, y); cx.lineTo(x, y + k); }
+    if (s === "r") { cx.moveTo(x + k, y); cx.lineTo(x + k, y + k); }
+    cx.stroke();
+  });
+  cx.strokeStyle = "#1e2a3a"; cx.lineWidth = 3;
+  cx.strokeRect(ox, oy, R.w * k, R.h * k);
+  cx.fillStyle = "#ffd400"; cx.strokeStyle = "#8a6d00"; cx.lineWidth = 2;
+  cx.fillRect(ox + R.c * k + 3, oy + R.r * k + 3, k - 6, k - 6);
+  cx.strokeRect(ox + R.c * k + 3, oy + R.r * k + 3, k - 6, k - 6);
+  $("st").textContent = `Robot: ${R.r + 1}-nji setir, ${R.c + 1}-nji sütün`;
+  $("cnt").textContent = `${R.paint.size} öýjük reňklendi`;
+}
+
+/* ============================ ýerine ýetiriş ============================ */
+let mode = "D", trace = [], tp = 0;
+function flatten(tree, out, guard) {
+  for (const n of tree) {
+    if (guard.n++ > 4000) throw new Error("gaýtalanma gaty uzak – şerti barla");
+    if (!n.kind) { out.push(n.cmd); apply(n.cmd); continue; }
+    if (n.kind === "for") {
+      for (let i = n.from; i <= n.to; i++) {
+        // gaýtalanma üýtgeýäni yzda galmaz ýaly, ony aýratyn ädim hökmünde ýazýarys
+        V[n.v] = i; out.push(`${n.v} := ${i}`);
+        flatten(n.body, out, guard);
+      }
+    } else if (n.kind === "while") {
+      let s = 0;
+      while (cond(n.cond)) {
+        flatten(n.body, out, guard);
+        if (++s > 400) throw new Error("«häzirlikçe» şerti hiç haçan ýalan bolmaýar");
+      }
+    } else if (n.kind === "if") {
+      if (cond(n.cond)) flatten(n.body, out, guard);
+      else if (n.els) flatten(n.els, out, guard);
+    }
+  }
+}
+function apply(c) {
+  const as = c.match(/^\s*([A-Za-zÄäŇňÖöŞşÜüÝýŽž_]\w*)\s*:=\s*(.+?)\s*$/);
+  if (as) { V[as[1].toLowerCase()] = evalExpr(as[2]); return; }
+  mode === "D" ? dRun(c) : rRun(c);
+}
+function cond(c) { if (mode === "D") throw new Error("Çyzgy çyzyjyda şert ýok"); return rCond(c); }
+function draw() { mode === "D" ? dDraw() : rDraw(); }
+
+function build() {
+  reset(false);
+  const [tree] = parse(atoms($("src").value), 0);
+  const out = [];
+  flatten(tree, out, {n: 0});
+  reset(false);
+  return out;
+}
+function reset(redraw = true) {
+  V = {};
+  if (mode === "D") dReset(PRE.D[cur].w, PRE.D[cur].h);
+  else rReset(PRE.R[cur].field);
+  tp = 0; if (redraw) { trace = []; draw(); $("msg").textContent = ""; }
+}
+$("run").onclick = () => {
+  try {
+    trace = build();
+    trace.forEach(apply);
+    tp = trace.length; draw();
+    $("msg").textContent = `Programma ýerine ýetirildi: ${trace.length} buýruk.`;
+    $("msg").className = "msg ok";
+  } catch (e) { fail(e); }
+};
+$("step").onclick = () => {
+  try {
+    if (!trace.length || tp >= trace.length) { trace = build(); tp = 0; }
+    apply(trace[tp]); tp++; draw();
+    $("msg").textContent = `${tp} / ${trace.length}: ${trace[tp - 1]}`;
+    $("msg").className = tp >= trace.length ? "msg ok" : "msg";
+  } catch (e) { fail(e); }
+};
+$("rst").onclick = () => reset();
+function fail(e) {
+  $("msg").textContent = "Ýalňyşlyk: " + e.message;
+  $("msg").className = "msg bad";
+  draw();
+}
+
+/* ============================ nusgalar ============================ */
+const PRE = {
+  D: {
+    gayyk: {n: "Gaýyk (25-nji surat)", w: 10, h: 10, src:
+`uses Drawman;
+begin
+Field(10, 10);
+OnVector(3, 1);
+PenDown;
+OnVector(3,0); OnVector(2,2);
+OnVector(-7,0); OnVector(2,-2);
+PenUp;
+OnVector(1,2);
+PenDown;
+OnVector(0,4); OnVector(2,-1); OnVector(-2,-1);
+PenUp;
+OnVector(-4,-5);
+end.`},
+    disli: {n: "Dişli çyzyk (26-njy surat)", w: 17, h: 5, src:
+`uses Drawman;
+begin
+Field(17, 5);
+ToPoint(1,3); PenDown;
+For n:=1 to 15 do
+begin
+  OnVector(0,-1);
+  OnVector(1,1);
+end;
+PenUp; ToPoint(0,0);
+end.`},
+    kwadrat: {n: "Kwadratlar (28-nji surat)", w: 19, h: 17, src:
+`Uses Drawman;
+Var n,k,t:integer;
+Begin
+Field(19, 17);
+topoint(9,8); pendown;
+k:=0; t:=0;
+For n:=1 to 7 do
+Begin
+  onvector(0,k+1); onvector(k+1,0);
+  onvector(0,t-1);
+  onvector(t-1,0); penUp;
+  topoint(9-n,8-n); pendown;
+  k:=k+2;
+  t:=t-2;
+End;
+penup; topoint(0,0);
+End.`},
+    basgancak: {n: "Basgançak", w: 12, h: 8, src:
+`uses Drawman;
+begin
+Field(12, 8);
+ToPoint(1,1); PenDown;
+For n:=1 to 6 do
+begin
+  OnVector(1,0);
+  OnVector(0,1);
+end;
+PenUp; ToPoint(0,0);
+end.`}
+  },
+  R: {
+    kwadrat: {n: "Kwadraty reňklemek (37-nji surat)",
+      field: {w: 7, h: 7, r: 3, c: 3, walls: []}, src:
+`uses Robot;
+begin
+Field(7,7);
+paint; Left;
+paint; Up;
+paint; Right;
+paint; Right;
+paint; Down;
+paint; Down;
+paint; Left;
+paint; Left;
+paint; Down;
+end.`},
+    hazirlikce: {n: "«Häzirlikçe» – hatary geç",
+      field: {w: 10, h: 1, r: 0, c: 0, walls: []}, src:
+`uses Robot;
+begin
+While FreeFromRight do
+  Right;
+end.`},
+    rengle: {n: "Hatary reňkläp geçmek",
+      field: {w: 10, h: 1, r: 0, c: 0, walls: []}, src:
+`uses Robot;
+begin
+paint;
+While FreeFromRight do
+begin
+  Right;
+  paint;
+end;
+end.`},
+    diwar: {n: "Diwara görä şahalanma (if1)",
+      field: {w: 5, h: 5, r: 2, c: 1, walls: ["2,2,d"]}, src:
+`uses Robot;
+begin
+Right;
+if WallFromDown then
+begin
+  up; right; down; paint;
+end;
+if WallFromUp then
+begin
+  down; right; up; paint;
+end;
+end.`},
+    perimetr: {n: "Gönüburçlugyň perimetri",
+      field: {w: 9, h: 7, r: 0, c: 0, walls: []}, src:
+`uses Robot;
+begin
+paint;
+While FreeFromRight do
+begin
+  Right; paint;
+end;
+While FreeFromDown do
+begin
+  Down; paint;
+end;
+While FreeFromLeft do
+begin
+  Left; paint;
+end;
+While FreeFromUp do
+begin
+  Up; paint;
+end;
+end.`}
+  }
+};
+let cur = "gayyk";
+
+const CMDS = {
+  D: [["Field(N, M)", "N × M ölçegli meýdança"], ["StandardField", "20 × 30 ölçegli meýdança"],
+      ["PenDown", "galamy aşak goýbermek"], ["PenUp", "galamy ýokary galdyrmak"],
+      ["ToPoint(x, y)", "galamy (x, y) nokada süýşürmek"],
+      ["OnVector(a, b)", "a > 0 saga, a < 0 çepe, b > 0 ýokary, b < 0 aşak"],
+      ["For n:=1 to K do", "K gezek gaýtalamak"]],
+  R: [["Right / Left", "1 öýjük saga / çepe"], ["Up / Down", "1 öýjük ýokary / aşak"],
+      ["Paint", "öýjügi reňklemek"], ["Field(N, M)", "N × M ölçegli meýdança"],
+      ["WallFromDown", "çyn, eger aşakda diwar bolsa"], ["FreeFromRight", "çyn, eger sag tarap boş bolsa"],
+      ["CellIsPainted", "çyn, eger öýjük reňklenen bolsa"],
+      ["While <şert> do", "häzirlikçe şert çyn – gaýtala"], ["if <şert> then ... else", "şerte görä saýlamak"]]
+};
+const THEORY = {
+  D: "<b>Çyzgy çyzyjy</b> tekizlikde koordinatalar boýunça berlen nokatlar boýunça şekilleri " +
+     "gurýar. Onuň galamy bar: <b>PenDown</b> ony aşak goýberýär, <b>PenUp</b> galdyrýar. " +
+     "Programmanyň soňunda galamy ýokary galdyryp, koordinatalar başlangyjyna gaýtarmaly.",
+  R: "<b>Robot</b> – dört tarapa ädimläp hereket edip bilýän kompýuter ýerine ýetirijisidir. " +
+     "Ol diwarlar bilen gurşalan öýjükli meýdançada hereket edýär. Diwaryň ýerleşýän ornuny " +
+     "öňünden kesgitlemek mümkin däl, şonuň üçin <b>şert buýruklary</b> ulanylýar."
+};
+function setMode(m) {
+  mode = m;
+  cur = Object.keys(PRE[m])[0];
+  $("tD").className = "btn" + (m === "D" ? " sel" : "");
+  $("tR").className = "btn" + (m === "R" ? " sel" : "");
+  $("goal").innerHTML = m === "D"
+    ? "Programmany üýtget-de, <b>Işe goýber</b> düwmesine bas. Çyzylan kesimler gyzyl reňkde görünýär."
+    : "Sary kwadrat – <b>Robot</b>. Ýogyn gara çyzyklar – diwarlar. Reňklenen öýjükler ýaşyl bolýar.";
+  $("cmds").innerHTML = CMDS[m].map(([c, t]) => `<div><b>${c}</b><br>${t}</div>`).join("");
+  $("theory").innerHTML = THEORY[m];
+  $("presets").innerHTML = Object.entries(PRE[m]).map(([k, v]) =>
+    `<button class="btn" data-pre="${k}">${v.n}</button>`).join("");
+  $("presets").querySelectorAll("button").forEach(b =>
+    b.onclick = () => load(b.dataset.pre));
+  load(cur);
+}
+function load(k) {
+  cur = k;
+  $("src").value = PRE[mode][k].src;
+  $("presets").querySelectorAll("button").forEach(b =>
+    b.className = "btn" + (b.dataset.pre === k ? " sel" : ""));
+  reset();
+}
+$("tD").onclick = () => setMode("D");
+$("tR").onclick = () => setMode("R");
+
+setMode("D");
+$("run").click();
+</script>
+</body>
+</html>

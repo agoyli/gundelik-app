@@ -5,13 +5,11 @@ import {
   BooksIcon, CalendarDotIcon, CardsIcon, ClockIcon, GameIcon, HistoryIcon, ListIcon,
   PlayCircleIcon, QuizIcon, TrophyIcon, UsersIcon,
 } from '../components/Icons';
-import { FreeLimitBar } from '../components/Paywall';
 import {
   BookmarkButton, DoneBadge, EmptyState, IconBadge, PointsPill, RankRow, RowChevron,
   SectionLabel, StatTile, StickyFooter, SubPage, SurfaceRow,
 } from '../components/Ui';
 import { fmtDate } from '../lib/date';
-import { setPref, usePrefs } from '../state/prefs';
 import { CONTEST_STATE } from '../data/guides';
 import type { Book, Contest, Deck, Game, TestItem, TestSubject } from '../data/guides';
 import { tokens } from '../theme';
@@ -39,7 +37,7 @@ function Hero({ tint, accent, icon, badge, title, meta }: {
       <IconBadge bg="#fff" color={accent} size={56} radius={18}>{icon}</IconBadge>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         {badge}
-        <Typography sx={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.3px', mt: badge ? '6px' : 0 }}>
+        <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', mt: badge ? '6px' : 0 }}>
           {title}
         </Typography>
         <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px' }}>{meta}</Typography>
@@ -52,7 +50,7 @@ const StatePill = ({ label, color }: { label: string; color: string }) => (
   <Box sx={{
     display: 'inline-grid', placeItems: 'center', px: '10px', height: 24,
     borderRadius: `${tokens.rPill}px`, bgcolor: '#fff', color,
-    fontSize: 11.5, fontWeight: 700,
+    fontSize: 12, fontWeight: 700,
   }}>{label}</Box>
 );
 
@@ -140,7 +138,7 @@ export function ContestDetailScreen({ contest, onBack, toast }: {
                 bgcolor: [tokens.gold, tokens.silver, tokens.bronze][i] ?? tokens.surfacePress,
                 color: tokens.ink, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700,
               }}>{i + 1}</Box>
-              <Typography sx={{ flex: 1, fontSize: 14.5, fontWeight: 500 }}>{p.place}</Typography>
+              <Typography sx={{ flex: 1, fontSize: 15, fontWeight: 500 }}>{p.place}</Typography>
               <PointsPill value={p.points} unit="bal" />
             </Box>
           ))}
@@ -236,7 +234,7 @@ export function BookDetailScreen({ book, onBack, toast }: {
           borderLeft: `6px solid ${book.accent}`, boxShadow: tokens.shadowCtl,
         }}><BooksIcon size={34} /></Box>
         <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Typography sx={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.25 }}>
+          <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.25 }}>
             {book.title}
           </Typography>
           <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '4px' }}>
@@ -256,9 +254,9 @@ export function BookDetailScreen({ book, onBack, toast }: {
               variant="determinate" value={book.read}
               aria-label={`${book.read}% okaldy`}
               sx={{
-                height: 7, borderRadius: 4, bgcolor: tokens.dividerSoft,
+                height: 7, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft,
                 '& .MuiLinearProgress-bar': {
-                  borderRadius: 4, bgcolor: book.read === 100 ? tokens.greenDeep : book.accent,
+                  borderRadius: `${tokens.rPill}px`, bgcolor: book.read === 100 ? tokens.greenDeep : book.accent,
                 },
               }}
             />
@@ -318,8 +316,8 @@ export function BookDetailScreen({ book, onBack, toast }: {
 
 /* ---------------- Kart toplumy ---------------- */
 
-export function DeckDetailScreen({ deck, onBack, onStudy, locked, onUpgrade }: {
-  deck: Deck; onBack: () => void; onStudy: () => void; locked?: boolean; onUpgrade?: () => void;
+export function DeckDetailScreen({ deck, onBack, onStudy }: {
+  deck: Deck; onBack: () => void; onStudy: () => void;
 }) {
   const pct = Math.round((deck.known / deck.cards.length) * 100);
   return (
@@ -351,8 +349,8 @@ export function DeckDetailScreen({ deck, onBack, onStudy, locked, onUpgrade }: {
             variant="determinate" value={pct}
             aria-label={`${pct}% öwrenildi`}
             sx={{
-              height: 7, borderRadius: 4, bgcolor: tokens.dividerSoft,
-              '& .MuiLinearProgress-bar': { borderRadius: 4, bgcolor: deck.accent },
+              height: 7, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft,
+              '& .MuiLinearProgress-bar': { borderRadius: `${tokens.rPill}px`, bgcolor: deck.accent },
             }}
           />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px', color: tokens.ink3, mt: '2px' }}>
@@ -388,19 +386,9 @@ export function DeckDetailScreen({ deck, onBack, onStudy, locked, onUpgrade }: {
 
       <Box sx={{ height: '8px' }} />
       <StickyFooter>
-        <Button
-          fullWidth variant="contained" disableElevation
-          onClick={() => (locked ? onUpgrade?.() : onStudy())}
-        >
-          {locked
-            ? 'Premium bilen dowam et'
-            : deck.known === 0 ? 'Öwrenip başla' : `Gaýtala — ${deck.due} kart`}
+        <Button fullWidth variant="contained" disableElevation onClick={onStudy}>
+          {deck.known === 0 ? 'Öwrenip başla' : `Gaýtala — ${deck.due} kart`}
         </Button>
-        {locked && (
-          <Typography sx={{ fontSize: 11.5, color: tokens.inkMuted, textAlign: 'center', mt: '8px' }}>
-            Hepdelik mugt gaýtalama ulanyldy — indiki duşenbe täzelenýär
-          </Typography>
-        )}
       </StickyFooter>
     </SubPage>
   );
@@ -421,8 +409,8 @@ export function TestSubjectScreen({ subject, onBack, onOpenTest }: {
       action={<BookmarkButton item={{ kind: 'test', id: subject.id, title: subject.label, sub: `${subject.tests.length} test` }} />}
     >
       <Hero
-        tint={subject.tint === tokens.surface ? tokens.surface : subject.tint}
-        accent={subject.color}
+        tint={subject.tint}
+        accent={subject.accent}
         icon={<QuizIcon size={28} />}
         title={subject.label}
         meta={`${subject.tests.length} test · ${passed}-si tabşyryldy`}
@@ -440,9 +428,9 @@ export function TestSubjectScreen({ subject, onBack, onOpenTest }: {
           {subject.tests.map((t) => (
             <SurfaceRow
               key={t.id}
-              icon={<IconBadge bg={subject.tint} color={subject.color} size={44}><QuizIcon size={22} /></IconBadge>}
+              icon={<IconBadge bg={subject.tint} color={subject.accent} size={44}><QuizIcon size={22} /></IconBadge>}
               label={t.title}
-              labelSx={{ fontSize: 15.5, fontWeight: 600 }}
+              labelSx={{ fontSize: 15, fontWeight: 600 }}
               sub={`${t.questions} sowal · ${t.minutes} min`}
               end={(
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -466,23 +454,11 @@ export function TestSubjectScreen({ subject, onBack, onOpenTest }: {
   );
 }
 
-export function TestDetailScreen({ test, accent, tint, onBack, toast, onUpgrade }: {
-  test: TestItem; accent: string; tint: string; onBack: () => void; toast: Toast; onUpgrade: () => void;
+export function TestDetailScreen({ test, accent, tint, onBack, toast }: {
+  test: TestItem; accent: string; tint: string; onBack: () => void; toast: Toast;
 }) {
-  const { premium, usedTest } = usePrefs();
-  const blocked = !premium && usedTest;
   return (
     <SubPage title="Test" onBack={onBack}>
-      {!premium && (
-        <Box sx={{ pt: '14px' }}>
-          <FreeLimitBar
-            used={usedTest}
-            label={usedTest ? 'Hepdelik mugt test ulanyldy' : 'Hepdede 1 mugt test'}
-            note={usedTest ? 'Indiki duşenbe täzelenýär' : 'Premium bilen çäksiz tabşyr'}
-            onUpgrade={onUpgrade}
-          />
-        </Box>
-      )}
       <Hero
         tint={tint} accent={accent}
         icon={<QuizIcon size={28} />}
@@ -557,22 +533,16 @@ export function TestDetailScreen({ test, accent, tint, onBack, toast, onUpgrade 
       <StickyFooter>
         <Button
           fullWidth variant="contained" disableElevation
-          onClick={() => {
-            if (blocked) { onUpgrade(); return; }
-            if (!premium) setPref('usedTest', true);
-            toast('Test tiz wagtda açylar');
-          }}
+          onClick={() => toast('Test tiz wagtda açylar')}
         >
-          {blocked
-            ? 'Premium bilen dowam et'
-            : test.best === null ? 'Testi başla' : 'Gaýtadan tabşyr'}
+          {test.best === null ? 'Testi başla' : 'Gaýtadan tabşyr'}
         </Button>
       </StickyFooter>
     </SubPage>
   );
 }
 
-/* Small helper the Temalar list uses for its "continue" row */
+/* Small helper the Sapaklar list uses for its "continue" row */
 export const ContinueRow = ({ label, sub, onClick }: {
   label: string; sub: string; onClick: () => void;
 }) => (

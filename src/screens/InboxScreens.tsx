@@ -170,7 +170,7 @@ function NotifDetail({ notif, onBack, toast }: {
                   key={f.name}
                   icon={<IconBadge bg={c.tint} color={c.ink} size={44}><Glyph size={20} /></IconBadge>}
                   label={f.name}
-                  labelSx={{ fontSize: 14.5, fontWeight: 600 }}
+                  labelSx={{ fontSize: 15, fontWeight: 600 }}
                   sub={f.size}
                   onClick={() => toast(`${f.name} ýüklenýär…`)}
                 />
@@ -213,7 +213,7 @@ function FileBubble({ msg, mine, toast }: { msg: ChatMsg; mine: boolean; toast: 
         <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: mine ? '#fff' : tokens.ink }} noWrap>
           {f.name}
         </Typography>
-        <Typography sx={{ fontSize: 11.5, color: mine ? 'rgba(255,255,255,.8)' : tokens.ink3 }}>
+        <Typography sx={{ fontSize: 12, color: mine ? 'rgba(255,255,255,.8)' : tokens.ink3 }}>
           {f.kind.toUpperCase()} · {f.size}
         </Typography>
       </Box>
@@ -317,11 +317,11 @@ function ChatThread({ chat, onBack, toast }: { chat: Chat; onBack: () => void; t
               maxWidth: '84%', minWidth: m.file ? 210 : 0,
               alignSelf: mine ? 'flex-end' : 'flex-start',
               p: m.file ? '8px' : '9px 13px 7px',
-              bgcolor: mine ? tokens.blue : tokens.surface,
+              bgcolor: mine ? tokens.blueSolid : tokens.surface,
               color: mine ? '#fff' : tokens.ink,
               borderRadius: mine
-                ? `${tokens.rRow}px ${tokens.rRow}px 4px ${tokens.rRow}px`
-                : `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px 4px`,
+                ? `${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px ${tokens.rRow}px`
+                : `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px`,
             }}>
               {showAuthor && (
                 <Typography sx={{ fontSize: 12, fontWeight: 700, color: chat.ink, px: m.file ? '4px' : 0, mb: '3px' }}>
@@ -426,7 +426,7 @@ function ArticlePage({ article, onBack, toast }: { article: Article; onBack: () 
     <SubPage title={meta.label} onBack={onBack}>
       {/* No cover art: the CMS supplies text, and an app-invented illustration
           would be the app editorialising someone else's article. */}
-      <Typography sx={{ fontSize: 23, fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.25, mt: '16px' }}>
+      <Typography sx={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.25, mt: '16px' }}>
         {article.title}
       </Typography>
       <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '8px' }}>
@@ -685,7 +685,7 @@ export function InboxScreen({ onBack, toast, onUpgrade }: {
                   sx={{
                     height: 32, px: '14px', borderRadius: `${tokens.rPill}px`, flex: 'none',
                     fontSize: 13.5, fontWeight: 600,
-                    bgcolor: on ? tokens.blue : tokens.surface,
+                    bgcolor: on ? tokens.blueSolid : tokens.surface,
                     color: on ? '#fff' : tokens.ink2,
                     transition: 'background .15s ease,color .15s ease',
                   }}

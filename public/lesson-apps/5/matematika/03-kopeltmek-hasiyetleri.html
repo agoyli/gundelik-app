@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Köpeltmegiň häsiýetleri — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 10px 6px; border-radius: 12px; font-size: 13.5px; font-weight: 700; background: #e8eef7; color: #5b6b80; }
+  .tab.active { background: #2456b0; color: #fff; }
+  .board { display: flex; justify-content: center; padding: 4px 0 10px; }
+  .formula { text-align: center; font-size: 21px; font-weight: 800; margin: 8px 0; }
+  .formula .g { color: #1d7a3d; }
+  .formula .o { color: #b25b12; }
+  .eqline { text-align: center; font-size: 17px; margin-top: 6px; color: #5b6b80; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Köpeltmegiň häsiýetleri</h1>
+  <div class="sub">Natural sanlary köpeltmek we onuň häsiýetleri · Matematika · 5-nji synp</div>
+
+  <div class="tabs">
+    <button class="tab active" data-t="orun">Orun çalyşma</button>
+    <button class="tab" data-t="utg">Utgaşdyrma</button>
+    <button class="tab" data-t="payl">Paýlaşdyrma</button>
+  </div>
+
+  <div class="card">
+    <div class="goal" id="goal"></div>
+    <div class="formula" id="formula"></div>
+    <div class="board"><svg id="board" viewBox="0 0 400 260"></svg></div>
+    <div class="eqline" id="eqline"></div>
+  </div>
+
+  <div class="card">
+    <div class="slider"><span class="lbl" id="la">a</span><input type="range" id="ra" min="1" max="8" value="4"><span class="out" id="oa">4</span></div>
+    <div class="slider"><span class="lbl" id="lb">b</span><input type="range" id="rb" min="1" max="8" value="3"><span class="out" id="ob">3</span></div>
+    <div class="slider" id="rowC"><span class="lbl" id="lc">c</span><input type="range" id="rc" min="1" max="6" value="2"><span class="out" id="oc">2</span></div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, I kitap (2017)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const SVG = document.getElementById("board");
+let mode = "orun", a = 4, b = 3, c = 2;
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+
+function cellGrid(x0, y0, cols, rows, size, fill, stroke) {
+  const g = el("g", {});
+  for (let r = 0; r < rows; r++)
+    for (let cc = 0; cc < cols; cc++)
+      g.appendChild(el("rect", {
+        x: x0 + cc * size, y: y0 + r * size, width: size - 2, height: size - 2,
+        rx: 3, fill: fill, stroke: stroke, "stroke-width": 1
+      }));
+  return g;
+}
+
+function render() {
+  SVG.innerHTML = "";
+  const goal = document.getElementById("goal");
+  const F = document.getElementById("formula");
+  const E = document.getElementById("eqline");
+  const H = document.getElementById("hint");
+  document.getElementById("rowC").style.display = mode === "orun" ? "none" : "";
+
+  if (mode === "orun") {
+    goal.textContent = "Köpeldijileriň orunlaryny çalyşsaň, köpeltmek hasyly üýtgemeýär. Iki gönüburçlugy deňeşdir — öýjükleriň sany birmeňzeş!";
+    F.innerHTML = `<span class="g">a · b</span> = <span class="o">b · a</span>`;
+    const s = 20;
+    SVG.appendChild(cellGrid(20, 40, b, a, s, "#cfe6d3", "#1d7a3d"));
+    let t = el("text", { x: 20, y: 30, "font-size": 15, "font-weight": 800, fill: "#1d7a3d" }); t.textContent = `${a} · ${b} = ${a * b}`; SVG.appendChild(t);
+    SVG.appendChild(cellGrid(230, 40, a, b, s, "#fbe2c9", "#b25b12"));
+    t = el("text", { x: 230, y: 30, "font-size": 15, "font-weight": 800, fill: "#b25b12" }); t.textContent = `${b} · ${a} = ${a * b}`; SVG.appendChild(t);
+    E.textContent = `${a} · ${b} = ${b} · ${a} = ${a * b}`;
+    H.innerHTML = `Öýjükleriň sany ikisinde-de <b>${a * b}</b>. Diňe gönüburçlugyň öwrümi üýtgedi.`;
+  }
+
+  if (mode === "utg") {
+    goal.textContent = "Ilki haýsy iki sany köpeltseň hem, netije birmeňzeş. Aşakda c sany gat (gatlak) — her gatda a · b öýjük bar.";
+    F.innerHTML = `<span class="g">(a · b) · c</span> = <span class="o">a · (b · c)</span>`;
+    const s = 16;
+    for (let k = 0; k < c; k++) {
+      const off = k * 16;
+      SVG.appendChild(cellGrid(30 + off, 150 - off - a * s, b, a, s, k % 2 ? "#dfe9fb" : "#cfe6d3", "#2456b0"));
+    }
+    const t = el("text", { x: 30, y: 200, "font-size": 15, "font-weight": 800, fill: "#1e2a3a" });
+    t.textContent = `${c} gat × (${a} · ${b}) öýjük`;
+    SVG.appendChild(t);
+    E.innerHTML = `(${a} · ${b}) · ${c} = ${a * b} · ${c} = <b>${a * b * c}</b> &nbsp;&nbsp; ${a} · (${b} · ${c}) = ${a} · ${b * c} = <b>${a * b * c}</b>`;
+    H.innerHTML = `Ýaýlaryň orny üýtgese-de, netije <b>${a * b * c}</b> bolup galýar.`;
+  }
+
+  if (mode === "payl") {
+    goal.textContent = "Gönüburçlugy iki bölege bölsek, meýdanlaryň jemi üýtgemeýär. Şonuň üçin köpeltmegi ýaýyň içindäki jem boýunça paýlap bolýar.";
+    F.innerHTML = `<span class="g">a · (b + c)</span> = <span class="g">a · b</span> + <span class="o">a · c</span>`;
+    const s = 22;
+    SVG.appendChild(cellGrid(30, 50, b, a, s, "#cfe6d3", "#1d7a3d"));
+    SVG.appendChild(cellGrid(30 + b * s + 8, 50, c, a, s, "#fbe2c9", "#b25b12"));
+    let t = el("text", { x: 30, y: 40, "font-size": 14, "font-weight": 800, fill: "#1d7a3d" }); t.textContent = `${a} · ${b} = ${a * b}`; SVG.appendChild(t);
+    t = el("text", { x: 30 + b * s + 8, y: 40, "font-size": 14, "font-weight": 800, fill: "#b25b12" }); t.textContent = `${a} · ${c} = ${a * c}`; SVG.appendChild(t);
+    E.innerHTML = `${a} · (${b} + ${c}) = ${a} · ${b} + ${a} · ${c} = ${a * b} + ${a * c} = <b>${a * (b + c)}</b>`;
+    H.innerHTML = `Bu häsiýet hasaby ýeňilleşdirýär: <b>8 · 105 = 8 · (100 + 5) = 800 + 40 = 840</b>.`;
+  }
+}
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(o => o.classList.remove("active"));
+  t.classList.add("active");
+  mode = t.dataset.t;
+  render();
+});
+for (const [id, out, set] of [["ra", "oa", v => a = v], ["rb", "ob", v => b = v], ["rc", "oc", v => c = v]]) {
+  document.getElementById(id).oninput = e => {
+    set(+e.target.value);
+    document.getElementById(out).textContent = e.target.value;
+    render();
+  };
+}
+render();
+</script>
+</body>
+</html>

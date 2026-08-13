@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deňleme — terezi — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .eq { text-align: center; font-size: 30px; font-weight: 800; margin: 6px 0 12px; }
+  .eq .x { color: #e2574c; }
+  .scene { display: flex; justify-content: center; }
+  .pan-lbl { font-size: 13px; fill: #5b6b80; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Deňleme — terezi</h1>
+  <div class="sub">Deňlemeleri ulanyp mesele çözmek · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal" id="story"></div>
+    <div class="eq" id="eq"></div>
+    <div class="scene"><svg id="board" viewBox="0 0 440 205"></svg></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Näme edeliň?</h3>
+    <div class="row">
+      <button class="btn" id="bLeft"></button>
+      <button class="btn" id="bRight"></button>
+      <button class="btn primary" id="bBoth"></button>
+    </div>
+    <div class="note">Terezi deňagramlylykda durar ýaly, <b>iki tarapdan hem</b> birmeňzeş agram aýyrmaly. Şonda deňlemäniň deňligi bozulmaýar.</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" id="bNew">Täze mesele</button>
+    </div>
+  </div>
+
+  <div class="card" id="rules">
+    <h3>Ýatda sakla</h3>
+    <div class="expl">
+      Näbelli goşulyjyny tapmak üçin, jemden belli goşulyjyny aýyrmaly:<br>
+      <b>x + 12 = 78 ⇒ x = 78 − 12 = 66</b><br><br>
+      Harpyň deňlemäni dogry san deňligine öwürýän bahasyna deňlemäniň <b>köki</b> diýilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, I kitap (2017)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const SVG = document.getElementById("board");
+let x, a, b, tilt = 0, leftA, rightB, solved;
+
+const STORIES = [
+  n => `Tereziniň çep okarasynda garpyz we ${n.a} kg daş, sag okarasynda ${n.b} kg daş bar. Terezi deňagramlylykda. Garpyzyň massasy näçe?`,
+  n => `Çep okarada gawun we ${n.a} kg daş, sag okarada ${n.b} kg daş. Gawunyň massasyny tap.`,
+  n => `Halta un we ${n.a} kg daş — çep okarada. Sag okarada ${n.b} kg daş. Haltanyň massasy näçe?`
+];
+let story;
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+
+function rnd(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+
+function newTask() {
+  x = rnd(2, 9); a = rnd(1, 8); b = x + a;
+  leftA = a; rightB = b; tilt = 0; solved = false;
+  story = STORIES[rnd(0, STORIES.length - 1)]({ a, b });
+  document.getElementById("story").textContent = story;
+  msg("");
+  updateButtons();
+  render();
+}
+
+function msg(t, cls) {
+  const m = document.getElementById("msg");
+  m.textContent = t; m.className = "msg" + (cls ? " " + cls : "");
+}
+
+function updateButtons() {
+  const n = Math.min(leftA, rightB, a);
+  document.getElementById("bLeft").textContent = `Çep tarapdan ${a} kg aýyr`;
+  document.getElementById("bRight").textContent = `Sag tarapdan ${a} kg aýyr`;
+  document.getElementById("bBoth").textContent = `Iki tarapdan hem ${a} kg aýyr`;
+  const dis = solved;
+  ["bLeft", "bRight", "bBoth"].forEach(id => document.getElementById(id).disabled = dis);
+}
+
+function render() {
+  SVG.innerHTML = "";
+  document.getElementById("eq").innerHTML = solved
+    ? `<span class="x">x</span> = ${x}`
+    : `<span class="x">x</span>${leftA ? " + " + leftA : ""} = ${rightB}`;
+
+  const cx = 220, topY = 40, armLen = 150;
+  const ang = tilt * 0.13;             // radians
+  const lx = cx - armLen * Math.cos(ang), ly = topY + armLen * Math.sin(ang);
+  const rx = cx + armLen * Math.cos(ang), ry = topY - armLen * Math.sin(ang);
+
+  // stand
+  SVG.appendChild(el("rect", { x: cx - 6, y: topY, width: 12, height: 132, fill: "#8a97a8", rx: 4 }));
+  SVG.appendChild(el("rect", { x: cx - 55, y: 170, width: 110, height: 14, fill: "#5b6b80", rx: 6 }));
+  // beam
+  SVG.appendChild(el("line", { x1: lx, y1: ly, x2: rx, y2: ry, stroke: "#5b6b80", "stroke-width": 8, "stroke-linecap": "round" }));
+  SVG.appendChild(el("circle", { cx: cx, cy: topY, r: 9, fill: "#1e2a3a" }));
+
+  drawPan(lx, ly, "left");
+  drawPan(rx, ry, "right");
+}
+
+function drawPan(px, py, side) {
+  const panY = py + 62;
+  SVG.appendChild(el("line", { x1: px, y1: py, x2: px, y2: panY, stroke: "#8a97a8", "stroke-width": 3 }));
+  SVG.appendChild(el("rect", { x: px - 58, y: panY, width: 116, height: 9, fill: "#8a97a8", rx: 4 }));
+
+  if (side === "left") {
+    // watermelon = x
+    if (!solved || true) {
+      SVG.appendChild(el("circle", { cx: px - 28, cy: panY - 22, r: 21, fill: "#7fc47f", stroke: "#1d7a3d", "stroke-width": 2.5 }));
+      const t = el("text", { x: px - 28, y: panY - 15, "text-anchor": "middle", "font-size": 20, "font-weight": 800, fill: "#1e2a3a" });
+      t.textContent = solved ? x : "x";
+      SVG.appendChild(t);
+    }
+    drawWeights(px + 20, panY, leftA);
+  } else {
+    drawWeights(px - 40, panY, rightB);
+  }
+}
+
+function drawWeights(startX, panY, kg) {
+  if (!kg) return;
+  const w = Math.min(84, 14 + kg * 7);
+  const h = 34;
+  SVG.appendChild(el("rect", { x: startX - w / 2 + 20, y: panY - h, width: w, height: h, rx: 6, fill: "#b8c6d8", stroke: "#5b6b80", "stroke-width": 2 }));
+  const t = el("text", { x: startX + 20, y: panY - 12, "text-anchor": "middle", "font-size": 15, "font-weight": 800, fill: "#1e2a3a" });
+  t.textContent = kg + " kg";
+  SVG.appendChild(t);
+}
+
+function check() {
+  if (leftA === 0 && rightB === x) {
+    solved = true;
+    tilt = 0;
+    msg(`Berekella! 🎉 Çep tarapda diňe x galdy: x = ${b} − ${a} = ${x}. Barlaýarys: ${x} + ${a} = ${b} ✓`, "ok");
+    updateButtons();
+  }
+}
+
+document.getElementById("bLeft").onclick = () => {
+  if (leftA < a) return;
+  leftA -= a; tilt = -1;
+  msg("Terezi agdaryldy! Diňe bir tarapdan aýyrsaň, deňagramlylyk bozulýar. Deňligiň dogrulygy hem bozuldy.", "bad");
+  render();
+  setTimeout(() => { leftA += a; tilt = 0; render(); }, 1400);
+};
+document.getElementById("bRight").onclick = () => {
+  if (rightB < a) return;
+  rightB -= a; tilt = 1;
+  msg("Terezi agdaryldy! Diňe sag tarapdan aýyrmak hem bolmaýar.", "bad");
+  render();
+  setTimeout(() => { rightB += a; tilt = 0; render(); }, 1400);
+};
+document.getElementById("bBoth").onclick = () => {
+  if (leftA < a) return;
+  leftA -= a; rightB -= a; tilt = 0;
+  msg(`Iki tarapdan hem ${a} kg aýyrdyk. Terezi ýene deňagramlylykda!`, "ok");
+  render();
+  setTimeout(check, 400);
+};
+document.getElementById("bNew").onclick = newTask;
+
+newTask();
+</script>
+</body>
+</html>

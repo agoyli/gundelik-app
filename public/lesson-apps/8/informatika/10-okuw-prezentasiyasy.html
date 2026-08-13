@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Okuw prezentasiýasy — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .pool { display: flex; flex-direction: column; gap: 7px; }
+  .slip { display: flex; align-items: center; gap: 9px; background: #f7fafd; border-radius: 11px;
+          padding: 10px 11px; font-size: 14px; }
+  .slip .ic { font-size: 17px; }
+  .slip .tx { flex: 1; line-height: 1.4; }
+  .slip .btn { padding: 7px 11px; font-size: 13px; }
+  .plan { display: flex; flex-direction: column; gap: 7px; min-height: 56px; }
+  .plan .slip { background: #e3edfd; }
+  .plan .no { width: 24px; height: 24px; border-radius: 7px; background: #2456b0; color: #fff;
+              font-size: 12px; font-weight: 800; display: flex; align-items: center;
+              justify-content: center; flex: 0 0 auto; }
+  .drop { border: 2px dashed #cfdcee; border-radius: 12px; padding: 10px; color: #93a2b5;
+          font-size: 13.5px; text-align: center; }
+  .show { background: linear-gradient(135deg,#123a6b,#2456b0); border-radius: 14px;
+          min-height: 200px; padding: 24px; color: #fff; display: flex; flex-direction: column;
+          justify-content: center; text-align: center; }
+  .show .h { font-size: 23px; font-weight: 800; line-height: 1.25; }
+  .show .b { font-size: 14.5px; margin-top: 12px; line-height: 1.55; opacity: .92; }
+  .show .pg { font-size: 12px; opacity: .7; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Okuw dersinden prezentasiýa</h1>
+  <div class="sub">«Türkmenistanyň derýalary» — geografiýa · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Prezentasiýany döretmek onuň <b>düzümini meýilleşdirmekden</b> başlanýar.
+      Aşakdaky bölekleri dogry tertipde ýygna: titul → mazmun → esasy bölekler → netije.</div>
+    <div class="plan" id="plan"></div>
+    <div class="drop" id="drop">Bölekleri aşakdan saýlap goş</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="check">Tertibi barla</button>
+      <button class="btn ghost" id="clear">Täzeden başla</button>
+      <span class="score" id="score"></span>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Taýýar bölekler</h3>
+    <div class="pool" id="pool"></div>
+  </div>
+
+  <div class="card">
+    <h3>Görkeziş (Показ слайдов)</h3>
+    <div class="show" id="show">
+      <div class="h" id="sh">Slaýd ýok</div>
+      <div class="b" id="sb">Ilki ýokarda prezentasiýany ýygna.</div>
+      <div class="pg" id="sp"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="prev">◀ Öňki</button>
+      <button class="btn" id="next">Indiki ▶</button>
+      <button class="btn primary" id="f5">F5 — başdan görkez</button>
+      <button class="btn ghost" id="save">💾 Sakla</button>
+    </div>
+    <div class="note" id="saved"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Görkeziş <b>Слайд-шоу → С начала</b> buýrugy ýa-da <b>F5</b> klawişi bilen başlaýar.
+      Ekranda duran slaýddan başlamak üçin <b>Shift+F5</b> basylýar. Prezentasiýa
+      PowerPoint 2016-da <b>.pptx</b> giňeltmede saklanýar; ony <b>PDF</b> formata hem geçirip bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const SLIDES = [
+  { ic: "🏷", h: "Türkmenistanyň derýalary", b: "8-nji synp okuwçysynyň taslama işi", role: "titul" },
+  { ic: "📋", h: "Meýilnama", b: "1. Amyderýa  2. Murgap  3. Tejen  4. Garagum derýasy  5. Netije", role: "mazmun" },
+  { ic: "🌊", h: "Amyderýa", b: "Ýurdumyzyň iň suwly derýasy. Ol Lebap we Mary welaýatlaryndan geçýär.", role: "esasy" },
+  { ic: "🌊", h: "Murgap derýasy", b: "Mary welaýatynyň suwaryş ulgamynyň esasy çeşmesidir.", role: "esasy" },
+  { ic: "🌊", h: "Garagum derýasy", b: "Amyderýadan suw alýan iri emeli akabadyr.", role: "esasy" },
+  { ic: "🏁", h: "Netije", b: "Derýalar oba hojalygynyň we ilatyň durmuşynyň esasydyr. Suwy tygşytly ulanmaly.", role: "netije" }
+];
+const ORDER = ["titul", "mazmun", "esasy", "esasy", "esasy", "netije"];
+let pool = SLIDES.map((s, i) => i).sort(() => Math.random() - .5);
+let plan = [], at = 0;
+
+function msg(t, cls) { $("msg").textContent = t; $("msg").className = "msg" + (cls ? " " + cls : ""); }
+
+function render() {
+  const P = $("pool"); P.innerHTML = "";
+  if (!pool.length) P.innerHTML = '<div style="color:#93a2b5;font-size:14px">Ähli bölekler ýerleşdirildi.</div>';
+  pool.forEach(i => {
+    const s = SLIDES[i];
+    const d = document.createElement("div");
+    d.className = "slip";
+    d.innerHTML = `<span class="ic">${s.ic}</span><span class="tx"><b>${s.h}</b></span>`;
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = "Goş ⤴";
+    b.onclick = () => { plan.push(i); pool = pool.filter(x => x !== i); msg(""); render(); };
+    d.appendChild(b);
+    P.appendChild(d);
+  });
+
+  const L = $("plan"); L.innerHTML = "";
+  plan.forEach((i, n) => {
+    const s = SLIDES[i];
+    const d = document.createElement("div");
+    d.className = "slip";
+    d.innerHTML = `<span class="no">${n + 1}</span><span class="ic">${s.ic}</span>
+                   <span class="tx">${s.h}</span>`;
+    const up = document.createElement("button");
+    up.className = "btn"; up.textContent = "▲";
+    up.onclick = () => { if (n > 0) { [plan[n - 1], plan[n]] = [plan[n], plan[n - 1]]; render(); } };
+    const rm = document.createElement("button");
+    rm.className = "btn warn"; rm.textContent = "✕";
+    rm.onclick = () => { pool.push(i); plan.splice(n, 1); render(); };
+    d.appendChild(up); d.appendChild(rm);
+    L.appendChild(d);
+  });
+  $("drop").style.display = plan.length ? "none" : "block";
+  $("score").textContent = `Slaýd: ${plan.length} / ${SLIDES.length}`;
+  at = Math.min(at, Math.max(0, plan.length - 1));
+  show();
+}
+
+function show() {
+  if (!plan.length) {
+    $("sh").textContent = "Slaýd ýok";
+    $("sb").textContent = "Ilki ýokarda prezentasiýany ýygna.";
+    $("sp").textContent = ""; return;
+  }
+  const s = SLIDES[plan[at]];
+  $("sh").textContent = s.h; $("sb").textContent = s.b;
+  $("sp").textContent = `${at + 1} / ${plan.length}`;
+}
+
+$("check").onclick = () => {
+  if (plan.length !== SLIDES.length) { msg(`Ýene ${SLIDES.length - plan.length} bölek galdy.`, "bad"); return; }
+  const got = plan.map(i => SLIDES[i].role);
+  const bad = got.findIndex((r, i) => r !== ORDER[i]);
+  if (bad < 0) msg("Berekella! 🎉 Prezentasiýanyň düzümi dogry: titul, mazmun, esasy bölekler, netije.", "ok");
+  else msg(`${bad + 1}-nji orunda «${got[bad]}» duran slaýd bar, emma bu ýerde «${ORDER[bad]}» bolmaly.`, "bad");
+};
+
+$("clear").onclick = () => { pool = SLIDES.map((s, i) => i).sort(() => Math.random() - .5); plan = []; at = 0; msg(""); render(); };
+$("prev").onclick = () => { if (at > 0) { at--; show(); } };
+$("next").onclick = () => { if (at < plan.length - 1) { at++; show(); } };
+$("f5").onclick = () => { at = 0; show(); };
+$("save").onclick = () => {
+  $("saved").innerHTML = plan.length
+    ? `💾 Saklandy: <b>Türkmenistanyň derýalary.pptx</b> — ${plan.length} slaýd.
+       Тип файла sanawyndan PDF hem saýlap bolardy.`
+    : "Saklamak üçin iň bolmanda bir slaýd gerek.";
+};
+
+render();
+</script>
+</body>
+</html>

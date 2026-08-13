@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanawlar we belgilemek — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .brow { border: 2px solid #d6e0ee; border-radius: 12px; background: #fff; padding: 12px 18px;
+          min-height: 150px; font-size: 15px; line-height: 1.7; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #2456b0;
+          background: #f7fafd; border-radius: 10px; padding: 10px 12px; line-height: 1.7;
+          overflow-x: auto; white-space: pre-wrap; }
+  .li { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .li input { flex: 1; min-width: 0; padding: 10px; border-radius: 10px; border: 2px solid #d6e0ee;
+              font-size: 14.5px; }
+  .li input:focus { outline: none; border-color: #2456b0; }
+  .li button { width: 44px; height: 44px; border: none; border-radius: 10px; background: #fbe3e3;
+               color: #b02424; font-size: 18px; cursor: pointer; flex: 0 0 auto; }
+  .lab { font-weight: 800; font-size: 13.5px; color: #5b6b80; margin: 10px 0 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sanawnamany we belgilemäni döretmek</h1>
+  <div class="sub">&lt;UL&gt; · &lt;OL&gt; · &lt;LI&gt; · TYPE · START · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Sanawyň görnüşini we bellikleriň şekilini saýla. Netije şol bada
+      brauzeriň penjiresinde görünýär.</div>
+    <div class="row tight">
+      <button class="btn sel" id="bul">&lt;UL&gt; markirlenen</button>
+      <button class="btn" id="bol">&lt;OL&gt; nomerlenen</button>
+    </div>
+    <div class="lab">TYPE</div>
+    <div class="row tight" id="types"></div>
+    <div id="startbox" style="display:none">
+      <div class="slider"><span class="lbl">START</span>
+        <input type="range" id="st" min="1" max="10" value="1"><span class="out" id="sto">1</span></div>
+    </div>
+    <div class="lab">Sanawyň elementleri</div>
+    <div id="items"></div>
+    <div class="row tight">
+      <button class="btn" id="add">+ Element goş</button>
+      <button class="btn ghost" id="nest">Iç-içe sanaw: ýok</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Brauzeriň penjiresi</h3>
+    <div class="brow" id="prev"></div>
+    <div class="code" id="code"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ýumuş</h3>
+    <div class="goal" id="tg"></div>
+    <div class="row">
+      <button class="btn primary" id="chk">Barla</button>
+      <button class="btn" id="nx">Indiki ýumuş</button>
+    </div>
+    <div class="msg" id="tm"></div>
+    <div class="score" id="ts">0 ýumuş ýerine ýetdi</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §7</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const UT = [["Disk", "disc"], ["Circle", "circle"], ["Square", "square"]];
+const OT = [["1", "1"], ["A", "A"], ["a", "a"], ["I", "I"], ["i", "i"]];
+let ul = true, type = "Disk", items = ["Algebra", "Geometriýa", "Fizika"], nested = false;
+
+function drawTypes() {
+  const box = $("types"); box.innerHTML = "";
+  (ul ? UT : OT).forEach(t => {
+    const b = document.createElement("button");
+    b.className = "btn" + (t[0] === type ? " sel" : ""); b.textContent = "TYPE=" + t[0];
+    b.dataset.t = t[0];
+    b.onclick = () => { type = t[0]; drawTypes(); draw(); };
+    box.appendChild(b);
+  });
+  $("startbox").style.display = ul ? "none" : "block";
+}
+function drawItems() {
+  const box = $("items"); box.innerHTML = "";
+  items.forEach((t, i) => {
+    const d = document.createElement("div"); d.className = "li";
+    const inp = document.createElement("input");
+    inp.value = t; inp.oninput = () => { items[i] = inp.value; draw(); };
+    const del = document.createElement("button");
+    del.textContent = "✕"; del.title = "Öçür";
+    del.onclick = () => { if (items.length > 1) { items.splice(i, 1); drawItems(); draw(); } };
+    d.appendChild(inp); d.appendChild(del); box.appendChild(d);
+  });
+}
+function draw() {
+  const p = $("prev"); p.innerHTML = "";
+  const lst = document.createElement(ul ? "ul" : "ol");
+  const css = ul ? (UT.find(x => x[0] === type) || UT[0])[1] : (OT.find(x => x[0] === type) || OT[0])[1];
+  lst.style.listStyleType = css;
+  if (!ul) lst.start = +$("st").value;
+  items.forEach((t, i) => {
+    const li = document.createElement("li");
+    li.textContent = t;
+    if (nested && i === 0) {
+      const sub = document.createElement("ul");
+      sub.style.listStyleType = "circle";
+      ["Deňlemeler", "Funksiýalar"].forEach(s => {
+        const x = document.createElement("li"); x.textContent = s; sub.appendChild(x);
+      });
+      li.appendChild(sub);
+    }
+    lst.appendChild(li);
+  });
+  p.appendChild(lst);
+
+  const tag = ul ? "UL" : "OL";
+  let c = "<" + tag + " TYPE=" + type + (ul ? "" : " START=" + $("st").value) + ">\n";
+  items.forEach((t, i) => {
+    c += "  <LI> " + t + "\n";
+    if (nested && i === 0)
+      c += "    <UL TYPE=Circle>\n      <LI> Deňlemeler\n      <LI> Funksiýalar\n    </UL>\n";
+  });
+  c += "</" + tag + ">";
+  $("code").textContent = c;
+  $("nest").textContent = "Iç-içe sanaw: " + (nested ? "bar" : "ýok");
+  $("sto").textContent = $("st").value;
+}
+
+$("bul").onclick = () => { ul = true; type = "Disk"; $("bul").classList.add("sel");
+                           $("bol").classList.remove("sel"); drawTypes(); draw(); };
+$("bol").onclick = () => { ul = false; type = "1"; $("bol").classList.add("sel");
+                           $("bul").classList.remove("sel"); drawTypes(); draw(); };
+$("add").onclick = () => { items.push("Täze element"); drawItems(); draw(); };
+$("nest").onclick = () => { nested = !nested; draw(); };
+$("st").oninput = draw;
+
+/* ------------------------------------------------------------------- ýumuşlar */
+const TASKS = [
+  { t: "Kwadrat bellikli markirlenen sanaw düz.", f: () => ul && type === "Square" },
+  { t: "Baş latyn harplary bilen nomerlenen sanaw düz.", f: () => !ul && type === "A" },
+  { t: "Nomerlemäni 5-den başlaýan sanaw düz.", f: () => !ul && +$("st").value === 5 },
+  { t: "Rim sifrleri bilen nomerlenen, dört elementli sanaw düz.",
+    f: () => !ul && type === "I" && items.length === 4 },
+  { t: "Birinji elementiň içinde iç-içe sanaw bolsun.", f: () => nested }
+];
+let ti = 0, tdone = 0;
+function drawT() { $("tg").textContent = (ti + 1) + ". " + TASKS[ti].t; $("tm").textContent = ""; }
+$("chk").onclick = () => {
+  const ok = TASKS[ti].f();
+  $("tm").className = "msg " + (ok ? "ok" : "bad");
+  if (ok && !TASKS[ti].done) { TASKS[ti].done = 1; tdone++; }
+  $("tm").textContent = ok ? "Dogry! ✅" : "Entek dogry däl – sazlamalary üýtget.";
+  $("ts").textContent = tdone + " ýumuş ýerine ýetdi";
+};
+$("nx").onclick = () => { ti = (ti + 1) % TASKS.length; drawT(); };
+
+drawTypes(); drawItems(); draw(); drawT();
+</script>
+</body>
+</html>

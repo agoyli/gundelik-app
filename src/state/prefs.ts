@@ -34,9 +34,6 @@ export type Prefs = {
   /* security */
   biometry: boolean; twoFactor: boolean;
   lang: LangId;
-  /* free-tier meters — what the week's single free attempt has been spent on */
-  usedTest: boolean;
-  usedCards: boolean;
 };
 
 const store: Prefs = {
@@ -46,8 +43,6 @@ const store: Prefs = {
   quiet: true, sound: true, haptics: true,
   biometry: true, twoFactor: false,
   lang: 'tk',
-  usedTest: false,
-  usedCards: false,
 };
 
 /* every pref except the language and the tier is a switch */
@@ -113,7 +108,7 @@ export const TIERS: Tier[] = [
     name: 'Göreldeli',
     monthly: 5,
     yearly: 40,
-    blurb: 'Bildirişler, nyşanlar, testler we bäsleşikler',
+    blurb: 'Bildirişler, ýyldyzlar, testler we bäsleşikler',
   },
   {
     id: 'zehin',
@@ -149,14 +144,14 @@ export const FEATURES: { id: FeatureId; label: string; tier: TierId }[] = [
   { id: 'notices', label: 'Mekdep bildirişleri', tier: 'free' },
   { id: 'chat', label: 'Mugallymlar bilen söhbet', tier: 'free' },
   { id: 'sms', label: 'Wakalar barada SMS', tier: 'gorelde' },
-  { id: 'badges', label: 'Nyşanlaryň doly seljermesi', tier: 'gorelde' },
-  { id: 'tests', label: 'Çäksiz testler', tier: 'gorelde' },
+  { id: 'badges', label: 'Ýyldyzlaryň doly seljermesi', tier: 'gorelde' },
+  { id: 'tests', label: 'Test bankasy — ähli testler', tier: 'gorelde' },
   { id: 'contests', label: 'Premium bäsleşikler', tier: 'gorelde' },
   { id: 'notes', label: 'Mugallymyň ähli bellikleri', tier: 'zehin' },
   { id: 'analytics', label: 'Analitika we hasabatlar', tier: 'zehin' },
-  { id: 'roadmap', label: 'Gollanmalar 1–12 synplar', tier: 'zehin' },
-  { id: 'cards', label: 'Çäksiz öwrediji kartlar', tier: 'zehin' },
-  { id: 'games', label: 'Tema oýunlary', tier: 'zehin' },
+  { id: 'roadmap', label: 'Ähli dersleriň sapaklary 1–12', tier: 'zehin' },
+  { id: 'cards', label: 'Öwrediji kartlaryň ählisi', tier: 'zehin' },
+  { id: 'games', label: 'Sapak oýunlary', tier: 'zehin' },
   { id: 'ai', label: 'Akylly mugallym 24/7', tier: 'zehin' },
 ];
 

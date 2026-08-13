@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masstab — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .plan { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .plan svg { display: block; width: 100%; height: auto; max-height: 130px; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 13px; text-align: center; font-size: 20px; font-weight: 800; }
+  .chain { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16.5px; line-height: 1.9; text-align: center; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Masstab</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def">Çyzgydaky uzynlygyň hakyky uzynlyga gatnaşygyna <b>masstab</b> diýilýär
+      we «M 1:100» görnüşinde ýazylýar. Ol çyzgydaky 1 sm-iň hakykatda 100 sm-e
+      deňdigini aňladýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Iki ädimde hasapla</h3>
+    <div class="plan"><svg id="pl" viewBox="0 0 320 120"></svg></div>
+    <div class="eq" id="eq" style="margin-top:8px"></div>
+    <div class="chain" id="chain" style="margin-top:8px"></div>
+    <div class="goal" id="ask"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki çyzgy</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, II kitap · 111–114-nji sahypalar</div>
+</div>
+
+<script>
+// [çyzgydaky sm, masstab, hakyky sm, hakyky metr, at]
+var T = [
+  [3, 100, 300, 3, "otagyň uzynlygy"],
+  [5, 100, 500, 5, "synp tagtasynyň uzynlygy"],
+  [4, 200, 800, 8, "howluň ini"],
+  [6, 100, 600, 6, "koridoryň uzynlygy"],
+  [2, 500, 1000, 10, "bagyň ini"]
+];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function draw() {
+  var t = T[ti], u = 34;
+  var w = t[0] * u;
+  var s = '<rect x="20" y="30" width="' + w + '" height="46" rx="6" fill="#eef4fb" stroke="#2456b0" stroke-width="3"/>';
+  s += '<text x="24" y="24" font-size="14" fill="#33506f">M 1:' + t[1] + "</text>";
+  s += '<line x1="20" y1="90" x2="' + (20 + w) + '" y2="90" stroke="#b0407a" stroke-width="3"/>';
+  s += '<text x="' + (20 + w + 6) + '" y="95" font-size="14" fill="#b0407a">' + t[0] + " sm</text>";
+  s += '<text x="24" y="60" font-size="14" fill="#1e2a3a">' + (stage >= 2 ? (t[3] + " m") : "?") + "</text>";
+  document.getElementById("pl").innerHTML = s;
+}
+function show() {
+  var t = T[ti];
+  draw();
+  document.getElementById("eq").textContent =
+    "Çyzgyda " + t[4] + " " + t[0] + " sm, masstab M 1:" + t[1];
+  var l = t[0] + " · " + t[1] + " = " + (stage >= 1 ? (t[2] + " sm") : "?");
+  if (stage >= 2) l += "<br>" + t[2] + " sm : 100 = <b>" + t[3] + " m</b>";
+  document.getElementById("chain").innerHTML = l;
+  document.getElementById("ask").textContent =
+    stage === 0 ? ("1-nji ädim: hakyky uzynlyk näçe sm?") :
+    stage === 1 ? ("2-nji ädim: " + t[2] + " sm näçe metr edýär?") : "Mysal çözüldi.";
+  var m = document.getElementById("msg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ? ("Hakyky uzynlyk: " + t[3] + " m.") : "";
+}
+var VALS = [3, 5, 6, 8, 10, 12, 20, 300, 500, 600, 800, 1000];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= 2) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), t = T[ti], m = document.getElementById("msg");
+    var w = stage === 0 ? t[2] : t[3];
+    d++;
+    if (v === w) {
+      ok++; stage++; show();
+      if (stage === 1) { m.className = "msg ok"; m.textContent = "Dogry! Indi santimetri metre öwür."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = stage === 0 ? "Ýalňyş. Çyzgydaky uzynlygy masstaba köpelt." :
+        "Ýalňyş. Santimetri 100-e bölüp, metre öwür.";
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["M 1:100 masstab näme aňladýar?",
+   ["Çyzgydaky 1 sm hakykatda 100 sm", "Çyzgydaky 100 sm hakykatda 1 sm", "Çyzgydaky 1 sm hakykatda 1 m kiçi"], 0],
+  ["M 1:100 masstabda çyzgydaky 3 sm näçe metr?", ["3 m", "30 m", "300 m"], 0],
+  ["M 1:200 masstabda çyzgydaky 4 sm hakykatda näçe sm?", ["800", "400", "80"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

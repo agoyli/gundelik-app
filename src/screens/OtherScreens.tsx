@@ -8,11 +8,14 @@ import {
 import {
   DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav, PillHeader,
   MeterTile, PointsPill, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
-  SheetDrawer, StatTile, SurfaceRow, TagPill,
+  SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
-import { AdSlot, FreeLimitBar, LockedPreview, TeaserCard } from '../components/Paywall';
-import { RATING, TEST_SUBJECTS } from '../data/guides';
+import { AdSlot, LockedPreview, TeaserCard } from '../components/Paywall';
+import { BANK_TOTAL, RATING, SAPAK_SUBJECTS, TEST_SUBJECTS } from '../data/guides';
+import { USER_GRADE, subjectBySlug } from '../data/curriculum';
+import type { CurriculumSubject } from '../data/curriculum';
 import { fmtRange } from '../lib/date';
+import { capitalise, ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/guides';
 import { PLAN, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
 import { TestDetailScreen, TestSubjectScreen } from './DetailScreens';
@@ -23,7 +26,7 @@ import { useCareerResult } from '../state/career';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
 import {
-  BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, TemalarScreen,
+  BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, SapaklarScreen,
 } from './SectionScreens';
 import {
   PaySheet, PaymentsScreen, PayMethodsScreen, ProfileEditScreen, SettingsScreen,
@@ -48,11 +51,13 @@ const TopBar = ({ title, action }: { title: string; action?: React.ReactNode }) 
   </Box>
 );
 
-/* One student everywhere: Muhammedow Muhammet, 8-nji «B», 16-njy mekdep */
+/* One student everywhere: Muhammedow Muhammet, 8-nji «B», 16-njy mekdep.
+   The grade is USER_GRADE — the same number the curriculum is read against, so
+   the profile and the subject list cannot disagree about what year this is. */
 export const STUDENT = {
   name: 'Muhammedow Muhammet',
   initials: 'MM',
-  cls: '8-nji «B» synp',
+  cls: `${ordinal(USER_GRADE)} «B» synp`,
   school: '16-njy mekdep',
   schoolLong: '16-njy orta mekdep',
   points: 1251,
@@ -157,26 +162,56 @@ const CardTitle = ({ children }: { children: string }) => (
 
 /* Mock week history so the period arrows actually navigate. The last entry is
    the week that contains TODAY — these read "23.09 – 30.09" while the diary
-   was showing February, which put two different autumns on one screen. */
+   was showing February, which put two different autumns on one screen.
+
+   Only the rank is stored. Everything a reader sees about it — "2-nji ýerde",
+   "1 orun ýokary galdy" — is written from that one number, so the paid card and
+   the free teaser cannot end up telling different stories about the same week. */
 const WEEKS = [
-  { label: fmtRange('2026-01-26', '2026-02-01'), place: '3-nji ýerde', delta: 'geçen hepde 4-nji' },
-  { label: fmtRange('2026-02-02', '2026-02-08'), place: '2-nji ýerde', delta: 'geçen hepde 3-nji' },
-  { label: fmtRange('2026-02-09', '2026-02-15'), place: '1-nji ýerde', delta: 'geçen hepde 2-nji' },
+  { label: fmtRange('2026-01-19', '2026-01-25'), place: 4 },
+  { label: fmtRange('2026-01-26', '2026-02-01'), place: 3 },
+  { label: fmtRange('2026-02-02', '2026-02-08'), place: 2 },
+  { label: fmtRange('2026-02-09', '2026-02-15'), place: 1 },
 ];
+
+const placeLabel = (n: number) => `${ordinal(n)} ýerde`;
+
+/* Movement against the previous week. A smaller number is a better place, so
+   the sign is flipped on the way out — the reader is told "went up", not "−1". */
+const weekMove = (i: number) => {
+  const prev = WEEKS[i - 1];
+  if (!prev) return null;
+  const d = prev.place - WEEKS[i].place;
+  if (d === 0) return 'geçen hepdedäki ýaly';
+  return `geçen hepdä garanyňda ${Math.abs(d)} orun ${d > 0 ? 'ýokary galdy' : 'aşak düşdi'}`;
+};
 
 /* Mock quarter history — the quarter card navigates like the weekly one.
    February is the third quarter, which is also what the school's announcement
    about closing dates says. */
 const QUARTER_HISTORY = [
-  { label: '2-nji çärýek', avg: '4.3', delta: 'geçen çärýek 4.1' },
-  { label: '3-nji çärýek', avg: '4.5', delta: 'geçen çärýek 4.3' },
+  { label: '1-nji çärýek', avg: 4.1 },
+  { label: '2-nji çärýek', avg: 4.3 },
+  { label: '3-nji çärýek', avg: 4.5 },
 ];
+
+const qtrMove = (i: number) => {
+  const prev = QUARTER_HISTORY[i - 1];
+  if (!prev) return null;
+  const pct = ((QUARTER_HISTORY[i].avg - prev.avg) / prev.avg) * 100;
+  if (Math.round(pct * 10) === 0) return 'geçen çärýekdäki ýaly';
+  return `geçen çärýek bilen deňeşdirende ${Math.abs(pct).toFixed(1)}% ${pct > 0 ? 'ösdi' : 'peseldi'}`;
+};
 
 /* weekly completion per subject — distinct from quarter averages */
 const SUBJECT_WEEK: [string, number][] = [
   ['Iňlis dili', 96], ['Türkmen dili', 94], ['Taryh', 90], ['Geografiýa', 88],
   ['Matematika', 82], ['Himiýa', 76], ['Fizika', 71],
 ];
+
+/* the strongest subject of the week — the one true sentence the free tier gets
+   about the subject report */
+const BEST_SUBJECT = SUBJECT_WEEK.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
 
 /*
  * What the free tier sees instead of the reports.
@@ -193,7 +228,7 @@ function LockedReport({ title, note, preview, onUpgrade }: {
   return (
     <ButtonBase
       onClick={onUpgrade}
-      aria-label={`${title} — ${note}, Premium bilen açylýar`}
+      aria-label={`${title} — ${note}, ${tierFor('analytics')?.name} bilen açylýar`}
       sx={{
         display: 'block', width: '100%', textAlign: 'left', overflow: 'hidden',
         bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
@@ -209,8 +244,13 @@ function LockedReport({ title, note, preview, onUpgrade }: {
           <LockIcon size={19} />
         </IconBadge>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 15.5, fontWeight: 700, letterSpacing: '-.2px' }} noWrap>{title}</Typography>
-          <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }} noWrap>{note}</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }} noWrap>{title}</Typography>
+          {/* the note carries the one true sentence about the hidden report, so
+              it is allowed to run to a second line rather than ellipsize */}
+          <Typography sx={{
+            fontSize: 12.5, color: tokens.ink3, mt: '2px', lineHeight: 1.4,
+            display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>{note}</Typography>
         </Box>
         <RowChevron />
       </Box>
@@ -237,21 +277,25 @@ function AnalitikaLocked({ onUpgrade }: { onUpgrade: () => void }) {
 
       <SectionLabel>Hasabatlar</SectionLabel>
 
+      {/* Each note is a true sentence about the report behind it — the movement,
+          the best subject, the change in the average. The direction is free; the
+          figure it moved to is what the plan buys. A reader who is told they
+          climbed two places has a question the blurred card answers. */}
       <LockedReport
         title="Synpda hepdelik ýetişigi"
-        note={`${WEEKS.length} hepdelik taryh`}
+        note={`Synpdaşlaryň arasynda näçinji orunda? ${capitalise(weekMove(WEEKS.length - 1)!)}.`}
         onUpgrade={onUpgrade}
         preview={(
           <Box sx={{ p: '18px 15px', textAlign: 'center' }}>
-            <HeroStat>{WEEKS[WEEKS.length - 1].place}</HeroStat>
-            <DeltaLine>{WEEKS[WEEKS.length - 1].delta}</DeltaLine>
+            <HeroStat>{placeLabel(WEEKS[WEEKS.length - 1].place)}</HeroStat>
+            <DeltaLine>{weekMove(WEEKS.length - 1)}</DeltaLine>
           </Box>
         )}
       />
 
       <LockedReport
         title="Dersler boýunça ýetişigi"
-        note={`${SUBJECT_WEEK.length} ders`}
+        note={`Iň gowy ugruň — ${BEST_SUBJECT}. ${SUBJECT_WEEK.length} dersiň hemmesi hasabatda.`}
         onUpgrade={onUpgrade}
         preview={(
           <Box sx={{ p: '16px 15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -261,8 +305,8 @@ function AnalitikaLocked({ onUpgrade }: { onUpgrade: () => void }) {
                 <LinearProgress
                   variant="determinate" value={val}
                   sx={{
-                    height: 8, borderRadius: 4, bgcolor: tokens.dividerSoft,
-                    '& .MuiLinearProgress-bar': { borderRadius: 4, bgcolor: tokens.greenDeep },
+                    height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft,
+                    '& .MuiLinearProgress-bar': { borderRadius: `${tokens.rPill}px`, bgcolor: tokens.greenDeep },
                   }}
                 />
               </Box>
@@ -273,19 +317,19 @@ function AnalitikaLocked({ onUpgrade }: { onUpgrade: () => void }) {
 
       <LockedReport
         title="Çärýegiň ortaça bahasy"
-        note={`${QUARTER_HISTORY.length} çärýek`}
+        note={`Çärýek bahalary, ${qtrMove(QUARTER_HISTORY.length - 1)}.`}
         onUpgrade={onUpgrade}
         preview={(
           <Box sx={{ p: '18px 15px', textAlign: 'center' }}>
-            <HeroStat>Baha: {QUARTER_HISTORY[QUARTER_HISTORY.length - 1].avg}</HeroStat>
-            <DeltaLine>{QUARTER_HISTORY[QUARTER_HISTORY.length - 1].delta}</DeltaLine>
+            <HeroStat>Baha: {QUARTER_HISTORY[QUARTER_HISTORY.length - 1].avg.toFixed(1)}</HeroStat>
+            <DeltaLine>{qtrMove(QUARTER_HISTORY.length - 1)}</DeltaLine>
           </Box>
         )}
       />
 
       <LockedReport
         title="Sapaklaryň görnüşleri boýunça"
-        note={`${LESSON_KINDS.length} topar`}
+        note={`Wagtyň köp bölegi haýsy görnüşdäki sapaklara gidýär? ${LESSON_KINDS.length} topar boýunça bölünişi.`}
         onUpgrade={onUpgrade}
         preview={(
           <Box sx={{ display: 'grid', placeItems: 'center', pt: '6px' }}><KindBubbles /></Box>
@@ -294,9 +338,9 @@ function AnalitikaLocked({ onUpgrade }: { onUpgrade: () => void }) {
 
       <Box sx={{ pt: '4px' }}>
         <TeaserCard
-          title="Analitika ýapyk"
-          note={`Synpdaky ornuň, dersler boýunça ýetişigiň we çärýek ortaçaň — ${plan?.name} nyrhnamasyndan başlap açylýar.`}
-          cta={`${plan?.name} al`}
+          title="Hakyky sanlary görmek üçin nyrhnama geçiň"
+          note={`Synpdaky ornuň, dersler boýunça ýetişigiň we çärýek ortaçaň — ${plan?.name} bilen açylýar.`}
+          feature="analytics"
           onUpgrade={onUpgrade}
         />
       </Box>
@@ -375,8 +419,8 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
             onNext={week < WEEKS.length - 1 ? () => setWeek(week + 1) : undefined}
           />
           <Box sx={{ borderTop: `0.5px solid ${tokens.dividerSoft}`, pt: '16px' }}>
-            <HeroStat>{WEEKS[week].place}</HeroStat>
-            <DeltaLine>{WEEKS[week].delta}</DeltaLine>
+            <HeroStat>{placeLabel(WEEKS[week].place)}</HeroStat>
+            <DeltaLine>{weekMove(week) ?? 'çärýegiň başy'}</DeltaLine>
           </Box>
           <DrillButton onClick={() => setSheet('yetisik')}>Dersler boýunça ýetişigi</DrillButton>
         </StatCard>
@@ -390,8 +434,8 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
             onNext={qtr < QUARTER_HISTORY.length - 1 ? () => setQtr(qtr + 1) : undefined}
           />
           <Box sx={{ borderTop: `0.5px solid ${tokens.dividerSoft}`, pt: '16px' }}>
-            <HeroStat>Baha: {QUARTER_HISTORY[qtr].avg}</HeroStat>
-            <DeltaLine>{QUARTER_HISTORY[qtr].delta}</DeltaLine>
+            <HeroStat>Baha: {QUARTER_HISTORY[qtr].avg.toFixed(1)}</HeroStat>
+            <DeltaLine>{qtrMove(qtr) ?? 'ilkinji çärýek'}</DeltaLine>
           </Box>
           <DrillButton onClick={() => setSheet('baha')}>Ders boýunça bahasy</DrillButton>
         </StatCard>
@@ -430,9 +474,9 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
                 variant="determinate"
                 value={sheet === 'yetisik' ? val : (val / 5) * 100}
                 sx={{
-                  height: 8, borderRadius: 4, bgcolor: tokens.dividerSoft,
+                  height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft,
                   '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
+                    borderRadius: `${tokens.rPill}px`,
                     bgcolor: sheet === 'yetisik' ? tokens.greenDeep : tokens.blue,
                   },
                 }}
@@ -455,11 +499,11 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
 
 /* ---------------- Gollanmalar (tile grid + Testler sub-screen) ---------------- */
 /* Six sections, paired the way the user reads them:
-   Temalar + Kartlar (learn) / Testler + Bäsleşikler (prove) / Oýunlar + Kitaphana (explore) */
+   Sapaklar + Kartlar (learn) / Testler + Bäsleşikler (prove) / Oýunlar + Kitaphana (explore) */
 const GUIDE_TILES: { id: SectionId; label: string; sub: string; icon: React.ReactNode }[] = [
-  { id: 'temalar', label: 'Temalar', sub: '5 ders', icon: <LayersIcon size={26} /> },
-  { id: 'kartlar', label: 'Öwrediji kartlar', sub: '12 gaýtalama', icon: <CardsIcon size={26} /> },
-  { id: 'testler', label: 'Testler', sub: '1251 bal', icon: <BigCheckIcon size={26} /> },
+  { id: 'sapaklar', label: 'Sapaklar', sub: `${SAPAK_SUBJECTS.length} ders`, icon: <LayersIcon size={26} /> },
+  { id: 'kartlar', label: 'Öwrediji kartlar', sub: `${BANK_TOTAL.cards} kart`, icon: <CardsIcon size={26} /> },
+  { id: 'testler', label: 'Testler', sub: `${BANK_TOTAL.tests} test`, icon: <BigCheckIcon size={26} /> },
   { id: 'basleshikler', label: 'Bäsleşikler', sub: '1 dowam edýär', icon: <TrophyIcon size={26} /> },
   { id: 'kitaphana', label: 'Kitaphana', sub: '4 kitap', icon: <BooksIcon size={26} /> },
 ];
@@ -468,7 +512,8 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
   onBack: () => void; toast: (m: string) => void;
   onOpenSubject: (s: TestSubject) => void; onUpgrade: () => void;
 }) {
-  const { premium, usedTest } = usePrefs();
+  const can = useCan('tests');
+  const plan = tierFor('tests');
   return (
     <>
       <PillHeader title="Testler" onBack={onBack} />
@@ -481,11 +526,11 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
           }}>
             <Box sx={{
               width: '100%', height: '100%', borderRadius: '50%', bgcolor: tokens.blueSoft,
-              color: tokens.blue, display: 'grid', placeItems: 'center', fontSize: 30, fontWeight: 700,
+              color: tokens.blueText, display: 'grid', placeItems: 'center', fontSize: 30, fontWeight: 700,
             }}>{STUDENT.initials}</Box>
           </Box>
           <Box sx={{ textAlign: 'center' }}>
-            <Typography sx={{ fontSize: 21, fontWeight: 700, letterSpacing: '-.3px' }}>
+            <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px' }}>
               {STUDENT.name}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', mt: '3px', fontSize: 15 }}>
@@ -509,48 +554,42 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
           </Box>
         </Box>
 
-        {/* The weekly free attempt is stated here, where tests are chosen —
-            not only inside the test that spends it */}
-        {!premium && (
+        {/* The lock is stated here, where tests are chosen — not only inside
+            the test that refuses to start. What the bank holds is stated with
+            it: the size of the thing is the reason to open it. */}
+        {!can && (
           <Box sx={{ pt: '16px' }}>
-            <FreeLimitBar
-              used={usedTest}
-              label={usedTest ? 'Hepdelik mugt test ulanyldy' : 'Hepdede 1 mugt test'}
-              note={usedTest ? 'Indiki duşenbe täzelenýär' : 'Premium bilen çäksiz test'}
+            <TeaserCard
+              title="Testler ýapyk"
+              note={`${BANK_TOTAL.tests} test, ${BANK_TOTAL.questions} sowal taýýar — ${plan?.name} bilen açylýar.`}
+              feature="tests"
               onUpgrade={onUpgrade}
             />
           </Box>
         )}
 
-        {/* Subject cards */}
-        <SectionHeading title="Testler" action={<TagPill label="Ähli" onClick={() => toast('Ähli dersler tiz wagtda')} />} />
-        <Box sx={{
-          display: 'flex', gap: '12px', overflowX: 'auto', mx: `-${tokens.gutter}`, px: tokens.gutter,
-          scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
-          maskImage: 'linear-gradient(90deg, #000 calc(100% - 26px), transparent)',
-          WebkitMaskImage: 'linear-gradient(90deg, #000 calc(100% - 26px), transparent)',
-        }}>
-          {TEST_SUBJECTS.map((s) => (
-            <ButtonBase key={s.id} aria-label={`${s.label}, ${s.tests.length} test`}
-              onClick={() => onOpenSubject(s)} sx={{
-                flex: '0 0 148px', height: 148, borderRadius: `${tokens.rCard}px`, bgcolor: s.tint,
-                display: 'flex', flexDirection: 'column', alignItems: 'stretch',
-                justifyContent: 'space-between', p: '16px', textAlign: 'left',
-                transition: 'transform .12s ease', '&:active': { transform: 'scale(.97)' },
-              }}>
-              <Box sx={{ alignSelf: 'flex-end' }}>
-                <IconBadge bg="#fff" color={s.color} size={52} radius={26}>{s.icon}</IconBadge>
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 17, fontWeight: 700, color: s.color, letterSpacing: '-.2px' }}>
-                  {s.label}
-                </Typography>
-                <Typography sx={{ fontSize: 12.5, color: s.color, opacity: .8, mt: '2px' }}>
-                  {s.tests.length} test
-                </Typography>
-              </Box>
-            </ButtonBase>
-          ))}
+        {/* Choosing a subject reads the same here as it does under Sapaklar:
+            the tinted 148px carousel was a second picker for the same decision,
+            and it clipped its last subject off the right edge besides. */}
+        <SectionHeading title="Dersler" action={<TagPill label="Ähli" onClick={() => toast('Ähli dersler tiz wagtda')} />} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {TEST_SUBJECTS.map((s) => {
+            /* what the bank holds for this subject, counted from the tests */
+            const questions = s.tests.reduce((n, t) => n + t.questions, 0);
+            return (
+              <SubjectRow
+                key={s.id}
+                icon={s.icon}
+                tint={s.tint}
+                accent={s.accent}
+                label={s.label}
+                sub={`${s.tests.length} test · ${questions} sowal`}
+                locked={!can}
+                lockNote={`${s.tests.length} test · ${plan?.name} bilen açylýar`}
+                onClick={() => (can ? onOpenSubject(s) : onUpgrade())}
+              />
+            );
+          })}
         </Box>
 
         {/* Rating */}
@@ -573,8 +612,8 @@ function TestlerFlow({ onBack, toast, onUpgrade }: {
   if (subject && test) {
     return (
       <TestDetailScreen
-        test={test} accent={subject.color} tint={subject.tint}
-        onBack={() => setTest(null)} toast={toast} onUpgrade={onUpgrade}
+        test={test} accent={subject.accent} tint={subject.tint}
+        onBack={() => setTest(null)} toast={toast}
       />
     );
   }
@@ -586,27 +625,40 @@ function TestlerFlow({ onBack, toast, onUpgrade }: {
 
 /* Oýunlar is not one of these any more. A game is a way of practising a
    topic, not a sixth kind of resource, and as its own tile it sat as far from
-   the topic it drills as it is possible to get. It is reached from Temalar,
+   the topic it drills as it is possible to get. It is reached from Sapaklar,
    where the topic is. */
-type SectionId = 'temalar' | 'kartlar' | 'testler' | 'basleshikler' | 'kitaphana';
+type SectionId = 'sapaklar' | 'kartlar' | 'testler' | 'basleshikler' | 'kitaphana';
 type GuideView = 'grid' | SectionId | 'roadmap' | 'upgrade' | 'bellikler';
 
 export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   const [view, setView] = useState<GuideView>('grid');
+  /* which subject's path is open — every subject has one now, so the roadmap is
+     no longer the Algebra page with a general name */
+  const [subject, setSubject] = useState<CurriculumSubject | null>(null);
   const back = () => setView('grid');
   /* where the paywall sends people from anywhere inside this tab */
   const upgrade = () => setView('upgrade');
 
   if (view === 'upgrade') return <UpgradeScreen onBack={back} toast={toast} />;
-  if (view === 'roadmap') {
-    return <RoadmapScreen onBack={() => setView('temalar')} toast={toast} onUpgrade={upgrade} />;
-  }
-  if (view === 'temalar') {
+  if (view === 'roadmap' && subject) {
     return (
-      <TemalarScreen
+      <RoadmapScreen
+        subject={subject} onBack={() => setView('sapaklar')} toast={toast} onUpgrade={upgrade}
+      />
+    );
+  }
+  if (view === 'sapaklar') {
+    return (
+      <SapaklarScreen
         onBack={back}
         toast={toast}
-        onOpenSubject={(id) => (id === 'matematika' ? setView('roadmap') : toast('Bu ders tiz wagtda elýeterli bolar'))}
+        onUpgrade={upgrade}
+        onOpenSubject={(id: string) => {
+          const s = subjectBySlug(id);
+          if (!s) { toast('Bu ders tiz wagtda elýeterli bolar'); return; }
+          setSubject(s);
+          setView('roadmap');
+        }}
       />
     );
   }
@@ -705,7 +757,7 @@ function HeatGrid({ months, colorOf, todayCell, label }: {
               const today = todayCell && r === todayCell.r && c === todayCell.c;
               return (
                 <Box key={`${r}-${c}`} sx={{
-                  aspectRatio: '1', borderRadius: '5px',
+                  aspectRatio: '1', borderRadius: `${tokens.rChip}px`,
                   bgcolor: today ? 'transparent' : colorOf(r, c),
                   ...(today && { border: `2px solid ${tokens.blue}` }),
                 }} />
@@ -723,7 +775,7 @@ const HeatLegend = ({ items, label }: { items: [string, string][]; label: string
     sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
     {items.map(([text, color]) => (
       <Box key={text} sx={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-        <Box aria-hidden sx={{ width: 12, height: 12, borderRadius: '3px', flex: 'none', bgcolor: color }} />
+        <Box aria-hidden sx={{ width: 12, height: 12, borderRadius: `${tokens.rChip}px`, flex: 'none', bgcolor: color }} />
         <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>{text}</Typography>
       </Box>
     ))}
@@ -790,7 +842,7 @@ function ChoiceSheet({ open, title, note, options, value, onPick, onClose, foote
               }}
             >
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 15.5, fontWeight: 600, color: on ? tokens.blueText : tokens.ink }} noWrap>
+                <Typography sx={{ fontSize: 15, fontWeight: 600, color: on ? tokens.blueText : tokens.ink }} noWrap>
                   {o.label}
                 </Typography>
                 {o.hint && (
@@ -931,11 +983,11 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
         >
           <Box aria-hidden sx={{
             width: 62, height: 62, borderRadius: '50%', flex: 'none',
-            background: `linear-gradient(150deg, #5B93F5 0%, ${tokens.blue} 70%)`,
+            background: `linear-gradient(150deg, ${tokens.blue} 0%, ${tokens.bluePress} 70%)`,
             color: '#fff', display: 'grid', placeItems: 'center', fontSize: 22, fontWeight: 700,
           }}>{STUDENT.initials}</Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography noWrap sx={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.3px' }}>
+            <Typography noWrap sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px' }}>
               {STUDENT.name}
             </Typography>
             <Typography variant="caption" noWrap sx={{ display: 'block', mt: '2px', fontSize: 14 }}>
@@ -1015,10 +1067,10 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             <IconBadge bg={tokens.greenTint} color={tokens.greenText} size={48}><WalletIcon size={24} /></IconBadge>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Typography sx={{ fontSize: 16.5, fontWeight: 700, letterSpacing: '-.2px' }}>{tierName(tier)}</Typography>
+                <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.2px' }}>{tierName(tier)}</Typography>
                 <Box sx={{
                   px: '9px', height: 22, borderRadius: `${tokens.rPill}px`,
-                  bgcolor: tokens.greenTint, color: tokens.greenText, fontSize: 11.5, fontWeight: 700,
+                  bgcolor: tokens.greenTint, color: tokens.greenText, fontSize: 12, fontWeight: 700,
                   display: 'grid', placeItems: 'center', flex: 'none',
                 }}>{PLAN.status}</Box>
               </Box>

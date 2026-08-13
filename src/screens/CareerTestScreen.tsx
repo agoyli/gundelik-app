@@ -95,7 +95,7 @@ export function CareerTestScreen({ onBack, onPickDream, toast }: {
                 width: 8, height: 8, borderRadius: '50%', flex: 'none', bgcolor: t.color,
               }} />
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 14.5, fontWeight: 600 }}>{t.label}</Typography>
+                <Typography sx={{ fontSize: 15, fontWeight: 600 }}>{t.label}</Typography>
                 <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '1px' }}>{t.note}</Typography>
               </Box>
             </Box>
@@ -128,16 +128,16 @@ export function CareerTestScreen({ onBack, onPickDream, toast }: {
         onBack={() => (step === 0 ? setStage('intro') : setStep(step - 1))}
       >
         <Box aria-hidden sx={{
-          height: 4, borderRadius: 2, bgcolor: tokens.surfacePress, mt: '16px', overflow: 'hidden',
+          height: 4, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.surfacePress, mt: '16px', overflow: 'hidden',
         }}>
           <Box sx={{
             width: `${(step / QUESTIONS.length) * 100}%`, height: '100%',
-            bgcolor: tokens.blue, borderRadius: 2, transition: `width .25s ${tokens.ease}`,
+            bgcolor: tokens.blue, borderRadius: `${tokens.rPill}px`, transition: `width .25s ${tokens.ease}`,
           }} />
         </Box>
 
         <Typography sx={{
-          fontSize: 21, fontWeight: 700, lineHeight: 1.35, letterSpacing: '-.2px',
+          fontSize: 20, fontWeight: 700, lineHeight: 1.35, letterSpacing: '-.2px',
           mt: '28px', mb: '24px',
         }}>{q.text}</Typography>
 

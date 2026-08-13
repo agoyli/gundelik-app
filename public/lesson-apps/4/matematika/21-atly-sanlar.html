@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atly sanlar — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.95; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 23px; font-weight: 800; }
+  .chain { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16.5px; line-height: 1.9; text-align: center; }
+  .opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .opts button { min-height: 50px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Atly sanlary sana köpeltmek we bölmek</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ölçeg birligi bilen ýazylan sanlara <b>atly sanlar</b> diýilýär.
+      Amaly ýerine ýetirmek üçin atly sany <b>iň kiçi birlige öwürmeli</b>, hasaplamaly we
+      netijäni ýene atly san görnüşinde ýazmaly.</div>
+    <div class="tbl" style="margin-top:8px">
+      1 kg = 1000 g&nbsp;&nbsp; 1 t = 1000 kg<br>
+      1 km = 1000 m&nbsp;&nbsp; 1 m = 100 sm<br>
+      1 sag = 60 min&nbsp;&nbsp; 1 min = 60 s
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Iki ädimde hasapla</h3>
+    <div class="eq" id="eq"></div>
+    <div class="chain" id="chain" style="margin-top:8px"></div>
+    <div class="goal" id="ask"></div>
+    <div class="opts" id="opts"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mysal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, II kitap · 89–93-nji sahypalar</div>
+</div>
+
+<script>
+// [ýazgy, kiçi birlikdäki baha, amal teksti, netije (kiçi birlikde), atly jogap,
+//  ýalňyş atly jogaplar, kiçi birligiň ady, aralyk ýalňyşlar]
+var T = [
+  ["200 g · 12", 200, "200 · 12", 2400, "2 kg 400 g", ["24 kg", "2 kg 40 g"], "g", [1200, 2040]],
+  ["134 kg 800 g : 8", 134800, "134 800 : 8", 16850, "16 kg 850 g", ["16 kg 85 g", "168 kg 50 g"], "g", [16085, 16580]],
+  ["3 kg 500 g · 4", 3500, "3500 · 4", 14000, "14 kg", ["1 kg 400 g", "140 kg"], "g", [1400, 14500]],
+  ["5 m 40 sm : 3", 540, "540 : 3", 180, "1 m 80 sm", ["1 m 8 sm", "18 m"], "sm", [108, 150]],
+  ["2 sag 15 min · 3", 135, "135 · 3", 405, "6 sag 45 min", ["4 sag 5 min", "6 sag 5 min"], "min", [245, 365]]
+];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function show() {
+  var t = T[ti];
+  document.getElementById("eq").textContent = t[0] + " = ?";
+  var l = "Kiçi birlige öwür: " + t[1] + " " + t[6];
+  if (stage >= 1) l += "<br>" + t[2] + " = " + t[3] + " " + t[6];
+  if (stage >= 2) l += "<br><b>= " + t[4] + "</b>";
+  document.getElementById("chain").innerHTML = l;
+  document.getElementById("ask").textContent =
+    stage === 0 ? ("1-nji ädim: " + t[2] + " näçe " + t[6] + " bolar?") :
+    stage === 1 ? "2-nji ädim: netijäni atly san görnüşinde ýaz." : "Mysal çözüldi.";
+  var arr = [];
+  if (stage === 0) arr = [String(t[3]), String(t[7][0]), String(t[7][1])];
+  else if (stage === 1) arr = [t[4], t[5][0], t[5][1]];
+  if (ti % 2 === 1) arr.reverse();
+  var h = "";
+  for (var k = 0; k < arr.length; k++) h += '<button class="btn" data-v="' + arr[k] + '">' + arr[k] + "</button>";
+  document.getElementById("opts").innerHTML = h;
+  var bs = document.getElementById("opts").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = pick;
+  var m = document.getElementById("msg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ? (t[0] + " = " + t[4] + ".") : "";
+}
+function pick() {
+  if (stage >= 2) return;
+  var t = T[ti], v = this.getAttribute("data-v"), m = document.getElementById("msg");
+  var w = stage === 0 ? String(t[3]) : t[4];
+  d++;
+  if (v === w) {
+    stage++; ok++; show();
+    if (stage === 1) { m.className = "msg ok"; m.textContent = "Dogry! Indi uly birlige gaýtaryp ýaz."; }
+  } else {
+    m.className = "msg bad";
+    m.textContent = stage === 0 ? ("Ýalňyş. " + t[2] + " hasaplamany gaýtadan et.") :
+      ("Ýalňyş. " + t[3] + " " + t[6] + " sanyny uly birlige böl.");
+  }
+  document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["200 g · 12 näçe bolar?", ["2 kg 400 g", "24 kg", "2 kg 40 g"], 0],
+  ["Atly sanlar bilen amal etmezden ozal näme etmeli?",
+   ["Iň kiçi birlige öwürmeli", "Iň uly birlige öwürmeli", "Birligi aýyrmaly"], 0],
+  ["134 kg 800 g : 8 näçe bolar?", ["16 kg 850 g", "16 kg 85 g", "168 kg 50 g"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

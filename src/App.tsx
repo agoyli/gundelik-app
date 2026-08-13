@@ -109,7 +109,7 @@ function Shell() {
       {/* the phone surface owns the document: full height, no page scroll */}
       <GlobalStyles styles={{
         'html, body, #root': { height: '100%' },
-        body: { background: '#EDEEF1', overscrollBehavior: 'none' },
+        body: { background: tokens.pageBg, overscrollBehavior: 'none' },
       }} />
 
       <Box sx={{ height: '100dvh', display: 'flex', justifyContent: 'center' }}>
@@ -119,6 +119,7 @@ function Shell() {
           bgcolor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden',
           '@media (min-width:480px)': {
             my: '24px', height: 'min(852px, calc(100dvh - 48px))',
+            /* a handset bezel, not a UI radius — deliberately off the ladder */
             borderRadius: '44px', boxShadow: '0 10px 40px rgba(17,18,19,.14)',
           },
         }}>
@@ -181,7 +182,7 @@ function Shell() {
         sx={{
           bottom: 'calc(110px + env(safe-area-inset-bottom)) !important',
           '& .MuiSnackbarContent-root': {
-            bgcolor: 'rgba(17,18,19,.92)', borderRadius: '999px',
+            bgcolor: 'rgba(17,18,19,.92)', borderRadius: `${tokens.rPill}px`,
             fontSize: 13.5, fontWeight: 500, minWidth: 0, justifyContent: 'center',
           },
         }}

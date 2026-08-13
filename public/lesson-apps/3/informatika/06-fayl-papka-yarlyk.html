@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faýl, papka we ýarlyk — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .desk { background: #cfe0fb; border-radius: 14px; padding: 12px; min-height: 200px; }
+  .icons { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 10px; }
+  .icon { background: #ffffff55; border-radius: 12px; padding: 9px 4px; text-align: center;
+          font-size: 12px; font-weight: 700; color: #1e2a3a; position: relative;
+          min-height: 78px; }
+  .icon.on { background: #fff; box-shadow: 0 0 0 3px #2456b0; }
+  .icon .em { display: block; font-size: 30px; }
+  .icon .lnk { position: absolute; left: 20px; bottom: 26px; font-size: 13px; }
+  .crumb { font-size: 13px; color: #5b6b80; margin-bottom: 8px; font-weight: 700; }
+  .bins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .bin { background: #f7fafd; border-radius: 12px; padding: 9px; min-height: 76px; }
+  .bin h4 { margin: 0 0 5px; font-size: 12.5px; }
+  .bin span { display: block; background: #fff; border-radius: 8px; padding: 5px 7px;
+              font-size: 12px; margin-bottom: 4px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Faýl, papka we ýarlyk</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Nyşanjyga bas – onuň nämedigini gör. Papkany açsaň, içindäkiler
+      görünýär.</div>
+    <div class="crumb" id="cr"></div>
+    <div class="desk"><div class="icons" id="ic"></div></div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn ghost" id="up">⬆️ Yza</button>
+      <button class="btn" id="rmb">🖱 Syçanyň sag gulagy</button>
+      <span class="badge info" id="cnt"></span>
+    </div>
+    <div id="ctx"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Windowsyň obýektleri</h3>
+    <div class="goal">Kitap: «Windowsyň obýektlerine faýllar, papkalar we ýarlyklar
+      degişlidir.» Suratly düwmä <b>piktogramma</b> diýilýär.</div>
+    <div class="bins" style="grid-template-columns:repeat(2,1fr)">
+      <div class="bin"><h4>📁 Boş papka</h4><span>Içinde faýl ýok.</span></div>
+      <div class="bin"><h4>🗂 Faýlly papka</h4><span>Içinde faýllar saklanýar.</span></div>
+      <div class="bin"><h4>📄 Faýl</h4><span>Ýörite at bilen maglumatyň saklanýan ýeri.</span></div>
+      <div class="bin"><h4>🔗 Ýarlyk</h4><span>Papka ýa-da programma salgylanma.</span></div>
+    </div>
+    <div class="hint">Ýarlygyň aşaky çep burçunda egri ugur görkeziji bolýar.
+      <b>Sebet (Корзина) ýarlyk däl</b> – onda beýle ok ýok.</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy topara degişli?</h3>
+    <div class="goal">Ada bas – ol dogry sütüne geçsin.</div>
+    <div class="row tight" id="pool"></div>
+    <div class="bins">
+      <div class="bin"><h4 style="color:#2456b0">📄 Faýl</h4><div id="bf"></div></div>
+      <div class="bin"><h4 style="color:#b25b12">📁 Papka</h4><div id="bp"></div></div>
+      <div class="bin"><h4 style="color:#6a4bb8">🔗 Ýarlyk</h4><div id="by"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const TREE = {
+  root: {name: "Iş stoly", items: [
+    {t: "folder", n: "Sapaklar", k: "sap"},
+    {t: "folder", n: "Suratlar", k: "sur"},
+    {t: "file", n: "Hat.docx", d: "Ýazgy faýly – ýazgy redaktorynda açylýar."},
+    {t: "link", n: "Paint", d: "Ýarlyk – programma salgylanma."},
+    {t: "bin", n: "Sebet", d: "Sebet (Корзина) – ol ýarlyk däl, onda egri ok ýok."},
+  ]},
+  sap: {name: "Iş stoly › Sapaklar", items: [
+    {t: "folder", n: "Matematika", k: "mat"},
+    {t: "file", n: "Informatika.docx", d: "Informatika sapagynyň ýazgysy."},
+    {t: "file", n: "Tertip.txt", d: "Ýönekeý tekst faýly."},
+  ]},
+  sur: {name: "Iş stoly › Suratlar", items: [
+    {t: "file", n: "Bahar.bmp", d: "Surat faýly – grafiki redaktorda açylýar."},
+    {t: "file", n: "Mekdep.jpg", d: "Surat faýly – fotosurat."},
+  ]},
+  mat: {name: "Iş stoly › Sapaklar › Matematika", items: [
+    {t: "file", n: "Meseleler.docx", d: "Matematika meseleleriniň ýazgysy."},
+  ]},
+};
+let cur = "root", hist = [], sel = null, ctx = false;
+const NEWNAMES = ["Sapak", "Ýumuş", "Gözleg", "Belligim"];
+let nn = 0;
+
+function icons() {
+  const f = TREE[cur];
+  $("cr").textContent = "📂 " + f.name;
+  $("ic").innerHTML = f.items.map((it, i) => {
+    const em = {folder: "📁", link: "🖥", bin: "🗑"}[it.t] || "📄";
+    return `<button class="icon${i === sel ? " on" : ""}" data-i="${i}">
+      <span class="em">${em}</span>${it.n}
+      ${it.t === "link" ? '<span class="lnk">↗️</span>' : ""}</button>`;
+  }).join("");
+  $("cnt").textContent = `${f.items.length} obýekt`;
+  $("ctx").innerHTML = ctx && sel !== null ? `<div class="bins"
+      style="grid-template-columns:repeat(3,1fr)">
+      <button class="btn" data-c="ac">Açmak</button>
+      <button class="btn" data-c="ad">Adyny üýtgetmek (Переименовать)</button>
+      <button class="btn ghost" data-c="ýap">Ýapmak</button></div>` : "";
+  $("ctx").querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
+    const it = f.items[sel];
+    if (b.dataset.c === "ac") { ctx = false; icons(); say(`«${it.n}» açyldy.`); return; }
+    if (b.dataset.c === "ýap") { ctx = false; icons(); say("Sanaw ýapyldy."); return; }
+    const ext = it.n.includes(".") ? "." + it.n.split(".").pop() : "";
+    const old = it.n;
+    it.n = NEWNAMES[nn++ % NEWNAMES.length] + ext;
+    ctx = false; icons();
+    say(`Faýla täze at berildi: «${old}» → «${it.n}».`);
+  });
+  $("ic").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, it = f.items[i];
+    sel = i; ctx = false;
+    if (it.t === "folder") {
+      hist.push(cur); cur = it.k; sel = null; icons();
+      say(`«${it.n}» papkasy açyldy – içindäki faýllar görünýär.`);
+      return;
+    }
+    icons();
+    if (it.t === "link") say(`«${it.n}» – ${it.d} Burçundaky ↗️ ok ýarlygyň belgisidir.`);
+    else if (it.t === "bin") say(it.d);
+    else {
+      const ext = it.n.split(".").pop();
+      say(`«${it.n}» – ${it.d} Ady «${it.n.split(".")[0]}», görnüşi «${ext}».`);
+    }
+  });
+}
+function say(t) { $("msg").textContent = t; $("msg").className = "msg ok"; }
+$("up").onclick = () => {
+  if (!hist.length) return say("Bu iň ýokarky ýer – yza gitmek bolmaýar.");
+  cur = hist.pop(); sel = null; ctx = false; icons(); say("Bir ädim yza gaýtdyk.");
+};
+$("rmb").onclick = () => {
+  if (sel === null) return say("Ilki nyşanjyga bas – soňra sag gulagy ulan.");
+  ctx = true; icons();
+  say("Syçanyň sag gulagy basyldy – buýruklaryň sanawy açyldy.");
+};
+
+/* ---------------- toparlamak ---------------- */
+const ITEMS = [
+  ["Hat.docx", "f"], ["Bahar.bmp", "f"], ["Aýdym.mp3", "f"], ["Film.mp4", "f"],
+  ["Sapaklar", "p"], ["Suratlar", "p"],
+  ["Paint ↗️", "y"], ["Skype ↗️", "y"],
+];
+let left = [];
+function bins() {
+  left = ITEMS.map((_, i) => i);
+  ["bf", "bp", "by"].forEach(k => $(k).innerHTML = "");
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  pool();
+}
+function pool() {
+  $("pool").innerHTML = left.map(i =>
+    `<button class="btn" data-i="${i}">${ITEMS[i][0]}</button>`).join("") ||
+    "<span class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [txt, kind] = ITEMS[i];
+    $({f: "bf", p: "bp", y: "by"}[kind]).innerHTML += `<span>${txt}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").textContent = kind === "f"
+      ? "✅ Bu faýl – onuň ady we görnüşi bar."
+      : kind === "p" ? "✅ Bu papka – onuň içinde faýllar saklanýar."
+                     : "✅ Bu ýarlyk – burçundaky ok bilen tanalýar.";
+    $("bmsg").className = "msg ok";
+    pool();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Faýllar nirede saklanýar?", ["Papkalarda", "Klawiaturada", "Monitorda"], 0],
+  ["Ýarlygy nädip tanaýarys?",
+   ["Reňkine görä", "Aşaky çep burçundaky egri oka görä", "Ölçegine görä"], 1],
+  ["Suratly düwmä näme diýilýär?", ["Papka", "Ýarlyk", "Piktogramma"], 2],
+  ["Faýlyň adyny üýtgetmek üçin haýsy setiri saýlamaly?",
+   ["Adyny üýtgetmek (Переименовать)", "Çap etmek", "Ýok etmek"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+icons(); bins();
+</script>
+</body>
+</html>

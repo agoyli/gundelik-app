@@ -262,10 +262,10 @@ export const ARTICLES: Article[] = [
     body: [
       '«Çagam» bölüminde bahalar, gatnaşyk we öý işleri bir ekranda jemlenýär. Her gün girmek hökman däl — hepdede bir gezek seretmek ýeterlik.',
       'Iň möhüm görkeziji — ortaça baha däl-de, tendensiýa. Baha 4-den 4.3-e ösýän bolsa, bu 4.8-den 4.6-a düşýän ýagdaýdan has gowudyr.',
-      'Nyşanlara üns ber: mugallymyň beren ýagşy nyşanlary çagaň sapakdaky özüni alyp barşyny bahadan has anyk görkezýär.',
+      'Ýyldyzlara üns ber: mugallymyň beren ýagşy ýyldyzlary çagaň sapakdaky özüni alyp barşyny bahadan has anyk görkezýär.',
       'Çaga bilen söhbetdeşlikde sanlardan başlama. «Bu hepde näme gyzykly boldy?» diýen sorag «Näme üçin 3 aldyň?» diýen soragdan has köp maglumat berýär.',
     ],
-    takeaways: ['Tendensiýa ortaça bahadan möhüm.', 'Nyşanlar özüni alyp barşy görkezýär.', 'Söhbeti sanlardan başlama.'],
+    takeaways: ['Tendensiýa ortaça bahadan möhüm.', 'Ýyldyzlar özüni alyp barşy görkezýär.', 'Söhbeti sanlardan başlama.'],
   },
   {
     id: 'a5', cat: 'habar',

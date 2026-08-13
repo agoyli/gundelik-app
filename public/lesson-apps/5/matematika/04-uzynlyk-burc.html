@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çyzgyç we transportir — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 11px 6px; border-radius: 12px; font-size: 14px; font-weight: 700; background: #e8eef7; color: #5b6b80; }
+  .tab.active { background: #2456b0; color: #fff; }
+  svg { touch-action: none; }
+  .task { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .units { font-size: 15px; line-height: 1.8; }
+  .units b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Çyzgyç we transportir</h1>
+  <div class="sub">Uzynlyk ölçeg birlikleri. Kesimleri gurmak · Matematika · 5-nji synp</div>
+
+  <div class="tabs">
+    <button class="tab active" data-t="ruler">Kesim gur</button>
+    <button class="tab" data-t="angle">Burç ölç</button>
+  </div>
+
+  <div class="card">
+    <div class="task" id="task"></div>
+    <svg id="board" viewBox="0 0 440 220"></svg>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="checkBtn">Barla</button>
+      <button class="btn ghost" id="newBtn">Täze ýumuş</button>
+    </div>
+    <div class="score" id="score" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ölçeg birlikleri</h3>
+    <div class="units">
+      <b>1 sm = 10 mm</b> · <b>1 dm = 10 sm</b> · <b>1 m = 100 sm</b> · <b>1 km = 1000 m</b><br>
+      Göni burç = <b>90°</b>, ýazgyn burç = <b>180°</b>. Göni burç ýazgyn burçuň ýarysydyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, I kitap (2017)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const SVG = document.getElementById("board");
+let mode = "ruler";
+let targetMM = 54, curMM = 20;      // ruler mode
+let targetDeg = 60, curDeg = 30;    // angle mode
+let right = 0, total = 0;
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+function txt(x, y, s, o = {}) {
+  const t = el("text", Object.assign({ x, y, "font-size": 12, fill: "#5b6b80", "text-anchor": "middle" }, o));
+  t.textContent = s; return t;
+}
+function msg(t, cls) { const m = document.getElementById("msg"); m.textContent = t; m.className = "msg" + (cls ? " " + cls : ""); }
+function rnd(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+
+const X0 = 30, PXMM = 2.6;   // 1 mm = 2.6 px  → 15 sm ≈ 390 px
+
+function renderRuler() {
+  SVG.innerHTML = "";
+  const y = 120;
+  // ruler body
+  SVG.appendChild(el("rect", { x: X0 - 10, y: y, width: 150 * PXMM + 20, height: 56, rx: 6, fill: "#fdf3d8", stroke: "#d8c48a", "stroke-width": 2 }));
+  for (let mm = 0; mm <= 150; mm++) {
+    const x = X0 + mm * PXMM;
+    const isCm = mm % 10 === 0, isHalf = mm % 5 === 0;
+    SVG.appendChild(el("line", { x1: x, y1: y, x2: x, y2: y + (isCm ? 18 : isHalf ? 12 : 7), stroke: "#8a7a4a", "stroke-width": isCm ? 1.6 : 1 }));
+    if (isCm) SVG.appendChild(txt(x, y + 33, mm / 10, { "font-size": 11, fill: "#8a7a4a" }));
+  }
+  // segment
+  const xEnd = X0 + curMM * PXMM;
+  SVG.appendChild(el("line", { x1: X0, y1: y - 40, x2: xEnd, y2: y - 40, stroke: "#2456b0", "stroke-width": 5, "stroke-linecap": "round" }));
+  SVG.appendChild(el("circle", { cx: X0, cy: y - 40, r: 7, fill: "#fff", stroke: "#2456b0", "stroke-width": 3 }));
+  const h = el("circle", { cx: xEnd, cy: y - 40, r: 13, fill: "#fff", stroke: "#e2574c", "stroke-width": 4, id: "handle", style: "cursor:grab" });
+  SVG.appendChild(h);
+  SVG.appendChild(txt(X0, y - 55, "A", { "font-weight": 700, fill: "#2456b0", "font-size": 14 }));
+  SVG.appendChild(txt(xEnd, y - 62, "B", { "font-weight": 700, fill: "#e2574c", "font-size": 14 }));
+  const cm = Math.floor(curMM / 10), mmr = curMM % 10;
+  const lblX = Math.max(95, Math.min(345, (X0 + xEnd) / 2));
+  SVG.appendChild(txt(lblX, y - 12, `AB = ${cm} sm ${mmr} mm  (${curMM} mm)`, { "font-size": 15, "font-weight": 800, fill: "#1e2a3a" }));
+}
+
+function renderAngle() {
+  SVG.innerHTML = "";
+  const cx = 220, cy = 175, R = 130;
+  // protractor
+  SVG.appendChild(el("path", {
+    d: `M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy} Z`,
+    fill: "#eaf1fb", stroke: "#b8c6d8", "stroke-width": 2
+  }));
+  for (let d = 0; d <= 180; d += 5) {
+    const r1 = R, r2 = R - (d % 10 === 0 ? 14 : 8);
+    const rad = d * Math.PI / 180;      // 0° — sag şöhlede, 180° — çepde
+    SVG.appendChild(el("line", {
+      x1: cx + r1 * Math.cos(rad), y1: cy - r1 * Math.sin(rad),
+      x2: cx + r2 * Math.cos(rad), y2: cy - r2 * Math.sin(rad),
+      stroke: "#8a97a8", "stroke-width": d % 10 === 0 ? 1.4 : .8
+    }));
+    if (d % 30 === 0) {
+      const rr = R - 26;
+      SVG.appendChild(txt(cx + rr * Math.cos(rad), cy - rr * Math.sin(rad) + 4, d, { "font-size": 11 }));
+    }
+  }
+  // fixed ray (to the right, 0°)
+  SVG.appendChild(el("line", { x1: cx, y1: cy, x2: cx + R + 8, y2: cy, stroke: "#2456b0", "stroke-width": 4, "stroke-linecap": "round" }));
+  // movable ray
+  const rad = curDeg * Math.PI / 180;
+  const ex = cx + (R + 8) * Math.cos(rad), ey = cy - (R + 8) * Math.sin(rad);
+  SVG.appendChild(el("path", {
+    d: `M ${cx + 40} ${cy} A 40 40 0 0 0 ${cx + 40 * Math.cos(rad)} ${cy - 40 * Math.sin(rad)}`,
+    fill: "none", stroke: "#e2574c", "stroke-width": 3
+  }));
+  SVG.appendChild(el("line", { x1: cx, y1: cy, x2: ex, y2: ey, stroke: "#e2574c", "stroke-width": 4, "stroke-linecap": "round" }));
+  SVG.appendChild(el("circle", { cx: ex, cy: ey, r: 13, fill: "#fff", stroke: "#e2574c", "stroke-width": 4, id: "handle", style: "cursor:grab" }));
+  SVG.appendChild(el("circle", { cx: cx, cy: cy, r: 6, fill: "#1e2a3a" }));
+  SVG.appendChild(txt(cx - 16, cy + 18, "O", { "font-size": 13 }));
+  SVG.appendChild(txt(cx + R - 4, cy - 10, "A", { "font-size": 13, fill: "#2456b0" }));
+  SVG.appendChild(txt(cx, cy + 40, `∠AOB = ${curDeg}° — ${kind(curDeg)}`, { "font-size": 16, "font-weight": 800, fill: "#1e2a3a" }));
+}
+
+function kind(d) {
+  if (d === 0) return "burç ýok";
+  if (d < 90) return "ýiti burç";
+  if (d === 90) return "göni burç";
+  if (d < 180) return "kütek burç";
+  return "ýazgyn burç";
+}
+
+function render() { mode === "ruler" ? renderRuler() : renderAngle(); }
+
+function newTask() {
+  msg("");
+  if (mode === "ruler") {
+    targetMM = rnd(2, 13) * 10 + rnd(0, 9);
+    curMM = 20;
+    const cm = Math.floor(targetMM / 10), mm = targetMM % 10;
+    document.getElementById("task").textContent =
+      `Ýumuş: ${cm} sm ${mm} mm uzynlykdaky AB kesimini gur. B nokady süýşür!`;
+  } else {
+    targetDeg = rnd(2, 34) * 5;
+    curDeg = 30;
+    document.getElementById("task").textContent =
+      `Ýumuş: ${targetDeg}° ululykdaky ∠AOB burçy gur. Gyzyl şöhläni süýşür!`;
+  }
+  render();
+}
+
+function check() {
+  total++;
+  let ok, info;
+  if (mode === "ruler") {
+    ok = curMM === targetMM;
+    const cm = Math.floor(curMM / 10), mm = curMM % 10;
+    info = ok ? `Dogry! AB = ${cm} sm ${mm} mm.` :
+      `Häzir AB = ${cm} sm ${mm} mm. Gerek: ${Math.floor(targetMM / 10)} sm ${targetMM % 10} mm.`;
+  } else {
+    ok = curDeg === targetDeg;
+    info = ok ? `Dogry! ∠AOB = ${curDeg}° — ${kind(curDeg)}.` :
+      `Häzir ${curDeg}°. Gerek: ${targetDeg}°.`;
+  }
+  if (ok) right++;
+  msg((ok ? "Berekella! 🎉 " : "") + info, ok ? "ok" : "bad");
+  document.getElementById("score").textContent = `Dogry: ${right} / ${total}`;
+  if (ok) setTimeout(newTask, 1300);
+}
+
+// dragging
+let drag = false;
+SVG.addEventListener("pointerdown", e => {
+  if (e.target.id !== "handle") return;
+  drag = true; SVG.setPointerCapture(e.pointerId);
+});
+SVG.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const r = SVG.getBoundingClientRect();
+  const sx = (e.clientX - r.left) * (440 / r.width);
+  const sy = (e.clientY - r.top) * (220 / r.height);
+  if (mode === "ruler") {
+    curMM = Math.max(0, Math.min(150, Math.round((sx - X0) / PXMM)));
+  } else {
+    const cx = 220, cy = 175;
+    let d = Math.atan2(cy - sy, sx - cx) * 180 / Math.PI;
+    d = Math.max(0, Math.min(180, Math.round(d / 5) * 5));
+    curDeg = d;
+  }
+  render();
+});
+SVG.addEventListener("pointerup", () => { drag = false; });
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(o => o.classList.remove("active"));
+  t.classList.add("active");
+  mode = t.dataset.t;
+  newTask();
+});
+document.getElementById("checkBtn").onclick = check;
+document.getElementById("newBtn").onclick = newTask;
+
+newTask();
+</script>
+</body>
+</html>

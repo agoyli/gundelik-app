@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wizual Web-konstruirlemek — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .app { border: 2px solid #d6e0ee; border-radius: 12px; overflow: hidden; background: #fff; }
+  .menu { display: flex; flex-wrap: wrap; gap: 2px; background: #eef2f8; padding: 5px;
+          border-bottom: 1px solid #d6e0ee; }
+  .menu button { border: none; background: none; padding: 8px 9px; border-radius: 7px;
+                 font-size: 13px; font-weight: 700; color: #3d4d63; cursor: pointer; min-height: 36px; }
+  .menu button.on { background: #2456b0; color: #fff; }
+  .drop { background: #fff; border-bottom: 1px solid #d6e0ee; padding: 6px; display: none; }
+  .drop.open { display: block; }
+  .drop button { display: block; width: 100%; text-align: left; border: none; background: #f7fafd;
+                 margin-bottom: 4px; padding: 11px; border-radius: 8px; font-size: 14px;
+                 cursor: pointer; min-height: 44px; }
+  .tit { display: flex; align-items: center; gap: 8px; padding: 7px 8px; background: #f7fafd;
+         border-bottom: 1px solid #d6e0ee; font-size: 13px; font-weight: 700; color: #5b6b80; }
+  .tit input { flex: 1; min-width: 0; padding: 8px; border-radius: 8px; border: 2px solid #d6e0ee;
+               font-size: 14px; }
+  .panes { display: flex; }
+  .pane { flex: 1; min-width: 0; padding: 10px 12px; min-height: 190px; }
+  .pane.code { background: #f7fafd; border-right: 1px solid #d6e0ee; color: #2456b0;
+               font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px;
+               line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+  .pane.des { font-size: 15px; line-height: 1.55; }
+  .pane.des table { border-collapse: collapse; }
+  .pane.des td { border: 1px solid #9db6dc; padding: 6px 10px; font-size: 13.5px; }
+  .pic { display: inline-block; background: #f2f7ff; border: 2px solid #4a637f; border-radius: 6px;
+         padding: 10px 14px; font-size: 30px; }
+  .st { font-size: 12.5px; color: #5b6b80; background: #eef2f8; padding: 6px 10px;
+        border-top: 1px solid #d6e0ee; }
+  .qa { padding: 10px 0; border-bottom: 1px solid #edf1f7; }
+  .qa:last-child { border-bottom: none; }
+  .qa .q { font-weight: 700; margin-bottom: 7px; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Görüş arkaly Web-konstruirlemek</h1>
+  <div class="sub">WYSIWYG · Dreamweaver · Kod, Böleklenme, Dizaýn · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Bu – wizual redaktoryň nusgasy. <b>Goýma</b> menýusyndan element saýla:
+      kody redaktor özi ýazar.</div>
+    <div class="app">
+      <div class="menu" id="menu"></div>
+      <div class="drop" id="drop"></div>
+      <div class="tit">Название: <input id="ttl" value="Meniň saýtym"></div>
+      <div class="panes" id="panes">
+        <div class="pane code" id="cd"></div>
+        <div class="pane des" id="ds"></div>
+      </div>
+      <div class="st" id="st"></div>
+    </div>
+    <div class="row tight">
+      <button class="btn sel" data-m="kod">Kod</button>
+      <button class="btn" data-m="bol">Böleklenme</button>
+      <button class="btn" data-m="diz">Dizaýn</button>
+      <button class="btn ghost" id="rst">Arassala</button>
+    </div>
+    <div class="msg" id="m"></div>
+  </div>
+
+  <div class="card">
+    <h3>WYSIWYG</h3>
+    <div class="note"><b>What You See Is What You Get</b> – «siz nämäni görseňiz, şony hem
+      alarsyňyz». Wizual usullar saýty işläp taýýarlamagyň zähmetini we möhletini
+      düýpli azaldýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="sc">0 / 3</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §10</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const MENU = ["Faýl", "Redaktirlemek", "Gözden geçirme", "Goýma", "Üýtgetmek", "Format",
+              "Buýruklar", "Web-saýt", "Penjire", "Habar berme"];
+const INS = [
+  { n: "Изображения — şekil", k: "img" },
+  { n: "Таблица — tablisa 2×2", k: "tab" },
+  { n: "Заголовок — sözbaşy", k: "h" },
+  { n: "Абзац — abzas", k: "p" },
+  { n: "Горизонтальная линия — çyzyk", k: "hr" }
+];
+let doc = [], mode = "kod", open = false;
+
+MENU.forEach(m => {
+  const b = document.createElement("button");
+  b.textContent = m;
+  b.onclick = () => {
+    if (m !== "Goýma") {
+      $("m").className = "msg";
+      $("m").textContent = "«" + m + "» menýusy. Elementleri goýmak üçin «Goýma» menýusyny aç.";
+      $("drop").classList.remove("open");
+      $("menu").querySelectorAll("button").forEach(x => x.classList.remove("on"));
+      return;
+    }
+    open = !open;
+    $("drop").classList.toggle("open", open);
+    $("menu").querySelectorAll("button").forEach(x => x.classList.toggle("on", open && x === b));
+  };
+  $("menu").appendChild(b);
+});
+INS.forEach(i => {
+  const b = document.createElement("button");
+  b.textContent = i.n;
+  b.onclick = () => {
+    doc.push(i.k);
+    open = false; $("drop").classList.remove("open");
+    $("menu").querySelectorAll("button").forEach(x => x.classList.remove("on"));
+    $("m").className = "msg ok";
+    $("m").textContent = "Element goýuldy – tegler awtomatiki ýazyldy.";
+    draw();
+  };
+  $("drop").appendChild(b);
+});
+
+document.querySelectorAll("[data-m]").forEach(b => b.onclick = () => {
+  mode = b.dataset.m;
+  document.querySelectorAll("[data-m]").forEach(x => x.classList.toggle("sel", x === b));
+  draw();
+});
+$("rst").onclick = () => { doc = []; draw(); };
+$("ttl").oninput = draw;
+
+function draw() {
+  $("cd").style.display = mode === "diz" ? "none" : "block";
+  $("ds").style.display = mode === "kod" ? "none" : "block";
+  $("st").textContent = mode === "kod" ? "Kod düzgüni — diňe programmirlemek üçin"
+    : mode === "bol" ? "Böleklenme düzgüni — çepde tegler, sagda netije"
+    : "Dizaýn düzgüni — diňe awtomatlaşdyrylan iş üçin";
+
+  let code = "<HTML>\n<HEAD>\n<TITLE>" + $("ttl").value + "</TITLE>\n</HEAD>\n<BODY>\n";
+  const ds = $("ds"); ds.innerHTML = "";
+  doc.forEach(k => {
+    if (k === "img") {
+      code += "<IMG SRC=«gul.jpg» WIDTH=90 ALT=«gül»>\n";
+      const e = document.createElement("div");
+      e.innerHTML = '<span class="pic">🌷</span>'; ds.appendChild(e);
+    } else if (k === "tab") {
+      code += "<TABLE BORDER=1>\n  <TR><TD>&nbsp;<TD>&nbsp;\n  <TR><TD>&nbsp;<TD>&nbsp;\n</TABLE>\n";
+      const t = document.createElement("table");
+      for (let i = 0; i < 2; i++) {
+        const tr = document.createElement("tr");
+        for (let j = 0; j < 2; j++) { const td = document.createElement("td"); td.textContent = " "; tr.appendChild(td); }
+        t.appendChild(tr);
+      }
+      ds.appendChild(t);
+    } else if (k === "h") {
+      code += "<H1>Sözbaşy</H1>\n";
+      const e = document.createElement("h1"); e.textContent = "Sözbaşy";
+      e.style.margin = ".25em 0"; ds.appendChild(e);
+    } else if (k === "p") {
+      code += "<P>Täze abzasyň teksti\n";
+      const e = document.createElement("p"); e.textContent = "Täze abzasyň teksti";
+      ds.appendChild(e);
+    } else {
+      code += "<HR SIZE=3 WIDTH=80%>\n";
+      const e = document.createElement("hr");
+      e.style.border = "none"; e.style.height = "3px"; e.style.background = "#9db6dc";
+      e.style.width = "80%"; e.style.marginLeft = "0"; ds.appendChild(e);
+    }
+  });
+  code += "</BODY>\n</HTML>";
+  $("cd").textContent = code;
+  if (!doc.length) ds.innerHTML = '<span style="color:#8a97a8">Boş sahypa</span>';
+}
+
+/* -------------------------------------------------------------------- quiz */
+const Q = [
+  { q: "WYSIWYG nämäni aňladýar?",
+    o: ["Nämäni görseň, şony alarsyň", "Kody diňe elde ýazmak", "Faýly awtomatiki saklamak"], a: 0 },
+  { q: "Böleklenme düzgüninde çep bölekde näme durýar?",
+    o: ["Tegleriň taýýan ülňüsi", "Diňe surat", "Sahypanyň ady"], a: 0 },
+  { q: "Diňe programmirlemek üçin haýsy düzgün ulanylýar?",
+    o: ["Kod", "Dizaýn", "Format"], a: 0 }
+];
+let sc = 0;
+Q.forEach((x, i) => {
+  const d = document.createElement("div"); d.className = "qa";
+  d.innerHTML = '<div class="q">' + (i + 1) + ". " + x.q + "</div>";
+  const r = document.createElement("div"); r.className = "row tight";
+  x.o.forEach((t, j) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = t;
+    b.onclick = () => {
+      if (b.disabled) return;
+      r.querySelectorAll(".btn").forEach(z => z.disabled = true);
+      b.classList.add(j === x.a ? "primary" : "warn");
+      if (j !== x.a) r.querySelectorAll(".btn")[x.a].classList.add("primary");
+      if (j === x.a) sc++;
+      $("sc").textContent = sc + " / " + Q.length;
+    };
+    r.appendChild(b);
+  });
+  d.appendChild(r); $("quiz").appendChild(d);
+});
+
+draw();
+</script>
+</body>
+</html>

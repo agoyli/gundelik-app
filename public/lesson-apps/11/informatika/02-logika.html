@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logiki funksiýalar — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  table.tt { font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  table.tt th, table.tt td { text-align: center; padding: 7px 6px; }
+  table.tt thead th { background: #eef2f8; border-radius: 6px; font-size: 13px; }
+  table.tt td.one { color: #1d7a3d; font-weight: 800; }
+  table.tt td.zero { color: #b02424; font-weight: 800; }
+  table.tt td.res { background: #f3f8ff; }
+  .expr { font-size: 19px; font-weight: 800; color: #2456b0; text-align: center;
+          background: #f7fafd; border-radius: 12px; padding: 12px; letter-spacing: .5px; }
+  .sw { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+  .sw button { width: 74px; height: 58px; border-radius: 14px; font-size: 15px; font-weight: 800;
+               background: #eef2f8; color: #93a2b5; line-height: 1.25; }
+  .sw button.on { background: #1d7a3d; color: #fff; }
+  .lamp { text-align: center; margin-top: 6px; }
+  .lamp i { display: inline-block; width: 58px; height: 58px; border-radius: 50%;
+            background: #dbe4f0; box-shadow: inset 0 0 0 3px #cfdcee; }
+  .lamp i.on { background: #ffd34d; box-shadow: 0 0 22px #ffd34d, inset 0 0 0 3px #e8b62c; }
+  .laws div { background: #f7fafd; border-radius: 11px; padding: 10px 11px; font-size: 14px;
+              margin-bottom: 5px; cursor: pointer; }
+  .laws b { color: #2456b0; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .laws small { display: block; color: #93a2b5; font-size: 12.5px; margin-top: 3px; }
+  .laws div.on small { color: #1d7a3d; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Logiki funksiýalar</h1>
+  <div class="sub">Pikir aýtmalar, çynlyk tablisasy, logiki elementler · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Aňlatmany saýla. Çynlyk tablisasy ähli mümkin bahalary görkezýär –
+      <b>n</b> üýtgeýän üçin <b>2ⁿ</b> setir bolýar.</div>
+    <div class="row tight" style="margin-bottom:10px" id="picks"></div>
+    <div class="expr" id="expr"></div>
+    <div style="overflow-x:auto;margin-top:10px"><table class="tt" id="tt"></table></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="rows"></span>
+      <span class="score" id="note"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Logiki element</h3>
+    <div class="goal">Girişleri açyp-ýapyp gör. Çyrany ýakmak üçin haýsy şert gerek?</div>
+    <div class="row tight" style="justify-content:center">
+      <button class="btn sel" data-g="and">WE (И)</button>
+      <button class="btn" data-g="or">ÝA-DA (ИЛИ)</button>
+      <button class="btn" data-g="not">DÄL (HE)</button>
+    </div>
+    <div class="sw" id="sw"></div>
+    <div class="lamp"><i id="lamp"></i></div>
+    <div class="note" id="gx" style="text-align:center"></div>
+  </div>
+
+  <div class="card">
+    <h3>Logikanyň kanunlary</h3>
+    <div class="laws" id="laws"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Çyn ýa-da ýalan diýip baha berip bolýan tassyklama <b>pikir aýtma</b> diýilýär.
+      Amallaryň ýerine ýetiriliş tertibi: <b>inwersiýa → konýunksiýa → dizýunksiýa</b>.
+      Ýaýlaryň içindäki amallar hemişe öňürti ýerine ýetirilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const EXPRS = [
+  { t: "A ∧ B", n: 2, f: (a, b) => a && b, cols: [], note: "Konýunksiýa: diňe ikisi hem çyn bolanda çyn." },
+  { t: "A ∨ B", n: 2, f: (a, b) => a || b, cols: [], note: "Dizýunksiýa: iň bolmanda biri çyn bolsa çyn." },
+  { t: "Ā", n: 1, f: a => !a, cols: [], note: "Inwersiýa: bahany tersine öwürýär." },
+  {
+    t: "Ā ∧ B̄", n: 2, f: (a, b) => !a && !b,
+    cols: [["Ā", (a) => !a], ["B̄", (a, b) => !b]],
+    note: "«A däl we B däl» – de Morganyň kanuny boýunça bu A ∨ B bilen deňdir."
+  },
+  {
+    t: "¬(A ∨ B)", n: 2, f: (a, b) => !(a || b),
+    cols: [["A ∨ B", (a, b) => a || b]],
+    note: "«A ýa-da B däl» – ýokardaky Ā ∧ B̄ bilen sütünme-sütün deňdir."
+  },
+  {
+    t: "A ∧ (B ∨ C)", n: 3, f: (a, b, c) => a && (b || c),
+    cols: [["B ∨ C", (a, b, c) => b || c]],
+    note: "Üç üýtgeýän – tablisada 2³ = 8 setir bolýar."
+  },
+  { t: "A ∨ Ā", n: 1, f: a => a || !a, cols: [["Ā", a => !a]],
+    note: "Üçünji ýagdaýyň bolmazlyk kanuny: netije hemişe 1." }
+];
+let ei = 0;
+
+$("picks").innerHTML = EXPRS.map((e, i) =>
+  `<button class="btn${i === 0 ? " sel" : ""}" data-e="${i}">${e.t}</button>`).join("");
+document.querySelectorAll("[data-e]").forEach(b => b.onclick = () => {
+  ei = +b.dataset.e;
+  document.querySelectorAll("[data-e]").forEach(x => x.className = "btn" + (+x.dataset.e === ei ? " sel" : ""));
+  table();
+});
+
+function table() {
+  const e = EXPRS[ei];
+  const vars = ["A", "B", "C"].slice(0, e.n);
+  $("expr").textContent = e.t + (ei === 4 ? "   (kitapda üsti çyzykly ýazylýar)" : "");
+  const heads = vars.concat(e.cols.map(c => c[0])).concat([e.t]);
+  let h = "<thead><tr>" + heads.map(x => `<th>${x}</th>`).join("") + "</tr></thead><tbody>";
+  const rows = Math.pow(2, e.n);
+  for (let i = 0; i < rows; i++) {
+    const bits = vars.map((_, k) => (i >> (e.n - 1 - k)) & 1);
+    const bo = bits.map(Boolean);
+    h += "<tr>" + bits.map(b => `<td class="${b ? "one" : "zero"}">${b}</td>`).join("");
+    e.cols.forEach(c => {
+      const v = c[1](...bo) ? 1 : 0;
+      h += `<td class="${v ? "one" : "zero"}">${v}</td>`;
+    });
+    const r = e.f(...bo) ? 1 : 0;
+    h += `<td class="res ${r ? "one" : "zero"}">${r}</td></tr>`;
+  }
+  $("tt").innerHTML = h + "</tbody>";
+  $("rows").textContent = `${e.n} üýtgeýän → 2${["", "¹", "²", "³"][e.n]} = ${rows} setir`;
+  $("note").textContent = e.note;
+}
+
+/* ---------------- logiki element ---------------- */
+let gate = "and", ins = [false, false];
+function gates() {
+  const n = gate === "not" ? 1 : 2;
+  $("sw").innerHTML = Array.from({ length: n }, (_, i) =>
+    `<button class="${ins[i] ? "on" : ""}" data-i="${i}">${"AB"[i]}<br>${ins[i] ? 1 : 0}</button>`).join("");
+  $("sw").querySelectorAll("button").forEach(b =>
+    b.onclick = () => { const i = +b.dataset.i; ins[i] = !ins[i]; gates(); });
+  const out = gate === "and" ? (ins[0] && ins[1]) : gate === "or" ? (ins[0] || ins[1]) : !ins[0];
+  $("lamp").className = out ? "on" : "";
+  $("gx").innerHTML = gate === "and"
+    ? `WE elementi: çyra diňe <b>A = 1 we B = 1</b> bolanda ýanýar. Häzir netije <b>${out ? 1 : 0}</b>.`
+    : gate === "or"
+    ? `ÝA-DA elementi: çyra <b>iň bolmanda bir giriş 1</b> bolanda ýanýar. Häzir netije <b>${out ? 1 : 0}</b>.`
+    : `DÄL elementi: netije girişiň tersidir. A = ${ins[0] ? 1 : 0} → netije <b>${out ? 1 : 0}</b>.`;
+}
+document.querySelectorAll("[data-g]").forEach(b => b.onclick = () => {
+  gate = b.dataset.g;
+  document.querySelectorAll("[data-g]").forEach(x => x.className = "btn" + (x.dataset.g === gate ? " sel" : ""));
+  gates();
+});
+
+/* ---------------- kanunlar ---------------- */
+const LAWS = [
+  ["A ∧ Ā = 0", "Gapma-garşy dällik kanuny: pikir aýtma we onuň inkäri birbada çyn bolup bilmeýär."],
+  ["A ∨ Ā = 1", "Üçünji ýagdaýyň bolmazlyk kanuny: ýa pikir aýtma, ýa-da onuň inkäri çyndyr."],
+  ["¬(A ∧ B) = Ā ∨ B̄", "De Morganyň birinji kanuny. Kitapda çep tarap üsti çyzykly ýazylýar."],
+  ["¬(A ∨ B) = Ā ∧ B̄", "De Morganyň ikinji kanuny. Kitapda çep tarap üsti çyzykly ýazylýar."],
+  ["A ∧ A = A", "Idempotentlik: gaýtalanma netijäni üýtgetmeýär."],
+  ["A ∧ (B ∨ C) = (A ∧ B) ∨ (A ∧ C)", "Paýlaşdyrma (distributiwlik) kanuny."]
+];
+$("laws").innerHTML = LAWS.map(([f], i) =>
+  `<div data-i="${i}"><b>${f}</b><small>? basyp gör</small></div>`).join("");
+$("laws").querySelectorAll("div").forEach(d => d.onclick = () => {
+  const [f, t] = LAWS[+d.dataset.i];
+  d.className = "on";
+  d.innerHTML = `<b>${f}</b><small>${t}</small>`;
+});
+
+table(); gates();
+</script>
+</body>
+</html>

@@ -94,13 +94,16 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
       maxWidth: '86%', p: '9px 13px', fontSize: 14, lineHeight: 1.5,
       ...(m.role === 'user'
         ? {
-          alignSelf: 'flex-end', bgcolor: tokens.blue, color: '#fff',
-          borderRadius: `${tokens.rRow}px ${tokens.rRow}px 4px ${tokens.rRow}px`,
+          alignSelf: 'flex-end', bgcolor: tokens.blueSolid, color: '#fff',
+          borderRadius: `${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px ${tokens.rRow}px`,
         }
         : {
           alignSelf: 'flex-start', bgcolor: tokens.surface, color: tokens.ink,
-          borderRadius: `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px 4px`,
+          borderRadius: `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px`,
         }),
+      /* replies quote the lesson's own concept and exam lists, which arrive as
+         one string of bulleted lines */
+      whiteSpace: 'pre-line',
     }}>{m.text}</Box>
   );
 
@@ -113,7 +116,7 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
           bgcolor: tokens.blueSoft, color: tokens.blue, display: 'grid', placeItems: 'center',
         }}><SparkleIcon size={22} /></Box>
         <Box>
-          <Typography variant="h2" component="h2" sx={{ fontSize: 18 }}>Akylly mugallym</Typography>
+          <Typography variant="h2" component="h2" sx={{ fontSize: 17 }}>Akylly mugallym</Typography>
           <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted }}>Sapak boýunça islendik zat soraň</Typography>
         </Box>
       </Box>

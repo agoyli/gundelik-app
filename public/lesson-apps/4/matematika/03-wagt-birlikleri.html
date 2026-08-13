@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wagt ölçeginiň birlikleri — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.95; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 22px; font-weight: 800; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15.5px; font-weight: 700; }
+  .signs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .signs button { min-height: 52px; font-size: 22px; font-weight: 800; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wagt ölçeginiň birlikleri we baglanyşyklary</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def">Wagt sekunt, minut, sagat, gije-gündiz, hepde, aý, ýyl we asyr bilen
+      ölçelýär.</div>
+  </div>
+
+  <div class="card">
+    <div class="tbl">
+      1 min = 60 s<br>
+      1 sag = 60 min = 3600 s<br>
+      1 gije-gündiz = 24 sag<br>
+      7 gün = 1 hepde<br>
+      30-31 gün = 1 aý, 3 aý = 1 pasyl<br>
+      12 aý = 1 ýyl, 365 (366) gün = 1 ýyl<br>
+      100 ýyl = 1 asyr
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Birlige geçir</h3>
+    <div class="eq" id="eq"></div>
+    <div class="nums" id="nums" style="margin-top:8px"></div>
+    <div class="msg" id="emsg"></div>
+    <div class="row"><button class="btn primary" id="enext">Indiki mysal</button></div>
+    <div class="score" id="esc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Deňeşdir</h3>
+    <div class="eq" id="ceq"></div>
+    <div class="signs" style="margin-top:8px">
+      <button class="btn" data-v="&gt;">&gt;</button>
+      <button class="btn" data-v="&lt;">&lt;</button>
+      <button class="btn" data-v="=">=</button>
+    </div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><button class="btn ghost" id="cnext">Indiki jübüt</button></div>
+    <div class="score" id="csc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, I kitap · 38–41-nji sahypalar</div>
+</div>
+
+<script>
+// [sorag, jogap, düşündiriş]
+var E = [
+  ["2 sag 30 min = ? min", 150, "2 · 60 + 30 = 150 min."],
+  ["3 min 26 s = ? s", 206, "3 · 60 + 26 = 206 s."],
+  ["96 sag = ? gije-gündiz", 4, "96 : 24 = 4 gije-gündiz."],
+  ["720 s = ? min", 12, "720 : 60 = 12 min."],
+  ["5 gije-gündiz = ? sag", 120, "5 · 24 = 120 sag."],
+  ["360 min = ? sag", 6, "360 : 60 = 6 sag."]
+];
+var ei = 0, ed = 0, eok = 0, elock = 0;
+function showE() {
+  document.getElementById("eq").textContent = E[ei][0];
+  document.getElementById("emsg").className = "msg";
+  document.getElementById("emsg").textContent = "";
+  elock = 0;
+}
+var VALS = [4, 6, 12, 24, 60, 120, 150, 206];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (elock) return;
+    elock = 1; ed++;
+    var v = parseInt(this.getAttribute("data-n"), 10), t = E[ei], m = document.getElementById("emsg");
+    if (v === t[1]) { eok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + t[2]; }
+    document.getElementById("esc").textContent = "Netije: " + eok + " / " + ed;
+  };
+}
+document.getElementById("enext").onclick = function () { ei = (ei + 1) % E.length; showE(); };
+showE();
+
+// [çep tekst, çep bahasy (sekunt hasabynda), sag tekst, sag bahasy]
+var C = [
+  ["22 sag", 22 * 3600, "1 gije-gündiz", 24 * 3600],
+  ["1 sag 30 min", 5400, "91 min", 5460],
+  ["2 min", 120, "120 s", 120],
+  ["4 sag", 14400, "240 min", 14400],
+  ["3 hepde", 21 * 86400, "20 gün", 20 * 86400]
+];
+var ci = 0, cd = 0, cok = 0, clock = 0;
+function sign() {
+  var a = C[ci][1], b = C[ci][3];
+  return a > b ? ">" : (a < b ? "<" : "=");
+}
+function showC() {
+  document.getElementById("ceq").textContent = C[ci][0] + "  *  " + C[ci][2];
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  clock = 0;
+}
+var sb = document.getElementsByClassName("signs")[0].getElementsByTagName("button");
+for (var i = 0; i < sb.length; i++) {
+  sb[i].onclick = function () {
+    if (clock) return;
+    clock = 1; cd++;
+    var v = this.getAttribute("data-v"), w = sign(), m = document.getElementById("cmsg");
+    document.getElementById("ceq").textContent = C[ci][0] + "  " + w + "  " + C[ci][2];
+    if (v === w) { cok++; m.className = "msg ok"; m.textContent = "Dogry! Ikisini bir birlige öwrüp deňeşdirdik."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry belgi: " + w + "."; }
+    document.getElementById("csc").textContent = "Netije: " + cok + " / " + cd;
+  };
+}
+document.getElementById("cnext").onclick = function () { ci = (ci + 1) % C.length; showC(); };
+showC();
+
+var Q = [
+  ["1 sagatda näçe sekunt bar?", ["3600", "60", "600"], 0],
+  ["1 asyr näçe ýyla deň?", ["100 ýyl", "10 ýyl", "12 ýyl"], 0],
+  ["5 gije-gündiz näçe sagat edýär?", ["120", "100", "24"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

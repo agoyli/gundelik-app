@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rasional sanlar — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bin { background: #f7fafd; border-radius: 11px; padding: 9px; min-height: 78px; }
+  .bin h4 { margin: 0 0 6px; font-size: 13px; }
+  .bin.ok h4 { color: #1d7a3d; } .bin.no h4 { color: #b4232a; }
+  .bin span { display: inline-block; background: #fff; border-radius: 8px; padding: 5px 9px;
+              font-size: 13px; margin: 0 4px 4px 0;
+              font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .props { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+  .prop { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13px;
+          line-height: 1.6; }
+  .prop b { color: #2456b0; display: block; margin-bottom: 3px;
+            font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; }
+  .venn { background: #f7fafd; border-radius: 11px; padding: 12px; }
+  .venn div { border-radius: 12px; padding: 9px 11px; font-size: 13px; line-height: 1.6; }
+  .v1 { background: #dbe7ff; }
+  .v2 { background: #cfe0ff; margin-top: 7px; }
+  .v3 { background: #b9d2ff; margin-top: 7px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Rasional sanlar</h1>
+  <div class="sub">Rasional sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal"><b>m/n</b> görnüşinde ýazyp bolýan sanlara <b>rasional sanlar</b> diýilýär.
+      Bu ýerde m – bitin san, n – natural san. «Rasional» sözi latyn dilindäki
+      <i>ratio</i> – «gatnaşyk» sözünden gelip çykypdyr.</div>
+    <div class="venn">
+      <div class="v1"><b>Natural sanlar:</b> 1; 2; 3; 4; …</div>
+      <div class="v2"><b>Bitin sanlar:</b> natural sanlar, olara garşylykly sanlar we nol</div>
+      <div class="v3"><b>Rasional sanlar:</b> ähli bitin sanlar we ähli droblar –
+        položitel hem otrisatel</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>m/n görnüşine getir</h3>
+    <div class="goal">Sana bas – onuň drob görnüşindäki ýazgysyny gör.</div>
+    <div class="row tight" id="nums"></div>
+    <div class="calc" id="nc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Rasionalmy ýa-da däl?</h3>
+    <div class="goal">Her sana bas – ol degişli sütüne geçsin.</div>
+    <div class="row tight" id="pool"></div>
+    <div class="bins" style="margin-top:9px">
+      <div class="bin ok"><h4>Rasional san</h4><div id="bok"></div></div>
+      <div class="bin no"><h4>Rasional san däl</h4><div id="bno"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Amallaryň häsiýetleri</h3>
+    <div class="props">
+      <div class="prop"><b>a + b = b + a</b>Goşmagyň orun çalşyrma häsiýeti.</div>
+      <div class="prop"><b>(a + b) + c = a + (b + c)</b>Goşmagyň utgaşdyrma häsiýeti.</div>
+      <div class="prop"><b>a + 0 = a</b>Nol goşulanda san üýtgemeýär.</div>
+      <div class="prop"><b>a · 1 = a</b>Bire köpeldilende san üýtgemeýär.</div>
+      <div class="prop"><b>a + (−a) = 0</b>Garşylykly sanlaryň jemi noldur.</div>
+      <div class="prop"><b>a · (1/a) = 1</b>Ters sanlaryň hasyly bire deňdir (a ≠ 0).</div>
+      <div class="prop"><b>a · b = 0</b>Hasyl nol bolsa, köpeldijileriň biri hökman noldur.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>a · b = 0 deňlemesi</h3>
+    <div class="goal">Köpeltmek hasyly nola deň bolmagy üçin <b>bir köpeldiji</b> nola deň bolmaly.</div>
+    <div class="row tight" id="eq"></div>
+    <div class="calc" id="ec" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, II kitap (2018), §36–37</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- m/n görnüşi ---------------- */
+const NUMS = [
+  ["−4", "−4/1", "Bitin san maýdalawjysy 1 bolan drob görnüşinde ýazylýar."],
+  ["3", "3/1", "Islendik natural san hem rasional sandyr."],
+  ["0", "0/1", "Nol hem rasional sandyr."],
+  ["0,19", "19/100", "Onluk drobda iki sifr bar, şonuň üçin maýdalawjy 100."],
+  ["5,123", "5123/1000", "Üç sifr – maýdalawjy 1000."],
+  ["6 3/4", "27/4", "Garyşyk san nädogry drob görnüşine getirilýär: 6 · 4 + 3 = 27."],
+  ["−3 2/7", "−23/7", "3 · 7 + 2 = 23, minus belgi sanawjynyň öňünde ýazylýar."],
+];
+$("nums").innerHTML = NUMS.map((n, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${n[0]}</button>`).join("");
+$("nums").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("nums").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const n = NUMS[+b.dataset.i];
+  $("nc").innerHTML = `${n[0]} = <b>${n[1]}</b><br>${n[2]}`;
+});
+
+/* ---------------- toparlara bölmek ---------------- */
+const ITEMS = [
+  ["−7", true, "bitin san = −7/1"],
+  ["0,25", true, "= 25/100 = 1/4"],
+  ["2 1/2", true, "= 5/2"],
+  ["0", true, "= 0/1"],
+  ["0,(6)", true, "periodik drob = 6/9 = 2/3"],
+  ["π", false, "tükeniksiz periodik däl drob – m/n görnüşinde ýazyp bolmaýar"],
+  ["3,14159265…", false, "period ýok, şonuň üçin ady drob görnüşine getirip bolmaýar"],
+];
+let left = [];
+function bins() {
+  left = ITEMS.map((_, i) => i);
+  $("bok").innerHTML = ""; $("bno").innerHTML = "";
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  renderPool();
+}
+function renderPool() {
+  $("pool").innerHTML = left.map(i => `<button class="btn" data-i="${i}">${ITEMS[i][0]}</button>`)
+    .join("") || "<span class='hint' style='margin:0'>hemmesi ýerleşdirildi</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [txt, ok, why] = ITEMS[i];
+    $(ok ? "bok" : "bno").innerHTML += `<span>${txt}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").innerHTML = `<b>${txt}</b> – ${ok ? "rasional san" : "rasional san däl"}: ${why}`;
+    $("bmsg").className = "msg ok";
+    renderPool();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- a · b = 0 ---------------- */
+const EQ = [
+  ["6 · (x − 6) = 0", "6 ≠ 0, şonuň üçin x − 6 = 0", "x = 6"],
+  ["(x + 4) · 9 = 0", "9 ≠ 0, şonuň üçin x + 4 = 0", "x = −4"],
+  ["x · (x − 5) = 0", "birinji köpeldiji ýa-da ikinjisi nol bolmaly", "x = 0 ýa-da x = 5"],
+  ["(2x − 8) · (x + 1) = 0", "her köpeldijini nola deňleýäris", "x = 4 ýa-da x = −1"],
+];
+$("eq").innerHTML = EQ.map((e, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${e[0]}</button>`).join("");
+$("eq").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("eq").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const e = EQ[+b.dataset.i];
+  $("ec").innerHTML = `${e[0]}<br>${e[1]}<br>jogap: <b>${e[2]}</b>`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Rasional san haýsy görnüşde ýazylýar?", ["m · n", "m/n", "m − n", "m + n"], 1],
+  ["Aşakdakylaryň haýsysy rasional san däl?", ["−4", "0,19", "π", "6 3/4"], 2],
+  ["6 · (x − 6) = 0 deňlemäniň köki", ["x = 0", "x = 6", "x = −6", "x = 1"], 1],
+  ["«Rasional» sözi haýsy sözden gelip çykypdyr?",
+   ["ratio – gatnaşyk", "radius – ýarym diametr", "ratus – san", "realis – hakyky"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+bins();
+$("nums").querySelector("button").click();
+$("eq").querySelector("button").click();
+</script>
+</body>
+</html>

@@ -44,7 +44,7 @@ export const Rule = ({ title, children, warn }: {
 export const Mono = ({ children }: { children: ReactNode }) => (
   <Box component="code" sx={{
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-    fontSize: 12.5, bgcolor: tokens.surface, px: '6px', py: '2px', borderRadius: '5px',
+    fontSize: 12.5, bgcolor: tokens.surface, px: '6px', py: '2px', borderRadius: `${tokens.rChip}px`,
     whiteSpace: 'nowrap',
   }}>{children}</Box>
 );
@@ -91,7 +91,7 @@ export const PhoneStage = ({ children, height = 300, label }: {
   <Box sx={{ display: 'flex', flexDirection: 'column', gap: '11px', alignItems: 'center' }}>
     <Box sx={{
       width: 393, height, flex: '0 0 auto', position: 'relative', overflow: 'hidden',
-      bgcolor: '#fff', border: `1px solid ${tokens.divider}`, borderRadius: '28px',
+      bgcolor: '#fff', border: `1px solid ${tokens.divider}`, borderRadius: `${tokens.rCard}px`,
     }}>{children}</Box>
     {label && <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>{label}</Typography>}
   </Box>
@@ -159,7 +159,7 @@ export const SpecRow = ({ name, note, children }: {
     '&:last-of-type': { borderBottom: 0 },
   }}>
     <Box>
-      <Typography sx={{ fontWeight: 650, fontSize: 14.5 }}>{name}</Typography>
+      <Typography sx={{ fontWeight: 650, fontSize: 15 }}>{name}</Typography>
       <Typography sx={{ fontSize: 12.5, color: tokens.ink2, lineHeight: 1.45, mt: '3px' }}>{note}</Typography>
     </Box>
     <Box sx={{

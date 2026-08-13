@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mikrokalkulýator — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .calc {
+    max-width: 300px; margin: 0 auto; background: #1e2a3a; border-radius: 18px; padding: 14px;
+  }
+  .screen {
+    background: #cbe3c9; border-radius: 8px; padding: 12px 14px; text-align: right;
+    font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums;
+    color: #1e2a3a; min-height: 56px; overflow: hidden; word-break: break-all;
+  }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .k {
+    padding: 15px 0; border-radius: 10px; font-size: 19px; font-weight: 800;
+    background: #e8eef7; color: #1e2a3a;
+  }
+  .k:active { transform: scale(.95); }
+  .k.op { background: #ffb340; }
+  .k.eq { background: #1d7a3d; color: #fff; }
+  .k.c { background: #e2574c; color: #fff; }
+  .tape { font-size: 14px; color: #5b6b80; min-height: 20px; margin-top: 8px; text-align: center; font-weight: 700; }
+  .task { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; }
+  .seq { font-size: 15px; color: #5b6b80; }
+  .seq b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mikrokalkulýator</h1>
+  <div class="sub">Mikrokalýutorda hasaplamak · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="task" id="task"></div>
+    <div class="seq" id="seq"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost" id="nextBtn">Indiki ýumuş</button>
+      <span class="score" id="score"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="calc">
+      <div class="screen" id="screen">0</div>
+      <div class="keys" id="keys"></div>
+    </div>
+    <div class="tape" id="tape"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Sany girizmek üçin uly razrýadlardan başlap, sifrleriň düwmelerini yzly-yzyna basmaly.
+      Amallar maksatnama laýyklykda ýerine ýetirilýär: birinji san → amal düwmesi → ikinji san → «=».
+      Ekrandaky sany öçürmek üçin <b>C</b> düwmesi basylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, I kitap (2017)</div>
+</div>
+
+<script>
+const TASKS = [
+  { text: "720 we 634 sanlaryny goş.", seq: "720 [+] 634 [=]", answer: 1354 },
+  { text: "(1 051 + 213) · 4 hasapla.", seq: "1051 [+] 213 [×] 4 [=]", answer: 5056 },
+  { text: "8 934 − 2 176 tapawudy tap.", seq: "8934 [−] 2176 [=]", answer: 6758 },
+  { text: "376 · 25 köpeltmek hasylyny tap.", seq: "376 [×] 25 [=]", answer: 9400 },
+  { text: "9 576 : 24 paýyny tap.", seq: "9576 [:] 24 [=]", answer: 399 },
+  { text: "(2 480 − 1 130) : 5 hasapla.", seq: "2480 [−] 1130 [:] 5 [=]", answer: 270 }
+];
+let ti = 0, right = 0, done = 0;
+
+let display = "0", acc = null, pending = null, fresh = true;
+
+function show() {
+  const n = Number(display);
+  document.getElementById("screen").textContent =
+    isNaN(n) ? display : String(display).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function digit(d) {
+  if (fresh) { display = String(d); fresh = false; }
+  else if (display.length < 10) display = display === "0" ? String(d) : display + d;
+  show();
+}
+
+function apply() {
+  const cur = Number(display);
+  if (pending === null || acc === null) return cur;
+  let r = acc;
+  if (pending === "+") r = acc + cur;
+  if (pending === "−") r = acc - cur;
+  if (pending === "×") r = acc * cur;
+  if (pending === ":") r = cur === 0 ? NaN : acc / cur;
+  return r;
+}
+
+function op(o) {
+  const r = apply();
+  acc = (pending === null) ? Number(display) : r;
+  display = String(acc);
+  pending = o; fresh = true;
+  document.getElementById("tape").textContent = `${acc} ${o} ...`;
+  show();
+}
+
+function equals() {
+  if (pending === null) { check(Number(display)); return; }
+  const r = apply();
+  document.getElementById("tape").textContent = `${acc} ${pending} ${display} = ${r}`;
+  acc = null; pending = null; fresh = true;
+  display = isNaN(r) ? "Ýalňyş" : String(r);
+  show();
+  check(r);
+}
+
+function clearAll() {
+  display = "0"; acc = null; pending = null; fresh = true;
+  document.getElementById("tape").textContent = "";
+  show();
+}
+
+function check(r) {
+  const t = TASKS[ti];
+  if (!t) return;
+  const m = document.getElementById("msg");
+  done++;
+  if (Math.abs(r - t.answer) < 1e-9) {
+    right++;
+    m.textContent = `Berekella! 🎉 Netije: ${t.answer}`;
+    m.className = "msg ok";
+  } else {
+    m.textContent = `Ekranda ${r}. Dogry netije ${t.answer} bolmaly — maksatnama boýunça täzeden synanyş.`;
+    m.className = "msg bad";
+  }
+  document.getElementById("score").textContent = `Dogry: ${right} / ${done}`;
+}
+
+function loadTask() {
+  const t = TASKS[ti];
+  document.getElementById("task").textContent = `Ýumuş ${ti + 1}. ${t.text}`;
+  document.getElementById("seq").innerHTML = `Maksatnama: <b>${t.seq}</b>`;
+  document.getElementById("msg").textContent = "";
+  clearAll();
+}
+
+const LAYOUT = [
+  ["7", "8", "9", ":"], ["4", "5", "6", "×"],
+  ["1", "2", "3", "−"], ["C", "0", "=", "+"]
+];
+const keys = document.getElementById("keys");
+LAYOUT.flat().forEach(k => {
+  const b = document.createElement("button");
+  b.textContent = k;
+  b.className = "k" + ("+−×:".includes(k) ? " op" : k === "=" ? " eq" : k === "C" ? " c" : "");
+  b.onclick = () => {
+    if (/\d/.test(k)) digit(k);
+    else if (k === "C") clearAll();
+    else if (k === "=") equals();
+    else op(k);
+  };
+  keys.appendChild(b);
+});
+document.getElementById("nextBtn").onclick = () => {
+  ti = (ti + 1) % TASKS.length;
+  loadTask();
+};
+
+loadTask(); show();
+</script>
+</body>
+</html>

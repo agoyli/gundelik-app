@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onlukdan geçmek: goşmak tablisasy — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { border: 1px solid #d7e0ea; padding: 6px 2px; text-align: center; }
+  th { background: #eef3fb; font-weight: 700; }
+  td.on { background: #d9ead9; font-weight: 700; }
+  .tw { overflow-x: auto; }
+  .eq { text-align: center; font-size: 28px; font-weight: 700; margin: 9px 0 4px; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 18px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Onlukdan geçmek: goşmak tablisasy</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ondan geçýän ähli mysallar <b>goşmak tablisasynda</b> jemlenýär.
+      Tablisany ýat tutsaň, hasaplamak has çalt bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Goşmak tablisasy</h3>
+    <div class="goal">Öýjüge bas – mysal we netije görkeziler.</div>
+    <div class="tw"><table id="tab"></table></div>
+    <div class="msg" id="cmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Çalt hasapla</h3>
+    <div class="eq" id="task"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="tmsg"></div>
+    <div class="row"><button class="btn primary" id="next">Indiki mysal</button></div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, II kitap · 62-nji sahypa</div>
+</div>
+
+<script>
+var ROWS = [9, 8, 7, 6, 5], COLS = [2, 3, 4, 5, 6, 7, 8, 9];
+var h = "<tr><th>+</th>";
+for (var c = 0; c < COLS.length; c++) h += "<th>" + COLS[c] + "</th>";
+h += "</tr>";
+for (var r = 0; r < ROWS.length; r++) {
+  h += "<tr><th>" + ROWS[r] + "</th>";
+  for (var c = 0; c < COLS.length; c++) {
+    var s = ROWS[r] + COLS[c];
+    h += '<td data-a="' + ROWS[r] + '" data-b="' + COLS[c] + '">' + (s > 10 ? s : "·") + "</td>";
+  }
+  h += "</tr>";
+}
+document.getElementById("tab").innerHTML = h;
+var tds = document.getElementById("tab").getElementsByTagName("td");
+for (var i = 0; i < tds.length; i++) {
+  tds[i].onclick = function () {
+    var a = parseInt(this.getAttribute("data-a"), 10), b = parseInt(this.getAttribute("data-b"), 10);
+    var m = document.getElementById("cmsg");
+    if (a + b <= 10) { m.className = "msg"; m.textContent = a + " + " + b + " = " + (a + b) + " – bu mysal ondan geçmeýär."; return; }
+    for (var k = 0; k < tds.length; k++) tds[k].className = "";
+    this.className = "on";
+    var need = 10 - a, rest = b - need;
+    m.className = "msg ok";
+    m.textContent = a + " + " + b + " = " + a + " + " + need + " + " + rest + " = 10 + " + rest + " = " + (a + b) + ".";
+  };
+}
+
+var T = [[8, 6], [9, 9], [7, 6], [8, 7], [9, 5], [6, 6], [7, 8], [9, 4]];
+var ti = 0, d = 0, ok = 0, lock = 0;
+function showT() {
+  var t = T[ti], s = t[0] + t[1];
+  document.getElementById("task").textContent = t[0] + " + " + t[1] + " = ?";
+  var opts = [s, s - 1, s + 1, s - 2];
+  var hh = "";
+  var order = [ti % 4, (ti + 1) % 4, (ti + 2) % 4, (ti + 3) % 4];
+  for (var i = 0; i < 4; i++) hh += '<button class="btn" data-n="' + opts[order[i]] + '">' + opts[order[i]] + "</button>";
+  document.getElementById("nums").innerHTML = hh;
+  var nb = document.getElementById("nums").getElementsByTagName("button");
+  for (var i = 0; i < nb.length; i++) nb[i].onclick = tclick;
+  document.getElementById("tmsg").className = "msg";
+  document.getElementById("tmsg").textContent = "";
+  lock = 0;
+}
+function tclick() {
+  if (lock) return;
+  lock = 1; d++;
+  var v = parseInt(this.getAttribute("data-n"), 10), t = T[ti], s = t[0] + t[1];
+  var need = 10 - t[0], rest = t[1] - need, m = document.getElementById("tmsg");
+  if (v === s) { ok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[0] + " + " + need + " + " + rest + " = 10 + " + rest + " = " + s + "."; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + s + "."; }
+  document.getElementById("tsc").textContent = "Netije: " + ok + " / " + d;
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; showT(); };
+showT();
+
+var Q = [
+  ["8 + 6 näçe bolar?", ["14", "13", "15"], 0],
+  ["9 + 9 näçe bolar?", ["18", "17", "19"], 0],
+  ["7 + 6 näçe bolar?", ["13", "12", "14"], 0],
+  ["Goşmak tablisasyny ýat tutmak näme berýär?", ["Çalt hasaplamagy", "Uzyn ýazgyny", "Täze belgileri"], 0]
+];
+var qd = 0, qok = 0, h2 = "";
+for (var i = 0; i < Q.length; i++) {
+  h2 += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) h2 += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  h2 += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = h2;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

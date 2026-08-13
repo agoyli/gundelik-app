@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informasiýanyň ölçeg birlikleri — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  input[type=text], input[type=number] { padding: 11px; font-size: 15px; border-radius: 12px;
+    border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; width: 100%; }
+  input:focus { outline: none; border-color: #2456b0; }
+  .units { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; }
+  .units div { background: #f7fafd; border-radius: 11px; padding: 9px 11px; font-size: 13.5px;
+               text-align: center; }
+  .units b { display: block; color: #2456b0; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .units small { color: #93a2b5; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .bar span.l { width: 92px; color: #5b6b80; font-weight: 700; flex: 0 0 auto; }
+  .bar i { display: block; height: 20px; border-radius: 6px; background: #2456b0; }
+  .bar b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sh { display: flex; align-items: center; gap: 9px; background: #f7fafd; border-radius: 11px;
+        padding: 10px 11px; margin-bottom: 5px; font-size: 14px; }
+  .sh .txt { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Informasiýanyň ölçeg birlikleri</h1>
+  <div class="sub">Bit, baýt we tehniki serişdeler · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Sözi ýaz – kompýuterde her belgi <b>bir baýt</b> bilen kodlanýar.</div>
+    <input type="text" id="w" spellcheck="false" maxlength="60" value="kompýuter">
+    <div class="units" style="margin-top:9px" id="wu"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kitabyň möçberi</h3>
+    <div class="goal">«Paýhas çeşmesi» kitabynyň her sahypasynda ortaça 30 setir, her setirde
+      60 belgi bar. Sanlary üýtget-de, netijä seret.</div>
+    <div class="cols">
+      <div class="col"><label>Setirleriň sany</label>
+        <input type="number" id="rows" value="30" min="1" max="80"></div>
+      <div class="col"><label>Setirdäki belgiler</label>
+        <input type="number" id="chars" value="60" min="1" max="120"></div>
+      <div class="col"><label>Sahypalaryň sany</label>
+        <input type="number" id="pages" value="192" min="1" max="2000"></div>
+    </div>
+    <div class="calc" id="book" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Göterijileriň sygymy</h3>
+    <div class="bars" id="disks"></div>
+    <div class="note">Sygymlar deňeşdirilende hemmesi <b>Mbaýta</b> geçirilýär.
+      1 Gbaýt = 1024 Mbaýt.</div>
+  </div>
+
+  <div class="card">
+    <h3>Kömekçi serişdemi ýa-da awtomatik?</h3>
+    <div class="goal">Kömekçi serişde diňe işi ýeňilleşdirýär, awtomatik serişde bolsa
+      informasiýany özi işläp taýýarlaýar.</div>
+    <div id="sort"></div>
+    <div class="row"><span class="score" id="sc"></span>
+      <button class="btn ghost" id="again">Täzeden</button></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Bit</b> – informasiýanyň mukdaryny ölçemegiň iň kiçi ölçeg birligidir.
+      <b>1 baýt = 8 bit</b>. Uly birlikler 1024 esse ulalyp gidýär:
+      1 Kbaýt = 2¹⁰ baýt = 1024 baýt, 1 Mbaýt = 1024 Kbaýt, 1 Gbaýt = 1024 Mbaýt.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = x => x.toLocaleString("ru-RU");
+const dec = (x, d) => x.toFixed(d).replace(".", ",");
+
+/* ---------------- söz ---------------- */
+function word() {
+  const s = $("w").value;
+  const b = [...s].length;
+  $("wu").innerHTML =
+    `<div><b>${num(b)}</b><small>belgi</small></div>` +
+    `<div><b>${num(b)}</b><small>baýt</small></div>` +
+    `<div><b>${num(b * 8)}</b><small>bit</small></div>` +
+    `<div><b>${dec(b / 1024, 3)}</b><small>Kbaýt</small></div>`;
+}
+$("w").addEventListener("input", word);
+
+/* ---------------- kitap ---------------- */
+function book() {
+  const r = +$("rows").value || 0, c = +$("chars").value || 0, p = +$("pages").value || 0;
+  const page = r * c, all = page * p;
+  const kb = all / 1024, mb = kb / 1024;
+  $("book").innerHTML =
+    `bir sahypa: ${num(r)} · ${num(c)} = <b>${num(page)} baýt</b><br>` +
+    `tutuş kitap: ${num(page)} · ${num(p)} = <b>${num(all)} baýt</b><br>` +
+    `Kbaýta geçireliň: ${num(all)} : 1024 ≈ <b>${dec(kb, 0)} Kbaýt</b><br>` +
+    `Mbaýta geçireliň: ${dec(kb, 0)} : 1024 ≈ <b>${dec(mb, 2)} Mbaýt</b>`;
+}
+["rows", "chars", "pages"].forEach(i => $(i).addEventListener("input", book));
+
+/* ---------------- diskler ---------------- */
+const DISK = [
+  ["Diskete", 1.44], ["CD", 700], ["DVD", 4.7 * 1024],
+  ["Blu-ray", 25 * 1024], ["Fleş 64 Gb", 64 * 1024]
+];
+const max = Math.max(...DISK.map(d => d[1]));
+$("disks").innerHTML = DISK.map(([n, mb]) => {
+  const w = Math.max(2, Math.sqrt(mb / max) * 100);
+  const lbl = mb >= 1024 ? `${dec(mb / 1024, 1)} Gbaýt` : `${dec(mb, mb < 10 ? 2 : 0)} Mbaýt`;
+  return `<div class="bar"><span class="l">${n}</span><i style="width:${w}%"></i><b>${lbl}</b></div>`;
+}).join("");
+
+/* ---------------- serişdeler ---------------- */
+const S = [
+  ["Reňkli galamlar", false], ["Elektron terezi", true], ["Syýa we perolar", false],
+  ["Tonometr", true], ["Kalkulýator", true], ["Çyzgyç", false],
+  ["Kompýuter", true], ["Hat ýazýan maşyn", false]
+];
+let done = 0, ok = 0;
+function sort() {
+  $("sort").innerHTML = S.map(([t], i) =>
+    `<div class="sh" data-i="${i}"><span class="txt">${t}</span>
+      <button class="btn" data-v="0">Kömekçi</button>
+      <button class="btn" data-v="1">Awtomatik</button></div>`).join("");
+  $("sort").querySelectorAll(".sh").forEach(d =>
+    d.querySelectorAll("button").forEach(b => b.onclick = () => {
+      const i = +d.dataset.i, good = (b.dataset.v === "1") === S[i][1];
+      if (good) ok++;
+      done++; d.remove();
+      $("sc").textContent = `${ok} / ${done}`;
+      $("msg").textContent = good ? "Dogry."
+        : S[i][1] ? "Bu awtomatik serişde – ol informasiýany özi işleýär."
+                  : "Bu kömekçi serişde – ol diňe işi ýeňilleşdirýär.";
+      $("msg").className = good ? "msg ok" : "msg bad";
+      if (done === S.length) {
+        $("msg").textContent = `Tamamlandy: ${ok} / ${S.length} dogry.`;
+        $("msg").className = "msg ok";
+      }
+    }));
+  $("sc").textContent = "0 / 0";
+}
+$("again").onclick = () => { done = 0; ok = 0; $("msg").textContent = ""; sort(); };
+
+word(); book(); sort();
+</script>
+</body>
+</html>

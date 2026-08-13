@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Položitel we otrisatel sanlar — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .therm { display: flex; justify-content: center; gap: 22px; align-items: center;
+           background: #eef2f8; border-radius: 12px; padding: 12px; }
+  .therm svg { background: #fff; border-radius: 10px; }
+  .val { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 34px;
+         font-weight: 800; }
+  .val.plus { color: #c62828; } .val.minus { color: #1565c0; } .val.zero { color: #5b6b80; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bin { background: #f7fafd; border-radius: 11px; padding: 9px; min-height: 76px; }
+  .bin h4 { margin: 0 0 6px; font-size: 13px; }
+  .bin.p h4 { color: #c62828; } .bin.n h4 { color: #1565c0; }
+  .bin span { display: inline-block; background: #fff; border-radius: 8px; padding: 5px 9px;
+              font-size: 13.5px; margin: 0 4px 4px 0;
+              font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Položitel we otrisatel sanlar</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Öňi «+» belgili sanlara <b>položitel</b>, öňi «−» belgili sanlara
+      <b>otrisatel</b> sanlar diýilýär. Nol položitel hem, otrisatel hem däldir.</div>
+    <div class="therm">
+      <svg id="th" width="86" height="230" viewBox="0 0 86 230"
+        xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" font-size="10"></svg>
+      <div>
+        <div class="val" id="v"></div>
+        <div class="sub" id="lab" style="margin:4px 0 0"></div>
+      </div>
+    </div>
+    <div class="slider"><span class="lbl">Temperatura</span>
+      <input type="range" id="t" min="-30" max="45" value="25"><span class="out" id="to"></span></div>
+    <div class="msg ok" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sanlary toparlara böl</h3>
+    <div class="goal">Her sana bas – ol degişli sütüne geçsin.</div>
+    <div class="row tight" id="pool"></div>
+    <div class="bins" style="margin-top:9px">
+      <div class="bin p"><h4>Položitel sanlar</h4><div id="bp"></div></div>
+      <div class="bin n"><h4>Otrisatel sanlar</h4><div id="bn"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Habary düşündir</h3>
+    <div class="row tight" id="news"></div>
+    <div class="msg" id="nmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Radioda «Daşoguzda 9–12 gradus sowuk bolar» diýip habar berilýär, mawy ekranda bolsa şol
+      habar <b>«Daşoguzda −9…−12»</b> görnüşinde ýazylýar. Ýer ýüzündäki iň pes temperatura
+      <b>−89,2</b>, iň ýokary temperatura bolsa <b>+57,8</b> gradus bolupdyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §19</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- termometr ---------------- */
+function therm() {
+  const t = +$("t").value;
+  $("to").textContent = (t > 0 ? "+" : "") + t + "°";
+  const top = 16, bot = 190, span = bot - top;
+  const y = bot - ((t + 30) / 75) * span;
+  let ticks = "";
+  for (let v = -30; v <= 45; v += 15) {
+    const yy = bot - ((v + 30) / 75) * span;
+    ticks += `<line x1="30" y1="${yy}" x2="40" y2="${yy}" stroke="#93a2b5" stroke-width="1.5"/>
+              <text x="46" y="${yy + 4}" fill="#5b6b80">${v > 0 ? "+" : ""}${v}</text>`;
+  }
+  const y0 = bot - (30 / 75) * span;
+  $("th").innerHTML = `
+    <rect x="16" y="${top}" width="14" height="${span}" rx="7" fill="#eef2f8" stroke="#b9c8dc"/>
+    <rect x="16" y="${Math.min(y, y0)}" width="14" height="${Math.abs(y0 - y)}"
+      fill="${t >= 0 ? "#e05252" : "#4b8de0"}"/>
+    <circle cx="23" cy="${bot + 22}" r="13" fill="${t >= 0 ? "#e05252" : "#4b8de0"}"/>
+    <line x1="12" y1="${y0}" x2="34" y2="${y0}" stroke="#1e2a3a" stroke-width="2"/>
+    ${ticks}`;
+  const cls = t > 0 ? "plus" : t < 0 ? "minus" : "zero";
+  $("v").className = "val " + cls;
+  $("v").textContent = (t > 0 ? "+" : "") + t + "°";
+  $("lab").textContent = t > 0 ? "položitel san" : t < 0 ? "otrisatel san" : "nol";
+  $("msg").textContent = t > 0
+    ? `«${t} gradus yssy» diýilýär. Položitel sanyň öňündäki «+» köplenç ýazylmaýar: +${t} = ${t}.`
+    : t < 0
+      ? `«${-t} gradus sowuk» diýilýär, ýazgyda bolsa ${t} görnüşinde berilýär.`
+      : "Nol san položitel hem däl, otrisatel hem däldir – ol serhet nokadydyr.";
+}
+$("t").addEventListener("input", therm);
+
+/* ---------------- toparlara bölmek ---------------- */
+const NUMS = ["55", "−44", "−7,33", "0,8", "3,4", "−5/9", "9 1/9", "−13/4"];
+let left = NUMS.length;
+$("pool").innerHTML = NUMS.map((n, i) =>
+  `<button class="btn" data-i="${i}">${n}</button>`).join("");
+$("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const n = NUMS[+b.dataset.i];
+  const neg = n.startsWith("−");
+  const s = document.createElement("span");
+  s.textContent = n;
+  $(neg ? "bn" : "bp").appendChild(s);
+  b.remove();
+  if (!--left) {
+    $("bmsg").textContent = "Ähli sanlar bölündi. Nol bu toparlaryň hiç birine hem girmeýär.";
+    $("bmsg").className = "msg ok";
+  }
+});
+
+/* ---------------- habarlar ---------------- */
+const NEWS = [
+  ["Balkan welaýatynda 36–38 gradus yssy", "+36…+38", "Položitel sanlar bilen ýazylýar."],
+  ["Aşgabatda −9°", "9 gradus sowuk", "Otrisatel san sowugy aňladýar."],
+  ["Iň pes temperatura −89,2°", "89,2 gradus sowuk", "Bu Ýer ýüzünde bellenen iň pes temperatura."],
+  ["Deňiz derejesinden −28 m", "28 m pes", "Otrisatel san çuňlugy hem aňladyp bilýär."],
+];
+$("news").innerHTML = NEWS.map((n, i) =>
+  `<button class="btn" data-i="${i}">${n[0]}</button>`).join("");
+$("news").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("news").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const n = NEWS[+b.dataset.i];
+  $("nmsg").innerHTML = `<b>${n[1]}</b> – ${n[2]}`;
+  $("nmsg").className = "msg ok";
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Aşakdakylaryň haýsysy otrisatel san?", ["0", "+3,4", "−5,22", "9"], 2],
+  ["Nol haýsy topara degişli?", ["Položitel", "Otrisatel", "Ikisine hem", "Hiç birine hem däl"], 3],
+  ["«+35» san nähili okalýar?", ["minus otuz bäş", "plýus otuz bäş",
+                                 "otuz bäşden bir", "otuz bäş göterim"], 1],
+  ["«−7,33» san nähili okalýar?", ["ýedi bitin ýüzden otuz üç",
+                                   "minus ýedi bitin ýüzden otuz üç",
+                                   "minus ýedi ondan otuz üç", "ýedi minus otuz üç"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+therm();
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4 + 15 görnüşli ýatdan goşmak — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 30px; font-weight: 800; }
+  .chain { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 17px; line-height: 1.9; text-align: center; }
+  .nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 17px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>4 + 15 görnüşli ýatdan goşmak</h1>
+  <div class="sub">Matematika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="def">Birbelgili sana ikibelgili san goşulanda, <b>goşulyjylaryň orunlaryny
+      çalşyrmak amatlydyr</b>. Soňra ilki birlikler goşulýar:
+      4 + 15 = 15 + 4 = 10 + (5 + 4) = 19.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ädimme-ädim çöz</h3>
+    <div class="eq" id="eq"></div>
+    <div class="chain" id="chain" style="margin-top:8px"></div>
+    <div class="goal" id="ask" style="margin-top:8px"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="tmsg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mysal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 2, I kitap · 55–58-nji sahypalar</div>
+</div>
+
+<script>
+// [birinji, ikinji] — birinjisi kiçi bolsa orunlary çalşyrmaly
+var T = [[4, 15], [3, 24], [32, 7], [5, 41], [26, 3], [2, 56]];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function big() { return T[ti][0] > T[ti][1] ? T[ti][0] : T[ti][1]; }
+function small() { return T[ti][0] > T[ti][1] ? T[ti][1] : T[ti][0]; }
+function onesSum() { return (big() % 10) + small(); }
+function total() { return big() + small(); }
+function show() {
+  var t = T[ti];
+  document.getElementById("eq").textContent = t[0] + " + " + t[1] + " = ?";
+  var line = t[0] + " + " + t[1];
+  if (t[0] < t[1]) line += " = " + big() + " + " + small();
+  line += "<br>= " + (Math.floor(big() / 10) * 10) + " + (" + (big() % 10) + " + " + small() + ")";
+  if (stage >= 1) line += "<br>= " + (Math.floor(big() / 10) * 10) + " + " + onesSum();
+  if (stage >= 2) line += "<br><b>= " + total() + "</b>";
+  document.getElementById("chain").innerHTML = line;
+  document.getElementById("ask").textContent = stage === 0 ?
+    "1-nji ädim: birlikleriň jemi näçe?" :
+    (stage === 1 ? "2-nji ädim: doly jogap näçe?" : "Mysal çözüldi.");
+  var m = document.getElementById("tmsg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ? ("Jogap: " + total() + ".") : "";
+}
+var PAD = [];
+for (var i = 5; i <= 20; i++) PAD.push(i);
+var EXTRA = [25, 27, 29, 37, 39, 44, 46, 48, 56, 58];
+for (var i = 0; i < EXTRA.length; i++) PAD.push(EXTRA[i]);
+var h = "";
+for (var i = 0; i < PAD.length; i++) h += '<button class="btn" data-n="' + PAD[i] + '">' + PAD[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= 2) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("tmsg");
+    var w = stage === 0 ? onesSum() : total();
+    d++;
+    if (v === w) {
+      ok++; stage++; show();
+      if (stage === 1) { m.className = "msg ok"; m.textContent = "Dogry! Indi onluga şol jemi goş."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = stage === 0 ? "Ýalňyş. Birlikleri goş." : "Ýalňyş. Onluga birlikleriň jemini goş.";
+    }
+    document.getElementById("tsc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["4 + 15 näçe bolar?", ["19", "18", "20"], 0],
+  ["Ikibelgili sana birbelgili san goşulanda ilki näme goşulýar?", ["Birlikler", "Onluklar", "Jem"], 0],
+  ["41 + 8 näçe bolar?", ["49", "48", "50"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

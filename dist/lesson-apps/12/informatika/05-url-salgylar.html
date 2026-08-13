@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL-salgylar — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .url { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; background: #f7fafd;
+         border-radius: 12px; padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
+         font-size: 15px; overflow-x: auto; }
+  .chip { border: none; border-radius: 8px; padding: 8px 9px; cursor: pointer; font-size: 14.5px;
+          font-family: inherit; min-height: 40px; background: #e3edfd; color: #2456b0;
+          font-weight: 700; }
+  .chip.sel { background: #2456b0; color: #fff; }
+  .chip.plain { background: #eef2f8; color: #5b6b80; }
+  .tree { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+          line-height: 1.9; background: #f7fafd; border-radius: 12px; padding: 12px 14px; }
+  .tree b { color: #2456b0; }
+  .slot { min-height: 46px; border: 2px dashed #cfd8e6; border-radius: 12px; padding: 10px;
+          font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px;
+          word-break: break-all; }
+  .slot.ok { border-color: #1d7a3d; background: #e0f5e6; }
+  .slot.no { border-color: #b02424; background: #fbe3e3; }
+  .item { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 10px;
+          background: #eef2f8; margin-bottom: 7px; min-height: 44px; }
+  .item .t { flex: 1; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;
+             word-break: break-all; }
+  .item.ok { background: #e0f5e6; } .item.no { background: #fbe3e3; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>URL-salgylaryň ulanylyşy</h1>
+  <div class="sub">Protokol · domen · kataloglar · absolýut we otnositel salgy · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Salgynyň her bölegine bas – onuň näme aňladýandygyny okarsyň.</div>
+    <div class="url" id="anat"></div>
+    <div class="note" id="ex">Bölege bas…</div>
+  </div>
+
+  <div class="card">
+    <h3>Salgyny ýygna</h3>
+    <div class="goal" id="bg"></div>
+    <div class="slot" id="slot"></div>
+    <div class="row tight" id="parts"></div>
+    <div class="row">
+      <button class="btn ghost" id="undo">↩︎ Yza</button>
+      <button class="btn primary" id="bchk">Barla</button>
+      <button class="btn" id="next">Indiki ýumuş</button>
+    </div>
+    <div class="msg" id="bm"></div>
+  </div>
+
+  <div class="card">
+    <h3>Papkalaryň agajy</h3>
+    <div class="tree">
+📁 saýt<br>
+&nbsp;&nbsp;📄 <b>index.htm</b><br>
+&nbsp;&nbsp;📄 watan.htm<br>
+&nbsp;&nbsp;📁 image<br>
+&nbsp;&nbsp;&nbsp;&nbsp;🖼 gul.jpg<br>
+&nbsp;&nbsp;📁 sport<br>
+&nbsp;&nbsp;&nbsp;&nbsp;📄 futbol.htm
+    </div>
+    <div class="note">Saýtyň içinde diňe otnositel salgylar ulanylýar: absolýut salgylar
+      prowaýderiň serwerine geçirilende işlemeýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Absolýutmy ýa otnositel?</h3>
+    <div id="sort"></div>
+    <div class="msg" id="sm"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §6 — URL-salgylar</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ------------------------------------------------------------------ anatomiýa */
+const AN = [
+  ["http:", "Protokol – maglumat alyş-çalşygynyň düzgüni. Web-sahypalar üçin http ulanylýar."],
+  ["//", "Protokoly serweriň adyndan aýyrýan gulluk belgileri."],
+  ["www.abcde.ru", "Serweriň domen ady. Soňky bölegi (.ru) serweriň ýurduny görkezýär."],
+  ["\\sch29", "Serwerdäki katalog – bu ýerde 29-njy mekdebiň papkasy."],
+  ["\\sport", "Içki katalog – mekdebiň sport bölümi."],
+  ["\\futbol", "Ýene bir içki katalog."],
+  ["\\team.htm", "Gerekli Web-sahypanyň faýlynyň ady."]
+];
+AN.forEach(a => {
+  const b = document.createElement("button");
+  b.className = "chip"; b.textContent = a[0];
+  b.onclick = () => {
+    $("anat").querySelectorAll(".chip").forEach(x => x.classList.toggle("sel", x === b));
+    $("ex").innerHTML = "<b>" + a[0] + "</b> — " + a[1];
+  };
+  $("anat").appendChild(b);
+});
+
+/* --------------------------------------------------------------- salgy ýygnamak */
+const B = [
+  { g: "«www.mekdep.edu.tm» serwerindäki sport papkasyndan futbol.htm faýlynyň absolýut salgysy.",
+    a: ["http:", "//", "www.mekdep.edu.tm", "\\sport", "\\futbol.htm"],
+    d: ["\\image", "ftp:", "\\index.htm"] },
+  { g: "index.htm faýlyndan şol bir papkadaky watan.htm faýlyna otnositel salgy.",
+    a: ["watan.htm"], d: ["http:", "//", "\\saýt", "www.mekdep.edu.tm"] },
+  { g: "index.htm faýlyndan image papkasyndaky gul.jpg faýlyna otnositel salgy.",
+    a: ["image", "/gul.jpg"], d: ["http:", "\\sport", "//"] }
+];
+let bi = 0, cur = [];
+function drawB() {
+  const x = B[bi];
+  $("bg").textContent = (bi + 1) + ". " + x.g;
+  cur = [];
+  $("slot").className = "slot"; $("slot").textContent = "(boş)";
+  $("bm").textContent = "";
+  const p = $("parts"); p.innerHTML = "";
+  x.a.concat(x.d).sort(() => Math.random() - .5).forEach(t => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = t;
+    b.onclick = () => { cur.push(t); paint(); };
+    p.appendChild(b);
+  });
+}
+function paint() {
+  $("slot").textContent = cur.length ? cur.join("") : "(boş)";
+  $("slot").className = "slot";
+}
+$("undo").onclick = () => { cur.pop(); paint(); };
+$("bchk").onclick = () => {
+  const ok = cur.join("") === B[bi].a.join("");
+  $("slot").className = "slot " + (ok ? "ok" : "no");
+  $("bm").className = "msg " + (ok ? "ok" : "bad");
+  $("bm").textContent = ok ? "Dogry salgy!" : "Dogrusy: " + B[bi].a.join("");
+};
+$("next").onclick = () => { bi = (bi + 1) % B.length; drawB(); };
+
+/* ------------------------------------------------------------------- klassifikasiýa */
+const S = [["http://www.abcde.ru\\sch29\\team.htm", 1], ["watan.htm", 0],
+           ["image/gul.jpg", 0], ["http://bilim.edu.tm/index.htm", 1],
+           ["sport/futbol.htm", 0]];
+let sd = 0;
+S.forEach(s => {
+  const d = document.createElement("div"); d.className = "item";
+  d.innerHTML = '<span class="t">' + s[0] + "</span>";
+  const bx = document.createElement("span");
+  [["Absolýut", 1], ["Otnositel", 0]].forEach(o => {
+    const b = document.createElement("button");
+    b.className = "btn" + (o[1] ? "" : " ghost"); b.textContent = o[0];
+    b.style.marginLeft = "6px";
+    b.onclick = () => {
+      if (d.dataset.d) return;
+      d.dataset.d = "1";
+      bx.querySelectorAll(".btn").forEach(z => z.disabled = true);
+      const ok = o[1] === s[1];
+      d.className = "item " + (ok ? "ok" : "no");
+      if (ok) sd++;
+      $("sm").className = "msg " + (sd === S.length ? "ok" : "");
+      $("sm").textContent = sd + " / " + S.length + " dogry";
+    };
+    bx.appendChild(b);
+  });
+  d.appendChild(bx); $("sort").appendChild(d);
+});
+
+drawB();
+</script>
+</body>
+</html>

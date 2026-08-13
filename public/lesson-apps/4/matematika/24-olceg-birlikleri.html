@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ölçeg birlikleri — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 22px; font-weight: 800; }
+  .chain { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16.5px; line-height: 1.85; text-align: center; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sanlaryň alnyşy, ýazylyşy, okalyşy. Ölçeg birlikleri</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def"><b>Uzynlyk:</b> 1 km = 1000 m, 1 m = 100 sm, 1 sm = 10 mm.<br><b>Agyrlyk:</b> 1 t = 1000 kg, 1 sent = 100 kg, 1 kg = 1000 g.<br><b>Meýdan:</b> 1 kw. m = 100 kw. dm, 1 kw. dm = 100 kw. sm.<br><b>Wagt:</b> 1 sag = 60 min, 1 min = 60 s.</div>
+  </div>
+
+  <div class="card">
+    <h3>Birlige geçir</h3>
+    <div class="eq" id="eq"></div>
+    <div class="goal" id="goal" style="margin-top:8px">Dogry jogaby saýla.</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="chain" id="chain" style="margin-top:8px"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mysal</button>
+      <button class="btn ghost" id="hint">Kömek</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, II kitap · 121–123-nji sahypalar</div>
+</div>
+
+<script>
+// [sorag, dogry jogap, düşündiriş]
+var T = [["9 m 25 sm = ? sm", 925, "9 · 100 + 25 = 925 sm."], ["5 sent 50 kg = ? kg", 550, "5 · 100 + 50 = 550 kg."], ["7 km 300 m = ? m", 7300, "7 · 1000 + 300 = 7300 m."], ["2 sag 25 min = ? min", 145, "2 · 60 + 25 = 145 min."], ["3 kw. m = ? kw. dm", 300, "1 kw. m = 100 kw. dm, 3 · 100 = 300."], ["2 min 10 s = ? s", 130, "2 · 60 + 10 = 130 s."]];
+var VALS = [130, 145, 300, 550, 925, 7300];
+var ti = 0, d = 0, ok = 0, lock = 0;
+function show() {
+  document.getElementById("eq").textContent = T[ti][0];
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  document.getElementById("chain").textContent = "Jogaby saýlanyňdan soň düşündiriş çykar.";
+  lock = 0;
+}
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (lock) return;
+    lock = 1; d++;
+    var v = this.getAttribute("data-n"), t = T[ti], m = document.getElementById("msg");
+    if (v === String(t[1])) { ok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + t[1] + "."; }
+    document.getElementById("chain").textContent = t[2];
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+document.getElementById("hint").onclick = function () {
+  var m = document.getElementById("msg");
+  m.className = "msg";
+  m.textContent = T[ti][2];
+};
+show();
+
+var Q = [["1 tonna näçe kilograma deň?", ["1000 kg", "100 kg", "10 kg"], 0], ["1 sentner näçe kilograma deň?", ["100 kg", "1000 kg", "10 kg"], 0], ["1 kw. m näçe kwadrat desimetre deň?", ["100 kw. dm", "10 kw. dm", "1000 kw. dm"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

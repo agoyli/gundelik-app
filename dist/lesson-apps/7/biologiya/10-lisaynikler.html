@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lişaýnikler — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lişaýnikler</h1>
+  <div class="sub">Biologiýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Lişaýnik – kömelek bilen suwotynyň simbiozy bolup, Türkmenistanda 437 görnüşi duş gelýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Simbiozy ýygna</h3>
+    <div class="goal">Iki hyzmatdaşy hem işlet – lişaýnik diri bolarmy?</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Iki dürli organizmiň özara peýdaly bile ýaşamagyna simbioz diýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Üç görnüşi</h3>
+    <div class="goal">Görnüşe degip, alamatyny gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 190"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Biologiýa 7 · 10-njy tema</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["Kömelek", "komelek", false], ["Suwoty", "suwoty", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { 
+        var both = st.komelek && st.suwoty;
+        var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+        s += '<rect x="30" y="118" width="260" height="52" fill="#cfc6b0" stroke="#4a6b39" stroke-width="2"/>';
+        s += '<text x="160" y="150" font-size="10.5" fill="#4a4130" text-anchor="middle">daşyň üsti</text>';
+        if (st.komelek) for (var i = 0; i < 16; i++) {
+          var x = 40 + i * 15;
+          s += '<line x1="' + x + '" y1="118" x2="' + (x + 6) + '" y2="' + (86 + (i % 3) * 6) +
+               '" stroke="#a08858" stroke-width="2"/>';
+        }
+        if (st.suwoty) for (var i = 0; i < 12; i++)
+          s += '<circle cx="' + (48 + i * 20) + '" cy="' + (74 - (i % 2) * 8) + '" r="6" fill="#4f8f3a" stroke="#2f5a22" stroke-width="1.5"/>';
+        if (both) {
+          s += '<path d="M40 96 H280" stroke="#1d6f3c" stroke-width="3" stroke-dasharray="6 4"/>';
+          s += '<text x="160" y="42" font-size="12" fill="#14522b" text-anchor="middle">lişaýnik diri</text>';
+        } else {
+          s += '<text x="160" y="42" font-size="12" fill="#8c2a1e" text-anchor="middle">lişaýnik ýok</text>';
+        }
+        return s;
+       }
+  function readout(st) { 
+        if (st.komelek && st.suwoty)
+          return '<b>Simbioz doly.</b><br>Kömelek suw we mineral duz berýär, suwoty bolsa organiki madda döredýär.';
+        if (st.komelek) return 'Diňe kömelek bar – organiki madda döredýän ýok.';
+        if (st.suwoty) return 'Diňe suwoty bar – suw we mineral duz berýän ýok.';
+        return 'Ikisi hem ýok. Lişaýnik iki organizmiň bilelikdäki ýaşaýşydyr.';
+       }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var SP = [["kesmek şekilli", "M18 34 H106 V150 H18 Z", 62, 96, "Daşa, agajyň gabygyna gaty ýelmeşen, gopmaýan gatlak."], ["ýaprak şekilli", "M116 34 H204 V150 H116 Z", 160, 96, "Ýaprak ýaly ýasy, gyralary erkin galýan görnüş."], ["şahaly", "M214 34 H302 V150 H214 Z", 258, 96, "Şahalanýan görnüş; çolaşyk tornabeanyň boýy 40 sm-e ýetýär."]], SW = 320, SH = 190;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["Türkmenistanda näçe lişaýnik görnüşi duşýar?", ["437", "43", "4370"], 0], ["Lişaýnikde suwoty näme berýär?", ["Organiki madda", "Suw", "Mineral duz"], 0], ["Lişaýnikler nämäni kesgitleýär?", ["Arassa howany", "Topragyň şorluguny", "Ýeliň ugruny"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

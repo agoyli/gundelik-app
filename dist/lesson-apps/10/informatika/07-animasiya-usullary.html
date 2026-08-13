@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animasiýany döretmegiň usullary — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; display: flex; justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .keys { display: flex; gap: 6px; font-size: 12.5px; color: #5b6b80; margin-top: 8px; flex-wrap: wrap; }
+  .keys span { background: #f7fafd; border-radius: 8px; padding: 5px 9px; font-weight: 700; }
+  .keys span.on { background: #b9d3f2; color: #123a76; }
+  .sym { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .sym div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px; }
+  .sym b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Animasiýany döretmegiň usullary</h1>
+  <div class="sub">Hereket, traýektoriýa, forma we tekst · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Usuly saýla we süýşürgiji bilen kadrlaryň arasynda gez. 1-nji we 50-nji
+      kadrlar <b>esasy kadrlardyr</b>, aradakylary kompýuteriň özi döredýär.</div>
+    <div class="row tight" style="margin-bottom:10px">
+      <button class="btn sel" data-m="move">Hereket</button>
+      <button class="btn" data-m="path">Traýektoriýa</button>
+      <button class="btn" data-m="form">Forma</button>
+      <button class="btn" data-m="text">Tekst</button>
+    </div>
+    <div class="stage"><svg id="art" width="300" height="170" viewBox="0 0 300 170"></svg></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Kadr</span>
+      <input type="range" id="k" min="1" max="50" value="1"><span class="out" id="ko">1</span></div>
+    <div class="row">
+      <button class="btn primary" id="play">▶ Ýerine ýetirmek</button>
+      <span class="score" id="what"></span>
+    </div>
+    <div class="keys" id="keys"></div>
+    <div class="note" id="expl"></div>
+  </div>
+
+  <div class="card">
+    <h3>Simwollaryň görnüşleri</h3>
+    <div class="goal">Diňe simwollar animasiýanyň elementi bolup bilýär. Formany simwola öwürmek
+      üçin <b>F8</b> klawişi basylýar.</div>
+    <div class="sym">
+      <div><b>Grafika</b><br>Iň ýönekeýi. Sese we amala eýe däl.</div>
+      <div><b>Düwme</b><br>up, over, down, hit kadrlary bar. Oňa buýruk berip bolýar.</div>
+      <div><b>Roligiň parçasy</b><br>Öz içinde aýratyn animasiýa saklaýar.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Hereket animasiýasynda <b>Hereketiň nusgawy animasiýasyny döretmek</b>, forma animasiýasynda
+      bolsa <b>Forma animasiýasyny döretmek</b> buýrugy berilýär. Tekste forma animasiýasyny
+      ulanmak üçin ony ilki <b>Modifikasiýa – Bölmek (Ctrl + B)</b> bilen grafiki obýekte
+      öwürmelidir. Netijäni görmek üçin <b>Dolandyryş – Ýerine ýetirmek</b> ýa-da <b>Enter</b>.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let mode = "move", timer = null;
+
+const PATH = "M 30 130 L 80 40 L 130 130 L 180 40 L 230 130 L 270 60";
+const ghost = document.createElementNS("http://www.w3.org/2000/svg", "path");
+ghost.setAttribute("d", PATH);
+const LEN = (() => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.appendChild(ghost); document.body.appendChild(svg);
+  const l = ghost.getTotalLength(); svg.remove(); return l;
+})();
+
+const WORD = "SALAM";
+const START = [[36, 40], [96, 128], [150, 34], [212, 132], [262, 52]];
+
+function star(t, cx, cy) {
+  // 16 nokat: köpburçlukdan (ähli radiuslar deň) ýyldyza (nobatma-nobat uly/kiçi)
+  const pts = [];
+  for (let i = 0; i < 16; i++) {
+    const R = 58, r = 58 - t * 34;
+    const rad = (i % 2 === 0) ? R : r;
+    const a = (Math.PI * 2 * i) / 16 - Math.PI / 2;
+    pts.push(`${(cx + rad * Math.cos(a)).toFixed(1)},${(cy + rad * Math.sin(a)).toFixed(1)}`);
+  }
+  return pts.join(" ");
+}
+
+function render() {
+  const k = +$("k").value;
+  $("ko").textContent = k;
+  const t = (k - 1) / 49;
+  const A = $("art");
+
+  if (mode === "move") {
+    const x = 40 + t * 220;
+    A.innerHTML = `<line x1="40" y1="85" x2="260" y2="85" stroke="#e3edfd" stroke-width="3"/>
+      <circle cx="40" cy="85" r="8" fill="#dbe4f0"/><circle cx="260" cy="85" r="8" fill="#dbe4f0"/>
+      <circle cx="${x.toFixed(1)}" cy="85" r="22" fill="#e5007d"/>`;
+    $("what").textContent = "Hereketiň nusgawy animasiýasy";
+    $("expl").innerHTML = "1-nji kadrda obýekt çepde, 50-nji kadrda sagda. Aradaky ähli ýagdaýlary " +
+      "kompýuter özi hasaplaýar – şolara <b>aralyk freýmler</b> diýilýär.";
+  }
+
+  if (mode === "path") {
+    ghost.setAttribute("d", PATH);
+    const p = ghost.getPointAtLength(t * LEN);
+    A.innerHTML = `<path d="${PATH}" fill="none" stroke="#c9b6ef" stroke-width="2" stroke-dasharray="5 4"/>
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="14" fill="#2456b0"/>`;
+    $("what").textContent = "Traýektoriýa boýunça hereket";
+    $("expl").innerHTML = "Ugrukdyryjy gatlakda ýol çekilýär. Obýektiň merkezi ýoluň başyna we " +
+      "soňuna gabat getirilýär, galanyny programma dolandyrýar.";
+  }
+
+  if (mode === "form") {
+    A.innerHTML = `<polygon points="${star(t, 150, 85)}" fill="#e5007d"/>`;
+    $("what").textContent = "Forma animasiýasy";
+    $("expl").innerHTML = "Köpburçluk akgynly ýyldyza öwrülýär. Bu görnüşde şekili simwola " +
+      "öwürmeýärler – ol grafiki ýönekeýlerden düzülmelidir.";
+  }
+
+  if (mode === "text") {
+    const tx = WORD.split("").map((ch, i) => {
+      const [sx, sy] = START[i];
+      const ex = 62 + i * 44, ey = 92;
+      const x = sx + (ex - sx) * t, y = sy + (ey - sy) * t;
+      const rot = (1 - t) * (i % 2 ? 40 : -40);
+      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="34" font-weight="800"
+        fill="#2456b0" text-anchor="middle" transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})">${ch}</text>`;
+    }).join("");
+    A.innerHTML = tx;
+    $("what").textContent = "Tekstiň animasiýasy";
+    $("expl").innerHTML = "Söz <b>Ctrl + B</b> bilen harplara bölünýär, soňra her harp " +
+      "aýratyn gatlaga geçirilýär. Şeýlelikde her harp öz ýoly bilen hereket edýär.";
+  }
+
+  $("keys").innerHTML = [1, 50].map(n =>
+    `<span class="${k === n ? "on" : ""}">${n}-nji kadr – esasy kadr</span>`).join("") +
+    `<span>${k > 1 && k < 50 ? k + "-nji kadr – aralyk kadr" : "aralyk kadrlar: 2–49"}</span>`;
+}
+
+$("k").addEventListener("input", render);
+document.querySelectorAll("[data-m]").forEach(b => b.onclick = () => {
+  mode = b.dataset.m;
+  document.querySelectorAll("[data-m]").forEach(x => x.className = "btn" + (x.dataset.m === mode ? " sel" : ""));
+  render();
+});
+$("play").onclick = () => {
+  if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Ýerine ýetirmek"; return; }
+  $("play").textContent = "⏸ Duruzmak";
+  $("k").value = 1;
+  timer = setInterval(() => {
+    const v = +$("k").value + 1;
+    if (v > 50) { clearInterval(timer); timer = null; $("play").textContent = "▶ Ýerine ýetirmek"; return; }
+    $("k").value = v; render();
+  }, 1000 / 24);
+};
+
+render();
+</script>
+</body>
+</html>

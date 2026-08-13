@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ikibelgili sana köpeltmek — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .col { background: #fff6e0; border-radius: 13px; padding: 14px 10px; font-family: ui-monospace, Menlo, monospace; font-size: 22px; font-weight: 800; line-height: 1.55; text-align: right; }
+  .col .ln { border-bottom: 3px solid #1e2a3a; padding-bottom: 3px; }
+  .col .pad { padding-right: 14px; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Köpbelgili sany ikibelgili sana ýazuw arkaly köpeltmek</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ilki birlikleriň sanyna köpeldip <b>birinji doly däl köpeltmek hasylyny</b>,
+      soňra onluklaryň sanyna köpeldip <b>ikinji doly däl köpeltmek hasylyny</b> alýarys.
+      Olary goşup, umumy hasyly tapýarys: 45 · 62 = 90 + 2700 = 2790.</div>
+  </div>
+
+  <div class="card">
+    <h3>Üç ädimde köpelt</h3>
+    <div class="col" id="col"></div>
+    <div class="goal" id="ask" style="margin-top:8px"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mysal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, II kitap · 43–46-njy sahypalar</div>
+</div>
+
+<script>
+var T = [[45, 62], [37, 24], [123, 32], [58, 43], [214, 26]];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function a() { return T[ti][0]; }
+function b() { return T[ti][1]; }
+function p1() { return a() * (b() % 10); }
+function p2() { return a() * (b() - b() % 10); }
+function res() { return a() * b(); }
+function show() {
+  var s = '<div class="pad">' + a() + "</div>";
+  s += '<div class="ln pad">· ' + b() + "</div>";
+  s += '<div class="pad">' + (stage >= 1 ? p1() : "?") + "</div>";
+  s += '<div class="ln">' + (stage >= 2 ? (p2() / 10) : "?") + "&nbsp;&nbsp;</div>";
+  s += '<div class="pad">' + (stage >= 3 ? res() : "?") + "</div>";
+  document.getElementById("col").innerHTML = s;
+  document.getElementById("ask").textContent =
+    stage === 0 ? ("1-nji ädim: " + a() + " · " + (b() % 10) + " näçe bolar?") :
+    stage === 1 ? ("2-nji ädim: " + a() + " · " + (b() - b() % 10) + " näçe bolar?") :
+    stage === 2 ? ("3-nji ädim: " + p1() + " + " + p2() + " näçe bolar?") : "Mysal çözüldi.";
+  var m = document.getElementById("msg");
+  m.className = stage === 3 ? "msg ok" : "msg";
+  m.textContent = stage === 3 ?
+    (a() + " · " + b() + " = " + p1() + " + " + p2() + " = " + res() + ".") : "";
+}
+function want() { return stage === 0 ? p1() : (stage === 1 ? p2() : res()); }
+var VALS = [];
+for (var i = 0; i < T.length; i++) {
+  var x = T[i][0], y = T[i][1];
+  VALS.push(x * (y % 10), x * (y - y % 10), x * y);
+}
+VALS.sort(function (p, q) { return p - q; });
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= 3) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("msg");
+    var w = want();
+    d++;
+    if (v === w) {
+      ok++; stage++; show();
+      if (stage === 1) { m.className = "msg ok"; m.textContent = "Birinji doly däl köpeltmek hasyly tapyldy."; }
+      else if (stage === 2) { m.className = "msg ok"; m.textContent = "Ikinji doly däl köpeltmek hasyly tapyldy. Indi goş."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = stage === 0 ? "Ýalňyş. Birlikleriň sanyna köpelt." :
+        (stage === 1 ? "Ýalňyş. Onluklaryň sanyna köpelt." : "Ýalňyş. Iki hasyly goş.");
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["45 · 62 näçe bolar?", ["2790", "2700", "279"], 0],
+  ["Ikinji doly däl köpeltmek hasyly nämä köpeldilende alynýar?",
+   ["Onluklaryň sanyna", "Birlikleriň sanyna", "Ýüzlükleriň sanyna"], 0],
+  ["37 · 24 näçe bolar?", ["888", "848", "788"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a2 = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a2 === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

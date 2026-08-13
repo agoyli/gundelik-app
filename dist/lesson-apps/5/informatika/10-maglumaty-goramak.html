@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maglumaty goramak — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 11px 6px; border-radius: 12px; font-size: 14px; font-weight: 700; background: #e8eef7; color: #5b6b80; }
+  .tab.active { background: #2456b0; color: #fff; }
+  .lock { text-align: center; font-size: 46px; }
+  .pw {
+    text-align: center; font-size: 24px; font-weight: 800; letter-spacing: 2px;
+    background: #f4f7fb; border-radius: 10px; padding: 12px; min-height: 52px; word-break: break-all;
+  }
+  .bar { height: 14px; border-radius: 8px; background: #e3ebf5; overflow: hidden; margin: 10px 0 6px; }
+  .bar span { display: block; height: 100%; transition: width .3s, background .3s; }
+  .checks { font-size: 14.5px; line-height: 1.8; }
+  .checks .y { color: #1d7a3d; } .checks .n { color: #b02424; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .situation {
+    background: #f4f7fb; border-radius: 14px; padding: 16px 12px; text-align: center;
+    font-size: 16px; font-weight: 700; line-height: 1.5; min-height: 92px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .situation .ico { font-size: 32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maglumaty goramak</h1>
+  <div class="sub">Parol, ätiýaçlyk nusga we seresaplyk · Informatika · 5-nji synp</div>
+
+  <div class="tabs">
+    <button class="tab active" data-t="pw">Parol ýasa</button>
+    <button class="tab" data-t="vir">Wiruslar</button>
+    <button class="tab" data-t="game">Näme etmeli?</button>
+  </div>
+
+  <div id="paneVir" style="display:none">
+    <div class="card">
+      <div class="note">Kitap: «<b>Wiruslar</b> – öz nusgalaryny döretmäge we olary
+        kompýuteriň faýllaryna we ulgam bölegine ornaşdyrmaga ukyby bolan zyýanly
+        programmalardyr.»</div>
+      <h3 style="margin-top:12px">Zäherleýän obýektleri boýunça wiruslaryň bölünişi</h3>
+      <div id="vir"></div>
+    </div>
+    <div class="card">
+      <h3>Wiruslardan goranmagyň usullary</h3>
+      <div class="checks" id="prot"></div>
+    </div>
+    <div class="card">
+      <div class="note">
+        <b>Kibergiňişlik</b> – bu kiberobýektleriň hereketleriniň we olaryň özara
+        täsirleriniň amala aşyrylýan giňişligidir. <b>Kiberhowpsuzlyk</b> – kibergiňişligiň
+        düzüjilerini ýaramaz netijelere getirmegi mümkin bolan howplardan (kiberhüjümlerden)
+        we täsirlerden goramak şertleriniň jemidir. Programmalaşdyrylýan serişdeleriň kömegi
+        bilen dolandyrylýan islendik obýekt <b>kiberobýekt</b> bolup biler.
+      </div>
+    </div>
+  </div>
+
+  <div id="panePw">
+    <div class="card">
+      <div class="lock" id="lock">🔓</div>
+      <div class="pw" id="pw">—</div>
+      <div class="bar"><span id="barFill" style="width:0%"></span></div>
+      <div class="checks" id="checks"></div>
+      <div class="keys" id="keys"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost" id="clrBtn">Poz</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="note">
+        Kitap: «Ynamdar parol diýlende, <b>simwollardan we sanlardan</b> ybarat parol
+        goýmaklyk göz öňünde tutulýar. Ýöne öz ýadyňyzda galjak paroly goýmalydyr.»
+        Paroly üýtgetmek üçin <b>Пуск → Параметры → Учетные записи → Параметры входа →
+        Изменить</b> yzygiderligini ýerine ýetirmeli. Möhüm faýllary <b>WinRAR</b> ýa-da
+        <b>ZIP</b> bilen arhiwläp, arhiwe hem parol goýup bolýar.
+      </div>
+    </div>
+  </div>
+
+  <div id="paneGame" style="display:none">
+    <div class="card">
+      <div class="situation" id="sit"></div>
+      <div class="row" id="opts" style="margin-top:12px"></div>
+      <div class="msg" id="msg"></div>
+      <div class="score" id="score"></div>
+    </div>
+    <div class="card">
+      <div class="note">
+        Möhüm maglumatlaryň <b>ätiýaçlyk nusgasyny</b> saklamaly.
+        Näbelli çeşmelerden gelen faýllary açmaly däl — olar zyýanly bolup biler.
+        Depderiňi ýitirseň, ondaky ýazgylar hem ýitýär — kompýuterdäki maglumat hem şeýle.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+// ---------- parol ----------
+let pw = "";
+const WEAK = ["1234", "12345", "0000", "1111", "parol", "password", "aman", "merjen"];
+
+function renderPw() {
+  document.getElementById("pw").textContent = pw || "—";
+  const hasSym = /[a-zA-ZäöüňýşçžÄÖÜŇÝŞÇŽ\-_?!]/.test(pw);
+  const hasDigit = /\d/.test(pw);
+  const notWeak = pw.length > 0 && !WEAK.some(w => pw.toLowerCase().includes(w));
+  const rules = [
+    [hasSym, "Simwollar bar (harplar, nyşanlar)"],
+    [hasDigit, "Sanlar bar"],
+    [notWeak, "Aňsat çaklanýan söz däl"]
+  ];
+  const score = rules.filter(r => r[0]).length;
+  document.getElementById("checks").innerHTML = rules
+    .map(([ok, t]) => `<div class="${ok ? "y" : "n"}">${ok ? "✓" : "✗"} ${t}</div>`).join("");
+  const fill = document.getElementById("barFill");
+  fill.style.width = (score / 3 * 100) + "%";
+  fill.style.background = score <= 1 ? "#e2574c" : score === 2 ? "#ffb340" : "#1d7a3d";
+  document.getElementById("lock").textContent = score === 3 ? "🔒" : score >= 1 ? "🔐" : "🔓";
+}
+
+const KEYSET = ["a", "b", "m", "s", "T", "G", "Ý", "Ş", "1", "5", "7", "9", "-", "_", "?", "!"];
+const kbox = document.getElementById("keys");
+KEYSET.forEach(k => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = k;
+  b.onclick = () => { if (pw.length < 16) { pw += k; renderPw(); } };
+  kbox.appendChild(b);
+});
+document.getElementById("clrBtn").onclick = () => { pw = ""; renderPw(); };
+
+// ---------- wiruslar (kitap, sah. 68) ----------
+const VIR = [
+  ["💽 Ýükleýji wiruslar",
+   "Hemişelik we çalşyrylýan (gaty diskler) göterijileriň ýükleýji sektorlaryny zäherleýärler."],
+  ["📄 Faýl wiruslary",
+   "OS-yň resurslaryna täsir edip, faýllaryň düzümini doly ýa-da bölekleýin üýtgedýär. " +
+   "Şeýle-de faýlyň çalşyrylmagy (faýlyň ekiz taýy) mümkin."],
+  ["📝 Makrowiruslar",
+   "Makrobuýruklaryň kömegi bilen ýazylýar we programmanyň gurşawynda ýerine ýetirilýär " +
+   "(köplenç Microsoft Office); dokumentleri we elektron tablisalary zäherleýär."],
+  ["🌐 Tor wiruslary",
+   "Zäherleýjilik ukyby boýunça rezident we rezident däl ýagdaýda bolýarlar. Rezident " +
+   "wiruslar kompýuter öçürilmänkä onuň ýadynda saklanýar."],
+];
+document.getElementById("vir").innerHTML = VIR.map((v, i) =>
+  `<div class="situation" data-v="${i}" style="min-height:0;padding:12px;margin-bottom:7px">
+     <div>${v[0]}</div><div class="expl" id="ve${i}"></div></div>`).join("");
+document.querySelectorAll("[data-v]").forEach(d => d.onclick = () => {
+  document.getElementById("ve" + d.dataset.v).textContent = VIR[+d.dataset.v][1];
+});
+const PROT = [
+  "kanuny we öz wagtynda täzelenýän antiwirus programmalardan peýdalanmaly",
+  "kompýuteri wagtal-wagtal barlamaly (wirusyň barlygyny ýoklugyny anyklamaly)",
+  "maglumat saklaýjy gurluşlary açmazdan öň elmydama barlamaly",
+  "Internetde salgylanmalar boýunça hereket edilende seresap bolmaly",
+  "hödürlenýän programmalary işe goýbermeli däl",
+  "wagtal-wagtal wajyp maglumatlary nusgalap (kopiýalap) durmaly",
+];
+document.getElementById("prot").innerHTML =
+  PROT.map(p => `<div class="y">✓ ${p}</div>`).join("");
+
+// ---------- game ----------
+const CASES = [
+  {
+    ico: "📧", t: "Näbelli adamdan «Baýrak utduň!» diýen faýl geldi.",
+    opts: [["Faýly açmaly", false], ["Açmaly däl, ulula aýtmaly", true]],
+    why: "Näbelli çeşmelerden gelen faýllary açmaly däl — olar zyýanly bolup biler."
+  },
+  {
+    ico: "👥", t: "Dostuň parolyňy soraýar.",
+    opts: [["Aýtmaly", false], ["Aýtmaly däl", true]],
+    why: "Paroly keseki adamlara aýtmaly däl — dostuňa hem."
+  },
+  {
+    ico: "📁", t: "Ýyllyk taslamaň diňe bir kompýuterde saklanýar.",
+    opts: [["Şeýle galsyn", false], ["Ätiýaçlyk nusgasyny almaly", true]],
+    why: "Möhüm maglumatlaryň ätiýaçlyk nusgasyny saklamaly — kompýuter döwlese, maglumat ýitýär."
+  },
+  {
+    ico: "🔑", t: "Parol edip «1234» saýladyň.",
+    opts: [["Gowy parol", false], ["Gowşak — üýtgetmeli", true]],
+    why: "Aňsat çaklanýan parollar goragy üpjün etmeýär."
+  },
+  {
+    ico: "💻", t: "Kompýuteriňden gidip barýarsyň, faýllaryň açyk.",
+    opts: [["Şeýle galdyrmaly", false], ["Ekrany gulplamaly", true]],
+    why: "Maglumaty keseki adamlaryň eline düşmekden goramaly."
+  },
+  {
+    ico: "📝", t: "Paroly ekranyň gyrasyna kagyzda ýelmediň.",
+    opts: [["Amatly, bolýar", false], ["Beýle etmeli däl", true]],
+    why: "Paroly beýlekileriň görjek ýerinde goýmak — ony aýdan ýaly bolýar."
+  }
+];
+let gi = 0, gRight = 0, gDone = 0;
+
+function renderGame() {
+  const s = document.getElementById("sit");
+  const o = document.getElementById("opts");
+  o.innerHTML = "";
+  if (gi >= CASES.length) {
+    s.innerHTML = `<div class="ico">🏅</div><div>Tamamlandy! Dogry jogap: ${gRight} / ${gDone}</div>`;
+    const b = document.createElement("button");
+    b.className = "btn primary"; b.textContent = "↻ Täzeden";
+    b.onclick = () => { gi = 0; gRight = 0; gDone = 0; document.getElementById("msg").textContent = ""; renderGame(); };
+    o.appendChild(b);
+    return;
+  }
+  const c = CASES[gi];
+  s.innerHTML = `<div class="ico">${c.ico}</div><div>${c.t}</div>`;
+  c.opts.forEach(([label, ok]) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = label;
+    b.onclick = () => {
+      gDone++;
+      if (ok) gRight++;
+      const m = document.getElementById("msg");
+      m.innerHTML = (ok ? "✅ Dogry! " : "❌ Ýalňyş. ") + c.why;
+      m.className = "msg " + (ok ? "ok" : "bad");
+      document.getElementById("score").textContent = `Dogry: ${gRight} / ${gDone}`;
+      gi++;
+      setTimeout(renderGame, 1600);
+    };
+    o.appendChild(b);
+  });
+}
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  const k = t.dataset.t;
+  document.getElementById("panePw").style.display = k === "pw" ? "" : "none";
+  document.getElementById("paneVir").style.display = k === "vir" ? "" : "none";
+  document.getElementById("paneGame").style.display = k === "game" ? "" : "none";
+});
+
+renderPw();
+renderGame();
+</script>
+</body>
+</html>

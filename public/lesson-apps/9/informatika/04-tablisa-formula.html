@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablisa, formula, gipertekst — 9-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .page { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; padding: 16px;
+          font-size: 15px; line-height: 1.7; min-height: 150px; }
+  .page h4 { font-size: 17px; margin-bottom: 8px; }
+  .page ul, .page ol { margin: 6px 0 6px 22px; }
+  .page ul ul { margin-left: 18px; }
+  .page li { margin: 2px 0; }
+  .page table { border: 1px solid #b8c6d8; margin: 8px 0; }
+  .page th, .page td { border: 1px solid #d6e0ee; padding: 6px 9px; }
+  .page th { background: #e3edfd; text-align: center; font-weight: 700; color: #1e2a3a; }
+  .page td.merged { background: #f7fafd; text-align: center; }
+  .page .fx { font-family: Georgia, serif; font-size: 17px; }
+  .page a { color: #2456b0; text-decoration: underline; cursor: pointer; }
+  .page .anchor { background: #fff7d6; border-radius: 3px; padding: 0 2px; }
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 7px; }
+  .tools .btn { font-size: 13px; padding: 10px 6px; }
+  .fbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .fbar input { padding: 9px; border-radius: 9px; border: 2px solid #d6e0ee; width: 110px; font-size: 15px; }
+  .sup, .sub { font-size: 11px; vertical-align: super; }
+  .sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sanawlar, tablisalar, formulalar</h1>
+  <div class="sub">Tekst dokumentine ornaşdyrmak. Gipertekst · Informatika · 9-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Dokumente elementleri goş we netijäni gör. Aşakdaky gipersalgylanmalara
+      basyp bolýar.</div>
+    <div class="page" id="page"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Вставка</h3>
+    <div class="tools" id="tools"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" id="clear">Dokumenti arassala</button>
+      <span class="score" id="score"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Formula gurluşy</h3>
+    <div class="goal">Indeksi <b>Надстрочный</b> (ýokary) ýa-da <b>Подстрочный</b> (aşaky)
+      görnüş üýtgemesi bilen goýmaly.</div>
+    <div class="fbar">
+      <input id="base" value="a" maxlength="6">
+      <input id="idx" value="2" maxlength="4">
+      <button class="btn" id="up">Надстрочный aⁿ</button>
+      <button class="btn" id="dn">Подстрочный aₙ</button>
+      <button class="btn" id="pi">π simwoly</button>
+    </div>
+    <div class="hint" id="fout">Netije şu ýerde görüner.</div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="addF">Formulany dokumente goş</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Sanaw</b> – tertipleşdirilen gutarnykly elementleriň toplumydyr; üç görnüşi bar:
+      markerlenen, san bilen belgilenen we köpderejeli. <b>Tablisa</b> – gözeneklere bölünen
+      gönüburçluk, gözeneklere <b>öýjükler</b> diýilýär. <b>Gipertekst</b> tekstiň
+      elementleriniň arasynda geçmäge mümkinçilik berýär: ilki <b>zakladka</b>, soňra
+      <b>gipersalgylanma</b> döredilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 9 (2021)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let blocks = [], seq = 0;
+
+const TOOLS = [
+  { l: "Markerlenen sanaw", make: () => ({ t: "ul", label: "markerlenen sanaw" }) },
+  { l: "San bilen sanaw", make: () => ({ t: "ol", label: "san bilen belgilenen sanaw" }) },
+  { l: "Köpderejeli sanaw", make: () => ({ t: "multi", label: "köpderejeli sanaw" }) },
+  { l: "Таблица (tablisa)", make: () => ({ t: "table", label: "tablisa", merged: false }) },
+  { l: "Öýjükleri birleşdir", act: () => {
+      const t = blocks.find(b => b.t === "table");
+      if (!t) return "Ilki tablisa goş.";
+      t.merged = !t.merged;
+      return t.merged
+        ? "Объединить ячейки: 1-nji setiriň iki öýjügi birleşdirildi."
+        : "Разделить ячейки: birleşen öýjük ýene iki öýjüge bölündi."; } },
+  { l: "WordArt ýazgy", make: () => ({ t: "wa", label: "WordArt dekoratiw ýazgy" }) },
+  { l: "Закладка + Гиперссылка", make: () => ({ t: "link", label: "gipersalgylanma" }) }
+];
+
+TOOLS.forEach(x => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = x.l;
+  b.onclick = () => {
+    if (x.act) { msg(x.act(), "ok"); render(); return; }
+    const o = x.make(); o.id = ++seq;
+    blocks.push(o);
+    msg(`Dokumente ${o.label} goşuldy.`, "ok");
+    render();
+  };
+  $("tools").appendChild(b);
+});
+
+function msg(t, cls) { $("msg").textContent = t; $("msg").className = "msg" + (cls ? " " + cls : ""); }
+
+function render() {
+  const P = $("page");
+  let h = "<h4>Türkmenistanyň welaýatlary</h4>";
+  if (!blocks.length) h += '<div style="color:#93a2b5">Dokument boş. Aşakdan element goş.</div>';
+
+  blocks.forEach(b => {
+    if (b.t === "ul") h += `<ul><li>Ahal</li><li>Balkan</li><li>Daşoguz</li><li>Lebap</li><li>Mary</li></ul>`;
+    if (b.t === "ol") h += `<ol><li>Ahal</li><li>Balkan</li><li>Daşoguz</li><li>Lebap</li><li>Mary</li></ol>`;
+    if (b.t === "multi") h += `<ul><li>Ahal welaýaty<ul><li>Änew şäheri</li><li>Tejen şäheri</li></ul></li>
+                               <li>Mary welaýaty<ul><li>Mary şäheri</li><li>Baýramaly şäheri</li></ul></li></ul>`;
+    if (b.t === "table") {
+      h += `<table><tr>` +
+        (b.merged
+          ? `<th colspan="2" class="merged">Welaýat we merkezi</th><th>Meýdany (müň kw.km)</th>`
+          : `<th>Welaýat</th><th>Merkezi</th><th>Meýdany (müň kw.km)</th>`) +
+        `</tr>
+        <tr><td>Ahal</td><td>Änew şäheri</td><td style="text-align:right">97,16</td></tr>
+        <tr><td>Balkan</td><td>Balkanabat şäheri</td><td style="text-align:right">139,3</td></tr>
+        <tr><td>Mary</td><td>Mary şäheri</td><td style="text-align:right">87,1</td></tr></table>`;
+    }
+    if (b.t === "wa") h += `<div style="font-family:Georgia,serif;font-size:26px;font-weight:800;
+      background:linear-gradient(90deg,#2456b0,#6a4bb8);-webkit-background-clip:text;
+      background-clip:text;color:transparent;margin:8px 0">Watanym — Başymyň täji</div>`;
+    if (b.t === "fx") h += `<div class="fx">${b.html}</div>`;
+    if (b.t === "link") h += `<div style="margin-top:8px">Jikme-jik maglumat üçin
+      <a data-go="1">Meýdanlaryň tablisasyna</a> geç.</div>`;
+  });
+
+  if (blocks.some(b => b.t === "link"))
+    h += `<div style="margin-top:10px;font-size:13px;color:#93a2b5">
+          Zakladka: <span class="anchor" id="anchor">Meýdanlar</span></div>`;
+
+  P.innerHTML = h;
+  P.querySelectorAll("[data-go]").forEach(a => a.onclick = () => {
+    const t = P.querySelector("table") || $("anchor");
+    if (t) { t.scrollIntoView({ behavior: "smooth", block: "center" });
+      msg("Gipersalgylanma işledi – kursor zakladka bellenen ýere geçdi.", "ok"); }
+    else msg("Salgylanma bar, ýöne zakladka bellenen bölek ýok. Ilki tablisa goş.", "bad");
+  });
+
+  $("score").textContent = `Dokumentdäki element: ${blocks.length}`;
+}
+
+// ---- formula builder ----
+let fhtml = "";
+function setF(h) { fhtml = h; $("fout").innerHTML = '<span class="fx" style="font-size:19px">' + h + "</span>"; }
+$("up").onclick = () => setF(`${$("base").value}<span class="sup">${$("idx").value}</span>`);
+$("dn").onclick = () => setF(`${$("base").value}<span class="sub">${$("idx").value}</span>`);
+$("pi").onclick = () => setF(`L = 2&pi;R`);
+$("addF").onclick = () => {
+  if (!fhtml) { msg("Ilki formulany gur.", "bad"); return; }
+  blocks.push({ t: "fx", html: fhtml, id: ++seq, label: "formula" });
+  msg("Formula dokumente goşuldy.", "ok"); render();
+};
+$("clear").onclick = () => { blocks = []; msg(""); render(); };
+
+setF('a<span class="sup">2</span> + b<span class="sup">2</span> = c<span class="sup">2</span>');
+render();
+</script>
+</body>
+</html>

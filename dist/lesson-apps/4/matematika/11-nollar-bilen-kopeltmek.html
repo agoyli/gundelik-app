@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nollar bilen gutarýan sany köpeltmek — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 26px; font-weight: 800; }
+  .chain { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 17px; line-height: 1.9; text-align: center; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Soňy nollar bilen gutarýan sany birbelgili sana köpeltmek</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def">Sanyň soňundaky <b>nollary hasaba almazdan</b> köpeltmeli, soňra alnan
+      hasyla şol nollary <b>ýazmaly</b>: 5600 · 6 → 56 · 6 = 336 → <b>33 600</b>.</div>
+  </div>
+
+  <div class="card">
+    <h3>Iki ädimde köpelt</h3>
+    <div class="eq" id="eq"></div>
+    <div class="chain" id="chain" style="margin-top:8px"></div>
+    <div class="goal" id="ask"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mysal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, I kitap · 119–121-nji sahypalar</div>
+</div>
+
+<script>
+// [san, köpeldiji, nollaryň sany]
+var T = [[5600, 6, 2], [340, 8, 1], [7000, 4, 3], [820, 3, 1], [1200, 7, 2]];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function base() { return T[ti][0] / Math.pow(10, T[ti][2]); }
+function mid() { return base() * T[ti][1]; }
+function res() { return T[ti][0] * T[ti][1]; }
+function zeros() { var s = ""; for (var i = 0; i < T[ti][2]; i++) s += "0"; return s; }
+function show() {
+  var t = T[ti];
+  document.getElementById("eq").textContent = t[0] + " · " + t[1] + " = ?";
+  var l = "Nollary aýyr: " + base() + " · " + t[1];
+  if (stage >= 1) l += "<br>= " + mid() + ", indi " + t[2] + " sany nol goş";
+  if (stage >= 2) l += "<br><b>= " + res() + "</b>";
+  document.getElementById("chain").innerHTML = l;
+  document.getElementById("ask").textContent = stage === 0 ?
+    ("1-nji ädim: " + base() + " · " + t[1] + " näçe bolar?") :
+    (stage === 1 ? ("2-nji ädim: " + mid() + " sanyna " + t[2] + " sany nol goşsak näçe bolar?") :
+      "Mysal çözüldi.");
+  var m = document.getElementById("msg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ? (t[0] + " · " + t[1] + " = " + res() + ".") : "";
+}
+var VALS = [28, 84, 246, 272, 336, 2460, 2720, 8400, 24600, 27200, 28000, 33600];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= 2) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("msg");
+    var w = stage === 0 ? mid() : res();
+    d++;
+    if (v === w) {
+      ok++; stage++; show();
+      if (stage === 1) { m.className = "msg ok"; m.textContent = "Dogry! Indi nollary ýerine goý."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = stage === 0 ? "Ýalňyş. Nollary hasaba almazdan köpelt." :
+        ("Ýalňyş. Hasylyň soňuna " + zeros() + " ýazmaly.");
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["5600 · 6 näçe bolar?", ["33 600", "3360", "336 000"], 0],
+  ["Nollar bilen gutarýan sany köpeltmekde ilki näme etmeli?",
+   ["Nollary hasaba almazdan köpeltmeli", "Nollary köpeltmeli", "Nollary aýyrmaly"], 0],
+  ["340 · 8 näçe bolar?", ["2720", "272", "27 200"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

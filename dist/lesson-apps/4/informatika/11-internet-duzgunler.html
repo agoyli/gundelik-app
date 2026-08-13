@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internetden peýdalanmagyň düzgünleri — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .scene { background: #f7fafd; border-radius: 14px; padding: 12px; font-size: 15.5px;
+           line-height: 1.65; }
+  .scene .em { font-size: 30px; display: block; margin-bottom: 5px; }
+  .opts button { width: 100%; text-align: left; min-height: 52px; font-size: 14.5px;
+                 line-height: 1.4; padding: 10px 12px; margin-bottom: 6px; }
+  .rules { display: grid; gap: 7px; }
+  .rules div { background: #f7fafd; border-radius: 12px; padding: 9px 11px; font-size: 14px;
+               line-height: 1.5; }
+  .rules b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Internetden peýdalanmagyň düzgünleri</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <h3>Ýagdaýy çöz</h3>
+    <div class="scene" id="sc1"></div>
+    <div class="opts" id="op" style="margin-top:9px"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn primary" id="next" style="display:none">➡️ Indiki ýagdaý</button>
+      <button class="btn ghost" id="again" style="display:none">🔄 Başdan</button>
+    </div>
+    <div class="score" id="sco"></div>
+  </div>
+
+  <div class="card">
+    <h3>Internet torunda berjaý edilmeli düzgünler</h3>
+    <div class="goal">Kitap, sah. 102–103. Internetde-de garagollar we zyýan berijiler
+      peýda boldular – şonuň üçin özüňizi şolar ýaly adamlardan goramaly.</div>
+    <div class="rules">
+      <div>1. Diňe <b>öz ýoldaşlaryňyz ýa-da dogan-garyndaşlaryňyz</b> bilen gürleşiň
+        we hat alşyň.</div>
+      <div>2. Internetde <b>nätanyş adamlary bloga düşürmeli</b> (daşyny gabamaly).</div>
+      <div>3. Internetde öz <b>şahsy maglumatlaryňyzy: ýaşyňyzy, telefon belgiňizi,
+        öý salgyňyzy bermeli däl</b>.</div>
+      <div>4. <b>Mylakatly</b> bolmaly. Mydama ilki bilen salamlaşmaly we Internetden
+        çykanyňyzda hoşlaşmaly.</div>
+      <div>5. <b>Artykmaç soraglara jogap bermäň.</b> Mysal üçin, «Haçan sen öýde ýeke
+        galýarsyň?» we ş. m.</div>
+      <div>6. Hat alşanyňyzda <b>gödek sözleri ulanmak bolmaýar</b>.</div>
+      <div>7. <b>Diňe rugsat berilýän saýtlara</b> girip bilersiňiz.</div>
+      <div>8. <b>Ululardan rugsat bolmasa, Internetden hiç hili maglumat geçirip
+        almaly däl.</b></div>
+      <div>9. Eger torda bir zat sizi alada goýsa, onda muny <b>ata-eneleriňize ýa-da
+        özüňizden ululara habar beriň</b>.</div>
+      <div>10. <b>Rugsatsyz başga adamlar barada maglumat bermäň.</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const SCENES = [
+  {em: "💬", r: 3,
+   t: "Söhbetdeşlikde nätanyş adam: «Ýaşyňy, telefon belgiňi we öý salgyňy ýaz, men " +
+      "size sowgat ibererin» diýýär. Näme edersiň?",
+   o: [["Ählisini ýazaryn", "3-nji düzgün: şahsy maglumatlary bermeli däl."],
+       ["Ýazmaryn we ululara aýdaryn",
+        "Dogry! 3-nji düzgün: ýaşyňy, telefon belgiňi, öý salgyňy bermeli däl."],
+       ["Diňe telefon belgimi ýazaryn", "Telefon belgisi hem şahsy maglumat – ol hem bolmaýar."]],
+   a: 1},
+  {em: "🏠", r: 5,
+   t: "Nätanyş biri: «Haçan sen öýde ýeke galýarsyň? Öýüň açaryny nirede saklaýarsyňyz?» " +
+      "diýip soraýar.",
+   o: [["Jogap bermerin – bu artykmaç sorag",
+        "Dogry! 5-nji düzgün: artykmaç soraglara jogap bermeli däl."],
+       ["Dogrusyny ýazaryn", "Bu soraglar hut şol düzgünde mysal edilip getirilýär."],
+       ["Ýalan jogap ýazaryn", "Söhbetdeşligi dowam etdirmegiň özi howply."]],
+   a: 0},
+  {em: "🙂", r: 4,
+   t: "Söhbetdeşlige ýaňy girdiň. Ilkinji näme etmeli?",
+   o: [["Derrew soragymy ýazaryn", "4-nji düzgün mylakatly bolmagy talap edýär."],
+       ["Salamlaşmaly, çykanymda hoşlaşmaly",
+        "Dogry! 4-nji düzgün: mydama ilki salamlaşmaly, çykanyňda hoşlaşmaly."],
+       ["Hiç zat ýazman diňe okaryn", "Salamlaşmak edepliligiň alamaty."]],
+   a: 1},
+  {em: "😡", r: 6,
+   t: "Hat alşanyňda biri saňa gödek söz ýazdy. Näme edersiň?",
+   o: [["Men hem gödek jogap ýazaryn", "6-njy düzgün: gödek sözleri ulanmak bolmaýar."],
+       ["Gödek söz ulanman, ýazyşmany bes ederin we ululara habar bererin",
+        "Dogry! 6-njy we 9-njy düzgünler."],
+       ["Ähli dostlaryma paýlaşaryn", "Gödek sözi ýaýratmak ýagdaýy erbetleşdirýär."]],
+   a: 1},
+  {em: "🌐", r: 7,
+   t: "Gözlegde tanamaýan saýtyň salgysy çykdy. Oňa girip bolarmy?",
+   o: [["Hawa, islendik saýta girip bolýar", "7-nji düzgün muňa ýol bermeýär."],
+       ["Diňe rugsat berilýän saýtlara girmeli",
+        "Dogry! 7-nji düzgün: diňe rugsat berilýän saýtlara girip bolýar."],
+       ["Gijelerine girip bolýar", "Wagtyň bu ýerde ähmiýeti ýok."]],
+   a: 1},
+  {em: "⬇️", r: 8,
+   t: "Sapak üçin gyzykly surat tapdyň we ony kompýutere geçirip almakçy.",
+   o: [["Ilki ululardan rugsat soraryn",
+        "Dogry! 8-nji düzgün: ululardan rugsat bolmasa maglumat geçirip almaly däl."],
+       ["Rugsatsyz ýükläris", "8-nji düzgün muňa ýol bermeýär."],
+       ["Hiç haçan hiç zat ýüklemeli däl", "Ululardan rugsat bilen ýüklemek bolýar."]],
+   a: 0},
+  {em: "🤐", r: 10,
+   t: "Nätanyş biri seniň synpdaşyň telefon belgisini soraýar.",
+   o: [["Bererin, ol meniňki däl ahyry",
+        "10-njy düzgün: rugsatsyz başga adamlar barada maglumat bermeli däl."],
+       ["Bermerin – bu başga adamyň maglumaty", "Dogry! 10-njy düzgün."],
+       ["Diňe ady bilen mekdebini aýdaryn", "Bu hem başga adam barada maglumat."]],
+   a: 1},
+];
+let si = 0, done = 0, right = 0;
+
+function show() {
+  const s = SCENES[si];
+  $("sc1").innerHTML = `<span class="em">${s.em}</span>${s.t}`;
+  $("op").innerHTML = s.o.map((o, j) =>
+    `<button class="btn" data-j="${j}">${o[0]}</button>`).join("");
+  $("op").querySelectorAll("button").forEach(b => b.onclick = () => pick(+b.dataset.j, b));
+  $("msg").textContent = ""; $("msg").className = "msg";
+  $("next").style.display = "none";
+  $("again").style.display = "none";
+}
+function pick(j, b) {
+  const s = SCENES[si];
+  if ($("next").style.display !== "none") return;
+  const good = j === s.a;
+  b.classList.add("sel");
+  done++; if (good) right++;
+  $("msg").textContent = (good ? "✅ " : "❌ ") + s.o[j][1] +
+    (good ? "" : ` Dogrusy: «${s.o[s.a][0]}».`) + ` (${s.r}-njy düzgün)`;
+  $("msg").className = "msg " + (good ? "ok" : "bad");
+  $("sco").textContent = `${right} / ${done}`;
+  if (si < SCENES.length - 1) $("next").style.display = "";
+  else {
+    $("again").style.display = "";
+    $("sco").textContent = `${right} / ${done} – ähli ýagdaýlar tamamlandy 🎉`;
+  }
+}
+$("next").onclick = () => { si++; show(); };
+$("again").onclick = () => { si = 0; done = 0; right = 0; $("sco").textContent = ""; show(); };
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Internetde şahsy maglumatlaryňy bermek bolýarmy?",
+   ["Ýok", "Hawa", "Diňe agşamlyk"], 0],
+  ["Internetde kimler bilen gürleşmeli we hat alyşmaly?",
+   ["Islendik adam bilen", "Ýoldaşlaryň we dogan-garyndaşlaryň bilen", "Diňe nätanyşlar bilen"], 1],
+  ["Torda bir zat seni alada goýsa näme etmeli?",
+   ["Dymmaly", "Kompýuteri öçürmeli", "Ata-eneňe ýa-da ululara habar bermeli"], 2],
+  ["Internetden maglumat geçirip almazdan öň näme gerek?",
+   ["Ululardan rugsat", "Nätanyşyň razylygy", "Hiç zat"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+show();
+</script>
+</body>
+</html>

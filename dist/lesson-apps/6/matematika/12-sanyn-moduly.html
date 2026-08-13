@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanyň moduly — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px 6px; overflow-x: auto; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .big3 { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 28px;
+          font-weight: 800; text-align: center; color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sanyň moduly</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sanyň <b>moduly</b> – koordinata göni çyzygynda şol sana degişli nokadyň
+      hasap başlangyjyna çenli <b>uzaklygydyr</b>. Uzaklyk hiç haçan otrisatel bolmaýar.</div>
+    <div class="stage" id="ax"></div>
+    <div class="slider"><span class="lbl">San</span>
+      <input type="range" id="a" min="-70" max="70" value="-40"><span class="out" id="ao"></span></div>
+    <div class="big3" id="big"></div>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Modully aňlatmany hasapla</h3>
+    <div class="row tight" id="exprs"></div>
+    <div class="calc" id="ec" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Modully deňleme</h3>
+    <div class="goal">|x| = a görnüşdäki deňlemäniň näçe köki bar? Bahany üýtgedip gör.</div>
+    <div class="slider"><span class="lbl">a</span>
+      <input type="range" id="eq" min="-4" max="6" value="5"><span class="out" id="eqo"></span></div>
+    <div class="stage" id="ax2"></div>
+    <div class="calc" id="eqc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §22</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+const LO = -8, HI = 8, W = 620, PAD = 34;
+const px = v => PAD + ((v - LO) / (HI - LO)) * (W - 2 * PAD);
+
+function base(y) {
+  let t = "";
+  for (let v = LO; v <= HI; v++) {
+    const x = px(v), big = v === 0;
+    t += `<line x1="${x}" y1="${y - (big ? 12 : 7)}" x2="${x}" y2="${y + (big ? 12 : 7)}"
+            stroke="${big ? "#1e2a3a" : "#93a2b5"}" stroke-width="${big ? 2.5 : 1.5}"/>
+          <text x="${x}" y="${y + 30}" text-anchor="middle" font-size="12"
+            fill="#5b6b80">${v}</text>`;
+  }
+  return `<line x1="${PAD - 20}" y1="${y}" x2="${W - PAD + 8}" y2="${y}" stroke="#5b6b80"
+            stroke-width="2"/>${t}`;
+}
+
+/* ---------------- modul ---------------- */
+function axis() {
+  const a = +$("a").value / 10;
+  $("ao").textContent = N(a);
+  const y = 70, m = Math.abs(a);
+  const x1 = px(Math.min(0, a)), x2 = px(Math.max(0, a));
+  $("ax").innerHTML = `
+    <svg viewBox="0 0 ${W} 108" width="${W}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      ${base(y)}
+      ${a !== 0 ? `<line x1="${x1}" y1="${y - 26}" x2="${x2}" y2="${y - 26}" stroke="#e5007d"
+        stroke-width="5" stroke-linecap="round"/>
+        <text x="${(x1 + x2) / 2}" y="${y - 34}" text-anchor="middle" font-size="14"
+          font-weight="700" fill="#e5007d">|${N(a)}| = ${N(m)}</text>` : ""}
+      <circle cx="${px(a)}" cy="${y}" r="7" fill="#2456b0"/>
+      <circle cx="${px(0)}" cy="${y}" r="5" fill="#1e2a3a"/>
+      <text x="${px(a)}" y="${y + 48}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="#2456b0">A(${N(a)})</text>
+    </svg>`;
+  $("big").textContent = `|${N(a)}| = ${N(Math.abs(a))}`;
+  $("calc").innerHTML = a === 0
+    ? `|0| = 0, çünki O nokat hasap başlangyjy bilen gabat gelýär.`
+    : a > 0
+      ? `${N(a)} položitel san, şonuň üçin onuň moduly <b>öz-özüne deň</b>: |${N(a)}| = ${N(a)}.<br>` +
+        `Garşylykly sanyň moduly hem şoňa deň: |${N(-a)}| = ${N(a)}.`
+      : `${N(a)} otrisatel san, şonuň üçin onuň moduly <b>oňa garşylykly sana deň</b>: ` +
+        `|${N(a)}| = ${N(-a)}.<br>Modul otrisatel bolup bilmeýär.`;
+}
+$("a").addEventListener("input", axis);
+
+/* ---------------- aňlatmalar ---------------- */
+const EXPR = [
+  ["|−7| + |+2| + |+5| + |−10|", "7 + 2 + 5 + 10", 24],
+  ["|−13| + 4 · 7", "13 + 28", 41],
+  ["|−20| : |−4|", "20 : 4", 5],
+  ["|−72| : 12 − 6", "72 : 12 − 6", 0],
+  ["5 · |0| + 5", "5 · 0 + 5", 5],
+];
+$("exprs").innerHTML = EXPR.map((e, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${e[0]}</button>`).join("");
+$("exprs").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("exprs").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const e = EXPR[+b.dataset.i];
+  $("ec").innerHTML = `${e[0]}<br>= ${e[1]}<br>= <b>${e[2]}</b><br>` +
+    `Ilki her modul hasaplanýar, soňra amallar tertibi boýunça ýerine ýetirilýär.`;
+});
+
+/* ---------------- |x| = a ---------------- */
+function eq() {
+  const a = +$("eq").value;
+  $("eqo").textContent = N(a);
+  const y = 60;
+  const roots = a > 0 ? [-a, a] : a === 0 ? [0] : [];
+  $("ax2").innerHTML = `
+    <svg viewBox="0 0 ${W} 98" width="${W}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      ${base(y)}
+      ${roots.map(r => `<circle cx="${px(r)}" cy="${y}" r="8" fill="#1d7a3d"/>
+        <text x="${px(r)}" y="${y - 18}" text-anchor="middle" font-size="13" font-weight="700"
+          fill="#1d7a3d">${N(r)}</text>`).join("")}
+    </svg>`;
+  $("eqc").innerHTML =
+    `deňleme: <b>|x| = ${N(a)}</b><br>` +
+    (a > 0
+      ? `iki köki bar: x = ${N(a)} we x = ${N(-a)} – ikisi hem noldan ${a} birlik uzaklykda`
+      : a === 0
+        ? `bir köki bar: x = 0`
+        : `<b>köki ýok</b>, çünki modul hiç haçan otrisatel bolmaýar`);
+}
+$("eq").addEventListener("input", eq);
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["|−0,25| näçä deň?", ["−0,25", "0,25", "0", "4"], 1],
+  ["Haýsy tassyklama dogry?", ["Modul otrisatel bolup biler", "Modul hemişe položiteldir",
+                               "Modul otrisatel däldir", "Modul hemişe nola deňdir"], 2],
+  ["|x| = 5 deňligiň näçe köki bar?", ["1", "2", "0", "Tükeniksiz köp"], 1],
+  ["|−103| näçä deň?", ["−103", "103", "0", "1/103"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+axis(); eq();
+$("exprs").querySelector("button").click();
+</script>
+</body>
+</html>

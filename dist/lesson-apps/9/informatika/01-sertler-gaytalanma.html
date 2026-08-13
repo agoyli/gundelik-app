@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şertler we gaýtalanma — 9-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .code { background: #1e2a3a; border-radius: 12px; padding: 10px; overflow-x: auto; }
+  .code .ln { display: flex; gap: 8px; padding: 3px 6px; border-radius: 6px; white-space: pre;
+              font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+  .code .ln.on { background: #2f4a6b; }
+  .code .no { color: #6d829e; width: 18px; text-align: right; flex: 0 0 auto; }
+  .code .src { color: #d8e4f5; }
+  .kw { color: #7fc7ff; } .st { color: #b6e08a; } .cm { color: #8ea3bd; } .nm { color: #ffd479; }
+  .vars { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .v { background: #e3edfd; border-radius: 11px; padding: 9px 13px; text-align: center; min-width: 68px; }
+  .v .k { font-size: 12px; color: #5b6b80; font-weight: 700; }
+  .v .n { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .out { background: #0d1a2e; color: #9be08a; border-radius: 10px; padding: 10px 12px;
+         font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+         min-height: 44px; white-space: pre-wrap; line-height: 1.5; }
+  .progs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 7px; }
+  .progs .btn { font-size: 13px; padding: 10px 6px; }
+  .tt th, .tt td { text-align: center; padding: 6px 4px; font-size: 13.5px; }
+  .tt td.c { color: #1d7a3d; font-weight: 700; } .tt td.f { color: #b02424; font-weight: 700; }
+  .logic { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 7px; }
+  .lg { background: #f7fafd; border-radius: 11px; padding: 10px; text-align: center;
+        font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; cursor: pointer; }
+  .lg .r { display: block; margin-top: 5px; font-weight: 800; font-family: system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Şertler, şahalanma we gaýtalanma</h1>
+  <div class="sub">if · begin/end · for · while · Informatika · 9-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Programmany saýla, <b>a</b>-nyň bahasyny ber we <b>Ädim</b> düwmesine
+      basyp ony setirme-setir yzarla. Bu – <b>trassirowka</b>.</div>
+    <div class="progs" id="progs"></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl" id="inlbl">Giriş a</span>
+      <input type="range" id="in" min="1" max="30" value="13"><span class="out2" id="ino"
+        style="width:52px;text-align:right;font-weight:800;font-size:16px">13</span></div>
+    <div class="code" id="code"></div>
+    <div class="vars" id="vars"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="step">Ädim ▶</button>
+      <button class="btn" id="run">Ählisini işlet ⏩</button>
+      <button class="btn ghost" id="rst">Başlangyç</button>
+      <span class="score" id="cnt"></span>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Netije (ekran)</h3>
+    <div class="out" id="out"></div>
+  </div>
+
+  <div class="card">
+    <h3>Logiki amallar</h3>
+    <div class="goal">Her aňlatma bas – netijesi çykar.</div>
+    <div class="logic" id="logic"></div>
+    <table class="tt" style="margin-top:12px"><thead>
+      <tr><th>1-nji şert</th><th>amal</th><th>2-nji şert</th><th>netije</th></tr></thead>
+      <tbody id="tt"></tbody></table>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>if &lt;şert&gt; then &lt;1-nji buýruk&gt; else &lt;2-nji buýruk&gt;</b> — şert çyn bolsa
+      1-nji, ýalan bolsa 2-nji buýruk ýerine ýetirilýär. Birnäçe buýruk <b>begin</b> we <b>end</b>
+      bilen birikdirilýär. Gaýtalanma sany belli bolanda <b>for</b>, belli bolmadyk ýagdaýda
+      <b>while</b> ulanylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 9 (2021)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// Each program is a list of steps. A step returns the index of the next line, or null to stop.
+const PROGRAMS = {
+  "if — jübütlik": {
+    lbl: "Giriş a", min: 1, max: 40,
+    src: [
+      `<span class="kw">Program</span> ms1;`,
+      `<span class="kw">Var</span> a: integer;`,
+      `<span class="kw">Begin</span>`,
+      `  Readln (a);`,
+      `  <span class="kw">if</span> a <span class="kw">mod</span> 2 = 0 <span class="kw">then</span> a:= a <span class="kw">div</span> 2;`,
+      `  writeln (a);`,
+      `<span class="kw">End.</span>`
+    ],
+    init: a => ({ a }),
+    run: [
+      null, null, null,
+      (s, out) => { out.push("Bitin san giriz: " + s.a); return 4; },
+      (s, out, note) => {
+        const even = s.a % 2 === 0;
+        note(`Şert: ${s.a} mod 2 = ${s.a % 2} → ${even ? "çyn" : "ýalan"}.` +
+             (even ? " then şahasy ýerine ýetirilýär." : " Gysga görnüşde else ýok – buýruk goýberilýär."));
+        if (even) s.a = Math.floor(s.a / 2);
+        return 5;
+      },
+      (s, out) => { out.push(String(s.a)); return 6; },
+      null
+    ]
+  },
+  "if…else — uly san": {
+    lbl: "Giriş a", min: 1, max: 40,
+    src: [
+      `<span class="kw">Program</span> ms2;`,
+      `<span class="kw">Var</span> a, b: integer;`,
+      `<span class="kw">Begin</span>`,
+      `  Readln (a); b:= 18;`,
+      `  <span class="kw">if</span> a > b <span class="kw">then</span> writeln (<span class="st">'Uly san= '</span>, a)`,
+      `  <span class="kw">else</span> writeln (<span class="st">'Uly san= '</span>, b);`,
+      `<span class="kw">End.</span>`
+    ],
+    init: a => ({ a, b: 18 }),
+    run: [
+      null, null, null,
+      (s, out) => { out.push("1-nji bitin sany giriz: " + s.a); out.push("2-nji bitin sany giriz: 18"); return 4; },
+      (s, out, note) => {
+        const t = s.a > s.b;
+        note(`Şert: ${s.a} > ${s.b} → ${t ? "çyn" : "ýalan"}. ${t ? "then" : "else"} şahasy ýerine ýetirilýär.`);
+        if (t) { out.push("Uly san= " + s.a); return 6; }
+        return 5;
+      },
+      (s, out) => { out.push("Uly san= " + s.b); return 6; },
+      null
+    ]
+  },
+  "for — jem": {
+    lbl: "n (näçä çenli)", min: 1, max: 20,
+    src: [
+      `<span class="kw">Program</span> ms3;`,
+      `<span class="kw">Var</span> i, s, n: integer;`,
+      `<span class="kw">Begin</span>`,
+      `  Readln (n); s:= 0;`,
+      `  <span class="kw">For</span> i:=1 <span class="kw">to</span> n <span class="kw">do</span>`,
+      `    s:= s + i;`,
+      `  writeln (<span class="st">'s= '</span>, s);`,
+      `<span class="kw">End.</span>`
+    ],
+    init: n => ({ n, i: 0, s: 0 }),
+    run: [
+      null, null, null,
+      (s, out) => { out.push("n= " + s.n); return 4; },
+      (s, out, note) => {
+        s.i = s.i === 0 ? 1 : s.i + 1;
+        if (s.i > s.n) { note(`i = ${s.i} > n = ${s.n} — parametr ahyrky bahadan geçdi, gaýtalanma tamamlandy.`); return 6; }
+        note(`Gaýtalanma: i = ${s.i} (n = ${s.n} çenli).`);
+        return 5;
+      },
+      (s, out, note) => { s.s += s.i; note(`s = s + i = ${s.s - s.i} + ${s.i} = ${s.s}`); return 4; },
+      (s, out) => { out.push("s= " + s.s); return 7; },
+      null
+    ]
+  },
+  "while — näçe gezek 2-ä bölünýär": {
+    lbl: "Giriş a", min: 1, max: 200,
+    src: [
+      `<span class="kw">Program</span> ms4;`,
+      `<span class="kw">Var</span> a, k: integer;`,
+      `<span class="kw">Begin</span>`,
+      `  Readln (a); k:= 0;`,
+      `  <span class="kw">while</span> a <span class="kw">mod</span> 2 = 0 <span class="kw">do</span>`,
+      `  <span class="kw">begin</span> a:= a <span class="kw">div</span> 2; k:= k + 1; <span class="kw">end</span>;`,
+      `  writeln (<span class="st">'k= '</span>, k, <span class="st">'  galan a= '</span>, a);`,
+      `<span class="kw">End.</span>`
+    ],
+    init: a => ({ a, k: 0 }),
+    run: [
+      null, null, null,
+      (s, out) => { out.push("Bitin san giriz: " + s.a); return 4; },
+      (s, out, note) => {
+        const t = s.a % 2 === 0;
+        note(`Şert barlanýar: ${s.a} mod 2 = ${s.a % 2} → ${t ? "çyn, özen ýene ýerine ýetirilýär" : "ýalan, gaýtalanmadan çykylýar"}.`);
+        return t ? 5 : 6;
+      },
+      (s, out, note) => { const o = s.a; s.a = Math.floor(s.a / 2); s.k++; note(`a = ${o} div 2 = ${s.a}, k = ${s.k}`); return 4; },
+      (s, out) => { out.push(`k= ${s.k}  galan a= ${s.a}`); return 7; },
+      null
+    ]
+  }
+};
+
+let pname = "if — jübütlik", P = PROGRAMS[pname];
+let st = null, line = 0, out = [], steps = 0, halted = false;
+
+Object.keys(PROGRAMS).forEach(k => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = k; b.dataset.k = k;
+  b.onclick = () => { pname = k; P = PROGRAMS[k]; setup(); };
+  $("progs").appendChild(b);
+});
+
+function note(t) { $("msg").textContent = t; $("msg").className = "msg"; }
+
+function setup() {
+  [...$("progs").children].forEach(b => b.className = "btn" + (b.dataset.k === pname ? " sel" : ""));
+  $("inlbl").textContent = P.lbl;
+  $("in").min = P.min; $("in").max = P.max;
+  if (+$("in").value > P.max || +$("in").value < P.min) $("in").value = Math.min(P.max, Math.max(P.min, 13));
+  $("ino").textContent = $("in").value;
+  reset();
+}
+
+function reset() {
+  st = P.init(+$("in").value);
+  line = 3; out = []; steps = 0; halted = false;
+  note("Başlamak üçin «Ädim» düwmesine bas.");
+  render();
+}
+
+function render() {
+  const C = $("code"); C.innerHTML = "";
+  P.src.forEach((s, i) => {
+    const d = document.createElement("div");
+    d.className = "ln" + (i === line && !halted ? " on" : "");
+    d.innerHTML = `<span class="no">${i + 1}</span><span class="src">${s}</span>`;
+    C.appendChild(d);
+  });
+  const V = $("vars"); V.innerHTML = "";
+  Object.entries(st).forEach(([k, v]) =>
+    V.innerHTML += `<div class="v"><div class="k">${k}</div><div class="n">${v}</div></div>`);
+  $("out").textContent = out.join("\n") || "(entek çykyş ýok)";
+  $("cnt").textContent = `Ädim: ${steps}` + (halted ? " · tamamlandy" : "");
+}
+
+function step() {
+  if (halted) return false;
+  const f = P.run[line];
+  if (!f) { halted = true; note("Programma tamamlandy. ✅"); render(); return false; }
+  steps++;
+  const next = f(st, out, note);
+  line = next === null ? P.src.length : next;
+  if (!P.run[line]) { halted = true; }
+  render();
+  return !halted;
+}
+
+$("step").onclick = step;
+$("run").onclick = () => { let g = 0; while (step() && g++ < 500); if (!halted) note("Gaýtalanma tükeniksiz bolmagy mümkin – 500 ädimde duruzuldy."); };
+$("rst").onclick = reset;
+$("in").addEventListener("input", () => { $("ino").textContent = $("in").value; reset(); });
+
+// ---- logic playground ----
+const EXPR = [
+  ["(2 > 5) and (2 > 3)", false], ["(1 < 5) and (1 > 0)", true],
+  ["(6 > 9) and (7 > 5)", false], ["(3 > 2) or (3 < 1)", true],
+  ["(3 > 2) or (2 > 0)", true],   ["(1 > 2) or (1 < 0)", false],
+  ["not (5 > 6)", true],          ["not (6 > 5)", false]
+];
+EXPR.forEach(([e, v]) => {
+  const d = document.createElement("div");
+  d.className = "lg"; d.innerHTML = e + '<span class="r" style="color:#93a2b5">?</span>';
+  d.onclick = () => d.querySelector(".r").outerHTML =
+    `<span class="r" style="color:${v ? "#1d7a3d" : "#b02424"}">${v ? "çyn" : "ýalan"}</span>`;
+  $("logic").appendChild(d);
+});
+
+const T = [["Çyn","and","Çyn","Çyn"],["Ýalan","and","Çyn","Ýalan"],["Çyn","and","Ýalan","Ýalan"],
+           ["Ýalan","and","Ýalan","Ýalan"],["Çyn","or","Çyn","Çyn"],["Ýalan","or","Çyn","Çyn"],
+           ["Çyn","or","Ýalan","Çyn"],["Ýalan","or","Ýalan","Ýalan"],["–","not","Çyn","Ýalan"],
+           ["–","not","Ýalan","Çyn"]];
+$("tt").innerHTML = T.map(r => "<tr>" + r.map((c, i) =>
+  `<td class="${i === 3 || i !== 1 ? (c === "Çyn" ? "c" : c === "Ýalan" ? "f" : "") : ""}">${c}</td>`).join("") + "</tr>").join("");
+
+setup();
+</script>
+</body>
+</html>

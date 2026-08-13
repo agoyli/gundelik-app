@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Massiwler — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .arr { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+  .el { width: 46px; text-align: center; }
+  .el b { display: block; height: 44px; line-height: 44px; border-radius: 10px; font-size: 16px;
+          font-weight: 800; background: #eef2f8; color: #1e2a3a;
+          font-variant-numeric: tabular-nums; transition: background .12s; }
+  .el span { display: block; font-size: 10.5px; color: #93a2b5; margin-top: 3px; }
+  .el.i b { background: #2456b0; color: #fff; }
+  .el.j b { background: #f0a35e; color: #fff; }
+  .el.done b { background: #cdeed8; color: #1d6b3a; }
+  .el.hit b { background: #e5007d; color: #fff; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.6;
+          background: #f7fafd; border-radius: 11px; padding: 11px; overflow-x: auto; }
+  .code .cur { background: #ffe9b8; border-radius: 4px; display: inline-block; padding: 0 3px; }
+  .vars { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .vars span { background: #e3edfd; color: #2456b0; border-radius: 999px; padding: 6px 12px;
+               font-weight: 800; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .prog { height: 6px; background: #eef2f8; border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .prog i { display: block; height: 100%; background: #2456b0; width: 0; transition: width .12s; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Massiwler</h1>
+  <div class="sub">Birölçegli massiw, gözleg we tertipleşdirmek · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Massiw – bir at bilen belgilenýän bir görnüşli elementleriň yzygiderligi.
+      Her elementiň ýeri onuň <b>indeksi</b> bilen kesgitlenýär.</div>
+    <div class="arr" id="arr"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="rnd">random bilen düzmek</button>
+      <button class="btn" id="book">Okuwçylaryň boýlary</button>
+    </div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Elementler</span>
+      <input type="range" id="n" min="5" max="12" value="8"><span class="out" id="no">8</span></div>
+    <div class="code" id="decl"></div>
+  </div>
+
+  <div class="card">
+    <h3>Algoritm</h3>
+    <div class="row tight">
+      <button class="btn sel" data-a="sum">Jem</button>
+      <button class="btn" data-a="max">Iň uly element</button>
+      <button class="btn" data-a="count">Şert boýunça sanamak</button>
+      <button class="btn" data-a="sel">Saýlamak usuly</button>
+      <button class="btn" data-a="bub">«Köpürjik» usuly</button>
+    </div>
+    <div class="code" id="code" style="margin-top:10px"></div>
+    <div class="vars" id="vars"></div>
+    <div class="prog"><i id="bar"></i></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="step">Ädim ▸</button>
+      <button class="btn primary" id="auto">▶ Awtomatik</button>
+      <button class="btn ghost" id="rst">Täzeden</button>
+      <span class="score" id="cnt"></span>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Indeks massiwiň adyndan soň kwadrat ýaýlarda ýazylýar: <b>A[5]</b>. Massiwiň çäginden
+      çykmak – bu massiwde ýok elemente ýüzlenmekdir, ol programmanyň işini bes edýär.
+      Jemi hasaplamazdan öň <b>Jem := 0</b>, köpeltmek hasylyndan öň bolsa <b>P := 1</b> berilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const BOOK = [160, 154, 170, 160, 172, 181, 170, 175, 152, 157, 155, 168];
+
+let A = [], algo = "sum", trace = [], pos = 0, timer = null, isBook = false;
+
+/* ------------------------------------------------ massiwi düzmek */
+function makeRandom() {
+  const n = +$("n").value;
+  A = Array.from({ length: n }, () => Math.floor(Math.random() * 21));
+  isBook = false;
+  build();
+}
+function makeBook() {
+  A = BOOK.slice();
+  $("n").value = A.length; $("no").textContent = A.length;
+  isBook = true;
+  build();
+}
+
+/* ------------------------------------------------ trassalar */
+const CODE = {
+  sum: ["Jem := 0;", "For i := 1 to n do", "  Jem := Jem + A[i];", "Writeln ('Jem = ', Jem);"],
+  max: ["k := 1;", "For i := 2 to n do", "  if A[i] > A[k] then k := i;", "Writeln ('Iň uly = ', A[k]);"],
+  count: ["k := 0;", "For i := 1 to n do", "  if A[i] > B then k := k + 1;", "Writeln ('Sany = ', k);"],
+  sel: ["For t := 1 to n-1 do begin", "  m := t;", "  For i := t+1 to n do",
+        "    if A[i] < A[m] then m := i;", "  buf := A[t]; A[t] := A[m]; A[m] := buf;", "end;"],
+  bub: ["Repeat", "  ind := true;", "  For i := 1 to n-1 do",
+        "    if A[i] > A[i+1] then begin", "      buf := A[i]; A[i] := A[i+1]; A[i+1] := buf;",
+        "      ind := false;", "    end;", "Until ind;"]
+};
+
+function buildTrace() {
+  const a = A.slice(), n = a.length, tr = [];
+  const snap = (line, o) => tr.push(Object.assign({ arr: a.slice(), line }, o));
+
+  if (algo === "sum") {
+    let s = 0;
+    snap(0, { vars: { Jem: 0 }, note: "Jem üýtgeýäne başlangyç baha 0 berilýär." });
+    for (let i = 0; i < n; i++) {
+      s += a[i];
+      snap(2, { i, vars: { i: i + 1, "A[i]": a[i], Jem: s }, note: `Jem := ${s - a[i]} + ${a[i]} = ${s}` });
+    }
+    snap(3, { vars: { Jem: s }, note: `Ähli elementleriň jemi ${s}. Orta baha ${(s / n).toFixed(2).replace(".", ",")}.`, done: true });
+  }
+
+  if (algo === "max") {
+    let k = 0;
+    snap(0, { i: 0, vars: { k: 1, "A[k]": a[0] }, note: "Ilki birinji element iň uly hasaplanýar." });
+    for (let i = 1; i < n; i++) {
+      const better = a[i] > a[k];
+      if (better) k = i;
+      snap(2, {
+        i, j: k, vars: { i: i + 1, "A[i]": a[i], k: k + 1, "A[k]": a[k] },
+        note: better ? `${a[i]} öňkiden uly – k := ${i + 1}` : `${a[i]} > A[k] däl – k üýtgemeýär`
+      });
+    }
+    snap(3, { hit: k, vars: { k: k + 1, "A[k]": a[k] }, note: `Iň uly element ${a[k]}, indeksi ${k + 1}.`, done: true });
+  }
+
+  if (algo === "count") {
+    const B = isBook ? 170 : 10;
+    let k = 0;
+    snap(0, { vars: { B, k: 0 }, note: `Şert: A[i] > ${B}. Hasaplaýjy k := 0.` });
+    for (let i = 0; i < n; i++) {
+      const ok = a[i] > B;
+      if (ok) k++;
+      snap(2, {
+        i, hit: ok ? i : undefined, vars: { i: i + 1, "A[i]": a[i], k },
+        note: ok ? `${a[i]} > ${B} – şert ýerine ýetdi, k := ${k}` : `${a[i]} > ${B} däl – k üýtgemeýär`
+      });
+    }
+    snap(3, { vars: { k }, note: `Şerti kanagatlandyrýan elementleriň sany ${k}.`, done: true });
+  }
+
+  if (algo === "sel") {
+    for (let t = 0; t < n - 1; t++) {
+      let m = t;
+      snap(1, { i: t, done_to: t, vars: { t: t + 1, m: t + 1 }, note: `${t + 1}-nji orun üçin iň kiçini gözleýäris.` });
+      for (let i = t + 1; i < n; i++) {
+        const less = a[i] < a[m];
+        if (less) m = i;
+        snap(3, {
+          i: m, j: i, done_to: t, vars: { i: i + 1, "A[i]": a[i], m: m + 1, "A[m]": a[m] },
+          note: less ? `${a[i]} has kiçi – m := ${i + 1}` : `${a[i]} < A[m] däl`
+        });
+      }
+      const buf = a[t]; a[t] = a[m]; a[m] = buf;
+      snap(4, { i: t, j: m, done_to: t + 1, vars: { t: t + 1, m: m + 1 }, note: `A[${t + 1}] we A[${m + 1}] orunlaryny çalyşdyk.` });
+    }
+    snap(5, { done_to: n, note: "Massiw artýan tertipde tertipleşdirildi.", done: true });
+  }
+
+  if (algo === "bub") {
+    let ind = false, pass = 0;
+    while (!ind) {
+      ind = true; pass++;
+      snap(1, { vars: { seret: pass, ind: "true" }, note: `${pass}-nji seretme başlaýar. ind := true.` });
+      for (let i = 0; i < n - 1; i++) {
+        const swap = a[i] > a[i + 1];
+        if (swap) {
+          const buf = a[i]; a[i] = a[i + 1]; a[i + 1] = buf; ind = false;
+        }
+        snap(swap ? 4 : 3, {
+          i, j: i + 1, vars: { i: i + 1, ind: ind ? "true" : "false" },
+          note: swap ? `A[${i + 1}] > A[${i + 2}] – orunlary çalyşdyk` : `A[${i + 1}] > A[${i + 2}] däl – galýar`
+        });
+      }
+      if (ind) snap(7, { done_to: n, note: "Bir gezekde-de çalşyk bolmady – massiw tertipleşen.", done: true });
+    }
+  }
+
+  return tr;
+}
+
+/* ------------------------------------------------ görkezmek */
+function build() {
+  trace = buildTrace(); pos = 0;
+  $("decl").innerHTML =
+    `Var A: <b>array</b> [1 .. ${A.length}] <b>of</b> integer;<br>` +
+    `<span style="color:#93a2b5">{ ${A.map((v, i) => `A[${i + 1}]=${v}`).join(", ")} }</span>`;
+  show();
+}
+
+function show() {
+  const st = trace[pos] || { arr: A.slice() };
+  const a = st.arr;
+  $("arr").innerHTML = a.map((v, i) => {
+    let c = "el";
+    if (st.done_to !== undefined && i < st.done_to) c += " done";
+    if (i === st.j) c += " j";
+    if (i === st.i) c += " i";
+    if (i === st.hit) c += " hit";
+    return `<div class="${c}"><b>${v}</b><span>A[${i + 1}]</span></div>`;
+  }).join("");
+
+  $("code").innerHTML = CODE[algo].map((l, i) =>
+    i === st.line ? `<span class="cur">${l.replace(/ /g, "&nbsp;")}</span>` : l.replace(/ /g, "&nbsp;")
+  ).join("<br>");
+
+  $("vars").innerHTML = Object.entries(st.vars || {})
+    .map(([k, v]) => `<span>${k} = ${v}</span>`).join("");
+  $("msg").textContent = st.note || "";
+  $("msg").className = "msg " + (st.done ? "ok" : "");
+  $("cnt").textContent = `${pos + 1} / ${trace.length} ädim`;
+  $("bar").style.width = ((pos + 1) / trace.length * 100) + "%";
+}
+
+function stepOn() {
+  if (pos < trace.length - 1) { pos++; show(); return true; }
+  return false;
+}
+
+/* ------------------------------------------------ dolandyryş */
+$("step").onclick = () => { if (!stepOn()) { $("msg").textContent = "Algoritm tamamlandy."; $("msg").className = "msg ok"; } };
+$("auto").onclick = () => {
+  if (timer) { clearInterval(timer); timer = null; $("auto").textContent = "▶ Awtomatik"; return; }
+  $("auto").textContent = "⏸ Duruzmak";
+  timer = setInterval(() => {
+    if (!stepOn()) { clearInterval(timer); timer = null; $("auto").textContent = "▶ Awtomatik"; }
+  }, 380);
+};
+$("rst").onclick = () => {
+  if (timer) { clearInterval(timer); timer = null; $("auto").textContent = "▶ Awtomatik"; }
+  build();
+};
+$("rnd").onclick = makeRandom;
+$("book").onclick = makeBook;
+$("n").addEventListener("input", () => { $("no").textContent = $("n").value; makeRandom(); });
+document.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+  algo = b.dataset.a;
+  document.querySelectorAll("[data-a]").forEach(x => x.className = "btn" + (x.dataset.a === algo ? " sel" : ""));
+  if (timer) { clearInterval(timer); timer = null; $("auto").textContent = "▶ Awtomatik"; }
+  build();
+});
+
+makeBook();
+</script>
+</body>
+</html>

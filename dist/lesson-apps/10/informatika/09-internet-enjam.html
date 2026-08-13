@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internet torunda enjam we programma — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; overflow-x: auto; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .node { cursor: pointer; }
+  .node rect { fill: #e3edfd; stroke: #b9cdf0; stroke-width: 2; rx: 9; }
+  .node.on rect { fill: #2456b0; stroke: #2456b0; }
+  .node text { font-size: 11px; font-weight: 700; fill: #2456b0; text-anchor: middle; }
+  .node.on text { fill: #fff; }
+  .calc { background: #f7fafd; border-radius: 12px; padding: 11px; font-family: ui-monospace,
+          Menlo, Consolas, monospace; font-size: 14px; line-height: 1.8; }
+  .calc b { color: #2456b0; }
+  .sort { display: flex; gap: 8px; flex-wrap: wrap; }
+  .bin { flex: 1; min-width: 150px; background: #f7fafd; border-radius: 12px; padding: 10px; min-height: 96px; }
+  .bin h4 { font-size: 12.5px; color: #93a2b5; margin-bottom: 6px; font-weight: 800; }
+  .chip { display: inline-block; background: #e3edfd; color: #2456b0; border-radius: 999px;
+          padding: 7px 12px; font-size: 13.5px; font-weight: 700; margin: 0 4px 4px 0; cursor: pointer; }
+  .chip.bad { background: #fbe3e3; color: #b02424; }
+  .chip.ok { background: #e0f5e6; color: #1d7a3d; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Internet torunda enjam we programma üpjünçiligi</h1>
+  <div class="sub">Serwer, terminal, modem, tizlik · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Shemadaky gurluşa bas – onuň wezipesi ýazylar.</div>
+    <div class="stage">
+      <svg width="440" height="180" viewBox="0 0 440 180">
+        <line x1="86" y1="60" x2="150" y2="60" stroke="#cfdcee" stroke-width="3"/>
+        <line x1="222" y1="60" x2="286" y2="60" stroke="#cfdcee" stroke-width="3"/>
+        <line x1="354" y1="60" x2="390" y2="60" stroke="#cfdcee" stroke-width="3"/>
+        <line x1="50" y1="86" x2="50" y2="120" stroke="#cfdcee" stroke-width="3"/>
+        <line x1="186" y1="86" x2="186" y2="120" stroke="#cfdcee" stroke-width="3"/>
+        <g class="node" data-k="term"><rect x="8" y="36" width="78" height="48"/>
+          <text x="47" y="57">Terminal</text><text x="47" y="72">(kompýuter)</text></g>
+        <g class="node" data-k="modem"><rect x="150" y="36" width="72" height="48"/>
+          <text x="186" y="65">Modem</text></g>
+        <g class="node" data-k="prov"><rect x="286" y="36" width="68" height="48"/>
+          <text x="320" y="65">Prowaýder</text></g>
+        <g class="node" data-k="net"><rect x="390" y="36" width="44" height="48"/>
+          <text x="412" y="65">Internet</text></g>
+        <g class="node" data-k="card"><rect x="8" y="120" width="78" height="44"/>
+          <text x="47" y="147">Tor kartasy</text></g>
+        <g class="node" data-k="srv"><rect x="150" y="120" width="72" height="44"/>
+          <text x="186" y="147">Serwer</text></g>
+      </svg>
+    </div>
+    <div class="msg" id="nx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Internete birikmegiň usullary</h3>
+    <div class="row tight">
+      <button class="btn sel" data-c="dial">dial-up</button>
+      <button class="btn" data-c="adsl">ADSL</button>
+      <button class="btn" data-c="wifi">simsiz</button>
+      <button class="btn" data-c="mob">mobil telefon</button>
+    </div>
+    <div class="note" id="cx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Geçirilen informasiýanyň mukdary</h3>
+    <div class="goal">Kanalyň tizligini we wagty saýla. Mukdar = tizlik · wagt.</div>
+    <div class="slider"><span class="lbl">Tizlik</span>
+      <input type="range" id="v" min="1" max="100" value="8"><span class="out" id="vo">8</span></div>
+    <div class="slider"><span class="lbl">Wagt</span>
+      <input type="range" id="t" min="1" max="120" value="10"><span class="out" id="to">10</span></div>
+    <div class="calc" id="calc"></div>
+    <div class="note">1 Kbit/s = 10³ bit/s;  1 Mbit/s = 10³ Kbit/s = 10⁶ bit/s.</div>
+  </div>
+
+  <div class="card">
+    <h3>Programma üpjünçiligi</h3>
+    <div class="goal">Ýazgyny dogry topara ýerleşdir: ol bazalaýyn programma üpjünçiligimi
+      ýa amalymy?</div>
+    <div class="sort">
+      <div class="bin"><h4>BAZALAÝYN</h4><div id="b1"></div></div>
+      <div class="bin"><h4>AMALY</h4><div id="b2"></div></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="badge purple" id="item"></span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="toB1">Bazalaýyn</button>
+      <button class="btn" id="toB2">Amaly</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="msg" id="sx"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Informasiýa alyş-çalyşmak maksady bilen özara baglanyşdyrylan kompýuterleriň sistemasyna
+      <b>kompýuter tory</b> diýilýär. Tora hemişelik birigen, ýokary öndürijilikli kompýutere
+      <b>serwer</b>, Internete çykyp maglumat alýan kompýutere bolsa <b>terminal</b> diýilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const NODE = {
+  term: "Terminal – Internete çykyp, informasiýalary almak we ibermek işini ýerine ýetirýän kompýuter.",
+  modem: "Modem – informasiýalary sifr görnüşden elektrik signalyna we tersine özgerdýän gurluş.",
+  prov: "Prowaýder – Internet hyzmatyny berýän gurama. Ol ulanyjynyň adyny we parolyny barlaýar.",
+  net: "Internet – bütin dünýäni gurşap alan global kompýuter tory.",
+  card: "Tor kartasy – kompýuteri toruň beýleki gurluşlary bilen baglanyşdyrýan periferiýa gurluşy.",
+  srv: "Serwer – tora hemişelik birigen, ýokary öndürijilikli kompýuter. Ol tor hyzmatlaryny berýär."
+};
+document.querySelectorAll(".node").forEach(n => n.onclick = () => {
+  document.querySelectorAll(".node").forEach(x => x.classList.remove("on"));
+  n.classList.add("on");
+  $("nx").textContent = NODE[n.dataset.k];
+  $("nx").className = "msg ok";
+});
+
+const CONN = {
+  dial: "Adaty telefon liniýasy boýunça kommutirlenýän elýeterlilik. Analog modem gerek. " +
+        "Modem işleýärkä telefon liniýasy meşgul bolýar.",
+  adsl: "Asimmetrik sifrli müşderi liniýasy. Sifr DSL modemi we signallary paýlaýan splitter gerek. " +
+        "Telefon we Internet birbada işläp bilýär.",
+  wifi: "Simsiz sifrli aragatnaşyk kanaly boýunça elýeterlilik. Radio modem ulanylýar.",
+  mob: "Mobil telefon boýunça simsiz birikme. Kompýuter mobil torundan peýdalanýar."
+};
+document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-c]").forEach(x => x.className = "btn" + (x === b ? " sel" : ""));
+  $("cx").textContent = CONN[b.dataset.c];
+});
+$("cx").textContent = CONN.dial;
+
+function calc() {
+  const v = +$("v").value, t = +$("t").value;
+  $("vo").textContent = v; $("to").textContent = t;
+  const mbit = v * t;
+  const mbyte = mbit / 8;
+  const num = x => (x % 1 ? x.toFixed(3).replace(/0+$/, "") : String(x)).replace(".", ",");
+  $("calc").innerHTML =
+    `tizlik = <b>${v} Mbit/s</b>,  wagt = <b>${t} s</b><br>` +
+    `I = ${v} · ${t} = <b>${mbit} Mbit</b><br>` +
+    `= ${mbit} : 8 = <b>${num(mbyte)} Mbaýt</b><br>` +
+    `= <b>${num(mbyte * 1000)} kbaýt</b>  (1 Mbaýt = 10³ kbaýt)`;
+}
+["v", "t"].forEach(id => $(id).addEventListener("input", calc));
+
+const ITEMS = [
+  ["TCP/IP protokoly", 1], ["Windows Serwer", 1], ["Linux", 1], ["Free BSD", 1],
+  ["WWW gullugy", 2], ["Elektron poçta", 2], ["Brauzer", 2]
+];
+let queue = [], wrong = 0;
+
+function nextItem() {
+  if (!queue.length) {
+    $("item").textContent = "Hemmesi ýerleşdirildi";
+    $("toB1").disabled = $("toB2").disabled = true;
+    $("sx").textContent = wrong === 0
+      ? "Ähli ýazgylar birinji synanyşykda dogry ýerleşdirildi."
+      : `Tamamlandy. ${wrong} sany ýalňyşlyk goýberildi.`;
+    $("sx").className = "msg " + (wrong ? "bad" : "ok");
+    return;
+  }
+  $("item").textContent = queue[0][0];
+  $("toB1").disabled = $("toB2").disabled = false;
+}
+
+function answer(k) {
+  const [name, want] = queue[0];
+  if (k !== want) {
+    wrong++;
+    $("sx").textContent = want === 1
+      ? `«${name}» toruň özüni işletýär – ol bazalaýyn programma üpjünçiligidir.`
+      : `«${name}» Internetiň gulluklaryna hyzmat edýär – ol amaly programma üpjünçiligidir.`;
+    $("sx").className = "msg bad";
+    return;
+  }
+  queue.shift();
+  const c = document.createElement("span");
+  c.className = "chip ok"; c.textContent = name;
+  $(k === 1 ? "b1" : "b2").appendChild(c);
+  $("sx").textContent = "Dogry.";
+  $("sx").className = "msg ok";
+  nextItem();
+}
+
+function resetSort() {
+  queue = ITEMS.slice(); wrong = 0;
+  $("b1").innerHTML = ""; $("b2").innerHTML = "";
+  $("sx").textContent = "";
+  nextItem();
+}
+
+$("toB1").onclick = () => answer(1);
+$("toB2").onclick = () => answer(2);
+$("again").onclick = resetSort;
+
+calc(); resetSort();
+</script>
+</body>
+</html>

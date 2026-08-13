@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aralyk ýat — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .flow { display: grid; grid-template-columns: 1fr 132px 1fr; gap: 8px; align-items: center; }
+  @media (max-width: 560px) { .flow { grid-template-columns: 1fr; } }
+  .doc { background: #fff; border: 2px solid #d6e0ee; border-radius: 11px; padding: 11px;
+         min-height: 132px; font-size: 14px; line-height: 1.7; }
+  .doc h4 { margin: 0 0 6px; font-size: 12px; color: #93a2b5; }
+  .doc span.w { border-radius: 5px; padding: 1px 3px; cursor: pointer; }
+  .doc span.w.on { background: #2456b0; color: #fff; }
+  .buf { background: #efe9fb; border: 2px dashed #6a4bb8; border-radius: 11px; padding: 11px;
+         min-height: 96px; text-align: center; font-size: 13px; color: #6a4bb8; }
+  .buf b { display: block; font-size: 15px; margin-top: 6px; word-break: break-word; }
+  table.k { font-size: 13px; width: 100%; }
+  table.k th, table.k td { padding: 6px 8px; text-align: left; }
+  table.k thead th { background: #eef2f8; color: #5b6b80; }
+  table.k td.m { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700;
+                 color: #2456b0; }
+  .lines { list-style: none; padding: 0; margin: 0; }
+  .lines li { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 5px;
+              font-size: 14px; display: flex; gap: 9px; align-items: center; cursor: pointer; }
+  .lines li b { background: #d6e0ee; color: #2456b0; border-radius: 8px; width: 26px; height: 26px;
+                display: grid; place-items: center; font-size: 13px; flex: 0 0 auto; }
+  .lines li.on b { background: #2456b0; color: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Aralyk ýat: nusgalamak, kesmek, goýmak</h1>
+  <div class="sub">Alyş-çalyş buferi · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Çep resminamadaky sözlere basyp, parçany tapawutlandyr. Soňra
+      <b>Nusgalamak</b> ýa-da <b>Kesmek</b>, ahyrynda bolsa <b>Goýmak</b> buýrugyny ulan.</div>
+    <div class="flow">
+      <div class="doc" id="d1"><h4>1-nji resminama</h4><div id="t1"></div></div>
+      <div class="buf" id="buf"></div>
+      <div class="doc" id="d2"><h4>2-nji resminama</h4><div id="t2"></div></div>
+    </div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn" id="copy">Nusgalamak (Ctrl+C)</button>
+      <button class="btn" id="cut">Kesmek (Ctrl+X)</button>
+      <button class="btn primary" id="paste">Goýmak (Ctrl+V)</button>
+      <button class="btn ghost" id="rst">Başdan</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Üç amalyň ýerine ýetiriliş usullary</h3>
+    <div style="overflow-x:auto"><table class="k">
+      <thead><tr><th>Ýerine ýetirmek usuly</th><th>Nusgalamak</th><th>Kesmek</th><th>Goýmak</th></tr></thead>
+      <tbody>
+        <tr><td>Menýu buýrugy</td><td>Копировать</td><td>Вырезать</td><td>Вставить</td></tr>
+        <tr><td>Klawişleriň utgaşmasy</td><td class="m">Ctrl+C</td><td class="m">Ctrl+X</td><td class="m">Ctrl+V</td></tr>
+        <tr><td>Ikinji utgaşma</td><td class="m">Ctrl+Insert</td><td class="m">Shift+Delete</td><td class="m">Shift+Insert</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>Goşgynyň setirlerini dogry tertipde goý</h3>
+    <div class="goal">Şahyr Nury Baýramowyň «Mekdebim» goşgusynyň setirleri garyşdyryldy.
+      Setirleri kesip, dogry tertipde goý – setirlere yzygiderlikde bas.</div>
+    <ul class="lines" id="lines"></ul>
+    <div class="msg" id="lmsg"></div>
+    <button class="btn ghost" id="lr">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Nusgalamak</b> buýrugynda parçanyň nusgasy aralyk ýada geçýär, parçanyň özi bolsa
+      ekranda galýar. <b>Kesmek</b> buýrugynda parça aralyk ýada geçýär we ekrandan ýok bolýar.
+      <b>Goýmak</b> buýrugy aralyk ýatdaky parçany kursoryň duran ýerinde goýýar – ony
+      <b>birnäçe gezek</b> goýmak bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- resminamalar ---------------- */
+const START = "Türkmenistan – Beýik Ýüpek ýolunyň ýüregi".split(" ");
+let w1 = START.slice(), w2 = ["Meniň", "Watanym", "–"], pick = new Set(), buf = null;
+function draw() {
+  $("t1").innerHTML = w1.map((w, i) =>
+    `<span class="w ${pick.has(i) ? "on" : ""}" data-i="${i}">${w}</span> `).join("");
+  $("t1").querySelectorAll(".w").forEach(s => s.onclick = () => {
+    const i = +s.dataset.i;
+    pick.has(i) ? pick.delete(i) : pick.add(i);
+    draw();
+  });
+  $("t2").textContent = w2.join(" ");
+  $("buf").innerHTML = buf
+    ? `Aralyk ýat (alyş-çalyş buferi)<b>«${buf}»</b>`
+    : `Aralyk ýat<br><span style="opacity:.6">boş</span>`;
+}
+function sorted() { return [...pick].sort((a, b) => a - b); }
+$("copy").onclick = () => {
+  if (!pick.size) { warn("Ilki çep resminamada parçany tapawutlandyr."); return; }
+  buf = sorted().map(i => w1[i]).join(" ");
+  draw();
+  ok("Parçanyň nusgasy aralyk ýada geçdi. Parçanyň özi resminamada galdy.");
+};
+$("cut").onclick = () => {
+  if (!pick.size) { warn("Ilki çep resminamada parçany tapawutlandyr."); return; }
+  buf = sorted().map(i => w1[i]).join(" ");
+  w1 = w1.filter((_, i) => !pick.has(i));
+  pick = new Set();
+  draw();
+  ok("Parça aralyk ýada geçdi we resminamadan ýok boldy.");
+};
+$("paste").onclick = () => {
+  if (!buf) { warn("Aralyk ýat boş. Ilki nusgala ýa-da kes."); return; }
+  w2 = w2.concat(buf.split(" "));
+  draw();
+  ok("Parça 2-nji resminamada goýuldy. Aralyk ýatda ol saklanýar – ýene goýup bolýar.");
+};
+$("rst").onclick = () => {
+  w1 = START.slice(); w2 = ["Meniň", "Watanym", "–"]; pick = new Set(); buf = null;
+  draw(); $("msg").textContent = ""; $("msg").className = "msg";
+};
+function ok(t) { $("msg").textContent = t; $("msg").className = "msg ok"; }
+function warn(t) { $("msg").textContent = t; $("msg").className = "msg bad"; }
+
+/* ---------------- goşgy ---------------- */
+const POEM = [
+  "Eý, mekdebim, jana-jan,",
+  "Saňa bolan söýgim kän.",
+  "Sen misli enem deýin,",
+  "Bakdyň maňa mähriban."
+];
+const MIX = [1, 3, 2, 0];
+let order = [];
+function lines() {
+  const rest = MIX.filter(i => !order.includes(i));
+  $("lines").innerHTML = order.concat(rest).map(i => {
+    const k = order.indexOf(i);
+    return `<li class="${k >= 0 ? "on" : ""}" data-i="${i}"><b>${k >= 0 ? k + 1 : "?"}</b>${POEM[i]}</li>`;
+  }).join("");
+  $("lines").querySelectorAll("li").forEach(li => li.onclick = () => {
+    const i = +li.dataset.i;
+    if (order.includes(i)) return;
+    order.push(i); lines();
+  });
+  if (order.length === POEM.length) {
+    const good = order.every((v, i) => v === i);
+    $("lmsg").textContent = good
+      ? "Tertip dogry. Her setir kesilip, gerekli ýerine goýuldy."
+      : "Tertip nädogry. Goşgy «Eý, mekdebim, jana-jan,» setirinden başlanýar.";
+    $("lmsg").className = good ? "msg ok" : "msg bad";
+  } else $("lmsg").textContent = "";
+}
+$("lr").onclick = () => { order = []; $("lmsg").textContent = ""; lines(); };
+
+draw(); lines();
+</script>
+</body>
+</html>

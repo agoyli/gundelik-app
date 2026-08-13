@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tizlik. Wagt. Geçilen ýol — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .laws { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 18px; line-height: 2; text-align: center; font-weight: 700; }
+  .road { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .road svg { display: block; width: 100%; height: auto; max-height: 120px; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 17px; line-height: 1.6; }
+  .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .opts button { min-height: 50px; font-size: 17px; font-weight: 800; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tizlik barada düşünje. Tizlik. Wagt. Geçilen ýol</h1>
+  <div class="sub">Matematika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="def">Bir wagt birliginde geçilen ýola <b>tizlik</b> diýilýär.
+      Tizlik km/sag, m/min, m/s bilen ölçelýär.</div>
+    <div class="laws" style="margin-top:8px">
+      v = S : t<br>S = v · t<br>t = S : v
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Iki ädimde çöz</h3>
+    <div class="road"><svg id="rd" viewBox="0 0 320 110"></svg></div>
+    <div class="task" id="task" style="margin-top:8px"></div>
+    <div class="goal" id="ask" style="margin-top:8px"></div>
+    <div class="opts" id="opts">
+      <button class="btn" data-f="v">v = S : t</button>
+      <button class="btn" data-f="S">S = v · t</button>
+      <button class="btn" data-f="t">t = S : v</button>
+    </div>
+    <div class="nums" id="nums" style="margin-top:7px"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mesele</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 4, I kitap · 140–143-nji sahypalar</div>
+</div>
+
+<script>
+// [tapmaly, tekst, jogap, birlik, düşündiriş, ýoluň belgisi, wagtyň belgisi]
+var T = [
+  ["v", "Awtoulag 240 km ýoly 4 sagatda geçdi. Onuň tizligi näçe?", 60, "km/sag",
+   "240 : 4 = 60 km/sag.", "240 km", "4 sag"],
+  ["S", "Welosipedçiniň tizligi 12 km/sag. Ol 3 sagatda näçe ýol geçer?", 36, "km",
+   "12 · 3 = 36 km.", "? km", "3 sag"],
+  ["t", "Otly 300 km ýoly 50 km/sag tizlik bilen geçdi. Näçe sagat gerek boldy?", 6, "sag",
+   "300 : 50 = 6 sag.", "300 km", "? sag"],
+  ["v", "Pyýada 15 km ýoly 3 sagatda geçdi. Tizligi näçe?", 5, "km/sag",
+   "15 : 3 = 5 km/sag.", "15 km", "3 sag"],
+  ["S", "Gäminiň tizligi 25 km/sag. Ol 4 sagatda näçe ýol geçer?", 100, "km",
+   "25 · 4 = 100 km.", "? km", "4 sag"]
+];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function drawRoad() {
+  var t = T[ti];
+  var x = stage >= 2 ? 250 : (stage === 1 ? 160 : 60);
+  var s = '<line x1="20" y1="80" x2="300" y2="80" stroke="#94aec9" stroke-width="5"/>';
+  s += '<circle cx="20" cy="80" r="7" fill="#2456b0"/><circle cx="300" cy="80" r="7" fill="#2b7a4a"/>';
+  s += '<rect x="' + (x - 22) + '" y="48" width="44" height="24" rx="7" fill="#2456b0"/>';
+  s += '<circle cx="' + (x - 12) + '" cy="74" r="6" fill="#1e2a3a"/>';
+  s += '<circle cx="' + (x + 12) + '" cy="74" r="6" fill="#1e2a3a"/>';
+  s += '<text x="20" y="103" font-size="13" fill="#33506f">' + t[6] + "</text>";
+  s += '<text x="230" y="103" font-size="13" fill="#33506f">' + t[5] + "</text>";
+  document.getElementById("rd").innerHTML = s;
+}
+var FN = { v: "v = S : t", S: "S = v · t", t: "t = S : v" };
+function show() {
+  var t = T[ti];
+  drawRoad();
+  document.getElementById("task").textContent = t[1];
+  document.getElementById("ask").textContent = stage === 0 ? "1-nji ädim: haýsy düzgüni ulanmaly?" :
+    (stage === 1 ? "2-nji ädim: jogaby hasapla." : "Mesele çözüldi.");
+  var m = document.getElementById("msg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ? (FN[t[0]] + " → " + t[4]) : "";
+}
+var VALS = [3, 4, 5, 6, 12, 25, 36, 40, 50, 60, 100, 120];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var ob = document.getElementById("opts").getElementsByTagName("button");
+for (var i = 0; i < ob.length; i++) {
+  ob[i].onclick = function () {
+    if (stage !== 0) return;
+    var f = this.getAttribute("data-f"), m = document.getElementById("msg");
+    d++;
+    if (f === T[ti][0]) {
+      ok++; stage = 1; show();
+      m.className = "msg ok"; m.textContent = "Dogry düzgün: " + FN[f] + ". Indi hasapla.";
+    } else {
+      m.className = "msg bad"; m.textContent = "Ýalňyş. Nämäniň näbellidigine seret.";
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage !== 1) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), t = T[ti], m = document.getElementById("msg");
+    d++;
+    if (v === t[2]) {
+      ok++; stage = 2; show();
+    } else {
+      m.className = "msg bad"; m.textContent = "Ýalňyş. " + FN[t[0]] + " düzgünine görä hasapla.";
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["Tizligi tapmak üçin näme etmeli?", ["Ýoly wagta bölmeli", "Ýoly wagta köpeltmeli", "Wagty ýola bölmeli"], 0],
+  ["Tizligi 12 km/sag bolan welosipedçi 3 sagatda näçe km geçer?", ["36 km", "4 km", "15 km"], 0],
+  ["S = v · t düzgüni bilen näme tapylýar?", ["Geçilen ýol", "Tizlik", "Wagt"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

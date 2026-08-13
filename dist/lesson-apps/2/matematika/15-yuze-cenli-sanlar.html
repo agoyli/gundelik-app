@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1-den 100-e çenli sanlar — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tab { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+  .tab button { min-height: 36px; padding: 0; font-size: 13px; font-weight: 700; }
+  .big2 { font-size: 32px; font-weight: 800; text-align: center; }
+  .pads { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .pads button { min-height: 46px; font-size: 17px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>1-den 100-e çenli sanlar</h1>
+  <div class="sub">Matematika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="def">Her ikibelgili san <b>onluklardan</b> we <b>birliklerden</b> durýar.
+      9 onluga ýene 1 onluk goşulsa, <b>10 onluk</b>, ýagny <b>100</b> alynýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Düzümini tap</h3>
+    <div class="big2" id="num"></div>
+    <div class="goal" id="ask"></div>
+    <div class="pads" id="pads"></div>
+    <div class="msg" id="dmsg"></div>
+    <div class="row"><button class="btn primary" id="dnext">Indiki san</button></div>
+    <div class="score" id="dsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sanlar tablisasy</h3>
+    <div class="goal" id="tgoal"></div>
+    <div class="tab" id="tab"></div>
+    <div class="msg" id="tmsg"></div>
+    <div class="row"><button class="btn ghost" id="tnext">Indiki sorag</button></div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 2, II kitap · 106–107-nji sahypalar</div>
+</div>
+
+<script>
+var NUM = [47, 65, 30, 99, 82, 58], ni = 0, stage = 0, dd = 0, dok = 0;
+function tens() { return Math.floor(NUM[ni] / 10); }
+function ones() { return NUM[ni] % 10; }
+function show() {
+  document.getElementById("num").textContent = NUM[ni];
+  document.getElementById("ask").textContent = stage === 0 ?
+    "Bu sanda näçe onluk bar?" : (stage === 1 ? "Bu sanda näçe birlik bar?" : "Düzümi doly tapyldy.");
+  var m = document.getElementById("dmsg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ?
+    (NUM[ni] + " = " + tens() + " onluk we " + ones() + " birlik = " + (tens() * 10) + " + " + ones() + ".") : "";
+}
+var h = "";
+for (var i = 0; i <= 9; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("pads").innerHTML = h;
+var pb = document.getElementById("pads").getElementsByTagName("button");
+for (var i = 0; i < pb.length; i++) {
+  pb[i].onclick = function () {
+    if (stage >= 2) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("dmsg");
+    var w = stage === 0 ? tens() : ones();
+    dd++;
+    if (v === w) {
+      dok++; stage++; show();
+      if (stage === 1) { m.className = "msg ok"; m.textContent = "Dogry! Indi birlikleri aýt."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = stage === 0 ? "Ýalňyş. Çep tarapdaky belgä seret." : "Ýalňyş. Sag tarapdaky belgä seret.";
+    }
+    document.getElementById("dsc").textContent = "Netije: " + dok + " / " + dd;
+  };
+}
+document.getElementById("dnext").onclick = function () { ni = (ni + 1) % NUM.length; stage = 0; show(); };
+show();
+
+var ASK = [
+  ["Iň uly ikibelgili sana bas.", 99],
+  ["7 onlukdan durýan sana bas.", 70],
+  ["45-den 1 uly sana bas.", 46],
+  ["3 onluk we 8 birlikden durýan sana bas.", 38],
+  ["60-dan 1 kiçi sana bas.", 59]
+];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+var h2 = "";
+for (var i = 1; i <= 100; i++) h2 += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("tab").innerHTML = h2;
+var tb = document.getElementById("tab").getElementsByTagName("button");
+for (var i = 0; i < tb.length; i++) {
+  tb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = parseInt(this.getAttribute("data-n"), 10), w = ASK[ti][1], m = document.getElementById("tmsg");
+    if (v === w) { tok++; m.className = "msg ok"; m.textContent = "Dogry! Bu – " + w + "."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + w + "."; }
+    document.getElementById("tsc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+function showT() {
+  document.getElementById("tgoal").textContent = ASK[ti][0];
+  document.getElementById("tmsg").className = "msg";
+  document.getElementById("tmsg").textContent = "";
+  tlock = 0;
+}
+document.getElementById("tnext").onclick = function () { ti = (ti + 1) % ASK.length; showT(); };
+showT();
+
+var Q = [
+  ["10 onluk näçe edýär?", ["100", "10", "90"], 0],
+  ["47 sanynda näçe onluk bar?", ["4", "7", "47"], 0],
+  ["Iň uly ikibelgili san haýsy?", ["99", "90", "100"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

@@ -49,7 +49,7 @@ const MISUSE = [
   {
     note: 'Never park it in a badge. The hexagon is already the container.',
     el: (
-      <Box sx={{ display: 'grid', placeItems: 'center', width: 80, height: 80, borderRadius: '999px', bgcolor: tokens.blueTint }}>
+      <Box sx={{ display: 'grid', placeItems: 'center', width: 80, height: 80, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.blueTint }}>
         <BrandMark size={46} />
       </Box>
     ),
@@ -67,7 +67,7 @@ const MISUSE = [
   },
   {
     note: 'Never reset either wordmark in another face.',
-    el: <Typography sx={{ fontFamily: 'Georgia, serif', fontSize: 25 }}>eMekdep</Typography>,
+    el: <Typography sx={{ fontFamily: 'Georgia, serif', fontSize: 26 }}>eMekdep</Typography>,
   },
 ];
 
@@ -224,21 +224,20 @@ export function BrandbookScreen() {
           it. Use the platform lockup on anything a school administration reads, and the product
           lockup on the store listing and anywhere a family is being addressed.
         </Prose>
-        <Rule warn title="Two blues exist, and they are four percent apart.">
-          The mark and the wordmark both ship in <Mono>{BRAND_BLUE}</Mono>. The interface blue is
-          {' '}<Mono>tokens.blue</Mono> — <Mono>{tokens.blue}</Mono>. Side by side at similar size they
-          read as a printing fault rather than two deliberate colours, so never put the logo
-          directly beside a UI-blue element on the same surface. One blue per surface.
+        <Rule title="One blue. The mark's blue.">
+          There used to be two, four percent apart: the logo shipped in <Mono>{BRAND_BLUE}</Mono>
+          {' '}and the interface ran on its own slightly darker blue, which side by side read as a
+          printing fault rather than two deliberate colours. The interface now <i>is</i> the mark:
+          {' '}<Mono>tokens.blue</Mono> is <Mono>{tokens.blue}</Mono>, and every other blue in the
+          product is derived from it by arithmetic rather than by eye. The logo can sit beside a
+          UI-blue element on the same surface, because they are the same colour.
         </Rule>
         <Rule warn title={`${BRAND_BLUE} is never a text colour.`}>
           It measures <Num>{ratio(BRAND_BLUE, '#FFFFFF')}</Num> on white — {level(BRAND_BLUE, '#FFFFFF')} at
-          body size. Legitimate as the logo's own fill at display size, and nowhere else. Three
-          icons in the app still carry it as a hardcoded hex; they are a bug, not a precedent.
-        </Rule>
-        <Rule title="Open question for the next revision.">
-          Drawing the logo in <Mono>tokens.blue</Mono> instead would remove the near-miss entirely
-          and cost nothing at display size, where both read as the same blue. It needs a decision
-          from whoever owns the brand; until then both values stand as documented here.
+          body size. That is fine for the mark, which is a shape at 40px and up where 3:1 is the
+          bar, and it is exactly why the interface carries darker <Mono>Solid</Mono> and
+          {' '}<Mono>Text</Mono> grades for the moments the same blue has to sit under white words or
+          become a caption. Reach for a grade, never for the brand value.
         </Rule>
       </Plate>
 
@@ -280,7 +279,7 @@ export function BrandbookScreen() {
                 bgcolor: '#fff', border: `1px solid ${tokens.redTint}`, borderRadius: `${tokens.rRow}px`,
               }}>{m.el}</Box>
               <Typography sx={{ fontSize: 13, color: tokens.ink2, lineHeight: 1.45 }}>
-                <Box component="span" sx={{ color: tokens.redText, fontWeight: 700, fontSize: 11.5, mr: '7px' }}>ÝOK</Box>
+                <Box component="span" sx={{ color: tokens.redText, fontWeight: 700, fontSize: 12, mr: '7px' }}>ÝOK</Box>
                 {m.note}
               </Typography>
             </Box>
@@ -345,7 +344,7 @@ export function BrandbookScreen() {
           rows={[
             ['Barla', 'Tassykla, Täzele', 'It is a parent’s signature on a day — “I have seen this” — not a data refresh or an approval.'],
             ['Üns bermeli', 'Käýinç', 'The negative badge describes something to work on, not a reprimand handed down.'],
-            ['Nyşan', 'Bellik', '“Bellik” already means a teacher’s note in the diary. One word cannot carry two meanings one screen apart.'],
+            ['Ýyldyz', 'Nyşan, Bellik', '“Bellik” is already a teacher’s note in the diary and “nyşan” is the app’s own mark. What a teacher awards is a star.'],
             ['Göreldeli · Zehinli', 'Premium, Gold, Pro', 'Plans are named after the student they are bought for. A tier a family can say out loud is one they can choose between.'],
           ]}
         />
@@ -392,13 +391,15 @@ export function BrandbookScreen() {
           commissioning a redraw of the frame geometry — is the highest-value thing anyone could do
           to this kit.
         </Rule>
-        <Rule warn title="Two blues, pending a decision.">
-          See plate 03. Until it is settled, brand blue stays on brand surfaces and
-          {' '}<Mono>tokens.blue</Mono> stays inside the product.
+        <Rule title="The two blues are one blue.">
+          Settled — see plate 03. <Mono>tokens.blue</Mono> is the mark's own value and the rest of
+          the ramp is derived from it, so brand surfaces and product surfaces cannot drift apart
+          again without someone editing the derivation deliberately.
         </Rule>
-        <Rule warn title="Three icons still carry hardcoded hexes.">
-          <Mono>{BRAND_BLUE}</Mono>, <Mono>#898D95</Mono> and <Mono>#5A5E6F</Mono>, of which only the
-          last is a token. They predate this palette. Bugs to fix, never a precedent.
+        <Rule title="The icons no longer carry hardcoded hexes.">
+          The three that did now read <Mono>tokens.blue</Mono> and <Mono>tokens.blueSoft</Mono>, so
+          they follow the palette instead of shadowing it. <Mono>npm run check:tokens</Mono> fails
+          the build if a literal hex reappears anywhere outside <Mono>src/theme.ts</Mono>.
         </Rule>
       </Plate>
     </DocsPage>

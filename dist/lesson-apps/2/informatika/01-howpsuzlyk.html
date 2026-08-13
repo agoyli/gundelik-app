@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Howpsuzlyk düzgünleri — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 23px; }
+  .stage { background: #eef2f8; border-radius: 16px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 12px;
+               max-width: 100%; height: auto; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cards button { min-height: 66px; font-size: 14.5px; line-height: 1.4; text-align: left;
+                  padding: 11px; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+  .bin { background: #f7fafd; border-radius: 14px; padding: 10px; min-height: 84px; }
+  .bin h4 { margin: 0 0 6px; font-size: 14.5px; }
+  .bin span { display: block; background: #fff; border-radius: 10px; padding: 6px 9px;
+              font-size: 13.5px; margin-bottom: 5px; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 15.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kompýuter otagynyň düzgünleri</h1>
+  <div class="sub">Informatika · 2-nji synp</div>
+
+  <div class="card">
+    <h3>Dogry oturyş</h3>
+    <div class="goal">Sürgüni süýşür – okuwçynyň oturşy üýtgeýär. Dogry ýagdaýy tap.</div>
+    <div class="stage" id="st"></div>
+    <div class="slider"><span class="lbl">Ekrandan aralyk</span>
+      <input type="range" id="ds" min="10" max="90" value="20"><span class="out" id="dso"></span></div>
+    <div class="msg" id="dmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Bolýarmy ýa-da bolanok?</h3>
+    <div class="goal">Ýazga bas – ol öz sütünine geçsin.</div>
+    <div class="cards" id="pool"></div>
+    <div class="bins">
+      <div class="bin"><h4 style="color:#1d7a3d">✅ Bolýar</h4><div id="bok"></div></div>
+      <div class="bin"><h4 style="color:#b4232a">⛔ Bolanok</h4><div id="bno"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 2-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- oturyş ---------------- */
+function pose() {
+  const d = +$("ds").value;                 // sm
+  $("dso").textContent = d + " sm";
+  // 1-nji synp kitaby: monitor bilen gözüň aralygy 50 sm-den az bolmaly däl
+  const good = d >= 50;
+  const hx = 150 - (60 - d) * 1.1;          // kelläniň ýeri
+  $("st").innerHTML = `<svg viewBox="0 0 300 190" width="300"
+    xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">
+    <rect x="20" y="150" width="260" height="10" rx="5" fill="#93a2b5"/>
+    <rect x="196" y="66" width="72" height="52" rx="6" fill="#dbe7ff" stroke="#2456b0"
+      stroke-width="3"/>
+    <rect x="224" y="118" width="16" height="14" fill="#2456b0"/>
+    <rect x="210" y="132" width="44" height="7" rx="3" fill="#2456b0"/>
+    <rect x="150" y="138" width="52" height="8" rx="4" fill="#5b6b80"/>
+    <circle cx="${hx}" cy="60" r="22" fill="#f0a500"/>
+    <line x1="${hx}" y1="82" x2="${hx - (150 - hx) * 0.15}" y2="138"
+      stroke="${good ? "#1d7a3d" : "#b4232a"}" stroke-width="9" stroke-linecap="round"/>
+    <line x1="${hx}" y1="104" x2="${hx + 44}" y2="126"
+      stroke="${good ? "#1d7a3d" : "#b4232a"}" stroke-width="7" stroke-linecap="round"/>
+    <line x1="${hx - 22}" y1="138" x2="${hx - 22}" y2="168" stroke="#1e2a3a"
+      stroke-width="8" stroke-linecap="round"/>
+    <text x="${(hx + 232) / 2}" y="34" text-anchor="middle" font-size="13" font-weight="700"
+      fill="${good ? "#1d7a3d" : "#b4232a"}">${d} sm</text>
+    <line x1="${hx + 24}" y1="44" x2="196" y2="44" stroke="${good ? "#1d7a3d" : "#b4232a"}"
+      stroke-width="2" stroke-dasharray="5 4"/>
+  </svg>`;
+  $("dmsg").textContent = good
+    ? "✅ Dogry! Monitor bilen gözüň aralygy 50 santimetrden az bolmaly däl."
+    : "❌ Ekrana örän ýakyn – göz çalt ýadaýar. Aralyk 50 sm-den az bolmaly däl.";
+  $("dmsg").className = good ? "msg ok" : "msg bad";
+}
+$("ds").addEventListener("input", pose);
+
+/* ---------------- düzgünler ---------------- */
+/* düzgünler kitapdan alyndy (sah. 8-9) */
+const RULES = [
+  ["Mugallymyň rugsady bilen girmek", true],
+  ["Mugallymyň görkezen kompýuterinde işlemek", true],
+  ["Düwmelere çalaja basmak", true],
+  ["Her 10-15 minutdan arakesme etmek", true],
+  ["Tokly simleri, utgaşdyryjyny ellemek", false],
+  ["Klawiaturanyň üstünde iýmit we miwe suwuny saklamak", false],
+  ["Üstki eşik, hapa aýakgap bilen girmek", false],
+  ["Monitoryň, ulgam blogynyň üstünde zat goýmak", false],
+  ["Mugallymdan rugsatsyz enjamy açmak ýa-da ýapmak", false],
+];
+let left = [];
+function bins() {
+  left = RULES.map((_, i) => i);
+  $("bok").innerHTML = ""; $("bno").innerHTML = "";
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  pool();
+}
+function pool() {
+  $("pool").innerHTML = left.map(i =>
+    `<button class="btn" data-i="${i}">${RULES[i][0]}</button>`).join("") ||
+    "<span class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [txt, ok] = RULES[i];
+    $(ok ? "bok" : "bno").innerHTML += `<span>${txt}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").textContent = ok ? "✅ Dogry, muny etmek bolýar."
+                               : "⛔ Dogry, muny etmek bolanok.";
+    $("bmsg").className = "msg ok";
+    pool();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Kompýuteriň başynda näçe minut üznüksiz işlemek bolýar?",
+   ["10-15 minut", "2 sagat", "Bütin gün"], 0],
+  ["Aşakdakylaryň haýsysy bolmaýar?",
+   ["Düwmä çalaja basmak", "Klawiaturanyň üstünde suw saklamak", "Mugallymy diňlemek"], 1],
+  ["Kompýuter otagyna nähili girmeli?",
+   ["Üstki eşik bilen", "Hapa aýakgap bilen", "Mugallymyň rugsady bilen"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+pose(); bins();
+</script>
+</body>
+</html>

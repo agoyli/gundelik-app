@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýazuw arkaly bölmek — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .col { background: #fff6e0; border-radius: 13px; padding: 14px 10px; font-family: ui-monospace, monospace;
+         font-size: 26px; font-weight: 800; text-align: center; letter-spacing: 3px; }
+  .col .lab { display: block; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600;
+              letter-spacing: 0; color: #5b6b7c; margin-bottom: 4px; }
+  .chain { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16.5px; line-height: 1.9; text-align: center; }
+  .nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 17px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ikibelgili we üçbelgili sanlary birbelgili sana ýazuw arkaly bölmek</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def">Sanlar <b>bölünijiniň çepdäki sifrinden</b> bölünip başlanýar.
+      Sifrleriň her biri <b>doly däl bölüniji</b> bolýar:
+      696 : 3 = (600 + 90 + 6) : 3 = 200 + 30 + 2 = 232.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ädimme-ädim böl</h3>
+    <div class="col" id="col"></div>
+    <div class="chain" id="chain" style="margin-top:8px"></div>
+    <div class="goal" id="ask"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="tmsg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mysal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, II kitap · 115–117-nji sahypalar</div>
+</div>
+
+<script>
+// [bölüniji, bölüji] — hemme sifrler galyndysyz bölünýär
+var T = [[696, 3], [84, 4], [462, 2], [636, 3], [848, 4], [555, 5]];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function digs() { return String(T[ti][0]).split(""); }
+function q(k) { return parseInt(digs()[k], 10) / T[ti][1]; }
+function paý() { return T[ti][0] / T[ti][1]; }
+function steps() { return digs().length; }
+function draw() {
+  var t = T[ti], ds = digs();
+  var got = "";
+  for (var i = 0; i < ds.length; i++) got += (i < stage ? q(i) : "·");
+  document.getElementById("col").innerHTML =
+    '<span class="lab">bölüniji : bölüji = paý</span>' + t[0] + " : " + t[1] + " = " + got;
+  var line = "";
+  for (var i = 0; i < ds.length; i++) {
+    var place = Math.pow(10, ds.length - 1 - i);
+    var name = place === 100 ? "ýüzlük" : (place === 10 ? "onluk" : "birlik");
+    line += (i ? "<br>" : "") + (i + 1) + ") " + ds[i] + " " + name + " : " + t[1] + " = " +
+      (i < stage ? (q(i) + " " + name) : "?");
+  }
+  document.getElementById("chain").innerHTML = line;
+  document.getElementById("ask").textContent = stage < steps() ?
+    ((stage + 1) + "-nji sifri bölüjä böl: " + ds[stage] + " : " + t[1] + " = ?") :
+    ("Paý taýýar: " + paý() + ".");
+  var m = document.getElementById("tmsg");
+  m.className = stage >= steps() ? "msg ok" : "msg";
+  m.textContent = stage >= steps() ?
+    ("Barlag: " + paý() + " · " + t[1] + " = " + t[0] + " ✓") : "";
+}
+var h = "";
+for (var i = 0; i <= 9; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= steps()) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("tmsg");
+    var w = q(stage);
+    d++;
+    if (v === w) {
+      ok++; stage++; draw();
+      if (stage < steps()) { m.className = "msg ok"; m.textContent = "Dogry! Indiki sifre geç."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Ýalňyş. " + digs()[stage] + " : " + T[ti][1] + " näçe bolar?";
+    }
+    document.getElementById("tsc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; draw(); };
+document.getElementById("again").onclick = function () { stage = 0; draw(); };
+draw();
+
+var Q = [
+  ["Sütünleýin bölmekde haýsy sifrden başlaýarys?", ["Çepdäki sifrden", "Sagdaky sifrden", "Ortadaky sifrden"], 0],
+  ["84 : 4 näçe bolar?", ["21", "22", "20"], 0],
+  ["696 : 3 näçe bolar?", ["232", "223", "332"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

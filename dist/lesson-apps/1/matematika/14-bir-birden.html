@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bir-birden goşmak we aýyrmak — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .nl { display: grid; grid-template-columns: repeat(11, 1fr); gap: 3px; }
+  .nl div { background: #f2f5fa; border-radius: 8px; min-height: 40px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .nl div.cur { background: #4a7fd4; color: #fff; }
+  .nl div.nb { background: #dfe9f7; }
+  .eq { text-align: center; font-size: 28px; font-weight: 700; margin: 9px 0 4px; }
+  .nums { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 18px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bir-birden goşmak we aýyrmak</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def">Sana <b>1 goşulanda</b> onuň edil <b>yz ýanyndan</b> gelýän san alynýar.
+      Sandan <b>1 aýrylanda</b> onuň edil <b>öň ýanyndaky</b> san alynýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Sanlar hatarynda ýöre</h3>
+    <div class="nl" id="nl"></div>
+    <div class="eq" id="eq"></div>
+    <div class="row">
+      <button class="btn" id="m1">− 1</button>
+      <button class="btn primary" id="p1">+ 1</button>
+      <button class="btn ghost" id="rs">5-e gaýt</button>
+    </div>
+    <div class="msg" id="nmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Netijäni tap</h3>
+    <div class="eq" id="task"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="tmsg"></div>
+    <div class="row"><button class="btn primary" id="next">Indiki mysal</button></div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, I kitap · 71-nji sahypa</div>
+</div>
+
+<script>
+var cur = 5;
+function show(msg) {
+  var h = "";
+  for (var i = 0; i <= 10; i++) {
+    var c = i === cur ? "cur" : (Math.abs(i - cur) === 1 ? "nb" : "");
+    h += '<div class="' + c + '">' + i + "</div>";
+  }
+  document.getElementById("nl").innerHTML = h;
+  document.getElementById("eq").textContent = "Häzirki san: " + cur;
+  var m = document.getElementById("nmsg");
+  m.className = "msg" + (msg ? " ok" : "");
+  m.textContent = msg || (cur > 0 && cur < 10 ?
+    (cur - 1) + " – " + cur + " sanyň öň ýanyndaky, " + (cur + 1) + " – yz ýanyndaky san." : "");
+}
+document.getElementById("p1").onclick = function () {
+  if (cur >= 10) { show("10 – iň soňky san, hatarda mundan aňry gidilmeýär."); return; }
+  var old = cur; cur++;
+  show(old + " + 1 = " + cur + ". " + cur + " – " + old + " sanyň edil yz ýanyndaky san.");
+};
+document.getElementById("m1").onclick = function () {
+  if (cur <= 0) { show("0 – hatarda iň kiçi san."); return; }
+  var old = cur; cur--;
+  show(old + " − 1 = " + cur + ". " + cur + " – " + old + " sanyň edil öň ýanyndaky san.");
+};
+document.getElementById("rs").onclick = function () { cur = 5; show(""); };
+show("");
+
+var T = [[6, 1], [8, -1], [3, 1], [9, -1], [7, 1], [4, -1]];
+var ti = 0, d = 0, ok = 0, lock = 0;
+function showT() {
+  var t = T[ti];
+  document.getElementById("task").textContent = t[0] + (t[1] > 0 ? " + 1 = ?" : " − 1 = ?");
+  document.getElementById("tmsg").className = "msg";
+  document.getElementById("tmsg").textContent = "";
+  lock = 0;
+}
+var h = "";
+for (var i = 2; i <= 10; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (lock) return;
+    lock = 1; d++;
+    var v = parseInt(this.getAttribute("data-n"), 10), t = T[ti], r = t[0] + t[1];
+    var m = document.getElementById("tmsg");
+    if (v === r) {
+      ok++; m.className = "msg ok";
+      m.textContent = "Dogry! " + r + " – " + t[0] + " sanyň edil " + (t[1] > 0 ? "yz" : "öň") + " ýanyndaky san.";
+    } else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + r + "."; }
+    document.getElementById("tsc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; showT(); };
+showT();
+
+var Q = [
+  ["Sana 1 goşulanda haýsy san alynýar?", ["Edil yz ýanyndaky san", "Edil öň ýanyndaky san", "Iň uly san"], 0],
+  ["9 − 1 näçe bolar?", ["8", "10", "7"], 0],
+  ["4-iň edil öň ýanynda haýsy san durýar?", ["3", "5", "2"], 0],
+  ["Aýyrmak amaly haýsy belgi bilen ýazylýar?", ["−", "+", "="], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

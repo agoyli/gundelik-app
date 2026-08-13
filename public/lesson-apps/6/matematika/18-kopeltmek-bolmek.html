@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Položitel we otrisatel sanlary köpeltmek — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .big3 { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 26px;
+          font-weight: 800; text-align: center; color: #2456b0; margin: 4px 0; }
+  .tab { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .tab div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px;
+             font-family: ui-monospace, Menlo, Consolas, monospace; text-align: center; }
+  .tab div span { display: block; font-family: system-ui, sans-serif; font-size: 12px;
+                  color: #5b6b80; margin-top: 3px; }
+  .tab .p { color: #1d7a3d; font-weight: 800; }
+  .tab .m { color: #b4232a; font-weight: 800; }
+  .facs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .facs button { min-width: 62px; font-family: ui-monospace, Menlo, Consolas, monospace;
+                 font-size: 15px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Položitel we otrisatel sanlary köpeltmek we bölmek</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <h3>Alamatlaryň düzgüni</h3>
+    <div class="tab">
+      <div><span>«+» · «+»</span><b class="p">+</b><span>2 · 3 = 6</span></div>
+      <div><span>«+» · «−»</span><b class="m">−</b><span>2 · (−3) = −6</span></div>
+      <div><span>«−» · «+»</span><b class="m">−</b><span>(−2) · 3 = −6</span></div>
+      <div><span>«−» · «−»</span><b class="p">+</b><span>(−2) · (−3) = 6</span></div>
+    </div>
+    <div class="hint">Bölmekde hem edil şol düzgün işleýär:
+      (−18) : (−3) = 6, −42 : 6 = −7.</div>
+  </div>
+
+  <div class="card">
+    <h3>Köpeltmek maşyny</h3>
+    <div class="goal">Köpeldijileri saýla-da, alamatyň nähili emele gelýändigine seret.</div>
+    <div class="slider"><span class="lbl">a</span>
+      <input type="range" id="a" min="-60" max="60" value="-24"><span class="out" id="ao"></span></div>
+    <div class="slider"><span class="lbl">b</span>
+      <input type="range" id="b" min="-60" max="60" value="6"><span class="out" id="bo"></span></div>
+    <div class="row" style="justify-content:center;margin-top:4px">
+      <button class="btn sel" data-op="·">a · b</button>
+      <button class="btn" data-op=":">a : b</button>
+    </div>
+    <div class="big3" id="big"></div>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Otrisatel köpeldijileri sana</h3>
+    <div class="goal">Her köpeldijä bas – onuň alamaty üýtgeýär. Otrisatelleriň sany
+      <b>täk</b> bolsa hasyl otrisatel, <b>jübüt</b> bolsa položiteldir.</div>
+    <div class="facs" id="facs"></div>
+    <div class="calc" id="fc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Amatly toparlamak</h3>
+    <div class="goal">Utgaşdyrma häsiýeti hasaplamany ýeňilleşdirýär.</div>
+    <div class="row tight" id="grp"></div>
+    <div class="calc" id="gc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Nola bölmek bolmaýar.</b> Eger 6 : 0 = x bolsa, onda x · 0 = 6 bolmalydy. Ýöne islendik
+      sany nola köpeldeniňde nol alynýar, şonuň üçin beýle x san ýokdur.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, II kitap (2018), §31–33</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+const fx = v => N(Math.round(v * 100) / 100);
+let op = "·";
+
+/* ---------------- köpeltmek maşyny ---------------- */
+function calc() {
+  const a = +$("a").value / 10, b = +$("b").value / 10;
+  $("ao").textContent = N(a); $("bo").textContent = N(b);
+  const ma = Math.abs(a), mb = Math.abs(b);
+  if (op === ":" && b === 0) {
+    $("big").textContent = `${N(a)} : 0 – bolmaýar`;
+    $("calc").innerHTML = `<b>Nola bölmek bolmaýar.</b> Bölüji hiç haçan nola deň bolmaly däldir.`;
+    return;
+  }
+  const res = op === "·" ? a * b : a / b;
+  const mres = op === "·" ? ma * mb : ma / mb;
+  // ýaý diňe otrisatel köpeldiji üçin gerek
+  $("big").textContent = `${N(a)} ${op} ${b < 0 ? `(${N(b)})` : N(b)} = ${fx(res)}`;
+  const neg = a < 0 !== b < 0;
+  $("calc").innerHTML = a === 0 || (op === "·" && b === 0)
+    ? `Köpeldijileriň biri nol – hasyl hem <b>0</b>-a deňdir.`
+    : `modullary ${op === "·" ? "köpeldýäris" : "bölýäris"}: ` +
+      `${fx(ma)} ${op} ${fx(mb)} = <b>${fx(mres)}</b><br>` +
+      `alamatlar ${neg ? "<b>dürli</b>" : "<b>birmeňzeş</b>"} – ` +
+      `netijäniň öňünde ${neg ? "«−»" : "«+»"} durýar<br>` +
+      `jogap: <b>${fx(res)}</b>`;
+}
+["a", "b"].forEach(k => $(k).addEventListener("input", calc));
+document.querySelectorAll("[data-op]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-op]").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel"); op = b.dataset.op; calc();
+});
+
+/* ---------------- alamatlary sanamak ---------------- */
+const BASE = [2, 3, 4, 5, 6];
+let sign = [1, -1, -1, 1, -1];
+function facs() {
+  $("facs").innerHTML = BASE.map((v, i) =>
+    `<button class="btn ${sign[i] < 0 ? "warn" : ""}" data-i="${i}">${N(sign[i] * v)}</button>`)
+    .join("") + `<button class="btn ghost" id="fr">Başdan</button>`;
+  $("facs").querySelectorAll("[data-i]").forEach(b => b.onclick = () => {
+    sign[+b.dataset.i] *= -1; facs();
+  });
+  $("fr").onclick = () => { sign = [1, 1, 1, 1, 1]; facs(); };
+  const k = sign.filter(s => s < 0).length;
+  const prod = BASE.reduce((p, v, i) => p * v * sign[i], 1);
+  $("fc").innerHTML =
+    `${BASE.map((v, i) => sign[i] < 0 ? `(${N(-v)})` : String(v)).join(" · ")}<br>` +
+    `modullaryň hasyly: ${BASE.join(" · ")} = <b>${BASE.reduce((p, v) => p * v, 1)}</b><br>` +
+    `otrisatel köpeldijileriň sany: <b>${k}</b> – ${k % 2 ? "täk" : "jübüt"}<br>` +
+    `şonuň üçin hasyl <b>${k % 2 ? "otrisatel" : "položitel"}</b>: <b>${N(prod)}</b>`;
+}
+
+/* ---------------- toparlamak ---------------- */
+const GRP = [
+  ["6 · (−5) · 25 · 5", "(6 · 25) · (−5 · 5)", "150 · (−25)", "−3750"],
+  ["2 · (−3) · (−4) · 5 · (−6)", "(2 · 3 · 4 · 5 · 6) we üç otrisatel", "−720", "−720"],
+  ["(−4,3) · (−2)", "4,3 · 2", "8,6", "8,6"],
+  ["(−2,4) · 0,6", "−(2,4 · 0,6)", "−1,44", "−1,44"],
+];
+$("grp").innerHTML = GRP.map((g, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${g[0]}</button>`).join("");
+$("grp").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("grp").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const g = GRP[+b.dataset.i];
+  $("gc").innerHTML = `${g[0]}<br>= ${g[1]}<br>= ${g[2]}<br>= <b>${g[3]}</b>`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["(−2,4) · 0,6 näçä deň?", ["1,44", "−1,44", "−14,4", "−0,144"], 1],
+  ["2 · (−3) · (−4) · 5 · (−6) hasylyň alamaty nähili?",
+   ["Položitel", "Otrisatel", "Nol", "Kesgitläp bolmaýar"], 1],
+  ["(−18) : (−3) näçä deň?", ["−6", "6", "−54", "54"], 1],
+  ["Haýsy amaly ýerine ýetirmek bolmaýar?", ["0 : 6", "6 · 0", "6 : 0", "−6 · (−1)"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+calc(); facs();
+$("grp").querySelector("button").click();
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informasion howpsuzlyk — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .card2 { background: #f7fafd; border-radius: 12px; padding: 14px; font-size: 15px;
+           line-height: 1.55; min-height: 78px; }
+  .meter { height: 12px; border-radius: 999px; background: #e8eef7; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; transition: width .25s, background .25s; }
+  .pw { width: 100%; padding: 12px; font-size: 16px; border-radius: 12px;
+        border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .checks { display: flex; flex-direction: column; gap: 5px; margin-top: 9px; }
+  .chk { font-size: 13.5px; color: #93a2b5; }
+  .chk.on { color: #1d7a3d; font-weight: 700; }
+  .bio { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  .bio div { background: #efe9fb; border-radius: 12px; padding: 13px 8px; text-align: center;
+             font-size: 13px; color: #4b3a86; font-weight: 700; }
+  .bio div span { display: block; font-size: 26px; margin-bottom: 4px; }
+  .defs { display: flex; flex-direction: column; gap: 7px; }
+  .def { background: #f7fafd; border-radius: 11px; padding: 10px 12px; font-size: 14px;
+         line-height: 1.5; cursor: pointer; }
+  .def b { color: #2456b0; }
+  .def .body { display: none; margin-top: 6px; color: #5b6b80; }
+  .def.open .body { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Informasion hukuk we howpsuzlyk</h1>
+  <div class="sub">Goranmagyň tärleri · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Ýagdaýy oka. Bu hereket <b>howpsuzmy</b>, ýa-da <b>howplumy</b>?</div>
+    <div class="card2" id="case"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="safe">✅ Howpsuz</button>
+      <button class="btn warn" id="risk">⚠️ Howply</button>
+      <button class="btn ghost" id="next">Indiki</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="score" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Parolyňy barla</h3>
+    <div class="goal">Parol näçe uzyn we dürli belgili bolsa, şonça-da ony ele geçirmek kyn.</div>
+    <input class="pw" id="pw" type="text" value="1234" autocomplete="off" spellcheck="false">
+    <div class="meter" style="margin-top:10px"><i id="mtr"></i></div>
+    <div class="row" style="margin-top:8px"><span class="badge" id="pwv"></span></div>
+    <div class="checks" id="checks"></div>
+  </div>
+
+  <div class="card">
+    <h3>Biometrik sistema</h3>
+    <div class="goal">Parol bilen bir hatarda gaýtalanmaýan şahsy parametrler hem ulanylýar.</div>
+    <div class="bio">
+      <div><span>🗣</span>ses</div>
+      <div><span>👆</span>barmaklaryň şekilleri</div>
+      <div><span>👁</span>gözi</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Düşünjeler</h3>
+    <div class="goal">Her setire bas – kesgitlemesi açylar.</div>
+    <div class="defs" id="defs"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Informasion howpsuzlyk</b> – jemgyýetiň we adamyň informasion gurşawynyň goraglylygyny
+      üpjün etmek bilen bagly çäreleriň utgaşmasydyr. Kiberhowpsuzlygy üpjün etmek boýunça
+      Döwlet Maksatnamasy Türkmenistanyň Prezidentiniň <b>2017-nji ýylyň 7-nji iýunyndaky
+      247-nji Karary</b> bilen tassyklanyldy.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const CASES = [
+  { t: "Antiwirus programmany aýda bir gezek täzeläp durýarsyň.", safe: true,
+    w: "Dogry. Täze wiruslar hemişe döreýär, şonuň üçin bazalary täzeläp durmaly." },
+  { t: "Dostuň beren fleş diskini derrew açyp, ondaky faýly işe goýberýärsiň.", safe: false,
+    w: "Howply. Elektron göterijileri açmazdan öň antiwirus bilen barlamaly." },
+  { t: "Wajyp referatyňy başga bir diske nusgalap goýýarsyň.", safe: true,
+    w: "Dogry. Wajyp informasiýalary nusgalap durmak – goranmagyň esasy täri." },
+  { t: "Internetde nätanyş adam paroluňy soraýar, sen oňa berýärsiň.", safe: false,
+    w: "Howply. Paroly hiç kime bermeli däl – bu fişing hüjümi bolmagy mümkin." },
+  { t: "Poçtaňa gelen «Baýrak utduňyz!» hatyndaky salgylanma basýarsyň.", safe: false,
+    w: "Howply. Nätanyş salgylanmalar zyýanly programma ýa-da fişing sahypasyna eltip biler." },
+  { t: "Kompýuteriňe girmek üçin parol goýýarsyň.", safe: true,
+    w: "Dogry. Kompýutere we programma üpjünçiligine girmegiň goragy parol arkaly amala aşyrylýar." },
+  { t: "Internetden hödürlenýän nätanyş programmany ýükläp işe goýberýärsiň.", safe: false,
+    w: "Howply. Hödürlenýän nätanyş programmalary işe goýbermeli däl." },
+  { t: "Kompýuteri hepdede bir gezek doly barlagdan geçirýärsiň.", safe: true,
+    w: "Dogry. Kompýuteri yzygiderli barlap durmak – goranmagyň täri." }
+];
+let order = CASES.map((c, i) => i).sort(() => Math.random() - .5), idx = 0, right = 0, total = 0, locked = false;
+
+function ask() {
+  locked = false;
+  $("case").textContent = CASES[order[idx % order.length]].t;
+  $("msg").textContent = ""; $("msg").className = "msg";
+}
+function answer(v) {
+  if (locked) return;
+  locked = true; total++;
+  const c = CASES[order[idx % order.length]];
+  if (v === c.safe) { right++; $("msg").textContent = "Dogry! ✅ " + c.w; $("msg").className = "msg ok"; }
+  else { $("msg").textContent = "Nädogry. " + c.w; $("msg").className = "msg bad"; }
+  $("score").textContent = `Dogry jogap: ${right} / ${total}`;
+}
+$("safe").onclick = () => answer(true);
+$("risk").onclick = () => answer(false);
+$("next").onclick = () => { idx++; ask(); };
+
+const RULES = [
+  ["8 belgiden uzyn", p => p.length >= 8],
+  ["uly harp bar", p => /[A-ZÄÇÖŇŞÜÝŽ]/.test(p)],
+  ["kiçi harp bar", p => /[a-zäçöňşüýž]/.test(p)],
+  ["san bar", p => /\d/.test(p)],
+  ["ýörite belgi bar", p => /[^\p{L}\d]/u.test(p)],
+  ["adaty parol däl", p => !["1234", "12345678", "parol", "qwerty", "password", "0000"].includes(p.toLowerCase())]
+];
+function pwCheck() {
+  const p = $("pw").value;
+  const got = RULES.map(([l, f]) => [l, f(p)]);
+  const n = got.filter(([, v]) => v).length;
+  $("checks").innerHTML = got.map(([l, v]) =>
+    `<div class="chk${v ? " on" : ""}">${v ? "✅" : "○"} ${l}</div>`).join("");
+  const pct = n / RULES.length * 100;
+  const m = $("mtr");
+  m.style.width = pct + "%";
+  m.style.background = n <= 2 ? "#b02424" : n <= 4 ? "#e2884c" : "#1d7a3d";
+  const v = $("pwv");
+  v.className = "badge " + (n <= 2 ? "bad" : n <= 4 ? "warn" : "ok");
+  v.textContent = n <= 2 ? "Gowşak parol" : n <= 4 ? "Orta parol" : "Çylşyrymly parol";
+}
+$("pw").addEventListener("input", pwCheck);
+
+const DEFS = [
+  ["Informasion hukuk", "Informasiýa gurşawyndaky jemgyýetçilik gatnaşyklaryny sazlaýjy hukuk kadalarynyň utgaşmasydyr."],
+  ["Informasion gurşaw", "Kompýuter ulgamlarynyň bazasynda informasion resurslary ulanmak we döretmek üçin niýetlenen usullaryň, serişdeleriň we şertleriň utgaşmasydyr."],
+  ["Informasion howp", "Informasion gurşawyň işlemegi üçin howp döredýän faktorlaryň utgaşmasydyr."],
+  ["Informasion howpsuzlyk", "Jemgyýetiň we adamyň informasion gurşawynyň goraglylygyny üpjün etmek bilen bagly çäreleriň utgaşmasydyr."],
+  ["Kiberhüjüm", "Netijesinde kompýuter hatardan çykyp ýa-da möhüm maglumatlar ogurlanyp biler."]
+];
+DEFS.forEach(([t, b]) => {
+  const d = document.createElement("div");
+  d.className = "def";
+  d.innerHTML = `<b>${t}</b> <span style="color:#93a2b5;font-size:12.5px">— basyp aç</span>
+                 <div class="body">${b}</div>`;
+  d.onclick = () => d.classList.toggle("open");
+  $("defs").appendChild(d);
+});
+
+pwCheck(); ask();
+</script>
+</body>
+</html>

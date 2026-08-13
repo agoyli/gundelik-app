@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iş stoluny sazlamak — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .desk {
+    border-radius: 12px; min-height: 280px; padding: 12px; position: relative;
+    display: flex; flex-direction: column; justify-content: space-between;
+    background-size: cover; transition: background .3s;
+  }
+  .icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; align-content: start; }
+  .ico-item {
+    text-align: center; color: #fff; font-size: 11.5px; font-weight: 700; cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0,0,0,.6); padding: 5px 2px; border-radius: 8px; position: relative;
+  }
+  .ico-item:active, .ico-item.sel { background: rgba(255,255,255,.28); }
+  .ico-item .g { display: block; font-size: 30px; }
+  .ico-item .arrow {
+    position: absolute; left: 50%; margin-left: -22px; bottom: 20px;
+    background: #fff; color: #2456b0; border-radius: 3px; font-size: 11px; width: 14px; height: 14px;
+    line-height: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+  .taskbar {
+    background: rgba(0,0,0,.4); border-radius: 6px; padding: 7px 9px;
+    display: flex; align-items: center; gap: 8px; color: #fff; font-size: 12.5px; font-weight: 700;
+  }
+  .taskbar .clock { margin-left: auto; }
+  .ctx {
+    position: absolute; background: #fff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,.3);
+    overflow: hidden; z-index: 5; min-width: 170px;
+  }
+  .ctx div { padding: 10px 12px; font-size: 14px; cursor: pointer; }
+  .ctx div:hover, .ctx div:active { background: #e3edfd; }
+  .wallpapers { display: flex; gap: 8px; flex-wrap: wrap; }
+  .wp { width: 56px; height: 38px; border-radius: 8px; border: 3px solid transparent; cursor: pointer; background-size: cover; }
+  .wp.sel { border-color: #2456b0; }
+  .quiz .btn { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Iş stoly</h1>
+  <div class="sub">Iş stoluny sazlamak · Informatika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal" id="task"></div>
+    <div class="desk" id="desk">
+      <div class="icons" id="icons"></div>
+      <div class="taskbar">
+        <span>⊞ Başla</span><span>🔍</span>
+        <span class="clock" id="clock"></span>
+      </div>
+      <div class="ctx" id="ctx" style="display:none">
+        <div id="ctxPers">🎨 Персонализация (düşegi üýtget)</div>
+        <div id="ctxClose">✕ Ýap</div>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card" id="wpCard" style="display:none">
+    <h3>Iş stolunyň düşegini saýla</h3>
+    <div class="wallpapers" id="wps"></div>
+  </div>
+
+  <div class="card quiz">
+    <h3>Ýumuşlar</h3>
+    <div class="row" id="quizRow"></div>
+    <div class="score" id="score" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Ýarlyk</b> — aşaky çep burçunda kiçijik ugur görkezijisi bolan suratjyk; papka we faýla çalt barmagy üpjün edýär.
+      <b>Meseleler paneli</b> — iş stolunyň aşaky bölegindäki zolak; onda sagat, sene ýaly görkezijiler ýerleşýär.
+      Ýok edilýän papkalar ilki <b>Sebede</b> düşýär — gerek bolsa dikeltmek bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 5 (2019)</div>
+</div>
+
+<script>
+const WALLS = [
+  "linear-gradient(160deg,#4a7fc1,#2f5b96)",
+  "linear-gradient(160deg,#7bb87b,#2f7a4f)",
+  "linear-gradient(160deg,#e8a95c,#b25b12)",
+  "linear-gradient(160deg,#8a7bc8,#4b3b8f)"
+];
+let wall = 0, deleted = null;
+const ICONS = [
+  { id: "kompyuter", g: "💻", label: "Kompýuter", link: false },
+  { id: "papka", g: "📁", label: "Suratlar", link: false },
+  { id: "yarlyk", g: "📝", label: "Depder", link: true },
+  { id: "sebet", g: "🗑", label: "Sebet", link: false }
+];
+
+const QUIZ = [
+  { q: "Ýarlyga bas", check: id => id === "yarlyk", hint: "Ýarlygyň aşaky çep burçunda kiçijik ugur görkezijisi (↗) bolýar." },
+  { q: "Sebedi tap", check: id => id === "sebet", hint: "Ýok edilen faýllar Sebede düşýär." },
+  { q: "Kompýuter belgijigine bas", check: id => id === "kompyuter", hint: "Kompýuter belgijigi kompýuteriň dürli gurluşlaryny elýeterli edýär." }
+];
+let qi = 0, right = 0;
+
+function render() {
+  document.getElementById("desk").style.background = WALLS[wall];
+  const box = document.getElementById("icons");
+  box.innerHTML = "";
+  ICONS.forEach(ic => {
+    if (deleted === ic.id) return;
+    const d = document.createElement("div");
+    d.className = "ico-item";
+    d.innerHTML = `<span class="g">${ic.id === "sebet" && deleted ? "🗑️" : ic.g}</span>${ic.label}` +
+      (ic.link ? `<span class="arrow">↗</span>` : "");
+    d.onclick = () => tapIcon(ic);
+    box.appendChild(d);
+  });
+  const t = document.getElementById("task");
+  t.innerHTML = qi < QUIZ.length
+    ? `Ýumuş: <b>${QUIZ[qi].q}</b>. Iş stolunyň boş ýerine basyp, düşegi hem üýtgedip bilersiň.`
+    : "Ähli ýumuşlar tamamlandy! 🎉 Indi iş stolyny öz islegiňe görä sazla.";
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const r = document.getElementById("quizRow");
+  r.innerHTML = "";
+  QUIZ.forEach((q, i) => {
+    const s = document.createElement("span");
+    s.className = "btn" + (i < qi ? " sel" : "");
+    s.textContent = (i < qi ? "✓ " : "") + q.q;
+    r.appendChild(s);
+  });
+  document.getElementById("score").textContent = `Ýerine ýetirilen: ${qi} / ${QUIZ.length}`;
+}
+
+function msg(t, cls) { const m = document.getElementById("msg"); m.innerHTML = t; m.className = "msg" + (cls ? " " + cls : ""); }
+
+function tapIcon(ic) {
+  if (qi < QUIZ.length && QUIZ[qi].check(ic.id)) {
+    right++; qi++;
+    msg("Dogry! ✓ " + (QUIZ[qi - 1].hint), "ok");
+    render();
+    return;
+  }
+  if (ic.id === "papka") {
+    if (deleted === "papka") return;
+    deleted = "papka";
+    msg("«Suratlar» papkasy Sebede düşdi. Sebede basyp, ony dikeldip bilersiň.", "ok");
+    render();
+    return;
+  }
+  if (ic.id === "sebet" && deleted) {
+    deleted = null;
+    msg("Papka Sebetden dikeldildi! Ýok edilen faýllar ilki Sebede düşýär.", "ok");
+    render();
+    return;
+  }
+  msg(`Bu — «${ic.label}». ` + (qi < QUIZ.length ? QUIZ[qi].hint : ""), "");
+}
+
+const ctx = document.getElementById("ctx");
+document.getElementById("desk").addEventListener("click", e => {
+  if (e.target.id !== "desk") return;
+  const r = e.currentTarget.getBoundingClientRect();
+  ctx.style.left = (e.clientX - r.left) + "px";
+  ctx.style.top = (e.clientY - r.top) + "px";
+  ctx.style.display = "";
+});
+document.getElementById("ctxClose").onclick = () => ctx.style.display = "none";
+document.getElementById("ctxPers").onclick = () => {
+  ctx.style.display = "none";
+  document.getElementById("wpCard").style.display = "";
+  msg("Iş stolunyň boş ýerinde sag gulaga bas → Персонализация → gerekli suraty saýla.", "ok");
+};
+
+const wps = document.getElementById("wps");
+WALLS.forEach((w, i) => {
+  const d = document.createElement("div");
+  d.className = "wp" + (i === wall ? " sel" : "");
+  d.style.background = w;
+  d.onclick = () => {
+    wall = i;
+    [...wps.children].forEach(c => c.classList.remove("sel"));
+    d.classList.add("sel");
+    render();
+  };
+  wps.appendChild(d);
+});
+
+function tick() {
+  const d = new Date();
+  document.getElementById("clock").textContent =
+    String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+setInterval(tick, 10000); tick();
+render();
+</script>
+</body>
+</html>

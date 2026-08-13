@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ady droblary bölmek — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .line { display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 28px; font-weight: 800; flex-wrap: wrap; }
+  .fr { display: inline-flex; flex-direction: column; align-items: center; transition: transform .5s ease; }
+  .fr .t { color: #e2574c; } .fr .b { color: #2f7fd1; }
+  .fr .bar { width: 46px; height: 4px; background: #1e2a3a; border-radius: 2px; margin: 3px 0; }
+  .fr.flip { transform: rotate(180deg); }
+  .fr.flip .t, .fr.flip .b { transform: rotate(180deg); }
+  .op { font-size: 30px; font-weight: 800; color: #1e2a3a; }
+  .op.hot { color: #1d7a3d; }
+  .steps { font-size: 15.5px; line-height: 1.9; }
+  .steps .done { color: #1e2a3a; }
+  .steps .todo { color: #c3ccd8; }
+  .ctrl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .ctrl-grid .lbl2 { text-align: center; font-size: 12.5px; font-weight: 700; color: #5b6b80; }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .stepper button { width: 30px; height: 34px; border-radius: 8px; background: #e8eef7; font-size: 18px; font-weight: 800; }
+  .stepper span { width: 26px; text-align: center; font-size: 18px; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ady droblary bölmek</h1>
+  <div class="sub">Bölmek — ters droba köpeltmek · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="line" id="line"></div>
+    <div class="row" style="margin-top:14px; justify-content:center">
+      <button class="btn primary" id="nextBtn">Indiki ädim ▶</button>
+      <button class="btn ghost" id="resetBtn">Täzeden</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Çözülişi</h3>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <div class="card">
+    <h3>Droblary üýtget</h3>
+    <div class="ctrl-grid">
+      <div class="lbl2">a</div><div class="lbl2">b</div><div class="lbl2">c</div><div class="lbl2">d</div>
+      <div class="stepper" id="s_a"></div><div class="stepper" id="s_b"></div>
+      <div class="stepper" id="s_c"></div><div class="stepper" id="s_d"></div>
+    </div>
+    <div class="note">Düzgün: <b>(a/b) : (c/d) = (a/b) · (d/c) = (a·d)/(b·c)</b>. Bölünýän droby bölüji drobuň ters drobuna köpeldýäris.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, II kitap (2017)</div>
+</div>
+
+<script>
+let a = 2, b = 3, c = 4, d = 5;
+let stage = 0;   // 0 problem, 1 flipped, 2 multiplied, 3 reduced
+
+function gcd(x, y) { return y ? gcd(y, x % y) : x; }
+
+function frac(t, bt, flip) {
+  return `<span class="fr${flip ? " flip" : ""}"><span class="t">${t}</span><span class="bar"></span><span class="b">${bt}</span></span>`;
+}
+
+function render() {
+  const L = document.getElementById("line");
+  const num = a * d, den = b * c;
+  const g = gcd(num, den);
+
+  if (stage === 0) {
+    L.innerHTML = frac(a, b) + `<span class="op">:</span>` + frac(c, d);
+  } else if (stage === 1) {
+    L.innerHTML = frac(a, b) + `<span class="op hot">·</span>` + frac(c, d, true);
+  } else if (stage === 2) {
+    L.innerHTML = frac(a, b) + `<span class="op hot">·</span>` + frac(d, c) +
+      `<span class="op">=</span>` + frac(`${a}·${d}`, `${b}·${c}`);
+  } else {
+    L.innerHTML = frac(num, den) + (g > 1 ? `<span class="op">=</span>` + frac(num / g, den / g) : "");
+  }
+
+  const S = document.getElementById("steps");
+  const rows = [
+    `1. Mesele: ${a}/${b} : ${c}/${d}`,
+    `2. Bölmegi köpeltmek bilen çalyşýarys. Bölüji drob ${c}/${d} agdarylýar → ters droby ${d}/${c}.`,
+    `3. Köpeldýäris: ${a}/${b} · ${d}/${c} = (${a}·${d})/(${b}·${c}) = ${num}/${den}.`,
+    g > 1
+      ? `4. Gysgaldýarys: ${num}/${den} sanawjyny we maýdalawjyny ${g}-e bölýäris → <b>${num / g}/${den / g}</b>${den / g === 1 ? ` = <b>${num / g}</b>` : ""}.`
+      : `4. Gysgaltmak mümkin däl. Jogap: <b>${num}/${den}</b>${den === 1 ? ` = <b>${num}</b>` : ""}.`
+  ];
+  S.innerHTML = rows.map((r, i) =>
+    `<div class="${i <= stage ? "done" : "todo"}">${r}</div>`).join("");
+}
+
+function stepper(id, get, set, min, max) {
+  const box = document.getElementById(id);
+  box.innerHTML = "";
+  const mk = (txt, fn) => { const b2 = document.createElement("button"); b2.textContent = txt; b2.onclick = fn; return b2; };
+  const val = document.createElement("span");
+  val.textContent = get();
+  box.appendChild(mk("−", () => { if (get() > min) { set(get() - 1); stage = 0; refresh(); } }));
+  box.appendChild(val);
+  box.appendChild(mk("+", () => { if (get() < max) { set(get() + 1); stage = 0; refresh(); } }));
+}
+
+function refresh() {
+  stepper("s_a", () => a, v => a = v, 1, 9);
+  stepper("s_b", () => b, v => b = v, 2, 9);
+  stepper("s_c", () => c, v => c = v, 1, 9);
+  stepper("s_d", () => d, v => d = v, 2, 9);
+  render();
+}
+
+document.getElementById("nextBtn").onclick = () => { if (stage < 3) stage++; render(); };
+document.getElementById("resetBtn").onclick = () => { stage = 0; render(); };
+refresh();
+</script>
+</body>
+</html>

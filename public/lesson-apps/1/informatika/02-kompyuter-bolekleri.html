@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kompýuteriň bölekleri — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  h1 { font-size: 24px; }
+  .stage { background: #eef2f8; border-radius: 16px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .stage svg .hit { cursor: pointer; }
+  .say { background: #f2edfd; border-radius: 14px; padding: 13px; font-size: 16px;
+         line-height: 1.55; min-height: 56px; margin-top: 10px; }
+  .match { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .match button { min-height: 62px; font-size: 15px; }
+  .match .em { font-size: 26px; display: block; }
+  .qa { background: #f7fafd; border-radius: 14px; padding: 12px; margin-bottom: 7px;
+        font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kompýuteriň bölekleri</h1>
+  <div class="sub">Informatika · 1-nji synp</div>
+
+  <div class="card">
+    <h3>Bölege bas – adyny öwren</h3>
+    <div class="goal">Suratda kompýuteriň bölekleri görkezilen. Islendigine bas.</div>
+    <div class="stage" id="st"></div>
+    <div class="say" id="say"></div>
+  </div>
+
+  <div class="card">
+    <h3>Jübütleri tap</h3>
+    <div class="goal">Enjama bas, soňra onuň işine bas. Dogry bolsa jübüt aýrylýar.</div>
+    <div class="match" id="mt"></div>
+    <div class="msg" id="mmsg"></div>
+    <button class="btn ghost" id="mr" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 1-nji synp · II bölüm, sah. 21–26</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- surat ---------------- */
+/* kesgitlemeler kitapdan alyndy (sah. 21, 23) */
+const PARTS = {
+  mon: ["Monitor", "Monitor ekrana ýazgylary we şekilleri çykarmaga niýetlenen gurluşdyr."],
+  sys: ["Ulgam blogy", "Ulgam blogunda maglumatlary işläp taýýarlamagy we saklamagy amala " +
+        "aşyrýan möhüm gurluşlar ýerleşendir."],
+  kb:  ["Klawiatura", "Klawiatura kompýutere maglumatlary girizmek üçin niýetlenen " +
+        "gurluşdyr. Onuň kömegi bilen sanlary we harplary girizmek bolýar."],
+  ms:  ["Syçan", "Syçan (mouse) maglumatlary girizmek üçin peýdalanylýan kiçijik gutudyr. " +
+        "Onuň bir tigirjigi we iki gulagy – çep we sag gulagy – bolýar."],
+  pr:  ["Printer", "Printer maglumatlary kagyza çykarýan gurluşdyr."],
+  sp:  ["Ses çykaryjy", "Ses bilen işlemek üçin kompýutere ses çykaryjylar (kolonkalar) " +
+        "çatylýar."],
+};
+let sel = null;
+function draw() {
+  const c = k => sel === k ? "#e5007d" : "#2456b0";
+  const f = k => sel === k ? "#ffe3f1" : "#dbe7ff";
+  $("st").innerHTML = `
+  <svg viewBox="0 0 420 260" width="420" xmlns="http://www.w3.org/2000/svg"
+    font-family="system-ui, sans-serif" font-size="12" font-weight="700" text-anchor="middle">
+    <g class="hit" data-k="mon">
+      <rect x="118" y="24" width="150" height="102" rx="9" fill="${f('mon')}"
+        stroke="${c('mon')}" stroke-width="3"/>
+      <rect x="130" y="36" width="126" height="78" rx="4" fill="#fff"/>
+      <rect x="176" y="126" width="34" height="16" fill="${c('mon')}"/>
+      <rect x="156" y="142" width="74" height="8" rx="4" fill="${c('mon')}"/>
+      <text x="193" y="20" fill="${c('mon')}">Monitor</text>
+    </g>
+    <g class="hit" data-k="sys">
+      <rect x="292" y="42" width="60" height="118" rx="8" fill="${f('sys')}"
+        stroke="${c('sys')}" stroke-width="3"/>
+      <circle cx="322" cy="60" r="6" fill="${c('sys')}"/>
+      <rect x="303" y="78" width="38" height="7" rx="3" fill="${c('sys')}"/>
+      <rect x="303" y="92" width="38" height="7" rx="3" fill="${c('sys')}"/>
+      <text x="322" y="176" fill="${c('sys')}">Ulgam blogy</text>
+    </g>
+    <g class="hit" data-k="kb">
+      <rect x="118" y="168" width="150" height="42" rx="8" fill="${f('kb')}"
+        stroke="${c('kb')}" stroke-width="3"/>
+      ${[0,1,2].map(r => [0,1,2,3,4,5,6].map(i =>
+        `<rect x="${128 + i * 19}" y="${176 + r * 11}" width="14" height="7" rx="2"
+           fill="${c('kb')}" opacity=".55"/>`).join("")).join("")}
+      <text x="193" y="226" fill="${c('kb')}">Klawiatura</text>
+    </g>
+    <g class="hit" data-k="ms">
+      <rect x="288" y="182" width="34" height="48" rx="17" fill="${f('ms')}"
+        stroke="${c('ms')}" stroke-width="3"/>
+      <line x1="305" y1="184" x2="305" y2="202" stroke="${c('ms')}" stroke-width="3"/>
+      <text x="305" y="246" fill="${c('ms')}">Syçan</text>
+    </g>
+    <g class="hit" data-k="pr">
+      <rect x="22" y="70" width="76" height="46" rx="8" fill="${f('pr')}"
+        stroke="${c('pr')}" stroke-width="3"/>
+      <rect x="38" y="52" width="44" height="20" fill="#fff" stroke="${c('pr')}"
+        stroke-width="2"/>
+      <rect x="38" y="112" width="44" height="16" fill="#fff" stroke="${c('pr')}"
+        stroke-width="2"/>
+      <text x="60" y="146" fill="${c('pr')}">Printer</text>
+    </g>
+    <g class="hit" data-k="sp">
+      <rect x="34" y="176" width="46" height="58" rx="7" fill="${f('sp')}"
+        stroke="${c('sp')}" stroke-width="3"/>
+      <circle cx="57" cy="200" r="12" fill="none" stroke="${c('sp')}" stroke-width="3"/>
+      <circle cx="57" cy="222" r="5" fill="${c('sp')}"/>
+      <text x="57" y="250" fill="${c('sp')}">Ses çykaryjy</text>
+    </g>
+  </svg>`;
+  $("st").querySelectorAll(".hit").forEach(g => g.onclick = () => {
+    sel = g.dataset.k;
+    draw();
+    const p = PARTS[sel];
+    $("say").innerHTML = `<b>${p[0]}</b><br>${p[1]}`;
+  });
+}
+
+/* ---------------- jübütler ---------------- */
+const PAIR = [
+  ["🖥 Monitor", "Suraty görkezýär"],
+  ["⌨️ Klawiatura", "Harp ýazýar"],
+  ["🖱 Syçan", "Kursory süýşürýär"],
+  ["🖨 Printer", "Kagyza çykarýar"],
+  ["🔊 Ses çykaryjy", "Sesi eşitdirýär"],
+];
+let cards = [], first = null, leftPairs = 0;
+function match() {
+  cards = [];
+  PAIR.forEach((p, i) => { cards.push({t: p[0], i}); cards.push({t: p[1], i}); });
+  cards.sort(() => Math.random() - 0.5);
+  first = null; leftPairs = PAIR.length;
+  $("mmsg").textContent = ""; $("mmsg").className = "msg";
+  renderM();
+}
+function renderM() {
+  $("mt").innerHTML = cards.map((c, k) => c === null ? "" :
+    `<button class="btn ${first === k ? "sel" : ""}" data-k="${k}">${c.t}</button>`).join("") ||
+    "<span class='hint' style='margin:0'>Ähli jübüt tapyldy 🎉</span>";
+  $("mt").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const k = +b.dataset.k;
+    if (first === null) { first = k; renderM(); return; }
+    if (first === k) { first = null; renderM(); return; }
+    if (cards[first].i === cards[k].i) {
+      cards[first] = null; cards[k] = null; first = null; leftPairs--;
+      $("mmsg").textContent = leftPairs ? `Dogry! Ýene ${leftPairs} jübüt galdy.`
+                                        : "Ähli jübüt tapyldy 🎉";
+      $("mmsg").className = "msg ok";
+    } else {
+      $("mmsg").textContent = "Bular jübüt däl. Ýene synanyş.";
+      $("mmsg").className = "msg bad";
+      first = null;
+    }
+    renderM();
+  });
+}
+$("mr").onclick = match;
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Suraty haýsy bölek görkezýär?", ["Monitor", "Printer", "Syçan"], 0],
+  ["Harp ýazmak üçin näme gerek?", ["Kolonka", "Klawiatura", "Monitor"], 1],
+  ["Sesi haýsy enjam berýär?", ["Syçan", "Printer", "Ses çykaryjylar"], 2],
+  ["Syçanyň näçe gulagy bar?", ["Bir", "Iki", "Üç"], 1],
+  ["Maglumatlary kagyza haýsy gurluş çykarýar?", ["Printer", "Monitor", "Klawiatura"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:7px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+draw(); match();
+$("st").querySelector(".hit").dispatchEvent(new MouseEvent("click", {bubbles: true}));
+</script>
+</body>
+</html>

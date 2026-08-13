@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elektron tablisa — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .sheet { overflow-x: auto; border-radius: 12px; }
+  table.grid { border-collapse: collapse; font-size: 13.5px; min-width: max-content; }
+  table.grid th, table.grid td { border: 1px solid #d6e0ee; padding: 0; }
+  table.grid th { background: #eef2f8; color: #5b6b80; font-size: 11.5px; font-weight: 800;
+                  width: 66px; height: 24px; text-align: center; }
+  table.grid th.rh { width: 30px; }
+  table.grid td { width: 66px; height: 30px; }
+  table.grid td div { padding: 5px 6px; height: 30px; overflow: hidden; white-space: nowrap;
+                      cursor: pointer; font-variant-numeric: tabular-nums; }
+  table.grid td.num div { text-align: right; }
+  table.grid td.txt div { text-align: left; }
+  table.grid td.sel { outline: 2px solid #2456b0; outline-offset: -2px; background: #eaf1fd; }
+  table.grid td.err div { color: #b02424; font-weight: 700; }
+  .fbar { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+  .fbar .ref { width: 56px; text-align: center; font-weight: 800; color: #2456b0;
+               background: #eef2f8; border-radius: 9px; padding: 10px 4px; flex: 0 0 auto; }
+  .fbar input { flex: 1; min-width: 0; padding: 11px; font-size: 15px; border-radius: 10px;
+                border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .fbar input:focus { outline: none; border-color: #2456b0; }
+  .fx { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #5b6b80;
+        background: #f7fafd; border-radius: 10px; padding: 9px 11px; line-height: 1.6; }
+  .fx b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Elektron tablisa</h1>
+  <div class="sub">Öýjükler, formulalar we salgylanmalar · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Öýjüge bas, aşakdaky setire baha ýa-da formula ýaz. Formula hemişe
+      <b>=</b> belgisi bilen başlanýar.</div>
+    <div class="sheet"><table class="grid" id="grid"></table></div>
+    <div class="fbar">
+      <span class="ref" id="ref">A1</span>
+      <input id="edit" spellcheck="false" placeholder="=A1+B1">
+    </div>
+    <div class="row">
+      <button class="btn" id="down">↓ Aşak nusgala</button>
+      <button class="btn" id="right">→ Saga nusgala</button>
+      <button class="btn ghost" id="clr">Öýjügi arassala</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Taýýar mysallar</h3>
+    <div class="row tight">
+      <button class="btn" data-p="ilat">Ilatyň ösüşi</button>
+      <button class="btn" data-p="harajat">Harytlaryň gymmaty</button>
+      <button class="btn" data-p="pifagor">Pifagoryň tablisasy</button>
+      <button class="btn" data-p="yarys">Ýaryşyň ýazgysy</button>
+      <button class="btn ghost" data-p="bos">Boş tablisa</button>
+    </div>
+    <div class="note" id="px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Standart funksiýalar</h3>
+    <div class="fx">
+      <b>=СУММ(A1:B10)</b> – sanlaryň jemi<br>
+      <b>=СРЗНАЧ(A5:B11)</b> – orta arifmetik baha<br>
+      <b>=МАКС(D4:D7)</b> we <b>=МИН(H3:J10)</b> – iň uly we iň kiçi baha<br>
+      <b>=КОРЕНЬ(25)</b> – kwadrat kök<br>
+      <b>=ЕСЛИ(C2&gt;=80; "alynýar"; "alynmaýar")</b> – şert boýunça netije
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Nusgalananda üýtgeýän salgylanma <b>otnositel</b>, üýtgemeýän salgylanma bolsa
+      <b>absolýut</b> diýlip atlandyrylýar. Absolýut bölegiň öňünde <b>$</b> belgisi goýulýar:
+      <b>$A1</b>, <b>A$1</b>, <b>$A$1</b>. Muny F4 klawişi bilen hem çalşyp bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const COLS = ["A", "B", "C", "D", "E", "F"], ROWS = 12;
+let raw = {};              // "A1" -> girizilen tekst
+let cur = "A1";
+
+/* ---------------------------------------------------- formulany hasaplamak */
+const FUNCS = {
+  "СУММ": v => v.reduce((a, b) => a + b, 0),
+  "СРЗНАЧ": v => v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0,
+  "МАКС": v => v.length ? Math.max(...v) : 0,
+  "МИН": v => v.length ? Math.min(...v) : 0,
+  "КОРЕНЬ": v => Math.sqrt(v[0]),
+  "СУММКВ": v => v.reduce((a, b) => a + b * b, 0)
+};
+
+function cellsOfRange(a, b) {
+  const pa = parseRef(a), pb = parseRef(b);
+  const out = [];
+  for (let c = Math.min(pa.c, pb.c); c <= Math.max(pa.c, pb.c); c++)
+    for (let r = Math.min(pa.r, pb.r); r <= Math.max(pa.r, pb.r); r++)
+      out.push(COLS[c] + (r + 1));
+  return out;
+}
+function parseRef(s) {
+  const m = s.replace(/\$/g, "").match(/^([A-F])(\d{1,2})$/i);
+  return { c: COLS.indexOf(m[1].toUpperCase()), r: +m[2] - 1 };
+}
+
+function numOf(v) {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = parseFloat(v.replace(",", "."));
+    if (!isNaN(n) && /^-?[\d., ]+$/.test(v.trim())) return n;
+  }
+  return 0;
+}
+
+function value(name, seen) {
+  seen = seen || new Set();
+  if (seen.has(name)) return { err: "aýlaw" };
+  const src = (raw[name] || "").trim();
+  if (!src) return { v: "" };
+  if (src[0] !== "=") {
+    const n = parseFloat(src.replace(",", "."));
+    return (!isNaN(n) && /^-?[\d.,]+$/.test(src)) ? { v: n, num: true } : { v: src };
+  }
+  seen.add(name);
+  try { return { v: evalFormula(src.slice(1), seen), num: true }; }
+  catch (e) { return { err: "#ÝALŇYŞ" }; }
+  finally { seen.delete(name); }
+}
+
+function evalFormula(f, seen) {
+  // ЕСЛИ aýratyn işlenýär, sebäbi onuň argumentleri san däl bolup biler
+  const iff = f.match(/^\s*ЕСЛИ\s*\((.*)\)\s*$/i);
+  if (iff) {
+    const parts = splitArgs(iff[1]);
+    if (parts.length !== 3) throw 0;
+    const cond = cmp(parts[0], seen);
+    const pick = cond ? parts[1] : parts[2];
+    const t = pick.trim().replace(/^["«]|["»]$/g, "");
+    return /^["«]/.test(pick.trim()) ? t : arith(pick, seen);
+  }
+  return arith(f, seen);
+}
+
+function splitArgs(s) {
+  const out = []; let d = 0, cur = "";
+  for (const ch of s) {
+    if (ch === "(") d++;
+    if (ch === ")") d--;
+    if ((ch === ";" || ch === ",") && d === 0) { out.push(cur); cur = ""; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+function cmp(s, seen) {
+  const m = s.match(/^(.*?)(>=|<=|<>|=|>|<)(.*)$/);
+  if (!m) return arith(s, seen) !== 0;
+  const a = arith(m[1], seen), b = arith(m[3], seen);
+  return { ">=": a >= b, "<=": a <= b, "<>": a !== b, "=": a === b, ">": a > b, "<": a < b }[m[2]];
+}
+
+function arith(f, seen) {
+  let s = f;
+  // funksiýalar
+  s = s.replace(/(СУММКВ|СУММ|СРЗНАЧ|МАКС|МИН|КОРЕНЬ)\s*\(([^()]*)\)/gi, (_, fn, args) => {
+    const vals = [];
+    splitArgs(args).forEach(a => {
+      a = a.trim();
+      const rg = a.match(/^(\$?[A-F]\$?\d{1,2})\s*:\s*(\$?[A-F]\$?\d{1,2})$/i);
+      if (rg) cellsOfRange(rg[1], rg[2]).forEach(c => {
+        const r = value(c, seen); if (r.num) vals.push(r.v);
+      });
+      else vals.push(arith(a, seen));
+    });
+    return "(" + FUNCS[fn.toUpperCase()](vals) + ")";
+  });
+  // öýjük salgylanmalary
+  s = s.replace(/\$?([A-F])\$?(\d{1,2})/gi, (m0) => {
+    const r = value(m0.replace(/\$/g, "").toUpperCase(), seen);
+    if (r.err) throw 0;
+    return "(" + (r.num ? r.v : 0) + ")";
+  });
+  s = s.replace(/,(?=\d)/g, ".").replace(/\^/g, "**");
+  if (!/^[\d\s+\-*/().**]*$/.test(s)) throw 0;
+  const out = Function('"use strict";return (' + (s || "0") + ")")();
+  if (typeof out !== "number" || !isFinite(out)) throw 0;
+  return Math.round(out * 1e6) / 1e6;
+}
+
+/* ---------------------------------------------------- salgylanmany süýşürmek */
+function shift(f, dc, dr) {
+  return f.replace(/(\$?)([A-F])(\$?)(\d{1,2})/gi, (m0, d1, col, d2, row) => {
+    let c = COLS.indexOf(col.toUpperCase()), r = +row - 1;
+    if (!d1) c += dc;
+    if (!d2) r += dr;
+    if (c < 0 || c >= COLS.length || r < 0 || r >= ROWS) return "#ÇÄK";
+    return d1 + COLS[c] + d2 + (r + 1);
+  });
+}
+
+/* ---------------------------------------------------- görkezmek */
+function render() {
+  const t = $("grid");
+  let h = "<tr><th class='rh'></th>" + COLS.map(c => `<th>${c}</th>`).join("") + "</tr>";
+  for (let r = 1; r <= ROWS; r++) {
+    h += `<tr><th class="rh">${r}</th>`;
+    COLS.forEach(c => {
+      const n = c + r, res = value(n);
+      const cls = (n === cur ? "sel " : "") + (res.err ? "err " : "") + (res.num ? "num" : "txt");
+      const shown = res.err ? res.err
+        : res.num ? String(Math.round(res.v * 100) / 100).replace(".", ",")
+        : (res.v || "");
+      h += `<td class="${cls}" data-n="${n}"><div>${shown}</div></td>`;
+    });
+    h += "</tr>";
+  }
+  t.innerHTML = h;
+  t.querySelectorAll("td").forEach(td => td.onclick = () => { cur = td.dataset.n; sync(); });
+  $("ref").textContent = cur;
+  $("edit").value = raw[cur] || "";
+}
+function sync() { render(); }
+
+/* ---------------------------------------------------- dolandyryş */
+$("edit").addEventListener("input", () => { raw[cur] = $("edit").value; render(); $("edit").focus(); });
+$("edit").addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  const p = parseRef(cur);
+  if (p.r < ROWS - 1) cur = COLS[p.c] + (p.r + 2);
+  sync(); $("edit").focus();
+});
+
+// Excel-däki ýaly: nusgalamak goňşy sütünde (ýa-da setirde) berlenler gutarýança dowam edýär
+function reach(p, dc, dr) {
+  const limit = dr ? ROWS - p.r : COLS.length - p.c;
+  const gc = dr ? (p.c > 0 ? p.c - 1 : p.c + 1) : p.c;
+  const gr = dr ? p.r : (p.r > 0 ? p.r - 1 : p.r + 1);
+  let k = 1;
+  while (k < limit) {
+    const c = gc + dc * (dr ? 0 : k), r = gr + dr * k;
+    if (c >= COLS.length || r >= ROWS) break;
+    if (!(raw[COLS[c] + (r + 1)] || "").trim()) break;
+    k++;
+  }
+  return Math.max(1, k);
+}
+
+function copyTo(dc, dr) {
+  const src = raw[cur];
+  if (!src) { say("Ilki formulasy bolan öýjügi saýla.", false); return; }
+  const p = parseRef(cur);
+  const span = reach(p, dc, dr);
+  let n = 0;
+  for (let k = 1; k < span; k++) {
+    const name = COLS[p.c + dc * k] + (p.r + dr * k + 1);
+    raw[name] = src[0] === "=" ? "=" + shift(src.slice(1), dc * k, dr * k) : src;
+    n++;
+  }
+  render();
+  say(src[0] === "=" ? `${cur} öýjükdäki formula ${n} öýjüge nusgalandy. Otnositel salgylanmalar özi üýtgedi.`
+                     : `${cur} öýjügiň bahasy ${n} öýjüge nusgalandy.`, true);
+}
+$("down").onclick = () => copyTo(0, 1);
+$("right").onclick = () => copyTo(1, 0);
+$("clr").onclick = () => { delete raw[cur]; render(); say(cur + " arassalandy.", true); };
+function say(t, ok) { $("msg").textContent = t; $("msg").className = "msg " + (ok ? "ok" : "bad"); }
+
+/* ---------------------------------------------------- mysallar */
+const PRESETS = {
+  ilat: {
+    data: { A1: "Ýyl", B1: "Ilat sany", A2: "Häzirki", B2: "20000",
+            A3: "1", A4: "2", A5: "3", A6: "4", A7: "5", B3: "=B2+0,05*B2" },
+    cur: "B3",
+    note: "B3 öýjükdäki <b>=B2+0,05*B2</b> formulany «↓ Aşak nusgala» bilen B7-ä çenli " +
+          "ýaýrat. 5 ýyldan ilat 25 526 bolar."
+  },
+  harajat: {
+    data: { A1: "Haryt", B1: "Bahasy", C1: "Sany", D1: "Gymmaty",
+            A2: "Depder", B2: "0,20", C2: "10", D2: "=B2*C2",
+            A3: "Ruçka", B3: "0,50", C3: "5",
+            A4: "Galam", B4: "0,20", C4: "3",
+            A5: "Çyzgyç", B5: "1,00", C5: "1",
+            A6: "Jemi", D6: "=СУММ(D2:D5)" },
+    cur: "D2",
+    note: "D2 öýjügi D5-e çenli nusgala. Jemi gymmat <b>=СУММ(D2:D5)</b> formula bilen " +
+          "hasaplanýar we 6,10 manat bolýar."
+  },
+  pifagor: {
+    data: (() => {
+      const d = {};
+      for (let i = 1; i <= 9; i++) { d["A" + (i + 1)] = String(i); }
+      for (let j = 0; j < 5; j++) { d[COLS[j + 1] + "1"] = String(j + 1); }
+      d.B2 = "=$A2*B$1";
+      return d;
+    })(),
+    cur: "B2",
+    note: "B2 öýjükdäki <b>=$A2*B$1</b> garyşyk salgylanmany ilki saga, soňra aşak nusgala. " +
+          "Sütüniň belgisi $A-da, setiriň belgisi $1-de gulplanandyr."
+  },
+  yarys: {
+    data: { A1: "Ýaryşyň ýazgysy",
+            A2: "Emin", B2: "1", C2: "2", D2: "3", E2: "4", F2: "5",
+            A3: "Bahasy", B3: "6,35", C3: "9,80", D3: "8,00", E3: "9,20", F3: "7,90",
+            A5: "Iň uly", B5: "=МАКС(B3:F3)",
+            A6: "Iň kiçi", B6: "=МИН(B3:F3)",
+            A7: "Netije", B7: "=(СУММ(B3:F3)-B5-B6)/3" },
+    cur: "B7",
+    note: "Iň uly we iň kiçi baha aýrylýar, galan üç bahanyň orta arifmetigi türgeniň " +
+          "netijesi bolýar: <b>8,37</b>."
+  },
+  bos: { data: {}, cur: "A1", note: "Tablisa arassalandy. Öz mysalyňy ýaz." }
+};
+document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
+  const p = PRESETS[b.dataset.p];
+  raw = Object.assign({}, p.data);
+  cur = p.cur;
+  $("px").innerHTML = p.note;
+  $("msg").textContent = "";
+  render();
+});
+
+raw = Object.assign({}, PRESETS.ilat.data);
+$("px").innerHTML = PRESETS.ilat.note;
+cur = "B3";
+render();
+</script>
+</body>
+</html>

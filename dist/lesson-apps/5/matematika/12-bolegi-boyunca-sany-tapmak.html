@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bölegi boýunça sany tapmak — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .bar { display: flex; gap: 4px; margin: 10px 0 6px; }
+  .seg {
+    flex: 1; height: 52px; border-radius: 8px; background: #eef2f8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800; color: #93a2b5;
+    transition: background .3s, color .3s;
+  }
+  .seg.on { background: #ffb340; color: #1e2a3a; }
+  .brace { text-align: center; font-size: 14.5px; font-weight: 700; color: #b25b12; }
+  .whole { text-align: center; font-size: 14.5px; font-weight: 700; color: #2456b0; margin-top: 4px; }
+  .task { font-size: 16px; font-weight: 700; line-height: 1.5; }
+  .steps { font-size: 15.5px; line-height: 1.9; }
+  .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+  .key { padding: 13px 0; border-radius: 12px; font-size: 19px; font-weight: 800; background: #e3edfd; color: #2456b0; }
+  .ans { text-align: center; font-size: 26px; font-weight: 800; letter-spacing: 2px; min-height: 34px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bölegi boýunça sany tapmak</h1>
+  <div class="sub">Sanyň bölegi belli — sanyň özüni tap · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="task" id="task"></div>
+    <div class="bar" id="bar"></div>
+    <div class="brace" id="brace"></div>
+    <div class="whole" id="whole"></div>
+  </div>
+
+  <div class="card">
+    <h3>Jogabyň</h3>
+    <div class="ans" id="ans">_</div>
+    <div class="keys" id="keys"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="checkBtn">Barla</button>
+      <button class="btn ghost" id="clearBtn">Poz</button>
+      <button class="btn" id="newBtn">Täze mesele</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="score"></div>
+  </div>
+
+  <div class="card">
+    <h3>Çözülişi</h3>
+    <div class="steps" id="steps">Ilki jogaby ýaz, soň bu ýerde çözülişi görkeziler.</div>
+    <div class="note">Sany berlen bölegi boýunça tapmak üçin, bölegine deň bolan sany şol bölege bölmeli: <b>c : (a/b) = c · (b/a)</b>.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, II kitap (2017)</div>
+</div>
+
+<script>
+const STORIES = [
+  (a, b, part, total) => `Synpdaky okuwçylaryň ${a}/${b} bölegi, ýagny ${part} sanysy oglan. Synpda jemi näçe okuwçy bar?`,
+  (a, b, part, total) => `Kitabyň ${a}/${b} bölegi — ${part} sahypa okaldy. Kitapda jemi näçe sahypa bar?`,
+  (a, b, part, total) => `Bagyň ${a}/${b} bölegine, ýagny ${part} düýp nahal ekildi. Baga jemi näçe düýp nahal ekiler?`,
+  (a, b, part, total) => `Ýoluň ${a}/${b} bölegi — ${part} km geçildi. Ýoluň umumy uzynlygy näçe km?`
+];
+let a, b, one, total, part, typed = "", right = 0, done = 0;
+
+function rnd(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+
+function newTask() {
+  b = rnd(3, 8);
+  a = rnd(1, b - 1);
+  one = rnd(2, 9);
+  total = one * b;
+  part = one * a;
+  typed = "";
+  document.getElementById("task").textContent = STORIES[rnd(0, STORIES.length - 1)](a, b, part, total);
+  document.getElementById("steps").textContent = "Ilki jogaby ýaz, soň bu ýerde çözülişi görkeziler.";
+  msg("");
+  render();
+}
+
+function msg(t, cls) { const m = document.getElementById("msg"); m.textContent = t; m.className = "msg" + (cls ? " " + cls : ""); }
+
+function render() {
+  const bar = document.getElementById("bar");
+  bar.innerHTML = "";
+  for (let i = 0; i < b; i++) {
+    const s = document.createElement("div");
+    s.className = "seg" + (i < a ? " on" : "");
+    s.textContent = i < a ? "?" : "";
+    bar.appendChild(s);
+  }
+  document.getElementById("brace").textContent = `↑ ${a} bölek = ${part}`;
+  document.getElementById("whole").textContent = `Tutuş bitin — ${b} deň bölek. Jemi näçe?`;
+  document.getElementById("ans").textContent = typed || "_";
+}
+
+function check() {
+  if (!typed) return;
+  done++;
+  const ok = +typed === total;
+  if (ok) right++;
+  msg(ok ? `Berekella! 🎉 Jogap: ${total}` : `Jogap ${total} bolmaly. Çözülişine seret.`, ok ? "ok" : "bad");
+  document.getElementById("score").textContent = `Dogry: ${right} / ${done}`;
+  document.getElementById("steps").innerHTML =
+    `1. ${a} bölek — ${part}. Diýmek <b>1 bölek</b> = ${part} : ${a} = <b>${one}</b>.<br>` +
+    `2. Bitin ${b} bölekden ybarat: ${one} · ${b} = <b>${total}</b>.<br>` +
+    `3. Drob görnüşinde: ${part} : ${a}/${b} = ${part} · ${b}/${a} = ${part * b}/${a} = <b>${total}</b>.`;
+  // reveal bar
+  document.querySelectorAll(".seg").forEach((s, i) => { s.textContent = one; if (i >= a) s.style.color = "#5b6b80"; });
+  document.getElementById("whole").textContent = `Jemi: ${total}`;
+}
+
+const keys = document.getElementById("keys");
+for (let d = 0; d <= 9; d++) {
+  const k = document.createElement("button");
+  k.className = "key"; k.textContent = d;
+  k.onclick = () => { if (typed.length < 4) { typed += d; render(); } };
+  keys.appendChild(k);
+}
+document.getElementById("checkBtn").onclick = check;
+document.getElementById("clearBtn").onclick = () => { typed = ""; render(); };
+document.getElementById("newBtn").onclick = newTask;
+newTask();
+</script>
+</body>
+</html>

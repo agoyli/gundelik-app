@@ -9,7 +9,7 @@ import {
   RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented, SheetSection,
   StatTile, StickyFooter, SurfaceRow, SwitchRow, TabBar, TagPill, ToggleSwitch,
 } from '../components/Ui';
-import { theme, tokens } from '../theme';
+import { TYPE_SCALE, theme, tokens } from '../theme';
 import type { DayInfo, Lesson, TabId } from '../types';
 import { level, ratio } from './contrast';
 import {
@@ -83,7 +83,7 @@ const INKS: [string, string, string][] = [
   ['inkDisabled', tokens.inkDisabled, 'Disabled controls only — WCAG exempts them. Never for de-emphasis.'],
 ];
 
-const TYPE_SCALE: [string, string][] = [
+const TYPE_SPECIMENS: [string, string][] = [
   ['h1', 'Gündelik'],
   ['h2', 'Üçünji çärýek'],
   ['subtitle1', 'Töleg usullary'],
@@ -109,7 +109,7 @@ const Swatch = ({ name, value, use }: { name: string; value: string; use: string
 
 const Chip = ({ c, border }: { c: string; border?: boolean }) => (
   <Box component="span" sx={{
-    display: 'inline-block', width: 16, height: 16, borderRadius: '5px',
+    display: 'inline-block', width: 16, height: 16, borderRadius: `${tokens.rChip}px`,
     bgcolor: c, verticalAlign: '-3px', mr: '8px',
     border: border ? `1px solid ${tokens.divider}` : 0,
   }} />
@@ -139,7 +139,7 @@ function IconSheet() {
         }}>
           <Icon size={24} />
           <Typography sx={{
-            fontSize: 10.5, color: tokens.inkMuted, textAlign: 'center',
+            fontSize: 11, color: tokens.inkMuted, textAlign: 'center',
             wordBreak: 'break-word', lineHeight: 1.3,
           }}>{name.replace(/Icon$/, '')}</Typography>
         </Box>
@@ -182,19 +182,33 @@ export function DesignSystemScreen() {
           Every value here is read from <Mono>src/theme.ts</Mono> and every ratio is computed from
           it at render time. There is nothing on this plate to keep in step by hand.
         </Prose>
-        <Rule title="Two grades per accent, and the difference is not decorative.">
+        <Rule title="Three grades per accent, and the difference is not decorative.">
           The plain accent fills tiles, icons, borders and chart marks, where WCAG asks 3:1. The
-          {' '}<Mono>Text</Mono> grade is the same accent the moment it carries <i>words</i> at caption or
-          body size. Setting a caption in the plain accent was the single most common contrast bug
-          in this app.
+          {' '}<Mono>Solid</Mono> grade is the same accent the moment <i>white words</i> sit on it. The
+          {' '}<Mono>Text</Mono> grade is the same accent the moment it carries words at caption or body
+          size. Setting a caption in the plain accent was the single most common contrast bug in
+          this app. Only blue needs all three, because only blue is used as a filled surface.
         </Rule>
         <SectionLabel>Gök reňkler</SectionLabel>
+        <Prose>
+          The interface blue and the logo blue used to be two colours four percent apart. They are
+          one colour now: <Mono>tokens.blue</Mono> <i>is</i> the mark's <Mono>{BRAND_BLUE}</Mono>,
+          and every other blue below is derived from it arithmetically — scaled toward black for the
+          solids, toward white for the tints. The mark cannot drift from the interface again without
+          the derivation being edited on purpose.
+        </Prose>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
-          <Swatch name="BRAND_BLUE" value={BRAND_BLUE} use={`The logo only — ${ratio(BRAND_BLUE, '#FFFFFF')} on white, ${level(BRAND_BLUE, '#FFFFFF')} for text.`} />
-          <Swatch name="blue" value={tokens.blue} use={`The interface primary: fills, active states, hero figures. ${ratio(tokens.blue, '#FFFFFF')}.`} />
-          <Swatch name="bluePress" value={tokens.bluePress} use="The pressed state of anything blue." />
-          <Swatch name="blueText" value={tokens.blueText} use={`Blue carrying words. ${ratio(tokens.blueText, '#FFFFFF')} on white, ${ratio(tokens.blueText, tokens.blueTint)} on its own tint.`} />
+          <Swatch name="blue" value={tokens.blue} use={`The brand, exactly — the mark's own colour. Fills, icons, borders, active states. ${ratio(tokens.blue, '#FFFFFF')} on white: a fill, never a word.`} />
+          <Swatch name="blueSolid" value={tokens.blueSolid} use={`Brand × .90. Any blue surface under white words — buttons, chat bubbles, a 4. ${ratio(tokens.blueSolid, '#FFFFFF')} with white.`} />
+          <Swatch name="bluePress" value={tokens.bluePress} use={`Brand × .78. The pressed state of anything blue. ${ratio(tokens.bluePress, '#FFFFFF')} with white.`} />
+          <Swatch name="blueText" value={tokens.blueText} use={`Brand × .72. Blue carrying words. ${ratio(tokens.blueText, '#FFFFFF')} on white, ${ratio(tokens.blueText, tokens.blueTint)} on its own tint.`} />
         </Box>
+        <Rule title={`The brand blue is ${ratio(BRAND_BLUE, '#FFFFFF')} on white — ${level(BRAND_BLUE, '#FFFFFF')} for body text.`}>
+          That is not a flaw to design around, it is the reason the ladder exists. A logo is a
+          shape at 40px and up, where 3:1 is the bar and the mark clears it. The moment the same
+          blue has to carry a 13px caption it is the wrong grade, and{' '}
+          <Mono>blueText</Mono> is the right one.
+        </Rule>
         <SectionLabel>Aksentler</SectionLabel>
         <Table
           head={['Accent', 'Fill', 'Text grade', 'Tint', 'Text on tint', 'Carries']}
@@ -222,9 +236,11 @@ export function DesignSystemScreen() {
           A count that is only a quantity — twelve teacher notes — is a quiet pill. Two stacked rows
           must never both shout.
         </Rule>
-        <Rule title="No hardcoded hex in a screen.">
-          Colour comes from <Mono>tokens</Mono>. The deliberate exceptions are the banknote
-          illustration and white as a knockout.
+        <Rule title="No hardcoded hex in a screen — and it is checked, not trusted.">
+          Colour comes from <Mono>tokens</Mono>. <Mono>npm run check:tokens</Mono> fails on any hex
+          outside <Mono>src/theme.ts</Mono>, recomputes every contrast pair on this plate from the
+          tokens themselves, and names the token you should have used when a literal duplicates one.
+          The deliberate exceptions are the banknote illustration and white as a knockout.
         </Rule>
       </Plate>
 
@@ -235,7 +251,7 @@ export function DesignSystemScreen() {
           product — hierarchy is carried by size, weight and colour, never by a second typeface.
         </Prose>
         <SpecGroup>
-          {TYPE_SCALE.map(([variant, sample]) => {
+          {TYPE_SPECIMENS.map(([variant, sample]) => {
             const v = theme.typography[variant as keyof typeof theme.typography] as
               { fontSize?: number | string; fontWeight?: number | string };
             return (
@@ -244,7 +260,7 @@ export function DesignSystemScreen() {
                 borderBottom: `1px solid ${tokens.dividerSoft}`, '&:last-of-type': { borderBottom: 0 },
               }}>
                 <Typography sx={{
-                  flex: '0 0 150px', fontSize: 11.5, color: tokens.inkMuted,
+                  flex: '0 0 150px', fontSize: 12, color: tokens.inkMuted,
                   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
                 }}>
                   {variant} · {String(v?.fontSize ?? '')} / {String(v?.fontWeight ?? 400)}
@@ -254,12 +270,32 @@ export function DesignSystemScreen() {
             );
           })}
         </SpecGroup>
+        <SectionLabel>Basgançak</SectionLabel>
+        <Prose>
+          The named variants above are the common cases; the full ladder is every size the app is
+          allowed to set, read here straight from <Mono>TYPE_SCALE</Mono> in{' '}
+          <Mono>src/theme.ts</Mono>. <Mono>npm run check:tokens</Mono> fails on any{' '}
+          <Mono>fontSize</Mono> that is not one of them.
+        </Prose>
+        <Stage gap={14}>
+          {TYPE_SCALE.map((size) => (
+            <Fig key={size} label={`${size}`}>
+              <Typography sx={{ fontSize: size, fontWeight: 600, lineHeight: 1.1 }}>Aa</Typography>
+            </Fig>
+          ))}
+        </Stage>
+        <Rule title="13.5 and 12.5 are steps, not slips.">
+          Both were already carrying more of the app than several of the named variants — dense
+          label rows genuinely wanted a half step between 13 and 14, and micro captions one below
+          13. They are declared rather than tolerated. Everything thinner-spread than that was
+          snapped onto a neighbour, which is why there is no 14.5 or 15.5 any more.
+        </Rule>
         <Rule title="Every figure is tabular.">
           Marks, prices, dates, counts, times. A column of figures that shifts by a hair between
           rows is the fastest way to make a record look untrustworthy.
         </Rule>
         <Rule title="The Turkmen set is non-negotiable: ä ç ž ň ö ş ü ý.">
-          Before adopting any face, set <i>Şu gün · Şenbe · Öý işi · Ýetişik · Bäsleşik · Nyşanlar</i>
+          Before adopting any face, set <i>Şu gün · Şenbe · Öý işi · Ýetişik · Bäsleşik · Ýyldyzlar</i>
           {' '}and look at every diacritic at 13&nbsp;px. A face that fakes ň with a tilde is disqualified.
         </Rule>
         <Rule title="Sentence case everywhere.">
@@ -276,6 +312,7 @@ export function DesignSystemScreen() {
             ['rRow', tokens.rRow, 84, 60],
             ['rTile', tokens.rTile, 60, 48],
             ['rCell', tokens.rCell, 40, 40],
+            ['rChip', tokens.rChip, 24, 24],
             ['rPill', tokens.rPill, 84, 32],
           ] as const).map(([n, r, w, h]) => (
             <Fig key={n} label={`${n} ${r}`}>
@@ -289,8 +326,18 @@ export function DesignSystemScreen() {
         <Prose>
           Cards, tiles and the pill header take <Mono>rCard</Mono>. Rows and buttons take
           {' '}<Mono>rRow</Mono>, inputs and small tiles <Mono>rTile</Mono>, date cells <Mono>rCell</Mono>,
-          tags and switches <Mono>rPill</Mono>. A radius that is not on this ladder is a bug.
+          swatches and legend keys <Mono>rChip</Mono>, tags and switches <Mono>rPill</Mono>. A radius
+          that is not on this ladder is a bug, and <Mono>check:tokens</Mono> treats it as one — including
+          the bare <Mono>4px</Mono> hiding in the fourth corner of a compound value.
         </Prose>
+        <Rule title="A bar's radius is rPill, not half its height.">
+          Every progress track in the app used to carry a number — 2, 3, 4 or 6 — chosen to be half
+          of whatever that particular bar was tall. They were all trying to say &ldquo;round the
+          ends&rdquo;, none of them survived a change in height, and in <Mono>sx</Mono> a bare{' '}
+          <Mono>borderRadius: 4</Mono> is not even 4px: it is four times the theme's base, 64px,
+          which only looked right because the browser clamps it. <Mono>rPill</Mono> says the thing
+          they meant.
+        </Rule>
         <SectionLabel>Aralyk</SectionLabel>
         <Prose>
           Gutter <Mono>{tokens.gutter}</Mono> between siblings; card padding <Mono>{tokens.padCard}</Mono>.
@@ -433,7 +480,7 @@ export function DesignSystemScreen() {
           </SpecRow>
           <SpecRow name="GridTile" note="White card with an icon badge and a 17/700 label, in a 2-column grid. The Gollanmalar entry.">
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 172px)', gap: '11px' }}>
-              <GridTile icon={<IconBadge><Icons.TemaIcon size={24} /></IconBadge>} label="Temalar" sub="5 ders" onClick={() => {}} />
+              <GridTile icon={<IconBadge><Icons.TemaIcon size={24} /></IconBadge>} label="Sapaklar" sub="5 ders" onClick={() => {}} />
               <GridTile icon={<IconBadge bg={tokens.purpleTint} color={tokens.purpleText}><Icons.CardsIcon size={24} /></IconBadge>} label="Kartlar" sub="3 toplum" onClick={() => {}} />
             </Box>
           </SpecRow>
@@ -549,7 +596,7 @@ export function DesignSystemScreen() {
           </SpecRow>
           <SpecRow name="Lede" note="One sentence of explanation. Prefer the header's “?” — an explanation on demand costs no visitor a paragraph they read once.">
             <Box sx={{ width: 361 }}>
-              <Lede>Nyşanlar mugallymyň bahadan başga ýazýan zady.</Lede>
+              <Lede>Ýyldyzlar mugallymyň bahadan başga ýazýan zady.</Lede>
             </Box>
           </SpecRow>
         </SpecGroup>
@@ -599,8 +646,18 @@ export function DesignSystemScreen() {
         <Rule title="Size means optical size, not box size — and the factor is measured.">
           Render the glyph, read its <Mono>getBBox()</Mono>, and scale so the geometric mean of the
           ink lands on 15.8&nbsp;px at <Mono>size 22</Mono>. Measured across this set, ink ran from
-          11.7&nbsp;px to 26.2&nbsp;px inside one nominal size: a 2.25× spread. Normalised, it is
-          1.003×. Re-derive the same way if a glyph is replaced.
+          11.7&nbsp;px to 26.2&nbsp;px inside one nominal size: a 2.25× spread. Normalised, the whole
+          set now measures 15.79&nbsp;px mean at <Mono>size 22</Mono> with a 1.041× spread, the widest
+          single deviation being 3.6%. Re-derive the same way if a glyph is replaced — and derive it,
+          because three glyphs shipped without a factor at all and sat 12–46% oversize until they
+          were measured.
+        </Rule>
+        <Rule title="1.8, unless the stroke is knocked out of a fill.">
+          A light line on a solid field reads heavier than the same line on white, so knockout
+          strokes run 1.5–1.6 (<Mono>CoinIcon</Mono>, <Mono>MathIcon</Mono>, <Mono>QuestionIcon</Mono>)
+          and <Mono>LockIcon</Mono>'s shackle runs 2.2 to hold its own beside a filled body. Those are
+          the only weights off 1.8 that are deliberate; <Mono>HomeIcon</Mono>'s 2 belongs to the source
+          designer, and source artwork is not retouched.
         </Rule>
         <Rule title="An icon's ink is currentColor.">
           A baked-in hex makes a glyph single-use: the same calendar was blue in a tinted pill and

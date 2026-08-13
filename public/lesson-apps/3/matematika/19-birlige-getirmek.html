@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birlige getirmek usuly — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 12px 13px; font-size: 16.5px; line-height: 1.65; }
+  .tab { background: #f7fafd; border-radius: 12px; padding: 10px; }
+  .tab table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
+  .tab td, .tab th { border: 1px solid #ccd8e4; padding: 7px 5px; text-align: center; }
+  .tab th { background: #e3edfd; font-size: 13.5px; color: #33506f; }
+  .nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Birlige getirmek usulyna getirýän mesele</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ilki <b>bir birlige näçe düşýändigi</b> tapylýar, soňra gerekli
+      mukdar hasaplanýar: 30 : 5 = 6, soňra 54 : 6 = 9.</div>
+  </div>
+
+  <div class="card">
+    <h3>Iki ädimde çöz</h3>
+    <div class="task" id="task"></div>
+    <div class="tab" id="tab" style="margin-top:8px"></div>
+    <div class="goal" id="ask" style="margin-top:8px"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="tmsg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki mesele</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="tsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, II kitap · 63–64-nji sahypalar</div>
+</div>
+
+<script>
+// [tekst, jemi, bölek sany, gerekli bölek sany, birlik, zat]
+var T = [
+  ["30 kg üljäni bäş gaba deň bölüp saldylar. 54 kg ülje üçin şolar ýaly gapdan näçesi gerek bolar?",
+   30, 5, 54, "kg", "gap", "bolmek"],
+  ["Tikinçi 21 m matadan 7 köýnek tikdi. Şonuň ýaly 9 köýnek tikmek üçin näçe metr mata gerek?",
+   21, 7, 9, "m", "köýnek", "kopeltmek"],
+  ["Dört sany birmeňzeş gapda 24 kg apelsin bar. Şonuň ýaly 5 gapda näçe kilogram apelsin bolar?",
+   24, 4, 5, "kg", "gap", "kopeltmek"],
+  ["Birmeňzeş iki bedrede 14 kg alma bar. Massasy 49 kg bolan haltada şolar ýaly näçe bedre alma bolar?",
+   14, 2, 49, "kg", "bedre", "bolmek"]
+];
+var ti = 0, stage = 0, d = 0, ok = 0;
+function unit() { return T[ti][1] / T[ti][2]; }
+function fin() {
+  var t = T[ti];
+  return t[6] === "kopeltmek" ? unit() * t[3] : t[3] / unit();
+}
+function draw() {
+  var t = T[ti];
+  document.getElementById("task").textContent = t[0];
+  var u = stage >= 1 ? unit() : "?";
+  var f = stage >= 2 ? fin() : "?";
+  var h = "<table><tr><th>1 " + t[5] + "</th><th>" + t[5] + " sany</th><th>Jemi</th></tr>";
+  h += "<tr><td>" + u + " " + t[4] + "</td><td>" + t[2] + "</td><td>" + t[1] + " " + t[4] + "</td></tr>";
+  if (t[6] === "kopeltmek") h += "<tr><td>" + u + " " + t[4] + "</td><td>" + t[3] + "</td><td>" + f + " " + t[4] + "</td></tr>";
+  else h += "<tr><td>" + u + " " + t[4] + "</td><td>" + f + "</td><td>" + t[3] + " " + t[4] + "</td></tr>";
+  h += "</table>";
+  document.getElementById("tab").innerHTML = h;
+  document.getElementById("ask").textContent = stage === 0 ?
+    ("1-nji ädim: bir " + t[5] + " näçe " + t[4] + " düşýär?") :
+    (stage === 1 ? "2-nji ädim: soragyň jogaby näçe?" : "Mesele çözüldi.");
+  var m = document.getElementById("tmsg");
+  m.className = stage === 2 ? "msg ok" : "msg";
+  m.textContent = stage === 2 ?
+    ("Çözüw: " + t[1] + " : " + t[2] + " = " + unit() + ", soňra " +
+     (t[6] === "kopeltmek" ? (unit() + " · " + t[3] + " = " + fin()) : (t[3] + " : " + unit() + " = " + fin())) + ".") : "";
+}
+var h = "";
+for (var i = 2; i <= 31; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= 2) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("tmsg");
+    var w = stage === 0 ? unit() : fin();
+    d++;
+    if (v === w) {
+      ok++; stage++; draw();
+      if (stage === 1) { m.className = "msg ok"; m.textContent = "Dogry! Indi soragyň jogabyny tap."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = stage === 0 ? "Ýalňyş. Jemi bölekleriň sanyna böl." : "Ýalňyş. Tablisa ýene bir gezek seret.";
+    }
+    document.getElementById("tsc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; stage = 0; draw(); };
+document.getElementById("again").onclick = function () { stage = 0; draw(); };
+draw();
+
+var Q = [
+  ["Birlige getirmek usulynda ilki näme tapylýar?", ["Bir birlige näçe düşýändigi", "Jemi mukdar", "Tapawut"], 0],
+  ["21 m matadan 7 köýnek tikilse, bir köýnege näçe metr gerek?", ["3 m", "7 m", "14 m"], 0],
+  ["30 kg ülje 5 gaba deň bölünse, bir gapda näçe kilogram bolar?", ["6 kg", "5 kg", "35 kg"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

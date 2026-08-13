@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şriftiň ýazylyşy — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .paper { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; padding: 14px;
+           min-height: 96px; line-height: 1.7; }
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 7px; }
+  .tools button { min-height: 48px; font-size: 16px; font-weight: 800; }
+  .fonts { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 7px; }
+  .cols { display: flex; gap: 7px; flex-wrap: wrap; }
+  .cols button { width: 42px; height: 42px; border-radius: 11px; border: 3px solid #fff;
+                 box-shadow: 0 0 0 2px #d6e0ee; }
+  .cols button.on { box-shadow: 0 0 0 4px #2456b0; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cmp div { background: #f7fafd; border-radius: 12px; padding: 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Şriftiň ýazylyşy</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Aşakdaky ýazgyny bezäp gör: şrifti, ölçegi, reňki we ýazylyş görnüşini
+      üýtget.</div>
+    <div class="paper" id="pp"></div>
+    <div class="sub" style="margin:10px 0 5px">Şriftiň görnüşi:</div>
+    <div class="fonts" id="fn"></div>
+    <div class="slider" style="margin-top:9px"><span class="lbl">Ölçegi (punkt)</span>
+      <input type="range" id="sz" min="10" max="34" value="16"><span class="out" id="szo"></span></div>
+    <div class="sub" style="margin:9px 0 5px">Şriftiň ýazylyşy:</div>
+    <div class="tools" id="tl">
+      <button class="btn" data-k="b" style="font-weight:900">Ж</button>
+      <button class="btn" data-k="i" style="font-style:italic">К</button>
+      <button class="btn" data-k="u" style="text-decoration:underline">Ч</button>
+      <button class="btn" data-k="s" style="text-decoration:line-through">abc</button>
+    </div>
+    <div class="sub" style="margin:9px 0 5px">Ýazgynyň ýerleşişi:</div>
+    <div class="tools" id="al">
+      <button class="btn" data-a="left">⬅️ Çep gyradan</button>
+      <button class="btn" data-a="center">↔️ Merkezden</button>
+      <button class="btn" data-a="right">➡️ Sag gyradan</button>
+      <button class="btn" data-a="justify">▤ Iki gyra boýunça</button>
+    </div>
+    <div class="sub" style="margin:9px 0 5px">Şriftiň reňki:</div>
+    <div class="cols" id="cl"></div>
+    <div class="hint" id="say"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sanawy belgilemek</h3>
+    <div class="goal">Ýazgyny tapawutlandyrmaly we esasy menýudan gerekli guraly
+      saýlamaly. Her setiriň öňünde tegelejik ýa-da san peýda bolýar.</div>
+    <div class="row tight" id="lsbtn">
+      <button class="btn" data-l="none">Ýok</button>
+      <button class="btn" data-l="dot">• Tegelejik</button>
+      <button class="btn" data-l="num">1. Sanly</button>
+      <button class="btn" data-l="abc">a. Harply</button>
+    </div>
+    <div class="paper" id="ls" style="margin-top:9px;min-height:70px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const FONTS = [
+  ["Arial", "Arial, system-ui, sans-serif"],
+  ["Times", "Georgia, 'Times New Roman', serif"],
+  ["Courier", "ui-monospace, 'Courier New', monospace"],
+];
+const COLORS = ["#1e2a3a", "#2456b0", "#e5007d", "#1d7a3d", "#b25b12"];
+let st = {font: 0, size: 16, b: false, i: false, u: false, s: false,
+          color: "#1e2a3a", align: "left"};
+
+function paper() {
+  const dec = [st.u ? "underline" : "", st.s ? "line-through" : ""]
+    .filter(Boolean).join(" ") || "none";
+  $("pp").innerHTML = `<div style="
+    font-family:${FONTS[st.font][1]};
+    font-size:${st.size}px;
+    font-weight:${st.b ? 800 : 400};
+    font-style:${st.i ? "italic" : "normal"};
+    text-decoration:${dec};
+    text-align:${st.align};
+    color:${st.color}">Köp okan, köp biler. Kompýuterde ýazgy ýazmagy öwrenýäris.</div>`;
+  $("szo").textContent = st.size + " pt";
+  $("fn").innerHTML = FONTS.map((f, i) =>
+    `<button class="btn ${i === st.font ? "sel" : ""}" data-i="${i}"
+       style="font-family:${f[1]}">${f[0]}</button>`).join("");
+  $("fn").querySelectorAll("button").forEach(b => b.onclick = () => {
+    st.font = +b.dataset.i; paper();
+    say(`Şrift «${FONTS[st.font][0]}» görnüşine geçdi – harplaryň şekili üýtgedi.`);
+  });
+  $("cl").innerHTML = COLORS.map(c =>
+    `<button class="${c === st.color ? "on" : ""}" data-c="${c}" style="background:${c}"
+       aria-label="reňk"></button>`).join("");
+  $("cl").querySelectorAll("button").forEach(b => b.onclick = () => {
+    st.color = b.dataset.c; paper(); say("Ýazgynyň reňki üýtgedi.");
+  });
+  document.querySelectorAll("#tl [data-k]").forEach(b =>
+    b.classList.toggle("sel", st[b.dataset.k]));
+  document.querySelectorAll("#al [data-a]").forEach(b =>
+    b.classList.toggle("sel", st.align === b.dataset.a));
+}
+function say(t) { $("say").innerHTML = t; }
+
+/* ---------------- sanawy belgilemek (sah. 87–88) ---------------- */
+const LIST = ["Alma", "Armyt", "Nar"];
+const MARKS = {
+  none: {pre: () => "", t: "Belgi ýok – setirler ýönekeý ýazgy."},
+  dot:  {pre: () => "• ", t: "Her setirde ýazgynyň çep tarapynda tegelejik peýda boldy."},
+  num:  {pre: i => `${i + 1}. `, t: "Setirler san bilen belgilendi."},
+  abc:  {pre: i => `${"abç"[i]}. `, t: "Setirler harp bilen belgilendi."},
+};
+let mark = "none";
+function list() {
+  $("ls").innerHTML = LIST.map((x, i) =>
+    `<div>${MARKS[mark].pre(i)}${x}</div>`).join("");
+  $("lsbtn").querySelectorAll("button").forEach(b =>
+    b.classList.toggle("sel", b.dataset.l === mark));
+}
+$("lsbtn").querySelectorAll("button").forEach(b => b.onclick = () => {
+  mark = b.dataset.l; list();
+});
+$("sz").addEventListener("input", () => {
+  st.size = +$("sz").value; paper();
+  say(`Ölçeg <b>${st.size} punkt</b>. Punkt näçe uly bolsa, harp şonça uludyr.`);
+});
+document.querySelectorAll("#tl [data-k]").forEach(b => b.onclick = () => {
+  const k = b.dataset.k;
+  st[k] = !st[k]; paper();
+  say(k === "b" ? "<b>Ж – ýarym ýogyn.</b> Ol ýazgyny nygtaýar."
+    : k === "i" ? "<i>К – kursiw.</i> Ol harplary gyşardýar."
+    : k === "u" ? "<u>Ч – aşagy çyzylan.</u> Ol setiriň aşagyna çyzyk goşýar."
+    : "<s>abc – üsti çyzylan.</s> Ol ýazgynyň üstünden çyzyk geçirýär.");
+});
+const ALN = {left: "çep gyradan", center: "merkezden", right: "sag gyradan",
+             justify: "iki gyra boýunça"};
+document.querySelectorAll("#al [data-a]").forEach(b => b.onclick = () => {
+  st.align = b.dataset.a; paper();
+  say(`Ýazgy <b>${ALN[st.align]}</b> deňlendi.`);
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Ж düwmesi şrifti nähili edýär?", ["Ýarym ýogyn", "Kursiw", "Aşagy çyzylan"], 0],
+  ["Şriftiň näçe ýazylyş görnüşi bar?", ["Iki", "Dört", "Alty"], 1],
+  ["Deňlemegiň näçe guraly bar?", ["Iki", "Üç", "Dört"], 2],
+  ["Şriftiň reňkini haýsy gural üýtgedýär?",
+   ["A harpyň aşagyndaky reňk guraly", "Ч düwmesi", "Sanaw guraly"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+paper(); list();
+say("Düwmelere basyp, ýazgynyň görnüşini üýtgedip gör.");
+</script>
+</body>
+</html>

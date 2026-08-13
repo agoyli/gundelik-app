@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Howpsuzlyk düzgünleri — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .acts div.a { display: flex; gap: 9px; align-items: center; background: #f7fafd;
+                border-radius: 11px; padding: 10px 11px; margin-bottom: 6px; font-size: 14px; }
+  .acts div.a.done { opacity: .55; }
+  .acts .txt { flex: 1; }
+  .acts .mark { font-size: 18px; width: 22px; text-align: center; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; max-width: 100%; }
+  ol.seq { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  ol.seq li { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 5px;
+              font-size: 14px; cursor: pointer; display: flex; gap: 9px; align-items: center; }
+  ol.seq li b { background: #d6e0ee; color: #2456b0; border-radius: 8px; width: 26px;
+                height: 26px; display: grid; place-items: center; font-size: 13px; flex: 0 0 auto; }
+  ol.seq li.on b { background: #2456b0; color: #fff; }
+  .timer { font-size: 34px; font-weight: 800; color: #2456b0; font-variant-numeric: tabular-nums;
+           text-align: center; margin: 6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kompýuter otagynda howpsuzlyk</h1>
+  <div class="sub">Işlemegiň düzgünleri we tertibi · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Her hereket üçin <b>Bolýar</b> ýa-da <b>Bolmaýar</b> diýip saýla.
+      Kompýuter otagyndaky ähli enjamlar elektrik toguna birikdirilendir.</div>
+    <div class="acts" id="acts"></div>
+    <div class="row"><span class="score" id="sc"></span>
+      <button class="btn ghost" id="again">Täzeden</button></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Dogry oturmak</h3>
+    <div class="stage"><svg id="sit" width="300" height="200" viewBox="0 0 300 200"></svg></div>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn sel" data-p="ok">Dogry oturyş</button>
+      <button class="btn" data-p="bad">Nädogry oturyş</button>
+    </div>
+    <div class="note" id="sitx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Gözüňi dynç aldyr</h3>
+    <div class="goal">Uzak wagtlap dartgynly işlenende <b>her 5 minutdan</b> ekrandan nazaryňy
+      sowup, uzakdaky zatlara seretmeli.</div>
+    <div class="timer" id="clock">5:00</div>
+    <div class="row"><button class="btn primary" id="run">Başla</button>
+      <button class="btn ghost" id="rst">Nol</button>
+      <span class="badge info" id="fast">1 minut = 1 sekunt (görkeziş tizligi)</span></div>
+    <div class="msg" id="tmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sapagyň soňy: dogry tertibi düz</h3>
+    <div class="goal">Basyp, ädimleri dogry yzygiderlikde belle.</div>
+    <ol class="seq" id="seq"></ol>
+    <div class="msg" id="qmsg"></div>
+    <button class="btn ghost" id="qr">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Kompýuter otagyna diňe <b>mugallymyň rugsady</b> bilen girilýär. Tok we birikdiriji
+      simleri ellemek, monitoryň ekranyna hem-de onuň arka tarapyna el degirmek bolmaýar.
+      Näsazlyk ýüze çyksa, işi bes edip, mugallyma habar bermeli.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- bolýar / bolmaýar ---------------- */
+const ACTS = [
+  ["Mugallymyň rugsady bilen otaga girmek", true],
+  ["Tok we birikdiriji simleri ellemek", false],
+  ["Iş ýeriňi çyg mata bilen süpürmek", true],
+  ["Monitoryň arka tarapyna el degirmek", false],
+  ["Klawişlere batly urmak", false],
+  ["Klawişleri barmaklar bilen ýeňiljek basmak", true],
+  ["Näsazlygy özbaşdak düzetmäge synanyşmak", false],
+  ["Näsazlyk barada mugallyma habar bermek", true],
+  ["Iş ýeriňde zatlaryňy goýmak", false],
+  ["Elleriňi gury we arassa saklamak", true]
+];
+let done = 0, right = 0;
+function acts() {
+  $("acts").innerHTML = ACTS.map(([t], i) =>
+    `<div class="a" data-i="${i}"><span class="mark"></span><span class="txt">${t}</span>
+      <button class="btn" data-v="1">Bolýar</button>
+      <button class="btn" data-v="0">Bolmaýar</button></div>`).join("");
+  $("acts").querySelectorAll(".a").forEach(d => {
+    d.querySelectorAll("button").forEach(b => b.onclick = () => {
+      if (d.classList.contains("done")) return;
+      const ok = (b.dataset.v === "1") === ACTS[+d.dataset.i][1];
+      d.classList.add("done");
+      d.querySelector(".mark").textContent = ok ? "✅" : "❌";
+      done++; if (ok) right++;
+      d.querySelectorAll("button").forEach(x => x.disabled = true);
+      $("sc").textContent = `${right} / ${done}`;
+      if (done === ACTS.length) {
+        $("msg").textContent = right === ACTS.length
+          ? "Ähli düzgünleri dogry saýladyň."
+          : `${ACTS.length - right} sany ýalňyş boldy. Aşakdaky düzgünleri ýene bir gezek oka.`;
+        $("msg").className = right === ACTS.length ? "msg ok" : "msg bad";
+      }
+    });
+  });
+  $("sc").textContent = "0 / 0";
+}
+$("again").onclick = () => { done = 0; right = 0; $("msg").textContent = ""; acts(); };
+
+/* ---------------- oturyş ---------------- */
+function sit(mode) {
+  const ok = mode === "ok";
+  const back = ok ? "M150,150 L150,96" : "M150,150 L166,100";
+  const head = ok ? [150, 84] : [172, 90];
+  const leg = ok ? "M150,150 L150,178" : "M150,150 L128,176";
+  $("sit").innerHTML = `
+    <rect x="16" y="150" width="268" height="6" rx="3" fill="#d6e0ee"/>
+    <rect x="34" y="70" width="60" height="46" rx="6" fill="#e3edfd" stroke="#2456b0" stroke-width="2"/>
+    <rect x="56" y="116" width="16" height="12" fill="#c3d2e6"/>
+    <rect x="44" y="128" width="40" height="6" rx="3" fill="#c3d2e6"/>
+    <rect x="30" y="134" width="90" height="6" rx="3" fill="#93a2b5"/>
+    <path d="${back}" stroke="${ok ? '#1d7a3d' : '#b02424'}" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="${head[0]}" cy="${head[1]}" r="13" fill="${ok ? '#1d7a3d' : '#b02424'}"/>
+    <path d="${leg}" stroke="${ok ? '#1d7a3d' : '#b02424'}" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M150,178 L172,178" stroke="${ok ? '#1d7a3d' : '#b02424'}" stroke-width="6" stroke-linecap="round"/>
+    <path d="M120,140 L146,140" stroke="#5b6b80" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="133" y="134" font-size="11" fill="#5b6b80" text-anchor="middle">15–16 sm</text>
+    <path d="M96,92 L136,92" stroke="#93a2b5" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="116" y="86" font-size="10.5" fill="#93a2b5" text-anchor="middle">görüş nazary</text>`;
+  $("sitx").innerHTML = ok
+    ? "Göwre stoldan <b>15–16 sm</b> daşlykda, arka erkin, görüş nazary ekranyň ortasyna " +
+      "ugrukdyrylan. Aýaklar pola dik goýlan, bilekler klawiaturanyň deňesinde."
+    : "Göwre bükülen we ekrana ýakynlan. Şeýle oturylsa <b>biliňde we boýnuňda agyry</b> " +
+      "ýüze çykyp bilýär, aýaklary hem uzatmaly ýa-da ýygnamaly däl.";
+  document.querySelectorAll("[data-p]").forEach(b =>
+    b.className = "btn" + (b.dataset.p === mode ? " sel" : ""));
+}
+document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => sit(b.dataset.p));
+
+/* ---------------- 5 minut ---------------- */
+let left = 300, tid = null;
+function show() {
+  $("clock").textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+}
+function tick() {
+  left -= 60;                       // görkeziş üçin: 1 sekuntda 1 minut geçýär
+  if (left <= 0) {
+    left = 0; show(); stop();
+    $("tmsg").textContent = "5 minut doldy. Ekrandan nazaryňy sowup, uzakdaky zatlara seret.";
+    $("tmsg").className = "msg ok";
+    return;
+  }
+  show();
+}
+function stop() { clearInterval(tid); tid = null; $("run").textContent = "Başla"; }
+$("run").onclick = () => {
+  if (tid) { stop(); return; }
+  if (left === 0) left = 300;
+  $("tmsg").textContent = ""; $("tmsg").className = "msg";
+  $("run").textContent = "Sakla";
+  tid = setInterval(tick, 1000);
+};
+$("rst").onclick = () => { stop(); left = 300; show(); $("tmsg").textContent = ""; };
+
+/* ---------------- tertip ---------------- */
+const SEQ = [
+  "Mugallymyň ähli görkezmelerini ýerine ýetirmeli",
+  "Пуск menýusynda Завершение работы buýrugyny saýlamaly",
+  "Öçürilen kompýutere daşlygyny geýdirmeli",
+  "Oturgyjy ýerine süýşürmeli",
+  "Howlukman kompýuter otagyndan çykmaly"
+];
+let order = [];
+function seq() {
+  const shown = SEQ.map((t, i) => [t, i]).sort((a, b) => {
+    const ia = order.indexOf(a[1]), ib = order.indexOf(b[1]);
+    if (ia >= 0 && ib >= 0) return ia - ib;
+    if (ia >= 0) return -1;
+    if (ib >= 0) return 1;
+    return 0;
+  });
+  $("seq").innerHTML = shown.map(([t, i]) => {
+    const k = order.indexOf(i);
+    return `<li class="${k >= 0 ? "on" : ""}" data-i="${i}"><b>${k >= 0 ? k + 1 : "?"}</b>${t}</li>`;
+  }).join("");
+  $("seq").querySelectorAll("li").forEach(li => li.onclick = () => {
+    const i = +li.dataset.i;
+    if (order.includes(i)) return;
+    order.push(i); seq();
+  });
+  if (order.length === SEQ.length) {
+    const ok = order.every((v, i) => v === i);
+    $("qmsg").textContent = ok
+      ? "Tertip dogry. Sapagyň soňunda edil şeýle hereket etmeli."
+      : "Tertip nädogry. Ilki mugallymyň görkezmeleri, soň öçürmek, iň soňunda otagdan çykmak.";
+    $("qmsg").className = ok ? "msg ok" : "msg bad";
+  } else { $("qmsg").textContent = ""; }
+}
+$("qr").onclick = () => { order = []; $("qmsg").textContent = ""; seq(); };
+
+acts(); sit("ok"); show(); seq();
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drob aňlatmalar — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .expr { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 0; }
+  .fr { display: inline-flex; flex-direction: column; align-items: center; }
+  .fr .bar { height: 4px; background: #1e2a3a; border-radius: 2px; width: 100%; min-width: 90px; margin: 6px 0; }
+  .part {
+    font-size: 24px; font-weight: 800; padding: 6px 12px; border-radius: 10px; cursor: pointer;
+    background: #eef2f8; white-space: nowrap;
+  }
+  .part.up { color: #e2574c; }
+  .part.down { color: #2f7fd1; }
+  .part.hot { background: #fff3d6; outline: 2px solid #ffb340; }
+  .part.solved { background: #e0f5e6; color: #1d7a3d; }
+  .steps { font-size: 15.5px; line-height: 1.9; }
+  .label { text-align: center; font-size: 13px; color: #5b6b80; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Drob aňlatmalar</h1>
+  <div class="sub">Sanawjyny we maýdalawjyny hasapla, soňra böl · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Haýsy bölegi <b>ilki</b> hasaplamaly? Şol bölege bas!</div>
+    <div class="label">sanawjy</div>
+    <div class="expr" id="expr"></div>
+    <div class="label">maýdalawjy</div>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" id="newBtn">Täze aňlatma</button>
+      <span class="score" id="score"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Çözülişi</h3>
+    <div class="steps" id="steps"></div>
+    <div class="note">Amallaryň tertibi: ýaýlar → köpeltmek we bölmek → goşmak we aýyrmak. Drob çyzygy hem bölmek belgisidir.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, II kitap (2017)</div>
+</div>
+
+<script>
+let top_, bot, topVal, botVal, phase, right = 0, done = 0, log;
+
+function rnd(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+
+function makeSide(forceValue) {
+  // returns {text, value}
+  const kind = rnd(0, 2);
+  if (kind === 0) { const v = forceValue || rnd(2, 40); return { text: String(v), value: v }; }
+  if (kind === 1) {
+    const x = rnd(2, 12), y = rnd(2, 12);
+    return { text: `${x} + ${y}`, value: x + y };
+  }
+  const x = rnd(2, 9), y = rnd(2, 6);
+  return { text: `${x} · ${y}`, value: x * y };
+}
+
+function newTask() {
+  for (let tries = 0; tries < 60; tries++) {
+    const t = makeSide(), b2 = makeSide();
+    if (b2.value !== 0 && t.value % b2.value === 0 && t.value / b2.value >= 1 && b2.value !== 1) {
+      top_ = t; bot = b2; break;
+    }
+    if (tries === 59) { top_ = { text: "3 + 7", value: 10 }; bot = { text: "5", value: 5 }; }
+  }
+  topVal = null; botVal = null; phase = 0; log = [];
+  msg("");
+  document.getElementById("steps").innerHTML = "Aňlatmanyň bölegine bas.";
+  render();
+}
+
+function msg(t, cls) { const m = document.getElementById("msg"); m.textContent = t; m.className = "msg" + (cls ? " " + cls : ""); }
+
+function render() {
+  const E = document.getElementById("expr");
+  E.innerHTML = "";
+  const fr = document.createElement("div");
+  fr.className = "fr";
+  const up = document.createElement("div");
+  up.className = "part up" + (topVal !== null ? " solved" : phase === 0 ? "" : "");
+  up.textContent = topVal !== null ? topVal : top_.text;
+  up.onclick = () => tap("top");
+  const bar = document.createElement("div"); bar.className = "bar";
+  const dn = document.createElement("div");
+  dn.className = "part down" + (botVal !== null ? " solved" : "");
+  dn.textContent = botVal !== null ? botVal : bot.text;
+  dn.onclick = () => tap("bot");
+  fr.appendChild(up); fr.appendChild(bar); fr.appendChild(dn);
+  E.appendChild(fr);
+
+  if (topVal !== null && botVal !== null) {
+    const eq = document.createElement("div");
+    eq.className = "part solved";
+    eq.textContent = `= ${topVal / botVal}`;
+    E.appendChild(eq);
+  }
+}
+
+function tap(which) {
+  if (topVal !== null && botVal !== null) return;
+  if (which === "top") {
+    if (topVal !== null) return;
+    topVal = top_.value;
+    log.push(`Sanawjy: ${top_.text} = <b>${topVal}</b>`);
+    msg(`Sanawjyny hasapladyk: ${top_.text} = ${topVal}`, "ok");
+  } else {
+    if (botVal !== null) return;
+    botVal = bot.value;
+    log.push(`Maýdalawjy: ${bot.text} = <b>${botVal}</b>`);
+    msg(`Maýdalawjyny hasapladyk: ${bot.text} = ${botVal}`, "ok");
+  }
+  if (topVal !== null && botVal !== null) {
+    done++; right++;
+    log.push(`Soňra bölýäris: ${topVal} : ${botVal} = <b>${topVal / botVal}</b>`);
+    msg(`Berekella! 🎉 Aňlatmanyň bahasy — ${topVal / botVal}`, "ok");
+    document.getElementById("score").textContent = `Çözülen: ${right}`;
+  }
+  document.getElementById("steps").innerHTML = log.map((l, i) => `${i + 1}. ${l}`).join("<br>");
+  render();
+}
+
+document.getElementById("newBtn").onclick = newTask;
+newTask();
+</script>
+</body>
+</html>

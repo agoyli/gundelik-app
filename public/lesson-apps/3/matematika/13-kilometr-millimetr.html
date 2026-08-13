@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kilometr. Millimetr — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16.5px; line-height: 1.9; }
+  .eq { background: #fff6e0; border-radius: 13px; padding: 14px; text-align: center; font-size: 22px; font-weight: 800; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .opts button { min-height: 48px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kilometr. Millimetr</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def">Uly aralyklar <b>kilometr (km)</b>, örän kiçi uzynlyklar bolsa
+      <b>millimetr (mm)</b> bilen ölçelýär.</div>
+  </div>
+
+  <div class="card">
+    <div class="tbl">
+      1 km = 1000 m<br>
+      1 m = 100 sm = 10 dm<br>
+      1 sm = 10 mm<br>
+      1 dm = 100 mm
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Millimetre geçir</h3>
+    <div class="eq" id="eq"></div>
+    <div class="nums" id="nums" style="margin-top:8px"></div>
+    <div class="msg" id="emsg"></div>
+    <div class="row"><button class="btn primary" id="enext">Indiki mysal</button></div>
+    <div class="score" id="esc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy birlik amatly?</h3>
+    <div class="goal" id="ugoal"></div>
+    <div class="opts" id="uopts"></div>
+    <div class="msg" id="umsg"></div>
+    <div class="row"><button class="btn ghost" id="unext">Indiki sorag</button></div>
+    <div class="score" id="usc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, I kitap · 137–138-nji sahypalar</div>
+</div>
+
+<script>
+// [sm, mm]
+var E = [[3, 7], [5, 5], [1, 0], [7, 2], [10, 0], [4, 8]], ei = 0, ed = 0, eok = 0, elock = 0;
+function want() { return E[ei][0] * 10 + E[ei][1]; }
+function showE() {
+  document.getElementById("eq").textContent = E[ei][1] === 0 ?
+    (E[ei][0] + " sm = ? mm") : (E[ei][0] + " sm " + E[ei][1] + " mm = ? mm");
+  document.getElementById("emsg").className = "msg";
+  document.getElementById("emsg").textContent = "";
+  elock = 0;
+}
+var VALS = [10, 27, 37, 40, 48, 50, 55, 62, 70, 72, 100, 108];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (elock) return;
+    elock = 1; ed++;
+    var v = parseInt(this.getAttribute("data-n"), 10), w = want(), m = document.getElementById("emsg");
+    var yaz = E[ei][0] + " · 10" + (E[ei][1] ? (" + " + E[ei][1]) : "") + " = " + w;
+    if (v === w) { eok++; m.className = "msg ok"; m.textContent = "Dogry! " + yaz + " mm."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + yaz + " mm."; }
+    document.getElementById("esc").textContent = "Netije: " + eok + " / " + ed;
+  };
+}
+document.getElementById("enext").onclick = function () { ei = (ei + 1) % E.length; showE(); };
+showE();
+
+var U = [
+  ["Iki şäheriň arasyndaky aralyk", "km", "mm"],
+  ["Depderiň galyňlygy", "mm", "km"],
+  ["Mekdebe çenli ýol", "km", "mm"],
+  ["Monjugyň ölçegi", "mm", "km"]
+];
+var ui = 0, ud = 0, uok = 0, ulock = 0;
+function showU() {
+  document.getElementById("ugoal").textContent =
+    U[ui][0] + " haýsy birlik bilen ölçemek amatly?";
+  var arr = [U[ui][1], U[ui][2]];
+  if (ui % 2 === 1) arr.reverse();
+  var h2 = "";
+  for (var k = 0; k < arr.length; k++) h2 += '<button class="btn" data-v="' + arr[k] + '">' + arr[k] + "</button>";
+  document.getElementById("uopts").innerHTML = h2;
+  var bs = document.getElementById("uopts").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = uclick;
+  document.getElementById("umsg").className = "msg";
+  document.getElementById("umsg").textContent = "";
+  ulock = 0;
+}
+function uclick() {
+  if (ulock) return;
+  ulock = 1; ud++;
+  var v = this.getAttribute("data-v"), m = document.getElementById("umsg");
+  if (v === U[ui][1]) { uok++; m.className = "msg ok"; m.textContent = "Dogry! Bu ýerde " + U[ui][1] + " amatly."; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu ýerde " + U[ui][1] + " amatly."; }
+  document.getElementById("usc").textContent = "Netije: " + uok + " / " + ud;
+}
+document.getElementById("unext").onclick = function () { ui = (ui + 1) % U.length; showU(); };
+showU();
+
+var Q = [
+  ["1 km näçe metre deň?", ["1000 m", "100 m", "10 m"], 0],
+  ["1 sm näçe millimetre deň?", ["10 mm", "100 mm", "1000 mm"], 0],
+  ["100 mm näçe santimetr edýär?", ["10 sm", "1 sm", "100 sm"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Güýçleriň goşulyşy — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Güýçleriň goşulyşy</h1>
+  <div class="sub">Fizika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Birnäçe güýç ýaly täsir görkezýän güýje şol güýçleriň deňtäsiredijisi diýilýär. Bir tarapa: F = F₁ + F₂; garşylykly: F = F₁ – F₂.</div>
+  </div>
+
+  <div class="card">
+    <h3>Deňtäsiredijini tap</h3>
+    <div class="goal">F₂-ni süýşür (oň – saga, otrisatel – çepe) we deňtäsiredijä seret.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="-10" max="10" step="1" value="3">
+    <div class="info" id="siro1"></div>
+    <div class="note">F₁ = 5 N hemişe saga ugrukdyrylan.</div>
+  </div>
+
+  <div class="card">
+    <h3>Deňtäsiredijini tapmagyň tertibi</h3>
+    <div class="goal" id="ogoal"></div>
+    <div class="pool" id="opool"></div>
+    <div class="msg" id="omsg"></div>
+    <div class="done" id="odone" style="display:none"></div>
+    <div class="row"><button class="btn ghost" id="oreset">Täzeden başla</button></div>
+    <div class="score" id="osc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 7 · 6-njy tema</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { 
+        var F1 = 5, R = F1 + v;
+        var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+        s += '<rect x="140" y="70" width="40" height="40" fill="#cdebd6" stroke="#4a6b39" stroke-width="2"/>';
+        function arrow(y, F, col, lab) {
+          if (F === 0) return '<text x="160" y="' + (y + 4) + '" font-size="10" fill="#666" text-anchor="middle">' + lab + ' = 0</text>';
+          var x0 = F > 0 ? 180 : 140, L = Math.abs(F) * 11;
+          var x1 = F > 0 ? x0 + L : x0 - L, d = F > 0 ? -1 : 1;
+          var t = '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="' + col + '" stroke-width="4"/>';
+          t += '<path d="M' + (x1 + d * 10) + ' ' + (y - 6) + ' L' + x1 + ' ' + y + ' L' + (x1 + d * 10) + ' ' + (y + 6) + '" fill="' + col + '"/>';
+          t += '<text x="' + ((x0 + x1) / 2) + '" y="' + (y - 8) + '" font-size="10" fill="' + col + '" text-anchor="middle">' + lab + ' = ' + Math.abs(F) + ' N</text>';
+          return t;
+        }
+        s += arrow(78, F1, '#1d6f3c', 'F₁');
+        s += arrow(102, v, '#c0392b', 'F₂');
+        s += '<line x1="20" y1="140" x2="300" y2="140" stroke="#c3d1b6" stroke-width="2"/>';
+        s += arrow(158, R, '#7a3fa0', 'F');
+        return s;
+       }
+  function readout(v) { 
+        var R = 5 + v;
+        var t = R === 0 ? 'Deňagramlylyk: jisim ýerinden gozganmaýar.' :
+                (R > 0 ? 'Deňtäsiredijisi saga ugrukdyrylan.' : 'Deňtäsiredijisi çepe ugrukdyrylan.');
+        return '<b>F = 5 + (' + v + ') = ' + R + ' N</b><br>' + t;
+       }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "F₂" + ": " + String(v).replace(".", ",") + " " + "N";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var OS = ["Jisime täsir edýän ähli güýçleri belle.", "Her güýjüň ugruny saýla.", "Bir tarapa gönükdirilenleri goş.", "Garşylykly tarapa gönükdirilenleri aýyr.", "Netijäniň ugruny we san bahasyny ýaz."], OO = [4, 0, 3, 1, 2];
+(function () {
+  var next = 0, tries = 0, N = OS.length;
+  function draw() {
+    var h = "";
+    for (var k = 0; k < OO.length; k++) {
+      var i = OO[k];
+      if (i < next) continue;
+      h += '<button class="btn" data-i="' + i + '">' + OS[i] + "</button>";
+    }
+    document.getElementById("opool").innerHTML = h;
+    var bs = document.getElementById("opool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) bs[k].onclick = pick;
+    document.getElementById("ogoal").textContent = next < N ?
+      ((next + 1) + "-nji ädimi saýla.") : ("Ähli " + N + " ädim dogry tertipde ýygnaldy!");
+    var dv = document.getElementById("odone");
+    if (next > 0) {
+      var dh = "";
+      for (var i = 0; i < next; i++) dh += (i + 1) + ". " + OS[i] + "<br>";
+      dv.innerHTML = dh; dv.style.display = "block";
+    } else { dv.style.display = "none"; dv.innerHTML = ""; }
+    document.getElementById("osc").textContent = "Ädim: " + next + " / " + N + " · synanyşyk: " + tries;
+  }
+  function pick() {
+    var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("omsg");
+    tries++;
+    if (i === next) {
+      next++;
+      m.className = "msg ok";
+      m.textContent = next === N ? "Tertip dogry!" : "Dogry!";
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Ilki " + (next + 1) + "-nji ädim gelmeli.";
+    }
+    draw();
+  }
+  document.getElementById("oreset").onclick = function () {
+    next = 0; tries = 0;
+    document.getElementById("omsg").className = "msg";
+    document.getElementById("omsg").textContent = "";
+    draw();
+  };
+  draw();
+})();
+
+var Q = [["Saga 2 N, 5 N, 9 N, çepe 13 N bolsa F näçe?", ["3 N", "29 N", "13 N"], 0], ["Bir tarapa gönükdirilen güýçler nähili goşulýar?", ["F₁ + F₂", "F₁ – F₂", "F₁ · F₂"], 0], ["F = 0 bolsa jisim nähili ýagdaýda?", ["Deňagramlylykda", "Tizlenýär", "Ýykylýar"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Töwerek we tegelek — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex;
+           justify-content: center; }
+  .stage svg, .stage canvas { max-width: 100%; height: auto; background: #fff;
+                              border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .term { background: #f7fafd; border-radius: 11px; padding: 9px 11px; font-size: 13px;
+          line-height: 1.55; }
+  .term b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Töwerek we tegelek</h1>
+  <div class="sub">Onluk droblary köpeltmek we bölmek · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Radiusy üýtget – diametr, töweregiň uzynlygy we tegelegiň meýdany
+      şol bada gaýtadan hasaplanýar.</div>
+    <div class="stage" id="fig"></div>
+    <div class="slider"><span class="lbl">Radius r</span>
+      <input type="range" id="r" min="5" max="140" step="5" value="60">
+      <span class="out" id="ro"></span></div>
+    <div class="row tight" style="margin-top:6px">
+      <button class="btn sel" data-s="r">Radiusy görkez</button>
+      <button class="btn" data-s="d">Diametri görkez</button>
+      <button class="btn" data-s="s">Tegelegi boýa</button>
+    </div>
+    <div class="calc" id="calc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>π sany nireden gelip çykýar?</h3>
+    <div class="goal">Töweregiň daşyna sapak aýla-da, sapagyň uzynlygyny diametre böl. Netije
+      hemişe birmeňzeş – takmynan 3,14.</div>
+    <div class="stage"><canvas id="pi" width="560" height="180"></canvas></div>
+    <div class="slider"><span class="lbl">Sapagy aýla</span>
+      <input type="range" id="t" min="0" max="100" value="0"><span class="out" id="to"></span></div>
+    <div class="calc" id="pic"></div>
+  </div>
+
+  <div class="card">
+    <h3>Düşünjeler</h3>
+    <div class="terms">
+      <div class="term"><b>Töwerek</b> – sirkul bilen çyzylýan ýapyk çyzyk.</div>
+      <div class="term"><b>Tegelek</b> – töwerek bilen çäklenen tekizligiň bölegi.</div>
+      <div class="term"><b>Radius</b> – merkezi töweregiň nokady bilen birikdirýän kesim.</div>
+      <div class="term"><b>Diametr</b> – merkezden geçýän we iki nokady birikdirýän kesim.</div>
+      <div class="term"><b>π</b> – uzynlygyň diametre gatnaşygy, π ≈ 3,14.</div>
+      <div class="term"><b>Formulalar</b> – d = 2r, c = 2πr, S = πr².</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Gadymy Wawilonda töweregiň uzynlygyny hasaplanlarynda π ≈ 3 diýip alypdyrlar. Radiusy 20 m
+      bolan töwerek üçin bu 125,6 m ýerine 120 m berýär – tapawut <b>5,6 m</b>.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §13–§15</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const PI = 3.14;
+const T = x => (Math.round(x * 100) / 100).toString().replace(".", ",");
+
+/* ---------------- töwerek ---------------- */
+let show = "r";
+document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+  show = b.dataset.s;
+  document.querySelectorAll("[data-s]").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  fig();
+});
+function fig() {
+  const r = +$("r").value;
+  $("ro").textContent = r + " sm";
+  const S = 320, c = S / 2;
+  const k = 140 / 140;          // 1 sm = 1 px
+  const rr = Math.min(r, 140) * k;
+  let extra = "";
+  if (show === "r")
+    extra = `<line x1="${c}" y1="${c}" x2="${c + rr}" y2="${c}" stroke="#e5007d" stroke-width="3"/>
+             <text x="${c + rr / 2}" y="${c - 8}" text-anchor="middle" fill="#e5007d"
+               font-weight="700" font-size="14">r = ${r}</text>`;
+  if (show === "d")
+    extra = `<line x1="${c - rr}" y1="${c}" x2="${c + rr}" y2="${c}" stroke="#e5007d"
+               stroke-width="3"/>
+             <text x="${c}" y="${c - 8}" text-anchor="middle" fill="#e5007d"
+               font-weight="700" font-size="14">d = ${2 * r}</text>`;
+  $("fig").innerHTML = `
+    <svg viewBox="0 0 ${S} ${S}" width="${S}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      <circle cx="${c}" cy="${c}" r="${rr}" fill="${show === "s" ? "#cfe0ff" : "none"}"
+        stroke="#2456b0" stroke-width="3"/>
+      ${extra}
+      <circle cx="${c}" cy="${c}" r="4" fill="#1e2a3a"/>
+      <text x="${c - 6}" y="${c + 20}" fill="#1e2a3a" font-size="14" font-weight="700">O</text>
+    </svg>`;
+  $("calc").innerHTML =
+    `diametr:  d = 2r = 2 · ${r} = <b>${2 * r} sm</b><br>` +
+    `uzynlyk:  c = 2πr = 2 · 3,14 · ${r} = <b>${T(2 * PI * r)} sm</b><br>` +
+    `meýdan:   S = πr² = 3,14 · ${r}² = 3,14 · ${r * r} = <b>${T(PI * r * r)} sm²</b>`;
+}
+$("r").addEventListener("input", fig);
+
+/* ---------------- π ---------------- */
+const cv = $("pi"), cx = cv.getContext("2d");
+function pi() {
+  const t = +$("t").value / 100;
+  $("to").textContent = Math.round(t * 100) + "%";
+  const R = 62, cxx = 100, cyy = 90;
+  cx.clearRect(0, 0, 560, 180);
+  cx.fillStyle = "#fff"; cx.fillRect(0, 0, 560, 180);
+  // tegelek
+  cx.strokeStyle = "#d6e0ee"; cx.lineWidth = 3;
+  cx.beginPath(); cx.arc(cxx, cyy, R, 0, Math.PI * 2); cx.stroke();
+  // aýlanan sapak
+  cx.strokeStyle = "#e5007d"; cx.lineWidth = 5; cx.lineCap = "round";
+  if (t > 0) {
+    cx.beginPath();
+    cx.arc(cxx, cyy, R, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2);
+    cx.stroke();
+  }
+  // diametrler hatary
+  const d = 2 * R;
+  cx.strokeStyle = "#b9c8dc"; cx.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    const x = 210 + i * d;
+    if (x + d > 545) break;
+    cx.beginPath(); cx.moveTo(x, 128); cx.lineTo(x + d, 128); cx.stroke();
+    cx.beginPath(); cx.moveTo(x, 120); cx.lineTo(x, 136); cx.stroke();
+    cx.fillStyle = "#93a2b5"; cx.font = "12px system-ui, sans-serif";
+    cx.fillText("d", x + d / 2 - 4, 150);
+  }
+  // dogralan sapak
+  const len = t * 2 * Math.PI * R;
+  cx.strokeStyle = "#e5007d"; cx.lineWidth = 5;
+  cx.beginPath(); cx.moveTo(210, 108); cx.lineTo(Math.min(210 + len, 545), 108); cx.stroke();
+  cx.fillStyle = "#5b6b80"; cx.font = "13px system-ui, sans-serif";
+  cx.fillText("sapagyň uzynlygy", 210, 96);
+  // sapagyň uzynlygynyň DIAMETRE gatnaşygy: doly aýlawda 2πR : 2R = π
+  const ratio = t * Math.PI;
+  $("pic").innerHTML = t === 0
+    ? "Sürgüji süýşür: sapak töweregiň daşyna aýlanýar we aşakda göni çyzyk bolup ýazylýar."
+    : `aýlanan bölek: <b>${Math.round(t * 100)}%</b><br>` +
+      `sapagyň uzynlygy diametriň <b>${T(ratio)}</b> essesine deň<br>` +
+      (t >= 0.99
+        ? `doly aýlaw: c : d = <b>${T(ratio)}</b> ≈ π. Ine, şonuň üçin hem c = πd.`
+        : `doly aýlanda bu gatnaşyk 3,14-e, ýagny <b>π</b> sana ýeter`);
+}
+$("t").addEventListener("input", pi);
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Diametr radiusdan näçe esse uzyn?", ["2 esse", "3 esse", "4 esse", "Deň"], 0],
+  ["Radiusy 5 sm bolan töweregiň uzynlygy", ["10π sm", "5π sm", "25π sm", "3,14 sm"], 0],
+  ["Radiusy 1,5 sm bolan tegelegiň meýdany", ["7,6 sm²", "2,25π sm²", "3π sm²", "1,5π sm²"], 1],
+  ["Töweregiň uzynlygy 6,28 sm bolsa, diametri", ["1 sm", "2 sm", "3,14 sm", "12,56 sm"], 1],
+  ["Radius 2 esse ulalsa, meýdan näçe esse ulalýar?", ["2", "3", "4", "8"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+fig(); pi();
+</script>
+</body>
+</html>

@@ -8,11 +8,11 @@ import {
 import { AWARDS, BADGE_TYPES, TONE, WEEK_LABELS, badgeType, toneOf } from '../data/badges';
 import type { Award, BadgeTone } from '../data/badges';
 import { fmtDate } from '../lib/date';
-import { usePrefs } from '../state/prefs';
+import { tierFor, useCan, usePrefs } from '../state/prefs';
 import { tokens } from '../theme';
 
 /*
- * Mugallymyň nyşanlary — the badge feed and its statistics.
+ * Mugallymyň ýyldyzlary — the badge feed and its statistics.
  *
  * Everything on this page is aggregated from `AWARDS` at render time, so the
  * headline counts, the per-badge bars, the per-subject split and the weekly
@@ -32,7 +32,7 @@ export function BadgeChip({ typeId, size = 'md' }: { typeId: string; size?: 'sm'
   return (
     <Box
       role="img"
-      aria-label={`${tone.label} nyşan: ${t.label}`}
+      aria-label={`${tone.label} ýyldyz: ${t.label}`}
       sx={{
         display: 'inline-flex', alignItems: 'center', gap: sm ? '4px' : '6px', flex: 'none',
         height: sm ? 22 : 28, px: sm ? '7px' : '10px', borderRadius: `${tokens.rPill}px`,
@@ -111,7 +111,9 @@ const AwardRow = ({ a }: { a: Award }) => {
 type Range = 'week' | 'term';
 
 export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; onUpgrade: () => void }) {
-  const { premium, beta } = usePrefs();
+  const { beta } = usePrefs();
+  const can = useCan('badges');
+  const plan = tierFor('badges');
   const [range, setRange] = useState<Range>('term');
   const [tone, setTone] = useState<BadgeTone | 'all'>('all');
 
@@ -160,7 +162,7 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
   const feed = tone === 'all' ? scoped : scoped.filter((a) => toneOf(a) === tone);
 
   return (
-    <SubPage title="Nyşanlar" onBack={onBack} help="Mugallymlaryň sapakda beren nyşanlary. Baha näme edileni, nyşan bolsa nähili işlenilenini görkezýär.">
+    <SubPage title="Ýyldyzlar" onBack={onBack} help="Mugallymlaryň sapakda beren ýyldyzlary. Baha näme edileni, ýyldyz bolsa nähili işlenilenini görkezýär.">
 
       <Box sx={{ pt: '14px' }}>
         <Segmented
@@ -184,7 +186,7 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
           <Typography sx={{ fontSize: 13, fontWeight: 600, color: tokens.greenText }}>Ýagşy {good}</Typography>
           <Typography sx={{ fontSize: 13, fontWeight: 600, color: tokens.redText }}>Üns bermeli {bad}</Typography>
         </Box>
-        <Box role="img" aria-label={`Ýagşy nyşanlaryň paýy ${share} göterim`} sx={{
+        <Box role="img" aria-label={`Ýagşy ýyldyzlaryň paýy ${share} göterim`} sx={{
           display: 'flex', height: 12, borderRadius: `${tokens.rPill}px`, overflow: 'hidden', bgcolor: tokens.dividerSoft,
         }}>
           <Box sx={{ width: `${share}%`, bgcolor: tokens.greenDeep }} />
@@ -192,17 +194,17 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
         </Box>
         <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '10px', lineHeight: 1.45 }}>
           {share >= 80
-            ? 'Ajaýyp görkeziji — nyşanlaryň aglabasy ýagşy.'
+            ? 'Ajaýyp görkeziji — ýyldyzlaryň aglabasy ýagşy.'
             : share >= 60
-              ? 'Gowy görkeziji. Üns bermeli nyşanlaryň sebäbini aşakdan görüp bilersiň.'
-              : 'Üns bermeli nyşanlar köpelýär — aşakdaky derslere seret.'}
+              ? 'Gowy görkeziji. Üns bermeli ýyldyzlaryň sebäbini aşakdan görüp bilersiň.'
+              : 'Üns bermeli ýyldyzlar köpelýär — aşakdaky derslere seret.'}
         </Typography>
       </Box>
 
-      {premium ? (
+      {can ? (
         <>
           {/* per badge */}
-          <SectionLabel>Nyşan görnüşleri</SectionLabel>
+          <SectionLabel>Ýyldyz görnüşleri</SectionLabel>
           <Box sx={{
             bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: `16px ${tokens.padCard}`,
             display: 'flex', flexDirection: 'column', gap: '13px',
@@ -213,9 +215,9 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
                   <Box component="span" aria-hidden sx={{ fontSize: 14 }}>{t.emoji}</Box>
                   <Typography noWrap sx={{ fontSize: 13, color: tokens.ink2 }}>{t.label}</Typography>
                 </Box>
-                <Box sx={{ height: 8, borderRadius: 4, bgcolor: tokens.dividerSoft, overflow: 'hidden' }}>
+                <Box sx={{ height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft, overflow: 'hidden' }}>
                   <Box sx={{
-                    width: `${(n / maxType) * 100}%`, height: '100%', borderRadius: 4,
+                    width: `${(n / maxType) * 100}%`, height: '100%', borderRadius: `${tokens.rPill}px`,
                     bgcolor: TONE[t.tone].solid,
                   }} />
                 </Box>
@@ -246,11 +248,11 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
                 }}>
                   <Box sx={{
                     width: `${(s.good / maxSubject) * 100}%`, bgcolor: tokens.greenDeep,
-                    borderRadius: '4px 0 0 4px',
+                    borderRadius: `${tokens.rChip}px 0 0 ${tokens.rChip}px`,
                   }} />
                   <Box sx={{
                     width: `${(s.bad / maxSubject) * 100}%`, bgcolor: tokens.red,
-                    borderRadius: s.good ? '0 4px 4px 0' : '4px',
+                    borderRadius: s.good ? `0 ${tokens.rChip}px ${tokens.rChip}px 0` : `${tokens.rChip}px`,
                   }} />
                 </Box>
               </Box>
@@ -268,7 +270,7 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
                 <BetaPill />
               </Box>
               <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: `18px ${tokens.padCard}` }}>
-                <Box role="img" aria-label="Hepdelik nyşan tendensiýasy" sx={{
+                <Box role="img" aria-label="Hepdelik ýyldyz tendensiýasy" sx={{
                   display: 'flex', alignItems: 'flex-end', gap: '10px', height: 116,
                 }}>
                   {byWeek.map((w) => (
@@ -280,15 +282,15 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
                         {w.bad > 0 && (
                           <Box sx={{
                             height: `${(w.bad / maxWeek) * 92}px`, bgcolor: tokens.red,
-                            borderRadius: '4px 4px 0 0', minHeight: 4,
+                            borderRadius: `${tokens.rChip}px ${tokens.rChip}px 0 0`, minHeight: 4,
                           }} />
                         )}
                         <Box sx={{
                           height: `${(w.good / maxWeek) * 92}px`, bgcolor: tokens.greenDeep,
-                          borderRadius: w.bad > 0 ? '0 0 4px 4px' : '4px', minHeight: w.good ? 4 : 0,
+                          borderRadius: w.bad > 0 ? `0 0 ${tokens.rChip}px ${tokens.rChip}px` : `${tokens.rChip}px`, minHeight: w.good ? 4 : 0,
                         }} />
                       </Box>
-                      <Typography sx={{ fontSize: 10.5, color: tokens.inkMuted }}>{w.label}</Typography>
+                      <Typography sx={{ fontSize: 11, color: tokens.inkMuted }}>{w.label}</Typography>
                     </Box>
                   ))}
                 </Box>
@@ -299,8 +301,9 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
       ) : (
         <Box sx={{ pt: '18px' }}>
           <TeaserCard
-            title="Doly seljerme Premium-da"
-            note="Haýsy nyşanlaryň näçe gezek berlendigi, dersler boýunça bölünişi we hepdelik tendensiýa."
+            title="Doly seljerme ýapyk"
+            note={`Haýsy ýyldyzlaryň näçe gezek berlendigi, dersler boýunça bölünişi we hepdelik tendensiýa — ${plan?.name} bilen açylýar.`}
+            feature="badges"
             icon={<TrophyIcon size={22} />}
             onUpgrade={onUpgrade}
             preview={(
@@ -308,8 +311,8 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
                 {byType.slice(0, 4).map(({ t, n }) => (
                   <Box key={t.id} sx={{ display: 'grid', gridTemplateColumns: '120px 1fr', alignItems: 'center', gap: '10px' }}>
                     <Typography noWrap sx={{ fontSize: 13, color: tokens.ink2 }}>{t.emoji} {t.label}</Typography>
-                    <Box sx={{ height: 8, borderRadius: 4, bgcolor: tokens.dividerSoft }}>
-                      <Box sx={{ width: `${(n / maxType) * 100}%`, height: '100%', borderRadius: 4, bgcolor: TONE[t.tone].solid }} />
+                    <Box sx={{ height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft }}>
+                      <Box sx={{ width: `${(n / maxType) * 100}%`, height: '100%', borderRadius: `${tokens.rPill}px`, bgcolor: TONE[t.tone].solid }} />
                     </Box>
                   </Box>
                 ))}
@@ -319,8 +322,8 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
         </Box>
       )}
 
-      <SectionLabel>Nyşanlaryň taryhy</SectionLabel>
-      {premium ? (
+      <SectionLabel>Ýyldyzlaryň taryhy</SectionLabel>
+      {can ? (
         <>
           <Box sx={{ display: 'flex', gap: '8px', pb: '14px' }}>
             {([['all', 'Ähli'], ['good', 'Ýagşy'], ['bad', 'Üns bermeli']] as [BadgeTone | 'all', string][]).map(([id, label]) => {
@@ -331,7 +334,7 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
                   sx={{
                     height: 32, px: '14px', borderRadius: `${tokens.rPill}px`, flex: 'none',
                     fontSize: 13.5, fontWeight: 600,
-                    bgcolor: on ? tokens.blue : tokens.surface,
+                    bgcolor: on ? tokens.blueSolid : tokens.surface,
                     color: on ? '#fff' : tokens.ink2,
                     transition: 'background .15s ease,color .15s ease',
                   }}
@@ -340,7 +343,7 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
             })}
           </Box>
           {feed.length === 0 ? (
-            <EmptyState icon={<TrophyIcon size={26} />} title="Nyşan ýok" note="Bu döwürde bu görnüşde nyşan berilmedik." />
+            <EmptyState icon={<TrophyIcon size={26} />} title="Ýyldyz ýok" note="Bu döwürde bu görnüşde ýyldyz berilmedik." />
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {feed.map((a) => <AwardRow key={a.id} a={a} />)}
@@ -355,18 +358,18 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
 }
 
 /* ---------------- the free tier's view of the feed ----------------
- * The free tier gets the count and nothing that identifies a badge: not the
- * type, not the subject, not the teacher, not the comment. That is a deliberate
- * line, and it is drawn where the value actually is — a parent does not upgrade
- * to learn that five things happened, they upgrade to learn *which* five.
+ * The free tier gets the count, the date, the tone — and the teacher's name.
+ * What stays hidden is what the star actually was: the type, the subject and
+ * the comment. That is where the value is — a parent does not upgrade to learn
+ * that five things happened, they upgrade to learn *which* five.
  *
- * The rows are still drawn, dated and tone-coloured, because a masked row that
- * you can see the shape of is a specific question ("what did the maths teacher
- * write on Tuesday?"), and a specific question is what makes someone tap. An
- * empty state or a bare wall would just read as "nothing here".
+ * The teacher is named on purpose. A row that says "Ogulgerek Nurýewa · 12.05"
+ * over a masked line is a specific question ("what did she write?"), and a
+ * specific question is what makes someone tap; a row of two grey bars is just a
+ * wall. It also keeps the free tier useful rather than merely teasing.
  *
- * Everything shown is true: the count, the dates, the balance. Nothing is
- * invented to manufacture urgency.
+ * Everything shown is true: the count, the dates, the balance, the teacher.
+ * Nothing is invented to manufacture urgency.
  */
 function LockedFeed({ awards, onUpgrade }: { awards: Award[]; onUpgrade: () => void }) {
   const recent = awards.slice(0, 5);
@@ -387,12 +390,10 @@ function LockedFeed({ awards, onUpgrade }: { awards: Award[]; onUpgrade: () => v
                 bgcolor: tone.tint, color: tone.ink, display: 'grid', placeItems: 'center',
               }}><LockIcon size={18} /></Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                {/* the masked identity: the row exists, the detail does not */}
+                {/* who wrote it is free; what they wrote is not */}
+                <Typography noWrap sx={{ fontSize: 15, fontWeight: 600 }}>{a.teacher}</Typography>
                 <Box aria-hidden sx={{
-                  height: 11, width: '58%', borderRadius: 6, bgcolor: tone.tint,
-                }} />
-                <Box aria-hidden sx={{
-                  height: 9, width: '38%', borderRadius: 5, bgcolor: tokens.dividerSoft, mt: '8px',
+                  height: 9, width: '62%', borderRadius: `${tokens.rPill}px`, bgcolor: tone.tint, mt: '7px',
                 }} />
               </Box>
               <Typography sx={{ fontSize: 12, color: tokens.inkMuted, flex: 'none' }}>
@@ -405,10 +406,9 @@ function LockedFeed({ awards, onUpgrade }: { awards: Award[]; onUpgrade: () => v
 
       <Box sx={{ pt: '14px', pb: '10px' }}>
         <TeaserCard
-          title={`${hidden} nyşan ýazgysy ýapyk`}
-          note="Haýsy nyşan, haýsy dersde, haýsy mugallymdan we näme ýazandygy — Premium bilen açylýar."
-          cta="Premium al"
-          icon={<LockIcon size={22} />}
+          title={`${hidden} ýyldyz ýazgysy ýapyk`}
+          note={`Haýsy ýyldyz, haýsy dersde we mugallymyň näme ýazandygy — ${tierFor('badges')?.name} bilen açylýar.`}
+          feature="badges"
           onUpgrade={onUpgrade}
         />
       </Box>
@@ -423,7 +423,7 @@ export function BadgeRow({ onClick }: { onClick: () => void }) {
   return (
     <ButtonBase
       onClick={onClick}
-      aria-label={`Mugallymyň nyşanlary: ${good} ýagşy, ${bad} üns bermeli`}
+      aria-label={`Mugallymyň ýyldyzlary: ${good} ýagşy, ${bad} üns bermeli`}
       sx={{
         display: 'flex', alignItems: 'center', gap: '16px', width: '100%', minHeight: 48,
         bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, px: '15px', pr: '12px',
@@ -435,7 +435,7 @@ export function BadgeRow({ onClick }: { onClick: () => void }) {
         <TrophyIcon size={20} />
       </IconBadge>
       <Typography sx={{ flex: 1, fontSize: 17, fontWeight: 600, letterSpacing: '-.2px' }} noWrap>
-        Mugallymyň nyşanlary
+        Mugallymyň ýyldyzlary
       </Typography>
       <BadgeScore good={good} bad={bad} />
     </ButtonBase>

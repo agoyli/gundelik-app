@@ -77,7 +77,7 @@ function PlanCard({ tier, term, on, onPick }: {
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
           <Typography sx={{ fontSize: 16, fontWeight: 700, flex: 1 }} noWrap>{tier.name}</Typography>
           <Typography sx={{
-            fontSize: 18, fontWeight: 700, flex: 'none', fontVariantNumeric: 'tabular-nums',
+            fontSize: 17, fontWeight: 700, flex: 'none', fontVariantNumeric: 'tabular-nums',
             color: on ? tokens.blueText : tokens.ink,
           }}>{p} TMT</Typography>
         </Box>
@@ -142,7 +142,7 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
           bgcolor: 'rgba(255,255,255,.2)', display: 'grid', placeItems: 'center',
         }}><SparkleIcon size={24} /></Box>
         <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.25 }}>
+          <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.25 }}>
             Döwrebap tehnologiýa bilen netijeli bilim al
           </Typography>
         </Box>
@@ -214,7 +214,7 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
         <Button fullWidth variant="contained" disableElevation onClick={buy}>
           {chosen.name} — {price(chosen, term)} TMT
         </Button>
-        <Typography sx={{ fontSize: 11.5, color: tokens.inkMuted, textAlign: 'center', mt: '8px' }}>
+        <Typography sx={{ fontSize: 12, color: tokens.inkMuted, textAlign: 'center', mt: '8px' }}>
           Ilkinji 7 gün mugt · islendik wagt ýatyrylýar
         </Typography>
       </StickyFooter>

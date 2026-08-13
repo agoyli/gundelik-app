@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suratlaryň parçalaryny birikdirmek — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .src { background: #f7fafd; border-radius: 13px; padding: 8px; }
+  .src h4 { margin: 0 0 6px; font-size: 12.5px; color: #5b6b80; }
+  .src svg, .big svg { display: block; width: 100%; height: auto; background: #fff;
+                       border-radius: 10px; touch-action: manipulation; }
+  .big { background: #eef2f8; border-radius: 14px; padding: 10px; }
+  .clip { background: #f2edfd; border-radius: 12px; padding: 9px 11px; font-size: 13.5px;
+          min-height: 42px; display: flex; align-items: center; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+  .tool { background: #f7fafd; border-radius: 13px; padding: 9px; margin-bottom: 8px; }
+  .tool h4 { margin: 0 0 6px; font-size: 12.5px; color: #5b6b80; text-transform: uppercase;
+             letter-spacing: .4px; }
+  .tool button { min-height: 44px; font-size: 13px; line-height: 1.3; }
+  .ru { color: #5b6b80; font-weight: 500; }
+  @media (max-width: 420px) { .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Suratlaryň parçalaryny birikdirmek</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Kitap: «Iki suratdan gerekli parçalary <b>kesip almak</b> we olary täze
+      bir surat döretmek üçin <b>birikdirmek</b> bolýar.» Ilki guraly saýla, soň parça bas –
+      ol tapawutlandyrylýar, soňra Nusgalamak ýa-da Kesip almak, ahyrynda ak sahypa bas.</div>
+    <div class="tool">
+      <h4>Tapawutlandyrmagyň guraly</h4>
+      <div class="row tight" id="tl"></div>
+      <div class="hint" id="th"></div>
+    </div>
+    <div class="two">
+      <div class="src"><h4>1-nji surat: Tebigat</h4><div id="s1"></div></div>
+      <div class="src"><h4>2-nji surat: Şäher</h4><div id="s2"></div></div>
+    </div>
+    <div class="clip" id="cl" style="margin-top:9px"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="cp">📄 Nusgalamak <span class="ru">(Копировать)</span></button>
+      <button class="btn primary" id="ct">✂️ Kesip almak <span class="ru">(Вырезать)</span></button>
+    </div>
+    <div class="tool" style="margin-top:8px">
+      <h4>Goýmagyň görnüşi <span class="ru">(Вставить)</span></h4>
+      <div class="row tight" id="tr"></div>
+      <div class="hint">Kitap: parçany goýanyňda <b>dury (прозрачный)</b> buýrugy
+        kesgitlenýär – şonda parçanyň fony esasy suraty ýapmaýar.</div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn warn" id="rm">🗑 Goýlany aýyr</button>
+      <button class="btn ghost" id="clr">🧹 Sahypany arassala</button>
+      <button class="btn ghost" id="rst">🔄 Suratlary dikelt</button>
+    </div>
+    <div class="big" id="cv" style="margin-top:9px"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ýumuş</h3>
+    <div class="goal" id="task"></div>
+    <button class="btn primary" id="chk">✅ Barla</button>
+    <button class="btn ghost" id="next">🔀 Başga ýumuş</button>
+    <div class="msg" id="tmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* her parça (0;0) nokadynyň daşyna çyzylýar */
+const PARTS = {
+  gun:   {n: "gün", r: 22, d: `<circle cx="0" cy="0" r="13" fill="#e0a500"/>` +
+          [...Array(8)].map((_, i) => {
+            const a = i * Math.PI / 4;
+            return `<line x1="${(16 * Math.cos(a)).toFixed(1)}" y1="${(16 * Math.sin(a)).toFixed(1)}"
+              x2="${(21 * Math.cos(a)).toFixed(1)}" y2="${(21 * Math.sin(a)).toFixed(1)}"
+              stroke="#e0a500" stroke-width="3" stroke-linecap="round"/>`;
+          }).join("")},
+  bulut: {n: "bulut", r: 20, d: `<g fill="#c9d9ef"><circle cx="-9" cy="2" r="9"/>
+          <circle cx="2" cy="-3" r="12"/><circle cx="13" cy="3" r="8"/>
+          <rect x="-9" y="2" width="22" height="9" rx="4"/></g>`},
+  agac:  {n: "agaç", r: 22, d: `<rect x="-3" y="4" width="6" height="16" fill="#8a5a2b"/>
+          <circle cx="0" cy="-3" r="14" fill="#1d7a3d"/>`},
+  gul:   {n: "gül", r: 18, d: `<line x1="0" y1="2" x2="0" y2="16" stroke="#1d7a3d"
+          stroke-width="3"/>` + [...Array(5)].map((_, i) => {
+            const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
+            return `<circle cx="${(8 * Math.cos(a)).toFixed(1)}" cy="${(8 * Math.sin(a) - 2).toFixed(1)}"
+              r="6" fill="#e5007d"/>`;
+          }).join("") + `<circle cx="0" cy="-2" r="4" fill="#e0a500"/>`},
+  jay:   {n: "jaý", r: 24, d: `<rect x="-15" y="-4" width="30" height="22" fill="#c9a06a"/>
+          <polygon points="-19,-4 0,-19 19,-4" fill="#c62828"/>
+          <rect x="-5" y="4" width="10" height="14" fill="#8a5a2b"/>`},
+  masyn: {n: "maşyn", r: 22, d: `<rect x="-18" y="-4" width="36" height="12" rx="3" fill="#2456b0"/>
+          <rect x="-10" y="-13" width="19" height="10" rx="3" fill="#5b8ede"/>
+          <circle cx="-10" cy="9" r="5" fill="#1e2a3a"/><circle cx="10" cy="9" r="5" fill="#1e2a3a"/>`},
+  yswl:  {n: "yşyk", r: 20, d: `<rect x="-7" y="-18" width="14" height="30" rx="4" fill="#3c4a5c"/>
+          <circle cx="0" cy="-11" r="4" fill="#c62828"/>
+          <circle cx="0" cy="-2" r="4" fill="#e0a500"/>
+          <circle cx="0" cy="7" r="4" fill="#1d7a3d"/>`},
+  kopri: {n: "köpri", r: 26, d: `<path d="M-22,10 Q0,-16 22,10" fill="none" stroke="#5b6b80"
+          stroke-width="5"/><line x1="-22" y1="10" x2="-22" y2="18" stroke="#5b6b80"
+          stroke-width="4"/><line x1="22" y1="10" x2="22" y2="18" stroke="#5b6b80"
+          stroke-width="4"/>`},
+};
+const PIC1 = [["gun", 40, 38], ["bulut", 110, 34], ["agac", 45, 100], ["gul", 118, 108]];
+const PIC2 = [["jay", 48, 90], ["masyn", 118, 112], ["yswl", 122, 46], ["kopri", 48, 38]];
+
+/* göni gyraly parçalar üçin gönüburçluk, egri gyraly parçalar üçin erkin meýdança */
+const SHAPE = {jay: "rect", masyn: "rect", yswl: "rect",
+               gun: "free", bulut: "free", agac: "free", gul: "free", kopri: "free"};
+const TOOLS = [
+  ["rect", "▭ Gönüburçluk görnüşinde tapawutlandyrmak",
+   "Выделить прямоугольную область",
+   "Bu gural göni gyraly parçalar üçin amatly: jaý, maşyn, yşyk."],
+  ["free", "✂️ Erkin meýdança görnüşinde tapawutlandyrmak",
+   "Выделить произвольную область",
+   "Bu gural egri gyraly parçalar üçin amatly: gün, bulut, agaç, gül, köpri."],
+];
+const PASTE = [[1, "🫥 Dury", "прозрачный"], [0, "🔲 Dury däl", "непрозрачный"]];
+
+let pick = null, clip = null, placed = [], selP = -1;
+let tool = "rect", trans = 1, gone = [];
+
+$("tl").innerHTML = TOOLS.map(t =>
+  `<button class="btn" data-t="${t[0]}">${t[1]}<br><span class="ru">(${t[2]})</span></button>`)
+  .join("");
+$("tr").innerHTML = PASTE.map(p =>
+  `<button class="btn" data-tr="${p[0]}">${p[1]} <span class="ru">(${p[2]})</span></button>`)
+  .join("");
+$("tl").querySelectorAll("button").forEach(b => b.onclick = () => {
+  tool = b.dataset.t; pick = null; drawAll();
+  say(`Gural saýlandy: ${TOOLS.find(t => t[0] === tool)[1].slice(2)}.`);
+});
+$("tr").querySelectorAll("button").forEach(b => b.onclick = () => {
+  trans = +b.dataset.tr; drawAll();
+  say(trans ? "Goýmagyň görnüşi: dury – parçanyň fony görünmez."
+            : "Goýmagyň görnüşi: dury däl – parçanyň fony esasy suraty ýapar.", !trans);
+});
+function tools() {
+  $("tl").querySelectorAll("button").forEach(b =>
+    b.classList.toggle("sel", b.dataset.t === tool));
+  $("tr").querySelectorAll("button").forEach(b =>
+    b.classList.toggle("sel", +b.dataset.tr === trans));
+  $("th").textContent = TOOLS.find(t => t[0] === tool)[3];
+}
+
+function frame(k, x, y) {
+  const r = PARTS[k].r;
+  return tool === "rect"
+    ? `<rect x="${x - r}" y="${y - r}" width="${r * 2}" height="${r * 2}" fill="none"
+        stroke="#e5007d" stroke-width="2" stroke-dasharray="5 4"/>`
+    : `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#e5007d" stroke-width="2"
+        stroke-dasharray="4 5"/>`;
+}
+function srcSvg(id, list) {
+  const vis = list.filter(([k]) => !gone.includes(k));
+  $(id).innerHTML = `<svg viewBox="0 0 160 150" xmlns="http://www.w3.org/2000/svg">
+    <rect width="160" height="150" fill="#fff"/>
+    ${vis.map(([k, x, y]) => `<g transform="translate(${x},${y})">${PARTS[k].d}</g>`).join("")}
+    ${vis.map(([k, x, y]) => pick && pick.k === k ? frame(k, x, y) : "").join("")}
+    ${vis.map(([k, x, y]) => `<rect class="hit" data-k="${k}" x="${x - PARTS[k].r}"
+      y="${y - PARTS[k].r}" width="${PARTS[k].r * 2}" height="${PARTS[k].r * 2}"
+      fill="transparent" style="cursor:pointer"/>`).join("")}
+  </svg>`;
+  $(id).querySelectorAll(".hit").forEach(h => h.onclick = () => {
+    const k = h.dataset.k;
+    pick = {k};
+    drawAll();
+    const fit = SHAPE[k] === tool;
+    say(`«${PARTS[k].n}» tapawutlandyryldy. ` + (fit
+      ? "Gural parça gabat gelýär. Indi Nusgalamak ýa-da Kesip almak."
+      : SHAPE[k] === "free"
+        ? "Bu parçanyň gyrasy egri – Erkin meýdança guraly has amatly bolardy."
+        : "Bu parçanyň gyrasy göni – Gönüburçluk guraly has amatly bolardy."), !fit);
+  });
+}
+function drawCanvas() {
+  $("cv").innerHTML = `<svg id="sv" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+    <rect width="320" height="200" fill="#dff0fb"/>
+    ${placed.map(p => {
+      const r = PARTS[p.k].r;
+      const bg = p.t ? "" : `<rect x="${p.x - r}" y="${p.y - r}" width="${r * 2}"
+        height="${r * 2}" fill="#fff"/>`;
+      return bg + `<g transform="translate(${p.x},${p.y})">${PARTS[p.k].d}</g>`;
+    }).join("")}
+    ${selP >= 0 && placed[selP] ? `<rect x="${placed[selP].x - PARTS[placed[selP].k].r}"
+      y="${placed[selP].y - PARTS[placed[selP].k].r}" width="${PARTS[placed[selP].k].r * 2}"
+      height="${PARTS[placed[selP].k].r * 2}" fill="none" stroke="#e5007d" stroke-width="2"
+      stroke-dasharray="5 4"/>` : ""}
+  </svg>`;
+  $("sv").onclick = ev => {
+    const r = $("sv").getBoundingClientRect();
+    const x = Math.round((ev.clientX - r.left) * 320 / r.width);
+    const y = Math.round((ev.clientY - r.top) * 200 / r.height);
+    const hit = [...placed].reverse()
+      .findIndex(p => Math.abs(p.x - x) < PARTS[p.k].r && Math.abs(p.y - y) < PARTS[p.k].r);
+    if (hit >= 0) {
+      // eýýäm goýlan parça basylsa, ony belleýäris – täze parça boş ýere goýulýar
+      selP = placed.length - 1 - hit;
+      drawCanvas(); return say(`Sahypadaky «${PARTS[placed[selP].k].n}» bellendi.`);
+    }
+    if (!clip) return say("Aralyk ýat boş – ilki parça tapawutlandyryp, Nusgalamak ýa-da " +
+      "Kesip almak buýrugyny ber.", true);
+    placed.push({k: clip, x, y, t: trans});
+    selP = placed.length - 1;
+    drawCanvas();
+    say(`«${PARTS[clip].n}» täze surata goýuldy` +
+      (trans ? " – fony dury." : " – fony dury däl, ol arka meýdany ýapýar."), !trans);
+  };
+}
+function drawAll() { tools(); srcSvg("s1", PIC1); srcSvg("s2", PIC2); drawCanvas(); clipView(); }
+function clipView() {
+  $("cl").innerHTML = clip
+    ? `<b>Aralyk ýat:</b>&nbsp;«${PARTS[clip].n}» – sahypa basyp goý`
+    : `<b>Aralyk ýat:</b>&nbsp;<span style="color:#93a2b5">boş</span>`;
+}
+function say(t, bad) { $("msg").textContent = t; $("msg").className = "msg " + (bad ? "bad" : "ok"); }
+
+$("cp").onclick = () => {
+  if (!pick) return say("Ilki ýokardaky suratlaryň birinden parça tapawutlandyr.", true);
+  clip = pick.k; clipView();
+  say(`«${PARTS[clip].n}» nusgalandy – ol öz suratynda-da galdy.`);
+};
+$("ct").onclick = () => {
+  if (!pick) return say("Ilki ýokardaky suratlaryň birinden parça tapawutlandyr.", true);
+  clip = pick.k;
+  if (!gone.includes(clip)) gone.push(clip);
+  pick = null; drawAll();
+  say(`«${PARTS[clip].n}» kesilip alyndy – ol asyl suratdan aýryldy, ýöne aralyk ýatda dur.`);
+};
+$("rst").onclick = () => { gone = []; pick = null; drawAll();
+  say("Asyl suratlar dikeldildi."); };
+$("rm").onclick = () => {
+  if (selP < 0) return say("Ilki sahypadaky parça bas.", true);
+  const k = placed[selP].k; placed.splice(selP, 1); selP = -1;
+  drawCanvas(); say(`«${PARTS[k].n}» täze suratdan aýryldy.`);
+};
+$("clr").onclick = () => { placed = []; selP = -1; clip = null; pick = null; drawAll();
+  say("Sahypa arassalandy."); };
+
+/* ---------------- ýumuşlar ---------------- */
+const TASKS = [
+  {txt: "Täze surat: <b>gün</b>, <b>bulut</b> we <b>jaý</b> – oba ertiri. " +
+        "Parçalaryň hemmesi <b>dury</b> görnüşde goýulmaly.",
+   need: ["gun", "bulut", "jay"]},
+  {txt: "Täze surat: <b>köpri</b>, <b>maşyn</b> we <b>agaç</b> – ýoluň ugry. " +
+        "Egri gyraly parçalar üçin <b>Erkin meýdança</b> guralyny ulan.",
+   need: ["kopri", "masyn", "agac"]},
+  {txt: "Täze surat: <b>yşyk</b>, <b>maşyn</b>, <b>jaý</b> we <b>gül</b> – şäher köçesi. " +
+        "Göni gyraly parçalar üçin <b>Gönüburçluk</b> guralyny ulan.",
+   need: ["yswl", "masyn", "jay", "gul"]},
+];
+let ti = 0;
+const show = () => $("task").innerHTML = TASKS[ti].txt;
+$("chk").onclick = () => {
+  const have = placed.map(p => p.k);
+  const miss = TASKS[ti].need.filter(k => !have.includes(k)).map(k => PARTS[k].n);
+  const extra = [...new Set(have)].filter(k => !TASKS[ti].need.includes(k)).map(k => PARTS[k].n);
+  const opak = placed.filter(p => !p.t).map(p => PARTS[p.k].n);
+  const out = [];
+  if (miss.length) out.push("ýetmeýär: " + miss.join(", "));
+  if (extra.length) out.push("artykmaç: " + extra.join(", "));
+  if (!miss.length && !extra.length && opak.length)
+    out.push("dury däl goýlan parçalar: " + opak.join(", ") + " – olary aýryp, «Dury» " +
+      "görnüşinde täzeden goý");
+  $("tmsg").textContent = out.length ? out.join(" · ")
+    : "🎉 Berekella! Täze surat parçalardan dogry ýygnaldy.";
+  $("tmsg").className = "msg " + (out.length ? "bad" : "ok");
+};
+$("next").onclick = () => {
+  ti = (ti + 1) % TASKS.length; show();
+  placed = []; selP = -1; clip = null; pick = null; gone = []; drawAll();
+  $("tmsg").textContent = ""; $("tmsg").className = "msg";
+};
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Parçany nusgalamazdan öň näme etmeli?",
+   ["Ony tapawutlandyrmaly", "Faýly ýapmaly", "Suraty pozmaly"], 0],
+  ["Göni gyraly parçany almak üçin haýsy gural amatly?",
+   ["Erkin meýdança", "Gönüburçluk görnüşinde tapawutlandyrmak", "Pozguç"], 1],
+  ["Kesip almak buýrugy näme edýär?",
+   ["Parçany asyl suratda galdyrýar", "Parçany asyl suratdan aýyrýar", "Suraty ulaldýar"], 1],
+  ["Parçany goýanyňda haýsy buýruk kesgitlenýär?",
+   ["Dury (прозрачный)", "Ölçegini üýtgetmek", "Saklamak"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+drawAll(); show();
+</script>
+</body>
+</html>

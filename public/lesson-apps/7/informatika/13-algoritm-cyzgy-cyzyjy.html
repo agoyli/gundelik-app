@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritmler we Çyzgy çyzyjy — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex;
+           justify-content: center; }
+  .stage canvas { background: #fff; border-radius: 10px; max-width: 100%; height: auto; }
+  textarea { width: 100%; min-height: 210px; padding: 11px; font-size: 13.5px; border-radius: 12px;
+             border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace;
+             line-height: 1.7; resize: vertical; }
+  textarea:focus { outline: none; border-color: #2456b0; }
+  .cmds { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 5px; }
+  .cmds div { background: #f7fafd; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; }
+  .cmds b { color: #2456b0; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pane { display: none; }
+  .pane.on { display: block; }
+  .words { list-style: none; padding: 0; margin: 0; counter-reset: w; }
+  .words li { background: #f7fafd; border-radius: 10px; padding: 8px 11px; margin-bottom: 4px;
+              font-size: 13.5px; counter-increment: w; }
+  .words li::before { content: counter(w) ". "; color: #2456b0; font-weight: 800; }
+  pre.code { background: #f7fafd; border-radius: 11px; padding: 11px; font-size: 13px;
+             overflow-x: auto; font-family: ui-monospace, Menlo, Consolas, monospace;
+             line-height: 1.75; margin: 0; }
+  .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; }
+  .fig { background: #f7fafd; border-radius: 11px; padding: 9px; text-align: center;
+         font-size: 12.5px; }
+  .fig svg { display: block; margin: 0 auto 5px; }
+  .fig b { color: #2456b0; }
+  .url { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+         font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; }
+  .url span { padding: 6px 8px; border-radius: 8px; cursor: pointer; background: #f0f4f9; }
+  .url span.on { background: #2456b0; color: #fff; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bin { background: #f7fafd; border-radius: 11px; padding: 9px; min-height: 84px; }
+  .bin h4 { margin: 0 0 6px; font-size: 13px; }
+  .bin.ok h4 { color: #1d7a3d; } .bin.no h4 { color: #b4232a; }
+  .bin div { background: #fff; border-radius: 8px; padding: 6px 8px; font-size: 12.5px;
+             margin-bottom: 4px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+       font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Algoritmler. Çyzgy çyzyjy. Internet</h1>
+  <div class="sub">Algoritmleşdirmegiň esaslary · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="note"><b>Algoritm</b> – meseläni çözmek üçin ýerine ýetirilmeli buýruklaryň
+      gutarnykly yzygiderligidir. Bu söz orta asyr matematigi <b>Muhammet al-Horezminiň</b>
+      (787–850 ý.) adyndan gelip çykypdyr. Buýruklara düşünýän we olary dogry ýerine ýetirýän
+      adama ýa-da tehniki gurluşa <b>ýerine ýetiriji</b> diýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bir algoritm – üç ýazylyş usuly</h3>
+    <div class="goal">«Mekdebe taýýarlyk» algoritmi. Usuly saýla-da, tapawuda seret.</div>
+    <div class="tabs">
+      <button class="btn sel" data-t="w">Söz arkaly</button>
+      <button class="btn" data-t="s">Blok-shema</button>
+      <button class="btn" data-t="p">Programma</button>
+    </div>
+    <div class="pane on" id="pw" style="margin-top:9px">
+      <ul class="words">
+        <li>Ir oýanmaly.</li><li>Ýuwunmaly.</li><li>Düşegiňi tertiplemeli.</li>
+        <li>Ertirlik naharyny iýmeli.</li><li>Mekdep eşigiňi geýmeli.</li>
+        <li>Portfeliňi almaly.</li><li>Öýden çykmaly.</li>
+      </ul>
+    </div>
+    <div class="pane" id="ps" style="margin-top:9px;overflow-x:auto"></div>
+    <div class="pane" id="pp" style="margin-top:9px">
+      <pre class="code">Program Mekdebe_tayyarlyk;
+Begin
+  Oyanmak;
+  Yuwunmak;
+  Duseg_tertiplemek;
+  Ertirlik_iymek;
+  Geyinmek;
+  Portfel_almak;
+  Oyden_cykmak;
+End.</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Blok-shemanyň figuralary</h3>
+    <div class="figs" id="figs"></div>
+  </div>
+
+  <div class="card">
+    <h3>Algoritmiň görnüşi haýsy?</h3>
+    <div class="goal">Her ýagdaý üçin dogry görnüşi saýla.</div>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Çyzgy çyzyjy ýerine ýetiriji</h3>
+    <div class="goal">PascalABC dilinde programma ýaz we işe goýber. Galam <b>PenDown</b> bilen
+      aşak düşýär, <b>OnVector</b> bilen kesim çyzýar. Gaýtalanýan bölegi <b>Procedure</b>
+      hökmünde aýratyn ýazyp bolýar.</div>
+    <div class="stage"><canvas id="cv" width="640" height="440"></canvas></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="st"></span><span class="badge purple" id="cnt"></span>
+    </div>
+    <textarea id="src" spellcheck="false" style="margin-top:9px"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="run">Işe goýber (F9)</button>
+      <button class="btn" id="step">Bir ädim</button>
+      <button class="btn ghost" id="rst">Başdan</button>
+    </div>
+    <div class="row tight" style="margin-top:6px" id="presets"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Buýruklar sistemasy</h3>
+    <div class="cmds">
+      <div><b>Field(a, b)</b> – keseligine a, dikligine b öýjükli meýdan döredýär</div>
+      <div><b>ToPoint(x, y)</b> – galamy (x, y) nokada geçirýär</div>
+      <div><b>OnVector(a, b)</b> – galamy a sag, b ýokary süýşürýär</div>
+      <div><b>PenDown</b> – galamy aşak goýberýär, indi kesim çyzylýar</div>
+      <div><b>PenUp</b> – galamy galdyrýar, indi diňe süýşme bolýar</div>
+      <div><b>For n := 1 to 6 do</b> – gaýtalanma</div>
+      <div><b>While k &lt; 8 do</b> – şerte görä gaýtalanma</div>
+      <div><b>If k &lt; 5 then … else …</b> – şahalanma</div>
+      <div><b>Procedure Ad(a: integer)</b> – kömekçi algoritm</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Internet: saýtyň salgysy</h3>
+    <div class="goal">Salgynyň bölegine bas – onuň nämäni aňladýandygyny gör.</div>
+    <div class="url" id="url"></div>
+    <div class="msg" id="umsg"></div>
+    <div class="hint">Salgydaky soňky bölek köplenç döwleti ýa-da guramanyň görnüşini görkezýär:
+      <b>tm</b> – Türkmenistan, <b>ru</b> – Russiýa, <b>org</b> – gurama, <b>edu</b> – bilim.</div>
+  </div>
+
+  <div class="card">
+    <h3>Internetde howpsuzlyk</h3>
+    <div class="goal">Her ýazga bas – ol dogry ýa-da nädogry sütüne geçsin.</div>
+    <div class="row tight" id="pool"></div>
+    <div class="bins" style="margin-top:9px">
+      <div class="bin ok"><h4>Etmeli</h4><div id="bok"></div></div>
+      <div class="bin no"><h4>Etmeli däl</h4><div id="bno"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ==================== usullar ==================== */
+document.querySelectorAll("[data-t]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-t]").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  ["w", "s", "p"].forEach(k => $("p" + k).classList.toggle("on", k === b.dataset.t));
+});
+
+const SH = ["Ir oýanmak", "Ýuwunmak", "Düşegi tertiplemek", "Ertirlik iýmek",
+            "Geýinmek", "Portfeli almak", "Öýden çykmak"];
+(function shema() {
+  const w = 300, bh = 40, gap = 20, H = 60 + SH.length * (bh + gap) + 50;
+  let s = `<svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" xmlns="http://www.w3.org/2000/svg"
+    font-family="system-ui, sans-serif" font-size="12.5">`;
+  s += `<ellipse cx="150" cy="24" rx="62" ry="19" fill="#dbe7ff" stroke="#2456b0" stroke-width="2"/>
+        <text x="150" y="29" text-anchor="middle" fill="#1e2a3a">Başlangyç</text>`;
+  let y = 43;
+  SH.forEach(t => {
+    s += `<line x1="150" y1="${y}" x2="150" y2="${y + gap}" stroke="#93a2b5" stroke-width="2"/>
+          <polygon points="150,${y + gap} 145,${y + gap - 7} 155,${y + gap - 7}" fill="#93a2b5"/>
+          <rect x="34" y="${y + gap}" width="232" height="${bh}" rx="6" fill="#fff"
+            stroke="#2456b0" stroke-width="2"/>
+          <text x="150" y="${y + gap + 25}" text-anchor="middle" fill="#1e2a3a">${t}</text>`;
+    y += gap + bh;
+  });
+  s += `<line x1="150" y1="${y}" x2="150" y2="${y + gap}" stroke="#93a2b5" stroke-width="2"/>
+        <polygon points="150,${y + gap} 145,${y + gap - 7} 155,${y + gap - 7}" fill="#93a2b5"/>
+        <ellipse cx="150" cy="${y + gap + 19}" rx="62" ry="19" fill="#dbe7ff" stroke="#2456b0"
+          stroke-width="2"/>
+        <text x="150" y="${y + gap + 24}" text-anchor="middle" fill="#1e2a3a">Soňy</text></svg>`;
+  $("ps").innerHTML = s;
+})();
+
+/* ==================== figuralar ==================== */
+const FIG = [
+  ["Başlangyç we soňy", "owal", `<ellipse cx="60" cy="22" rx="52" ry="18" fill="#dbe7ff" stroke="#2456b0" stroke-width="2"/>`],
+  ["Amal, buýruk", "gönüburçluk", `<rect x="8" y="4" width="104" height="36" rx="5" fill="#fff" stroke="#2456b0" stroke-width="2"/>`],
+  ["Şert", "romb", `<polygon points="60,2 114,22 60,42 6,22" fill="#fff6e0" stroke="#e08b00" stroke-width="2"/>`],
+  ["Giriş-çykyş", "paralelogram", `<polygon points="22,4 114,4 98,40 6,40" fill="#eaf7ee" stroke="#1d7a3d" stroke-width="2"/>`],
+  ["Kömekçi algoritm", "goşa gyraly", `<rect x="8" y="4" width="104" height="36" rx="5" fill="#efe9fb" stroke="#6a4bb8" stroke-width="2"/><line x1="20" y1="4" x2="20" y2="40" stroke="#6a4bb8" stroke-width="2"/><line x1="100" y1="4" x2="100" y2="40" stroke="#6a4bb8" stroke-width="2"/>`],
+  ["Ugur", "ok", `<line x1="60" y1="4" x2="60" y2="34" stroke="#93a2b5" stroke-width="3"/><polygon points="60,42 52,30 68,30" fill="#93a2b5"/>`]
+];
+$("figs").innerHTML = FIG.map(f =>
+  `<div class="fig"><svg width="120" height="46" viewBox="0 0 120 46"
+     xmlns="http://www.w3.org/2000/svg">${f[2]}</svg><b>${f[0]}</b><br>${f[1]}</div>`).join("");
+
+/* ==================== görnüş testi ==================== */
+const Q = [
+  ["Buýruklar biri-biriniň yzyndan, hiç bir şertsiz ýerine ýetirilýär.", 0],
+  ["Eger daşarda ýagyş ýagýan bolsa saýawan al, bolmasa alma.", 1],
+  ["Meýdanyň 10 öýjügini yzly-yzyna reňkle.", 2],
+  ["Çaý gaýnatmak: suw guý, ojaga goý, garaş, otur.", 0],
+  ["Baha 4-den uly bolsa «berekella», bolmasa «taýýarlan» diýip ýaz.", 1],
+  ["Basgançagyň 12 ädimini şol bir hereket bilen çyk.", 2]
+];
+const NAMES = ["Çyzykly", "Şahalanma", "Gaýtalanma"];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  NAMES.map((n, j) => `<button class="btn" data-i="${i}" data-j="${j}">${n}</button>`).join("") +
+  `</div><div class="expl" id="qe${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("qe" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][1];
+  b.classList.add("sel");
+  $("qe" + i).textContent = good ? "Dogry." : `Nädogry. Bu – ${NAMES[Q[i][1]]} algoritmi.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+/* ==================== terjimeçi ==================== */
+const cv = $("cv"), cx = cv.getContext("2d");
+function atoms(src) {
+  return src.replace(/\r/g, "").replace(/\{[^}]*\}/g, "")
+    .split(/;|\n/).map(s => s.trim()).filter(Boolean);
+}
+function block(A, i, inline) {
+  if (inline) return parse(A, i + 1);
+  if ((A[i + 1] || "").toLowerCase() === "begin") return parse(A, i + 2);
+  return [[{cmd: A[i + 1]}], i + 2];
+}
+function parse(A, i) {
+  const out = [];
+  while (i < A.length) {
+    const raw = A[i], low = raw.toLowerCase();
+    if (low === "end" || low === "end.") return [out, i + 1];
+    let m, body;
+    if ((m = low.match(/^for\s+(\w+)\s*:?=\s*(-?\d+)\s+to\s+(-?\d+)\s+do(\s+begin)?$/))) {
+      [body, i] = block(A, i, !!m[4]);
+      out.push({kind: "for", v: m[1], from: +m[2], to: +m[3], body});
+      continue;
+    }
+    if ((m = low.match(/^while\s+(.+?)\s+do(\s+begin)?$/))) {
+      [body, i] = block(A, i, !!m[2]);
+      out.push({kind: "while", cond: m[1], body});
+      continue;
+    }
+    if ((m = low.match(/^if\s+(.+?)\s+then(\s+begin)?$/))) {
+      [body, i] = block(A, i, !!m[2]);
+      let els = null;
+      if (i < A.length && A[i].toLowerCase().startsWith("else")) {
+        const e = A[i].toLowerCase();
+        [els, i] = e === "else"
+          ? block(A, i, false)
+          : e.endsWith("begin") ? parse(A, i + 1) : [[{cmd: A[i].slice(4).trim()}], i + 1];
+      }
+      out.push({kind: "if", cond: m[1], body, els});
+      continue;
+    }
+    if (low === "begin" || low.startsWith("uses ") || low.startsWith("var ") ||
+        low.startsWith("program ")) { i++; continue; }
+    out.push({cmd: raw});
+    i++;
+  }
+  return [out, i];
+}
+/* kömekçi algoritmleri esasy programmadan aýyrýarys */
+let PROC = {};
+function extractProcs(A) {
+  const main = [];
+  let i = 0;
+  while (i < A.length) {
+    const m = A[i].match(
+      /^procedure\s+([A-Za-zÄäŇňÖöŞşÜüÝýŽž_]\w*)\s*(?:\(([^)]*)\))?\s*$/i);
+    if (m) {
+      const params = (m[2] || "").split(",").map(s => s.split(":")[0].trim()).filter(Boolean);
+      let j = i + 1;
+      if ((A[j] || "").toLowerCase() === "begin") j++;
+      const [body, next] = parse(A, j);
+      PROC[m[1].toLowerCase()] = {params, body};
+      i = next;
+      continue;
+    }
+    main.push(A[i]); i++;
+  }
+  return main;
+}
+
+let V = {};
+function evalExpr(src) {
+  const s = src.replace(/\s+/g, "");
+  let p = 0;
+  const peek = () => s[p];
+  function num() {
+    if (peek() === "(") { p++; const v = sum(); if (peek() === ")") p++; return v; }
+    if (peek() === "-") { p++; return -num(); }
+    if (peek() === "+") { p++; return num(); }
+    let m = /^\d+/.exec(s.slice(p));
+    if (m) { p += m[0].length; return +m[0]; }
+    m = /^[A-Za-zÄäŇňÖöŞşÜüÝýŽž_]\w*/.exec(s.slice(p));
+    if (m) {
+      p += m[0].length;
+      const k = m[0].toLowerCase();
+      if (!(k in V)) throw new Error("näbelli üýtgeýän: " + m[0]);
+      return V[k];
+    }
+    throw new Error("aňlatmany okap bolmady: " + src);
+  }
+  function mul() {
+    let v = num();
+    while ("*/".includes(peek())) {
+      const o = s[p++], q = num();
+      v = o === "*" ? v * q : Math.trunc(v / q);
+    }
+    return v;
+  }
+  function sum() {
+    let v = mul();
+    while ("+-".includes(peek())) { const o = s[p++], q = mul(); v = o === "+" ? v + q : v - q; }
+    return v;
+  }
+  const v = sum();
+  if (p < s.length) throw new Error("aňlatmany okap bolmady: " + src);
+  return v;
+}
+function callOf(cmd) {
+  const m = cmd.trim().match(/^([A-Za-zÄäŇňÖöŞşÜüÝýŽž_]\w*)\s*(?:\(([^)]*)\))?\s*$/);
+  if (!m) return null;
+  const args = (m[2] || "").trim() ? m[2].split(",").map(a => evalExpr(a)) : [];
+  return {name: m[1].toLowerCase(), args};
+}
+function cond(c) {
+  const m = c.match(/^(.+?)\s*(<=|>=|<>|=|<|>)\s*(.+)$/);
+  if (!m) throw new Error("näbelli şert: " + c);
+  const a = evalExpr(m[1]), b = evalExpr(m[3]);
+  return {"<": a < b, ">": a > b, "<=": a <= b, ">=": a >= b,
+          "=": a === b, "<>": a !== b}[m[2]];
+}
+
+/* ---------- Çyzgy çyzyjy ---------- */
+const D = {w: 14, h: 10, x: 0, y: 0, pen: false, segs: []};
+function dReset(w, h) { D.w = w || D.w; D.h = h || D.h; D.x = 0; D.y = 0; D.pen = false; D.segs = []; }
+function dRun(cmd) {
+  const c = callOf(cmd);
+  if (!c) throw new Error("näbelli buýruk: " + cmd);
+  const [a, b] = c.args;
+  if (c.name === "field") { dReset(a, b); return; }
+  if (c.name === "standardfield") { dReset(20, 30); return; }
+  if (c.name === "pendown") { D.pen = true; return; }
+  if (c.name === "penup") { D.pen = false; return; }
+  if (c.name === "topoint" || c.name === "onvector") {
+    const nx = c.name === "topoint" ? a : D.x + a;
+    const ny = c.name === "topoint" ? b : D.y + b;
+    if (nx < 0 || ny < 0 || nx > D.w || ny > D.h)
+      throw new Error(`galam meýdandan çykdy: (${nx}, ${ny})`);
+    if (D.pen) D.segs.push([D.x, D.y, nx, ny]);
+    D.x = nx; D.y = ny; return;
+  }
+  throw new Error("näbelli buýruk: " + cmd);
+}
+function dDraw() {
+  const W = cv.width, H = cv.height, pad = 34;
+  const k = Math.min((W - pad * 2) / D.w, (H - pad * 2) / D.h);
+  const ox = pad, oy = H - pad;
+  const P = (x, y) => [ox + x * k, oy - y * k];
+  cx.clearRect(0, 0, W, H);
+  cx.fillStyle = "#fff"; cx.fillRect(0, 0, W, H);
+  cx.strokeStyle = "#e2e9f2"; cx.lineWidth = 1;
+  for (let i = 0; i <= D.w; i++) {
+    const [x, y] = P(i, 0);
+    cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x, oy - D.h * k); cx.stroke();
+  }
+  for (let j = 0; j <= D.h; j++) {
+    const [x, y] = P(0, j);
+    cx.beginPath(); cx.moveTo(x, y); cx.lineTo(ox + D.w * k, y); cx.stroke();
+  }
+  cx.strokeStyle = "#93a2b5"; cx.lineWidth = 1.6;
+  cx.beginPath(); cx.moveTo(ox, oy); cx.lineTo(ox + D.w * k, oy);
+  cx.moveTo(ox, oy); cx.lineTo(ox, oy - D.h * k); cx.stroke();
+  cx.fillStyle = "#93a2b5"; cx.font = "12px system-ui, sans-serif"; cx.textAlign = "center";
+  for (let i = 0; i <= D.w; i += 2) { const [x] = P(i, 0); cx.fillText(i, x, oy + 17); }
+  cx.textAlign = "right";
+  for (let j = 0; j <= D.h; j += 2) { const [, y] = P(0, j); cx.fillText(j, ox - 7, y + 4); }
+  cx.strokeStyle = "#e5007d"; cx.lineWidth = 3; cx.lineCap = "round";
+  D.segs.forEach(([x1, y1, x2, y2]) => {
+    const [a, b] = P(x1, y1), [c2, d2] = P(x2, y2);
+    cx.beginPath(); cx.moveTo(a, b); cx.lineTo(c2, d2); cx.stroke();
+  });
+  const [px, py] = P(D.x, D.y);
+  cx.fillStyle = D.pen ? "#1d7a3d" : "#fff";
+  cx.strokeStyle = "#1e2a3a"; cx.lineWidth = 2;
+  cx.fillRect(px - 7, py - 7, 14, 14); cx.strokeRect(px - 7, py - 7, 14, 14);
+  $("st").textContent = `galam: (${D.x}, ${D.y}) · ${D.pen ? "aşak" : "ýokary"}`;
+  $("cnt").textContent = `${D.segs.length} kesim çyzyldy`;
+}
+
+/* ---------- ýerine ýetiriş ---------- */
+let trace = [], tp = 0;
+function apply(c) {
+  const as = c.match(/^\s*([A-Za-zÄäŇňÖöŞşÜüÝýŽž_]\w*)\s*:=\s*(.+?)\s*$/);
+  if (as) { V[as[1].toLowerCase()] = evalExpr(as[2]); return; }
+  dRun(c);
+}
+function flatten(tree, out, g) {
+  for (const n of tree) {
+    if (g.n++ > 4000) throw new Error("gaýtalanma gaty uzak – şerti barla");
+    if (!n.kind) {
+      if (/:=/.test(n.cmd)) { out.push(n.cmd); apply(n.cmd); continue; }
+      const c = callOf(n.cmd);
+      if (c && PROC[c.name]) {
+        const P = PROC[c.name];
+        if (P.params.length !== c.args.length)
+          throw new Error(`${n.cmd}: kömekçi algoritm ${P.params.length} argument talap edýär`);
+        if (++g.d > 30) throw new Error("kömekçi algoritm özüni gaty köp çagyrýar");
+        // parametrleri aýratyn ädim edip ýazýarys – gaýtadan görkezilende hem belli bolsun
+        P.params.forEach((p, k) => { V[p.toLowerCase()] = c.args[k]; out.push(`${p} := ${c.args[k]}`); });
+        flatten(P.body, out, g);
+        g.d--;
+        continue;
+      }
+      out.push(n.cmd); apply(n.cmd);
+      continue;
+    }
+    if (n.kind === "for") {
+      for (let i = n.from; i <= n.to; i++) {
+        V[n.v] = i; out.push(`${n.v} := ${i}`);
+        flatten(n.body, out, g);
+      }
+    } else if (n.kind === "while") {
+      let s = 0;
+      while (cond(n.cond)) {
+        flatten(n.body, out, g);
+        if (++s > 400) throw new Error("«häzirlikçe» şerti hiç haçan ýalan bolmaýar");
+      }
+    } else if (n.kind === "if") {
+      if (cond(n.cond)) flatten(n.body, out, g);
+      else if (n.els) flatten(n.els, out, g);
+    }
+  }
+}
+function build() {
+  reset(false);
+  PROC = {};
+  const main = extractProcs(atoms($("src").value));
+  const [tree] = parse(main, 0);
+  const out = [];
+  flatten(tree, out, {n: 0, d: 0});
+  reset(false);
+  return out;
+}
+function reset(redraw = true) {
+  V = {};
+  dReset(PRE[cur].w, PRE[cur].h);
+  tp = 0;
+  if (redraw) { trace = []; dDraw(); $("msg").textContent = ""; $("msg").className = "msg"; }
+}
+$("run").onclick = () => {
+  try {
+    trace = build();
+    trace.forEach(apply);
+    tp = trace.length; dDraw();
+    $("msg").textContent = `Programma ýerine ýetirildi: ${trace.length} ädim, ` +
+      `${D.segs.length} kesim.`;
+    $("msg").className = "msg ok";
+  } catch (e) { fail(e); }
+};
+$("step").onclick = () => {
+  try {
+    if (!trace.length || tp >= trace.length) { trace = build(); tp = 0; }
+    apply(trace[tp]); tp++; dDraw();
+    $("msg").textContent = `${tp} / ${trace.length}: ${trace[tp - 1]}`;
+    $("msg").className = tp >= trace.length ? "msg ok" : "msg";
+  } catch (e) { fail(e); }
+};
+$("rst").onclick = () => reset();
+function fail(e) {
+  $("msg").textContent = "Ýalňyşlyk: " + e.message;
+  $("msg").className = "msg bad";
+  dDraw();
+}
+
+/* ---------- nusgalar ---------- */
+const PRE = {
+  oy: {n: "Öý (çyzykly)", w: 14, h: 10, src:
+`Uses Drawman;
+Begin
+Field(14, 10);
+ToPoint(2, 1);
+PenDown;
+OnVector(6, 0);
+OnVector(0, 4);
+OnVector(-6, 0);
+OnVector(0, -4);
+PenUp;
+ToPoint(2, 5);
+PenDown;
+OnVector(3, 3);
+OnVector(3, -3);
+PenUp;
+ToPoint(4, 1);
+PenDown;
+OnVector(0, 2);
+OnVector(2, 0);
+OnVector(0, -2);
+PenUp;
+ToPoint(0, 0);
+End.`},
+  basgancak: {n: "Basgançak (For gaýtalanmasy)", w: 14, h: 10, src:
+`Uses Drawman;
+Var n: integer;
+Begin
+Field(14, 10);
+ToPoint(1, 1);
+PenDown;
+For n := 1 to 6 do
+begin
+  OnVector(2, 0);
+  OnVector(0, 1);
+end;
+PenUp;
+ToPoint(0, 0);
+End.`},
+  komekci: {n: "Kömekçi algoritm (Procedure)", w: 20, h: 12, src:
+`Uses Drawman;
+Procedure Kwadrat(a: integer)
+Begin
+  PenDown;
+  OnVector(a, 0);
+  OnVector(0, a);
+  OnVector(-a, 0);
+  OnVector(0, -a);
+  PenUp;
+End;
+Begin
+Field(20, 12);
+ToPoint(1, 1);
+Kwadrat(3);
+OnVector(4, 0);
+Kwadrat(5);
+OnVector(6, 0);
+Kwadrat(2);
+ToPoint(0, 0);
+End.`},
+  sahalanma: {n: "Şahalanma (If … else)", w: 16, h: 12, src:
+`Uses Drawman;
+Var k: integer;
+Begin
+Field(16, 12);
+ToPoint(1, 1);
+PenDown;
+k := 1;
+While k < 8 do
+begin
+  If k < 5 then
+    OnVector(0, 2)
+  else
+    OnVector(0, -2);
+  OnVector(1, 0);
+  k := k + 1;
+end;
+PenUp;
+ToPoint(0, 0);
+End.`}
+};
+let cur = "oy";
+$("presets").innerHTML = Object.entries(PRE).map(([k, p]) =>
+  `<button class="btn ${k === cur ? "sel" : ""}" data-p="${k}">${p.n}</button>`).join("");
+$("presets").querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
+  cur = b.dataset.p;
+  $("presets").querySelectorAll("[data-p]").forEach(x =>
+    x.classList.toggle("sel", x.dataset.p === cur));
+  $("src").value = PRE[cur].src;
+  reset();
+});
+$("src").value = PRE[cur].src;
+reset();
+
+/* ==================== Internet ==================== */
+const URL_ = [
+  ["http://", "informasiýany geçirmek düzgüni (protokol)"],
+  ["www.", "bütindünýä kerep – World Wide Web"],
+  ["bilim", "saýtyň ady"],
+  [".", "bölüji nokat"],
+  ["gov", "guramanyň görnüşi: döwlet edarasy"],
+  [".", "bölüji nokat"],
+  ["tm", "döwlet: Türkmenistan"],
+  ["/informatika", "saýtdaky sahypanyň ýoly"]
+];
+$("url").innerHTML = URL_.map((u, i) => `<span data-i="${i}">${u[0]}</span>`).join("");
+$("url").querySelectorAll("span").forEach(s => s.onclick = () => {
+  $("url").querySelectorAll("span").forEach(x => x.classList.remove("on"));
+  s.classList.add("on");
+  $("umsg").textContent = `${URL_[+s.dataset.i][0]} – ${URL_[+s.dataset.i][1]}`;
+  $("umsg").className = "msg ok";
+});
+
+/* ==================== howpsuzlyk ==================== */
+const SAFE = [
+  ["Näbelli hatdaky faýly açmazlyk", true],
+  ["Antiwirus programmasyny täzelemek", true],
+  ["Öý salgyňy we telefonyňy paýlaşmak", false],
+  ["Paroly diňe özüňde saklamak", true],
+  ["Näbelli adam bilen duşuşyga gitmek", false],
+  ["Näbelli salgydan gelen baýragy almak", false],
+  ["Kynçylyk çykanda ulular bilen maslahatlaşmak", true],
+  ["Kompýuterde uzak wagtlap arasyz oturmak", false]
+];
+let left = SAFE.length;
+$("pool").innerHTML = SAFE.map((s, i) => `<button class="btn" data-i="${i}">${s[0]}</button>`).join("");
+$("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const s = SAFE[+b.dataset.i];
+  const box = document.createElement("div");
+  box.textContent = s[0];
+  $(s[1] ? "bok" : "bno").appendChild(box);
+  b.remove();
+  if (!--left) {
+    $("bmsg").textContent = "Ähli ýazgylar ýerleşdirildi. Internetde howpsuzlyk – " +
+      "şahsy maglumatlaryňy goramakdan başlanýar.";
+    $("bmsg").className = "msg ok";
+  }
+});
+</script>
+</body>
+</html>

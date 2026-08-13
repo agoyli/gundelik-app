@@ -58,7 +58,7 @@ export const useIsBookmarked = (kind: BookmarkKind, id: string) =>
 /* Section labels for the collection page, so a group heading and the tile that
    owns the section can never disagree. */
 export const KIND_LABEL: Record<BookmarkKind, string> = {
-  tema: 'Temalar',
+  tema: 'Sapaklar',
   deck: 'Öwrediji kartlar',
   test: 'Testler',
   contest: 'Bäsleşikler',

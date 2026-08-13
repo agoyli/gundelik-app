@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dok, kursiw, aşagy çyzylan — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .brow { border: 2px solid #d6e0ee; border-radius: 12px; background: #fff; padding: 14px 16px;
+          min-height: 90px; font-size: 17px; line-height: 1.9; }
+  .w { cursor: pointer; padding: 2px 3px; border-radius: 5px; }
+  .w.sel { background: #e3edfd; outline: 2px solid #2456b0; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #2456b0;
+          background: #f7fafd; border-radius: 10px; padding: 10px 12px; line-height: 1.8;
+          overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+  .tgt { border: 2px dashed #1d7a3d; border-radius: 12px; padding: 12px 14px; background: #f3fbf5;
+         font-size: 17px; line-height: 1.9; }
+  .ord { display: block; width: 100%; text-align: left; margin-bottom: 6px; padding: 12px;
+         border-radius: 10px; border: none; background: #eef2f8; cursor: pointer;
+         font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; min-height: 44px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sözbaşylary taýýarlamak</h1>
+  <div class="sub">&lt;B&gt; · &lt;I&gt; · &lt;U&gt; · &lt;S&gt; · &lt;SUP&gt; · &lt;SUB&gt; · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Sözlemdäki söze bas – ol saýlanar. Soňra tegi ulan.</div>
+    <div class="brow" id="prev"></div>
+    <div class="row tight" id="tools"></div>
+    <div class="row"><button class="btn ghost" id="clr">Formatlary aýyr</button></div>
+    <div class="code" id="code"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ýumuş: nusgany gaýtala</h3>
+    <div class="tgt" id="tgt"></div>
+    <div class="row">
+      <button class="btn primary" id="chk">Barla</button>
+      <button class="btn" id="nx">Indiki nusga</button>
+    </div>
+    <div class="msg" id="tm"></div>
+    <div class="score" id="ts">0 nusga ýerine ýetdi</div>
+  </div>
+
+  <div class="card">
+    <h3>Tegleriň tertibi</h3>
+    <div class="goal">Kombinirlenen tegleriň dogry ýazylyşyny saýla.</div>
+    <div id="ordbox"></div>
+    <div class="msg" id="om"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">Iň soňky açylan teg <b>birinji</b> ýapylmalydyr:
+      &lt;Teg1&gt;&lt;Teg2&gt; … &lt;/Teg2&gt;&lt;/Teg1&gt;. <b>&lt;SMALL&gt;</b> bir ölçeg
+      kiçeldýär, <b>&lt;BIG&gt;</b> bolsa bir ölçeg ulaldýar.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §4 — tekstiň fragmentleri</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const WORDS = ["Aşgabat", "–", "Türkmenistanyň", "ak", "mermerli", "paýtagtydyr"];
+const TAGS = [["B", "Dok"], ["I", "Kursiw"], ["U", "Aşagy çyzyk"], ["S", "Üsti çyzyk"],
+              ["SUP", "Ýokarky indeks"], ["SUB", "Aşaky indeks"],
+              ["SMALL", "Kiçi"], ["BIG", "Uly"]];
+let fmt = WORDS.map(() => []), sel = -1;
+
+TAGS.forEach(t => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = "<" + t[0] + "> " + t[1];
+  b.onclick = () => {
+    if (sel < 0) { flash("Ilki sözi saýla."); return; }
+    const f = fmt[sel], i = f.indexOf(t[0]);
+    if (i >= 0) f.splice(i, 1); else f.push(t[0]);
+    draw();
+  };
+  $("tools").appendChild(b);
+});
+
+function style(el, f) {
+  el.style.fontWeight = f.indexOf("B") >= 0 ? "800" : "400";
+  el.style.fontStyle = f.indexOf("I") >= 0 ? "italic" : "normal";
+  const d = [];
+  if (f.indexOf("U") >= 0) d.push("underline");
+  if (f.indexOf("S") >= 0) d.push("line-through");
+  el.style.textDecoration = d.join(" ") || "none";
+  el.style.verticalAlign = f.indexOf("SUP") >= 0 ? "super" : f.indexOf("SUB") >= 0 ? "sub" : "baseline";
+  const sc = f.indexOf("SUP") >= 0 || f.indexOf("SUB") >= 0 ? .72
+           : f.indexOf("SMALL") >= 0 ? .8 : f.indexOf("BIG") >= 0 ? 1.25 : 1;
+  el.style.fontSize = (17 * sc) + "px";
+}
+
+function draw() {
+  const p = $("prev"); p.innerHTML = "";
+  WORDS.forEach((w, i) => {
+    const s = document.createElement("span");
+    s.className = "w" + (i === sel ? " sel" : "");
+    s.textContent = w;
+    style(s, fmt[i]);
+    s.onclick = () => { sel = i; draw(); };
+    p.appendChild(s);
+    p.appendChild(document.createTextNode(" "));
+  });
+  $("code").textContent = WORDS.map((w, i) => {
+    const f = fmt[i];
+    return f.map(t => "<" + t + ">").join("") + w +
+           f.slice().reverse().map(t => "</" + t + ">").join("");
+  }).join(" ");
+}
+function flash(t) { $("tm").className = "msg bad"; $("tm").textContent = t; }
+$("clr").onclick = () => { fmt = WORDS.map(() => []); sel = -1; draw(); };
+
+/* -------------------------------------------------------------------- nusgalar */
+const T = [
+  { d: "«Aşgabat» dok hem kursiw bolsun.", need: { 0: ["B", "I"] } },
+  { d: "«paýtagtydyr» sözüniň aşagy çyzylsyn.", need: { 5: ["U"] } },
+  { d: "«ak» kiçi, «mermerli» uly ölçegde bolsun.", need: { 3: ["SMALL"], 4: ["BIG"] } },
+  { d: "«Türkmenistanyň» dok, «ak» üsti çyzylan bolsun.", need: { 2: ["B"], 3: ["S"] } }
+];
+let ti = 0, tdone = 0;
+function drawT() {
+  $("tgt").textContent = (ti + 1) + ". " + T[ti].d;
+  $("tm").textContent = "";
+}
+$("chk").onclick = () => {
+  const n = T[ti].need;
+  let ok = true;
+  WORDS.forEach((w, i) => {
+    const want = (n[i] || []).slice().sort().join(",");
+    const got = fmt[i].slice().sort().join(",");
+    if (want !== got) ok = false;
+  });
+  $("tm").className = "msg " + (ok ? "ok" : "bad");
+  if (ok && !T[ti].done) { T[ti].done = 1; tdone++; }
+  $("tm").textContent = ok ? "Dogry! Nusga gaýtalandy. ✅"
+                           : "Entek gabat gelmeýär – artykmaç ýa-da ýetmeýän teg bar.";
+  $("ts").textContent = tdone + " nusga ýerine ýetdi";
+};
+$("nx").onclick = () => { ti = (ti + 1) % T.length; drawT(); };
+
+/* ---------------------------------------------------------------- teg tertibi */
+const ORD = [
+  { a: "<B><I> Aşgabat </I></B>", ok: 1 },
+  { a: "<B><I> Aşgabat </B></I>", ok: 0 },
+  { a: "<U><SUP> 2 </U></SUP>", ok: 0 },
+  { a: "<U><SUP> 2 </SUP></U>", ok: 1 }
+];
+ORD.sort(() => Math.random() - .5).forEach(o => {
+  const b = document.createElement("button");
+  b.className = "ord"; b.textContent = o.a;
+  b.onclick = () => {
+    b.style.background = o.ok ? "#e0f5e6" : "#fbe3e3";
+    $("om").className = "msg " + (o.ok ? "ok" : "bad");
+    $("om").textContent = o.ok
+      ? "Dogry: iň soňky açylan teg birinji ýapyldy."
+      : "Ýalňyş: tegler kesişip bolmaýar, iň soňky açylan birinji ýapylmaly.";
+  };
+  $("ordbox").appendChild(b);
+});
+
+draw(); drawT();
+</script>
+</body>
+</html>

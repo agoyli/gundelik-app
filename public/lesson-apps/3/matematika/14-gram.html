@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gram — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .sc { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .sc svg { display: block; width: 100%; height: auto; max-height: 190px; }
+  .wts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .wts button { min-height: 46px; font-size: 15.5px; font-weight: 700; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15.5px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Gram</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def">Kiçi agramlar <b>gram (g)</b> bilen ölçelýär. <b>1 kg = 1000 g</b>.
+      Agram terezi bilen ölçelýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Terezini deňle</h3>
+    <div class="sc"><svg id="sv" viewBox="0 0 300 180"></svg></div>
+    <div class="goal" id="wgoal"></div>
+    <div class="wts" id="wts"></div>
+    <div class="msg" id="wmsg"></div>
+    <div class="row"><button class="btn primary" id="wnext">Indiki ýagdaý</button></div>
+    <div class="score" id="wsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Grama geçir</h3>
+    <div class="goal" id="ggoal"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="gmsg"></div>
+    <div class="row"><button class="btn ghost" id="gnext">Indiki sorag</button></div>
+    <div class="score" id="gsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, I kitap · 139–141-nji sahypalar</div>
+</div>
+
+<script>
+// [çep okarada näçe gram bar, sag okarada näçe gerek]
+var W = [[800, 200], [600, 400], [900, 100], [500, 500], [700, 300]];
+var wi = 0, wd = 0, wok = 0, wlock = 0, tilt = 1;
+function drawSvg() {
+  var b = W[wi][0];
+  var dy = tilt ? 16 : 0;
+  var s = '<line x1="150" y1="30" x2="150" y2="150" stroke="#6b5a2a" stroke-width="6"/>';
+  s += '<line x1="40" y1="' + (44 + dy) + '" x2="260" y2="' + (44 - dy) + '" stroke="#6b5a2a" stroke-width="6" stroke-linecap="round"/>';
+  s += '<rect x="18" y="' + (54 + dy) + '" width="76" height="34" rx="8" fill="#f3e6c4" stroke="#9a7a3a" stroke-width="2"/>';
+  s += '<text x="56" y="' + (76 + dy) + '" font-size="15" text-anchor="middle" fill="#3a3020">1 kg</text>';
+  s += '<rect x="206" y="' + (54 - dy) + '" width="76" height="34" rx="8" fill="#f3e6c4" stroke="#9a7a3a" stroke-width="2"/>';
+  s += '<text x="244" y="' + (76 - dy) + '" font-size="15" text-anchor="middle" fill="#3a3020">' + b + ' g</text>';
+  s += '<rect x="110" y="150" width="80" height="14" rx="5" fill="#6b5a2a"/>';
+  document.getElementById("sv").innerHTML = s;
+}
+function draw() {
+  drawSvg();
+  document.getElementById("wgoal").textContent =
+    "Sag okarada " + W[wi][0] + " g şeker bar. Terezini deňlemek üçin näçe gram çekim daşy gerek?";
+  document.getElementById("wmsg").className = "msg";
+  document.getElementById("wmsg").textContent = "";
+  wlock = 0;
+}
+var WV = [100, 200, 300, 400, 500, 600, 700, 800];
+var h = "";
+for (var i = 0; i < WV.length; i++) h += '<button class="btn" data-n="' + WV[i] + '">' + WV[i] + " g</button>";
+document.getElementById("wts").innerHTML = h;
+var wb = document.getElementById("wts").getElementsByTagName("button");
+for (var i = 0; i < wb.length; i++) {
+  wb[i].onclick = function () {
+    if (wlock) return;
+    wlock = 1; wd++;
+    var v = parseInt(this.getAttribute("data-n"), 10), w = W[wi][1], m = document.getElementById("wmsg");
+    if (v === w) {
+      wok++; tilt = 0; drawSvg();
+      m.className = "msg ok";
+      m.textContent = "Dogry! " + W[wi][0] + " + " + w + " = 1000 g = 1 kg.";
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Ýalňyş. 1000 − " + W[wi][0] + " = " + w + " g gerek.";
+    }
+    document.getElementById("wsc").textContent = "Netije: " + wok + " / " + wd;
+  };
+}
+document.getElementById("wnext").onclick = function () { wi = (wi + 1) % W.length; tilt = 1; draw(); };
+draw();
+
+var G = [[1, 0], [2, 500], [1, 250], [3, 0], [2, 0]], gi = 0, gd = 0, gok = 0, glock = 0;
+function gwant() { return G[gi][0] * 1000 + G[gi][1]; }
+function showG() {
+  document.getElementById("ggoal").textContent = G[gi][1] === 0 ?
+    (G[gi][0] + " kg näçe gram edýär?") :
+    (G[gi][0] + " kg " + G[gi][1] + " g näçe gram edýär?");
+  document.getElementById("gmsg").className = "msg";
+  document.getElementById("gmsg").textContent = "";
+  glock = 0;
+}
+var GV = [500, 1000, 1250, 1500, 2000, 2250, 2500, 3000];
+var h2 = "";
+for (var i = 0; i < GV.length; i++) h2 += '<button class="btn" data-n="' + GV[i] + '">' + GV[i] + "</button>";
+document.getElementById("nums").innerHTML = h2;
+var gb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < gb.length; i++) {
+  gb[i].onclick = function () {
+    if (glock) return;
+    glock = 1; gd++;
+    var v = parseInt(this.getAttribute("data-n"), 10), w = gwant(), m = document.getElementById("gmsg");
+    if (v === w) { gok++; m.className = "msg ok"; m.textContent = "Dogry! 1 kg = 1000 g, netije " + w + " g."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + w + " g."; }
+    document.getElementById("gsc").textContent = "Netije: " + gok + " / " + gd;
+  };
+}
+document.getElementById("gnext").onclick = function () { gi = (gi + 1) % G.length; showG(); };
+showG();
+
+var Q = [
+  ["1 kg näçe grama deň?", ["1000 g", "100 g", "10 g"], 0],
+  ["500 g näçe bölek kilogram edýär?", ["Ýarym kilogram", "Bir kilogram", "Iki kilogram"], 0],
+  ["Agram näme bilen ölçelýär?", ["Terezi bilen", "Çyzgyç bilen", "Sagat bilen"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

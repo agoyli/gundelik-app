@@ -2,7 +2,8 @@ import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { CheckIcon, LockIcon, SparkleIcon, TrendUpIcon, UsersIcon } from './Icons';
 import { IconBadge, SheetDrawer } from './Ui';
-import { ENTRY, PROOF, usePrefs } from '../state/prefs';
+import { ENTRY, PROOF, tierFor, usePrefs } from '../state/prefs';
+import type { FeatureId } from '../state/prefs';
 import { tokens } from '../theme';
 
 /*
@@ -66,10 +67,14 @@ export function LockedPreview({ children, height = 132 }: { children: ReactNode;
 
 /* ---------------- the teaser ---------------- */
 
-export function TeaserCard({ title, note, cta = 'Premium al', icon, preview, onUpgrade, compact }: {
-  title: string; note: string; cta?: string; icon?: ReactNode;
+export function TeaserCard({ title, note, feature, cta, icon, preview, onUpgrade, compact }: {
+  title: string; note: string; feature?: FeatureId; cta?: string; icon?: ReactNode;
   preview?: ReactNode; onUpgrade: () => void; compact?: boolean;
 }) {
+  /* The button names the plan that opens *this* feature, read from the same
+     table the screens gate on — so a teaser can never invite someone to a tier
+     that would not actually unlock the thing they just tapped. */
+  const label = cta ?? `${(feature && tierFor(feature)?.name) ?? ENTRY.name} al`;
   return (
     <Box sx={{
       bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, overflow: 'hidden',
@@ -89,42 +94,8 @@ export function TeaserCard({ title, note, cta = 'Premium al', icon, preview, onU
         <Button
           variant="contained" disableElevation onClick={onUpgrade}
           sx={{ mt: '4px', height: 42, px: '22px' }}
-        >{cta}</Button>
+        >{label}</Button>
       </Box>
-    </Box>
-  );
-}
-
-/* ---------------- free-tier meter ----------------
-   States what is left, not only what is spent — a limit the user can still
-   act on is information; a limit stated as a refusal is just a wall. */
-
-export function FreeLimitBar({ used, label, note, onUpgrade }: {
-  used: boolean; label: string; note: string; onUpgrade: () => void;
-}) {
-  return (
-    <Box sx={{
-      display: 'flex', alignItems: 'center', gap: '12px',
-      bgcolor: used ? tokens.orangeTint : tokens.blueTint,
-      borderRadius: `${tokens.rRow}px`, p: '12px 14px',
-    }}>
-      <Box aria-hidden sx={{ color: used ? tokens.orangeText : tokens.blueText, display: 'flex', flex: 'none' }}>
-        {used ? <LockIcon size={20} /> : <SparkleIcon size={20} />}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: used ? tokens.orangeText : tokens.blueText }}>
-          {label}
-        </Typography>
-        <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '1px' }}>{note}</Typography>
-      </Box>
-      <ButtonBase
-        onClick={onUpgrade}
-        sx={{
-          flex: 'none', height: 32, px: '13px', borderRadius: `${tokens.rPill}px`,
-          bgcolor: '#fff', color: tokens.blueText, fontSize: 13, fontWeight: 700,
-          boxShadow: tokens.shadowCtl,
-        }}
-      >Açmak</ButtonBase>
     </Box>
   );
 }
@@ -182,7 +153,7 @@ export function AdCard({ onUpgrade, variant = 'full' }: {
         <PremiumPill />
         <Typography sx={{ fontSize: 12, opacity: .85 }}>mahabat</Typography>
       </Box>
-      <Typography sx={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.3px', mt: '10px' }}>
+      <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', mt: '10px' }}>
         Ähli testler, kartlar we Akylly mugallym
       </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '7px', mt: '12px' }}>
@@ -218,10 +189,11 @@ export function AdSlot({ onUpgrade, variant }: { onUpgrade: () => void; variant?
    For gates reached by tapping something (the AI button), where a full page
    would lose the user's place. */
 
-export function PaidFeatureSheet({ open, onClose, title, note, bullets, onUpgrade }: {
+export function PaidFeatureSheet({ open, onClose, title, note, feature, bullets, onUpgrade }: {
   open: boolean; onClose: () => void; title: string; note: string;
-  bullets: string[]; onUpgrade: () => void;
+  feature?: FeatureId; bullets: string[]; onUpgrade: () => void;
 }) {
+  const plan = (feature && tierFor(feature)?.name) ?? ENTRY.name;
   return (
     <SheetDrawer open={open} onClose={onClose}>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '10px' }}>
@@ -250,7 +222,7 @@ export function PaidFeatureSheet({ open, onClose, title, note, bullets, onUpgrad
       <Box sx={{ display: 'flex', gap: '10px', mt: '14px' }}>
         <Button fullWidth onClick={onClose} sx={{ bgcolor: tokens.surface, color: tokens.ink }}>Soňra</Button>
         <Button fullWidth variant="contained" disableElevation onClick={() => { onClose(); onUpgrade(); }}>
-          Premium al
+          {`${plan} al`}
         </Button>
       </Box>
     </SheetDrawer>

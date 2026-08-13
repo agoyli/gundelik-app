@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tegler we gipersalgylanmalar — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .brow { border: 2px solid #d6e0ee; border-radius: 12px; overflow: hidden; background: #fff; }
+  .bar { background: #eef2f8; padding: 8px 12px; font-size: 12.5px; font-weight: 800;
+         color: #5b6b80; border-bottom: 1px solid #d6e0ee;
+         font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .page { padding: 12px 14px; min-height: 190px; font-size: 15px; line-height: 1.65; }
+  .lnk { cursor: pointer; text-decoration: underline; background: none; border: none;
+         padding: 2px 0; font-size: 15px; font-family: inherit; }
+  .pop { position: relative; border: 2px dashed #6a4bb8; border-radius: 12px; padding: 10px 12px;
+         background: #f7f4fd; margin-top: 10px; font-size: 14.5px; }
+  .pop b { color: #6a4bb8; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #2456b0;
+          background: #f7fafd; border-radius: 10px; padding: 10px 12px; line-height: 1.7;
+          overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+  .sw { width: 44px; height: 44px; border-radius: 10px; border: 2px solid #d6e0ee; padding: 0;
+        cursor: pointer; }
+  .sw.sel { border-color: #2456b0; border-width: 3px; }
+  .lab { font-weight: 800; font-size: 13.5px; color: #5b6b80; margin: 8px 0 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tegler we gipersalgylanmalar</h1>
+  <div class="sub">&lt;A HREF&gt; · LINK, VLINK, ALINK · NAME · TARGET · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Aşakdaky mini-saýt üç sahypadan durýar. Salgylanma bas – brauzer başga
+      sahypa geçer. Işlenen salgylanma reňkini üýtgedýär.</div>
+    <div class="brow">
+      <div class="bar" id="url">index.htm</div>
+      <div class="page" id="pg"></div>
+    </div>
+    <div class="code" id="code"></div>
+    <div class="row"><button class="btn ghost" id="rst">Taryhy arassala</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Salgylanmalaryň reňkleri</h3>
+    <div class="lab">LINK — entek açylmadyk</div>
+    <div class="row tight" id="c1"></div>
+    <div class="lab">VLINK — öň açylan</div>
+    <div class="row tight" id="c2"></div>
+    <div class="note" id="cn"></div>
+  </div>
+
+  <div class="card">
+    <h3>Salgyny düz</h3>
+    <div class="goal" id="tq"></div>
+    <div class="row tight" id="ta"></div>
+    <div class="msg" id="tm"></div>
+    <div class="score" id="ts">0 / 4</div>
+  </div>
+
+  <div class="card">
+    <div class="note">Şekile hem gipersalgylanma goýup bolýar: IMG tegi A tegiň
+      içinde ýerleşdirilýär. <b>TARGET=_blank</b> sahypany täze penjirä ýükleýär.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §6</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const SITE = {
+  "index.htm": {
+    t: "Baş sahypa",
+    p: "Bu – mekdebimiziň saýtynyň öý sahypasy. Aşakdaky salgylanmalar arkaly beýleki " +
+       "sahypalara geçip bolýar.",
+    l: [["Türkmenistan barada", "watan.htm"], ["Suratlar", "surat.htm"],
+        ["Bilim portaly (täze penjire)", "_blank"]]
+  },
+  "watan.htm": {
+    t: "Türkmenistan",
+    p: "Türkmenistan – Bitaraplyk ýurdy. Paýtagty Aşgabat şäheridir. Sahypanyň soňundaky " +
+       "salgylanma seni ýene öý sahypasyna gaýtarýar.",
+    l: [["Suratlar", "surat.htm"], ["Öý sahypasy", "index.htm"], ["#ýokary bellige", "#top"]]
+  },
+  "surat.htm": {
+    t: "Suratlar",
+    p: "🏛 🌷 🐎 — sahypadaky şekilleriň her birine gipersalgylanma goýup bolýar.",
+    l: [["Türkmenistan barada", "watan.htm"], ["Öý sahypasy", "index.htm"]]
+  }
+};
+let cur = "index.htm", seen = {}, LINK = "blue", VLINK = "purple";
+
+function drawPage() {
+  const p = SITE[cur];
+  $("url").textContent = "http://mekdep.edu.tm/" + cur;
+  const box = $("pg"); box.innerHTML = "";
+  const h = document.createElement("h2"); h.textContent = p.t; h.style.margin = ".2em 0";
+  box.appendChild(h);
+  const t = document.createElement("p"); t.textContent = p.p; box.appendChild(t);
+  p.l.forEach(l => {
+    const d = document.createElement("div");
+    const b = document.createElement("button");
+    b.className = "lnk"; b.textContent = l[0];
+    b.style.color = seen[l[1]] ? VLINK : LINK;
+    b.onclick = () => {
+      if (l[1] === "_blank") {
+        const pop = document.createElement("div");
+        pop.className = "pop";
+        pop.innerHTML = "<b>Täze penjire açyldy.</b> TARGET=_blank buýrugy çagyrylýan sahypany " +
+                        "başga penjirä ýükleýär, öňki sahypa ýapylmaýar.";
+        box.appendChild(pop);
+        return;
+      }
+      if (l[1] === "#top") {
+        const pop = document.createElement("div");
+        pop.className = "pop";
+        pop.innerHTML = "<b>Içki geçme.</b> Şu sahypanyň içindäki &lt;A NAME=top&gt; belligine " +
+                        "geçildi. Salgyda # simwoly ulanylýar.";
+        box.appendChild(pop);
+        return;
+      }
+      seen[l[1]] = 1; cur = l[1]; drawPage();
+    };
+    d.appendChild(b); box.appendChild(d);
+  });
+  $("code").textContent = "<BODY LINK=" + LINK + " VLINK=" + VLINK + " ALINK=red>\n" +
+    p.l.map(l => l[1] === "_blank"
+      ? '<A HREF=«http://bilim.edu.tm» TARGET=_blank>' + l[0] + "</A>"
+      : l[1] === "#top" ? '<A HREF=«#top»>' + l[0] + "</A>"
+      : '<A HREF=«' + l[1] + '»>' + l[0] + "</A>").join("\n");
+}
+
+["blue", "navy", "teal", "green"].forEach(c => mk("c1", c, v => LINK = v));
+["purple", "maroon", "gray", "olive"].forEach(c => mk("c2", c, v => VLINK = v));
+function mk(box, c, set) {
+  const b = document.createElement("button");
+  b.className = "sw"; b.style.background = c; b.title = c; b.dataset.c = c;
+  b.onclick = () => {
+    set(c);
+    $(box).querySelectorAll(".sw").forEach(x => x.classList.toggle("sel", x === b));
+    $("cn").innerHTML = "<b>&lt;BODY LINK=" + LINK + " VLINK=" + VLINK + " ALINK=red&gt;</b> — " +
+      "ALINK basylan pursatdaky reňkdir.";
+    drawPage();
+  };
+  $(box).appendChild(b);
+}
+
+/* -------------------------------------------------------------------- ýumuş */
+const TQ = [
+  { q: "«sport.htm» faýly şol bir papkada. Salgyny nädip ýazmaly?",
+    o: ["<A HREF=«sport.htm»>Sport</A>", "<A SRC=«sport.htm»>Sport</A>",
+        "<A NAME=«sport.htm»>Sport</A>"], a: 0 },
+  { q: "Sahypa täze penjirede açylmaly. Näme goşmaly?",
+    o: ["TARGET=_blank", "ALIGN=right", "BORDER=0"], a: 0 },
+  { q: "Sahypanyň içindäki belligine geçmek üçin näme ulanylýar?",
+    o: ["# simwoly we NAME belligi", "http: protokoly", "ALT parametri"], a: 0 },
+  { q: "Basylan pursatdaky reňki haýsy buýruk berýär?",
+    o: ["ALINK", "LINK", "VLINK"], a: 0 }
+];
+let qi = 0, qs = 0;
+function drawQ() {
+  if (qi >= TQ.length) {
+    $("tq").textContent = "Ýumuş tamamlandy.";
+    $("ta").innerHTML = "";
+    $("tm").className = "msg ok";
+    $("tm").textContent = qs === TQ.length ? "Hemmesi dogry! 🎉" : "Netije: " + qs + " / " + TQ.length;
+    return;
+  }
+  const x = TQ[qi];
+  $("tq").textContent = (qi + 1) + ". " + x.q;
+  $("ta").innerHTML = "";
+  x.o.forEach((t, j) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.textContent = t;
+    b.onclick = () => {
+      if (j === x.a) { qs++; $("tm").className = "msg ok"; $("tm").textContent = "Dogry!"; }
+      else { $("tm").className = "msg bad"; $("tm").textContent = "Dogrusy: " + x.o[x.a]; }
+      qi++; $("ts").textContent = qs + " / " + TQ.length;
+      setTimeout(drawQ, 60);
+    };
+    $("ta").appendChild(b);
+  });
+}
+
+$("rst").onclick = () => { seen = {}; cur = "index.htm"; drawPage(); };
+drawPage(); drawQ();
+</script>
+</body>
+</html>

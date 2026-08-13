@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informasion modeller — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; overflow-x: auto; }
+  .stage svg { background: #fff; border-radius: 10px; }
+  .nd { cursor: pointer; }
+  .nd ellipse { fill: #fff; stroke: #2456b0; stroke-width: 2.5; }
+  .nd.on ellipse { fill: #2456b0; }
+  .nd text { font-size: 11.5px; font-weight: 700; fill: #2456b0; text-anchor: middle; }
+  .nd.on text { fill: #fff; }
+  .lk { stroke: #b9cdf0; stroke-width: 2.5; }
+  .lk.on { stroke: #1d7a3d; stroke-width: 4; }
+  table.tri { font-size: 13px; font-variant-numeric: tabular-nums; }
+  table.tri th, table.tri td { text-align: center; padding: 6px 5px; }
+  table.tri thead th { background: #e3edfd; color: #2456b0; }
+  table.tri tbody th { background: #f7fafd; color: #5b6b80; text-align: left; }
+  .bins { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bin { flex: 1; min-width: 128px; background: #f7fafd; border-radius: 12px; padding: 9px; min-height: 78px; }
+  .bin h4 { font-size: 11.5px; color: #93a2b5; margin-bottom: 5px; font-weight: 800; }
+  .chip { display: inline-block; background: #e0f5e6; color: #1d7a3d; border-radius: 999px;
+          padding: 5px 10px; font-size: 12.5px; font-weight: 700; margin: 0 3px 3px 0; }
+  .stages div { background: #f7fafd; border-radius: 11px; padding: 10px 11px; font-size: 14px;
+                margin-bottom: 5px; cursor: pointer; display: flex; gap: 9px; }
+  .stages i { flex: 0 0 26px; height: 26px; border-radius: 8px; background: #e3edfd; color: #2456b0;
+              font-style: normal; font-weight: 800; font-size: 13px; text-align: center; line-height: 26px; }
+  .stages small { display: block; font-size: 12.5px; color: #93a2b5; margin-top: 3px; }
+  .stages div.on small { color: #5b6b80; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Informasion modeller</h1>
+  <div class="sub">Modelleriň görnüşleri we maglumatlary düzümleşdirmek · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Mysal haýsy modele degişli? Dogry topary saýla.</div>
+    <div class="bins">
+      <div class="bin"><h4>MATERIAL</h4><div id="b1"></div></div>
+      <div class="bin"><h4>KEŞPLEÝIN</h4><div id="b2"></div></div>
+      <div class="bin"><h4>TESWIRLEÝJI</h4><div id="b3"></div></div>
+      <div class="bin"><h4>FORMAL</h4><div id="b4"></div></div>
+    </div>
+    <div class="row" style="margin-top:10px"><span class="badge purple" id="item"></span></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" data-b="1">Material</button>
+      <button class="btn" data-b="2">Keşpleýin</button>
+      <button class="btn" data-b="3">Teswirleýji</button>
+      <button class="btn" data-b="4">Formal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="msg" id="qx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Maglumatlary düzümleşdirmek</h3>
+    <div class="row tight" style="margin-bottom:10px">
+      <button class="btn sel" data-v="tab">Tablisa modeli</button>
+      <button class="btn" data-v="tree">Iýerarhik model</button>
+      <button class="btn" data-v="net">Tor modeli</button>
+    </div>
+    <div id="view"></div>
+    <div class="note" id="vx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Modelleşdirmegiň tapgyrlary</h3>
+    <div class="stages" id="stages"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Model</b> – anyk maksatlar üçin öwrenilýän obýektiň düýpli häsiýetlerini saklaýan täze
+      obýektdir. Wagta baglylykda modeller <b>statiki</b> we <b>dinamiki</b> bolýar.
+      Grafyň düwünlerine <b>depeler</b>, olary birikdirýän çyzyklara bolsa <b>gapyrgalar</b> diýilýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- toparlara bölmek ---------------- */
+const ITEMS = [
+  ["Globus", 1], ["Uçaryň aerodinamik maketi", 1], ["Kristal gözenegiň nusgasy", 1],
+  ["Fotosurat", 2], ["Geografik karta", 2],
+  ["Okuw kitabyndaky düşündiriş", 3], ["Hadysa barada gürrüň", 3],
+  ["F = m·a formulasy", 4], ["Himiki elementleriň periodik tablisasy", 4],
+  ["Paskal dilindäki programma", 4]
+];
+const WHY = {
+  1: "Bu maddy nusga – material modeldir.",
+  2: "Bu obýektiň görnüş keşbini görkezýär – keşpleýin modeldir.",
+  3: "Bu tebigy dilde beýan – teswirleýji belgileýin modeldir.",
+  4: "Bu formal dilde – formula, tablisa ýa-da programmada ýazylan formal modeldir."
+};
+let queue = [], wrong = 0;
+function nextItem() {
+  if (!queue.length) {
+    $("item").textContent = "Hemmesi ýerleşdirildi";
+    document.querySelectorAll("[data-b]").forEach(b => b.disabled = true);
+    $("qx").textContent = wrong === 0 ? "Ähli mysallar birinji synanyşykda dogry ýerleşdirildi."
+      : `Tamamlandy. ${wrong} sany ýalňyşlyk goýberildi.`;
+    $("qx").className = "msg " + (wrong ? "bad" : "ok");
+    return;
+  }
+  $("item").textContent = queue[0][0];
+  document.querySelectorAll("[data-b]").forEach(b => b.disabled = false);
+}
+function answer(k) {
+  const [n, want] = queue[0];
+  if (k !== want) { wrong++; $("qx").textContent = WHY[want]; $("qx").className = "msg bad"; return; }
+  queue.shift();
+  const c = document.createElement("span");
+  c.className = "chip"; c.textContent = n;
+  $("b" + k).appendChild(c);
+  $("qx").textContent = "Dogry."; $("qx").className = "msg ok";
+  nextItem();
+}
+function resetQ() {
+  queue = ITEMS.slice(); wrong = 0;
+  [1, 2, 3, 4].forEach(i => $("b" + i).innerHTML = "");
+  $("qx").textContent = ""; nextItem();
+}
+document.querySelectorAll("[data-b]").forEach(b => b.onclick = () => answer(+b.dataset.b));
+$("again").onclick = resetQ;
+
+/* ---------------- düzüm modelleri ---------------- */
+const TREE = {
+  nodes: [
+    { id: "k", t: "Kompýuter", x: 160, y: 26 },
+    { id: "s", t: "Super", x: 52, y: 92 },
+    { id: "v", t: "Serwerler", x: 160, y: 92 },
+    { id: "p", t: "Personal", x: 268, y: 92 },
+    { id: "d", t: "Stoluň üsti", x: 62, y: 158 },
+    { id: "n", t: "Portatiw", x: 168, y: 158 },
+    { id: "j", t: "Jübi", x: 262, y: 158 }
+  ],
+  links: [["k", "s"], ["k", "v"], ["k", "p"], ["p", "d"], ["p", "n"], ["p", "j"]],
+  dir: true
+};
+const NET = {
+  nodes: [
+    { id: "m", t: "Mekdep", x: 160, y: 30 },
+    { id: "t", t: "Teatr", x: 52, y: 100 },
+    { id: "b", t: "Bazar", x: 268, y: 100 },
+    { id: "h", t: "Myhmanhana", x: 160, y: 165 }
+  ],
+  links: [["m", "t"], ["m", "b"], ["t", "b"], ["t", "h"], ["b", "h"]],
+  dir: false
+};
+let sel = null;
+
+function drawGraph(g) {
+  const P = Object.fromEntries(g.nodes.map(n => [n.id, n]));
+  const lines = g.links.map(([a, b], i) => {
+    const on = sel && (a === sel || b === sel);
+    return `<line class="lk${on ? " on" : ""}" x1="${P[a].x}" y1="${P[a].y + (g.dir ? 13 : 0)}"
+      x2="${P[b].x}" y2="${P[b].y - (g.dir ? 15 : 0)}"${g.dir ? ' marker-end="url(#ar)"' : ""}/>`;
+  }).join("");
+  const nodes = g.nodes.map(n =>
+    `<g class="nd${sel === n.id ? " on" : ""}" data-id="${n.id}">
+       <ellipse cx="${n.x}" cy="${n.y}" rx="50" ry="15"/>
+       <text x="${n.x}" y="${n.y + 4}">${n.t}</text></g>`).join("");
+  return `<div class="stage"><svg width="330" height="195" viewBox="0 0 330 195">
+    <defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0,0 L7,3.5 L0,7 z" fill="#b9cdf0"/></marker></defs>
+    ${lines}${nodes}</svg></div>`;
+}
+
+const TRI = [
+  ["α, rad", "0", "π/6", "π/4", "π/3", "π/2", "π", "3π/2"],
+  ["α°", "0°", "30°", "45°", "60°", "90°", "180°", "270°"],
+  ["sin α", "0", "1/2", "√2/2", "√3/2", "1", "0", "−1"],
+  ["cos α", "1", "√3/2", "√2/2", "1/2", "0", "−1", "0"],
+  ["tg α", "0", "√3/3", "1", "√3", "—", "0", "—"],
+  ["ctg α", "—", "√3", "1", "√3/3", "0", "—", "0"]
+];
+
+function view(kind) {
+  if (kind === "tab") {
+    $("view").innerHTML = '<div style="overflow-x:auto"><table class="tri"><thead><tr>' +
+      TRI[0].map((c, i) => `<th>${i ? c : ""}</th>`).join("") + "</tr></thead><tbody>" +
+      TRI.slice(1).map(r => "<tr>" + r.map((c, i) =>
+        i ? `<td>${c}</td>` : `<th>${c}</th>`).join("") + "</tr>").join("") +
+      "</tbody></table></div>";
+    $("vx").innerHTML = "Tablisa modelde obýektleriň sanawy birinji sütünde, häsiýetleriniň " +
+      "bahalary bolsa beýleki sütünlerde ýerleşdirilýär. Öýjükdäki <b>—</b> belgisi " +
+      "kesgitsizligi aňladýar.";
+    return;
+  }
+  const g = kind === "tree" ? TREE : NET;
+  $("view").innerHTML = drawGraph(g);
+  $("view").querySelectorAll(".nd").forEach(n => n.onclick = () => {
+    sel = sel === n.dataset.id ? null : n.dataset.id;
+    view(kind);
+  });
+  $("vx").innerHTML = kind === "tree"
+    ? "Iýerarhik modelde elementler ýokarky derejeden aşaklygyna şahalanýar. Ýokarky derejäniň " +
+      "her elementi aşaky derejäniň birnäçe elementini ýaradýar, aşaky derejäniň bir elementi " +
+      "bolsa ýokarkynyň diňe birine degişlidir. Depä bas – onuň baglanyşyklary bellener."
+    : "Tor modelde elementleriň arasyndaky baglanyşyklar erkin bolýar. Bu graf gönükdirilen " +
+      "däldir – gapyrgalar simmetrikdir. Depä bas – onuň baglanyşyklary bellener.";
+}
+document.querySelectorAll("[data-v]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-v]").forEach(x => x.className = "btn" + (x === b ? " sel" : ""));
+  sel = null;
+  view(b.dataset.v);
+});
+
+/* ---------------- tapgyrlar ---------------- */
+const STAGES = [
+  ["Beýan ediji maglumat modeli gurmak",
+   "Obýekt öwrenilýär, derňemegiň maksady kesgitlenilýär, düýpli parametrler saýlanýar."],
+  ["Formallaşdyrylan modeli döretmek",
+   "Model formal dilde – formulalar, deňlemeler we deňsizlikler bilen ýazylýar."],
+  ["Kompýuter modeline özgertmek",
+   "Model programmada ýa-da elektron tablisada amala aşyrylýar."],
+  ["Kompýuter modeliniň synagyny geçirmek",
+   "Netijeler barlanýar. Şert kanagatlandyrmasa, öňki tapgyra dolanylýar."],
+  ["Netijeleri seljermek we modeli düzetmek",
+   "Netijeler hakyky ölçegler bilen deňeşdirilýär. Gabat gelmese, model düzedilýär."]
+];
+$("stages").innerHTML = STAGES.map(([t], i) =>
+  `<div data-i="${i}"><i>${i + 1}</i><span>${t}<small>? basyp gör</small></span></div>`).join("");
+$("stages").querySelectorAll("div").forEach(d => d.onclick = () => {
+  const [t, x] = STAGES[+d.dataset.i];
+  d.className = "on";
+  d.innerHTML = `<i>${+d.dataset.i + 1}</i><span>${t}<small>${x}</small></span>`;
+});
+
+resetQ(); view("tab");
+</script>
+</body>
+</html>

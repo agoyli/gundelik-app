@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GraphABC — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; }
+  .editor { background: #1e2a3a; border-radius: 12px; padding: 10px; }
+  .ln { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 8px; }
+  .ln.on { background: #2c3d55; }
+  .ln .no { color: #6d829e; font-size: 12px; width: 18px; text-align: right; }
+  .ln code { color: #d8e4f5; font-family: ui-monospace, Menlo, Consolas, monospace;
+             font-size: 13px; flex: 1; }
+  .ln .x { color: #ff9c8f; font-size: 15px; background: none; padding: 4px 6px; }
+  .pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+  .pal .btn { padding: 10px 6px; font-size: 13.5px; }
+  .swatch { width: 30px; height: 30px; border-radius: 8px; border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #d6e0ee; cursor: pointer; }
+  .swatch.sel { box-shadow: 0 0 0 3px #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GraphABC bilen surat çekmek</h1>
+  <div class="sub">Töwerek, gönüburçlyk, kesim · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Grafiki penjirä bas – koordinatalar alnar. Soňra buýruk goş.
+      Koordinata başlangyjy <b>ýokarky çep burçdadyr</b>: x saga, y aşak ösýär.</div>
+    <svg id="stage" class="stage" viewBox="0 0 400 300"></svg>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info mono" id="coord">x = 0, y = 0</span>
+      <span class="score" id="hint">Penjirä basyp nokat saýla</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Buýruk goş</h3>
+    <div class="pal" id="pal"></div>
+    <div class="row" style="margin-top:10px">
+      <span class="score">Galam / çotga reňki:</span>
+      <span id="colors" class="row tight"></span>
+    </div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Galamyň ini</span>
+      <input type="range" id="pw" min="1" max="10" value="2"><span class="out" id="pwo">2</span></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Programma</h3>
+    <div class="editor" id="editor"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" id="clr">Ählisini poz</button>
+      <button class="btn" id="demo">Nusga: öýjagaz</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Grafiki buýruklary ulanmak üçin programma <b>Uses GraphABC;</b> setiri bilen modul
+      birikdirilýär. Ýapyk figuranyň içini <b>FloodFill (x, y, reňk)</b> boýaýar.
+      Reňkler: clRed – gyzyl, clGreen – ýaşyl, clBlue – gök, clYellow – sary.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const S = $("stage");
+const COLORS = { clRed: "#e2574c", clGreen: "#1d7a3d", clBlue: "#2456b0",
+                 clYellow: "#f0b429", clBlack: "#1e2a3a", clBrown: "#8a5a2b" };
+let pen = "clBlue", pick = null, prog = [];
+
+Object.keys(COLORS).forEach(k => {
+  const s = document.createElement("div");
+  s.className = "swatch" + (k === pen ? " sel" : "");
+  s.style.background = COLORS[k]; s.title = k; s.dataset.k = k;
+  s.onclick = () => { pen = k; [...$("colors").children].forEach(c =>
+    c.className = "swatch" + (c.dataset.k === pen ? " sel" : "")); };
+  $("colors").appendChild(s);
+});
+
+const CMDS = [
+  { l: "SetPixel", n: 1, make: p => ({ t: "pixel", x: p[0].x, y: p[0].y, c: pen }) },
+  { l: "Line",     n: 2, make: p => ({ t: "line", x: p[0].x, y: p[0].y, x2: p[1].x, y2: p[1].y, c: pen, w: +$("pw").value }) },
+  { l: "Rectangle", n: 2, make: p => ({ t: "rect", x: p[0].x, y: p[0].y, x2: p[1].x, y2: p[1].y, c: pen, w: +$("pw").value }) },
+  { l: "Circle",   n: 2, make: p => ({ t: "circle", x: p[0].x, y: p[0].y,
+      r: Math.round(Math.hypot(p[1].x - p[0].x, p[1].y - p[0].y)), c: pen, w: +$("pw").value }) },
+  { l: "FloodFill", n: 1, make: p => ({ t: "fill", x: p[0].x, y: p[0].y, c: pen }) }
+];
+let pending = null, pts = [];
+
+CMDS.forEach(c => {
+  const b = document.createElement("button");
+  b.className = "btn"; b.textContent = c.l + (c.n === 2 ? " (2 nokat)" : " (1 nokat)");
+  b.onclick = () => {
+    pending = c; pts = [];
+    [...$("pal").children].forEach(x => x.className = "btn");
+    b.className = "btn sel";
+    msg(`«${c.l}» saýlandy. Penjirede ${c.n} nokada bas.`, "ok");
+  };
+  $("pal").appendChild(b);
+});
+
+function msg(t, cls) { $("msg").textContent = t; $("msg").className = "msg" + (cls ? " " + cls : ""); }
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+
+S.addEventListener("click", e => {
+  const r = S.getBoundingClientRect();
+  const x = Math.round((e.clientX - r.left) * (400 / r.width));
+  const y = Math.round((e.clientY - r.top) * (300 / r.height));
+  $("coord").textContent = `x = ${x}, y = ${y}`;
+  if (!pending) { $("hint").textContent = "Ilki ýokardan buýrugy saýla"; return; }
+  pts.push({ x, y });
+  if (pts.length === pending.n) {
+    prog.push(pending.make(pts));
+    msg(`Buýruk goşuldy: ${line(prog[prog.length - 1])}`, "ok");
+    pending = null; pts = [];
+    [...$("pal").children].forEach(x => x.className = "btn");
+    render();
+  } else $("hint").textContent = `Ýene ${pending.n - pts.length} nokat gerek`;
+});
+
+function line(c) {
+  if (c.t === "pixel") return `SetPixel (${c.x}, ${c.y}, ${c.c});`;
+  if (c.t === "line") return `Line (${c.x}, ${c.y}, ${c.x2}, ${c.y2});`;
+  if (c.t === "rect") return `Rectangle (${c.x}, ${c.y}, ${c.x2}, ${c.y2});`;
+  if (c.t === "circle") return `Circle (${c.x}, ${c.y}, ${c.r});`;
+  return `FloodFill (${c.x}, ${c.y}, ${c.c});`;
+}
+
+function render() {
+  S.innerHTML = "";
+  // fills first, so outlines stay visible on top
+  prog.filter(c => c.t === "fill").forEach(c => {
+    const box = enclosing(c);
+    if (box) S.appendChild(box.node(COLORS[c.c]));
+  });
+  prog.forEach(c => {
+    const col = COLORS[c.c];
+    if (c.t === "pixel") S.appendChild(el("rect", { x: c.x, y: c.y, width: 3, height: 3, fill: col }));
+    if (c.t === "line") S.appendChild(el("line", { x1: c.x, y1: c.y, x2: c.x2, y2: c.y2, stroke: col, "stroke-width": c.w, "stroke-linecap": "round" }));
+    if (c.t === "rect") S.appendChild(el("rect", {
+      x: Math.min(c.x, c.x2), y: Math.min(c.y, c.y2),
+      width: Math.abs(c.x2 - c.x), height: Math.abs(c.y2 - c.y),
+      fill: "none", stroke: col, "stroke-width": c.w }));
+    if (c.t === "circle") S.appendChild(el("circle", { cx: c.x, cy: c.y, r: c.r, fill: "none", stroke: col, "stroke-width": c.w }));
+  });
+
+  const E = $("editor");
+  E.innerHTML = `<div class="ln"><span class="no">1</span><code>Program surat;</code></div>
+                 <div class="ln"><span class="no">2</span><code>Uses GraphABC;</code></div>
+                 <div class="ln"><span class="no">3</span><code>Begin</code></div>
+                 <div class="ln"><span class="no">4</span><code>&nbsp;&nbsp;SetWindowSize (400, 300);</code></div>`;
+  prog.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "ln";
+    const setter = c.t === "fill" ? "" :
+      `SetPenColor (${c.c}); ` + (c.t === "pixel" ? "" : `SetPenWidth (${c.w}); `);
+    d.innerHTML = `<span class="no">${i + 5}</span><code>&nbsp;&nbsp;${setter}${line(c)}</code>
+                   <button class="x" title="setiri poz">✕</button>`;
+    d.querySelector(".x").onclick = () => { prog.splice(i, 1); render(); };
+    E.appendChild(d);
+  });
+  E.innerHTML += `<div class="ln"><span class="no">${prog.length + 5}</span><code>End.</code></div>`;
+}
+
+// find the smallest already-drawn closed figure containing the fill point
+function enclosing(f) {
+  let best = null;
+  prog.forEach(c => {
+    if (c.t === "rect") {
+      const x = Math.min(c.x, c.x2), y = Math.min(c.y, c.y2);
+      const w = Math.abs(c.x2 - c.x), h = Math.abs(c.y2 - c.y);
+      if (f.x > x && f.x < x + w && f.y > y && f.y < y + h && (!best || w * h < best.area))
+        best = { area: w * h, node: col => el("rect", { x, y, width: w, height: h, fill: col }) };
+    }
+    if (c.t === "circle") {
+      const d = Math.hypot(f.x - c.x, f.y - c.y);
+      const area = Math.PI * c.r * c.r;
+      if (d < c.r && (!best || area < best.area))
+        best = { area, node: col => el("circle", { cx: c.x, cy: c.y, r: c.r, fill: col }) };
+    }
+  });
+  return best;
+}
+
+$("pw").addEventListener("input", () => $("pwo").textContent = $("pw").value);
+$("clr").onclick = () => { prog = []; pending = null; pts = []; msg(""); render(); };
+$("demo").onclick = () => {
+  prog = [
+    { t: "rect", x: 120, y: 150, x2: 280, y2: 250, c: "clBrown", w: 3 },
+    { t: "line", x: 120, y: 150, x2: 200, y2: 80, c: "clRed", w: 3 },
+    { t: "line", x: 200, y: 80, x2: 280, y2: 150, c: "clRed", w: 3 },
+    { t: "rect", x: 175, y: 195, x2: 225, y2: 250, c: "clBlue", w: 3 },
+    { t: "circle", x: 330, y: 60, r: 26, c: "clYellow", w: 3 },
+    { t: "fill", x: 140, y: 240, c: "clYellow" },
+    { t: "fill", x: 200, y: 230, c: "clBlue" },
+    { t: "fill", x: 330, y: 60, c: "clYellow" }
+  ];
+  msg("Nusga ýüklendi. Setirleri pozup ýa-da täze buýruk goşup üýtgedip bilersiň.", "ok");
+  render();
+};
+render();
+</script>
+</body>
+</html>

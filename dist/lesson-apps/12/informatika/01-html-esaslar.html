@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýönekeý HTML sahypasy — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .ed { width: 100%; min-height: 210px; padding: 11px; border-radius: 12px; font-size: 13.5px;
+        border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace;
+        line-height: 1.55; resize: vertical; }
+  .ed:focus { outline: none; border-color: #2456b0; }
+  .brow { border: 2px solid #d6e0ee; border-radius: 12px; overflow: hidden; background: #fff; }
+  .bar { background: #eef2f8; padding: 8px 12px; font-size: 12.5px; font-weight: 800;
+         color: #5b6b80; border-bottom: 1px solid #d6e0ee; display: flex; gap: 8px; }
+  .bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #cfd8e6; margin-top: 3px; }
+  .page { padding: 12px 14px; min-height: 150px; font-size: 15px; line-height: 1.5; }
+  .page h1, .page h2, .page h3 { margin: .3em 0; }
+  .swatch { width: 44px; height: 44px; border-radius: 10px; border: 2px solid #d6e0ee;
+            cursor: pointer; padding: 0; }
+  .swatch.sel { border-color: #2456b0; border-width: 3px; }
+  .ord { display: block; width: 100%; text-align: left; margin-bottom: 6px; padding: 11px;
+         border-radius: 10px; border: none; background: #eef2f8; cursor: pointer;
+         font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; min-height: 44px; }
+  .ord.pick { background: #e3edfd; color: #2456b0; font-weight: 800; }
+  .task { padding: 8px 0; border-bottom: 1px solid #edf1f7; font-size: 14.5px; }
+  .task:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ýönekeý HTML sahypalaryny taýýarlamak</h1>
+  <div class="sub">Блокнот · tegler · konteýnerler · fon · Informatika · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Aşakdaky penjire – seniň «Блокнот»-yň. Kody üýtget, aşakdaky mini-brauzer
+      netijäni şol bada görkezer.</div>
+    <textarea class="ed" id="src" spellcheck="false"></textarea>
+    <div class="row tight">
+      <button class="btn" data-ins="h1">&lt;H1&gt;</button>
+      <button class="btn" data-ins="p">&lt;P&gt;</button>
+      <button class="btn" data-ins="b">&lt;B&gt;</button>
+      <button class="btn" data-ins="hr">&lt;HR&gt;</button>
+      <button class="btn" data-ins="cmt">&lt;!-- --&gt;</button>
+      <button class="btn ghost" id="rst">Başdaky kod</button>
+    </div>
+    <div class="msg" id="err"></div>
+  </div>
+
+  <div class="card">
+    <h3>Brauzeriň penjiresi</h3>
+    <div class="brow">
+      <div class="bar"><span class="dot"></span><span class="dot"></span><span id="tt">Täze sahypa</span></div>
+      <div class="page" id="pg"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Fon reňki — BGCOLOR</h3>
+    <div class="row tight" id="cols"></div>
+    <div class="note" id="cn">Reňke bas – ol BODY teginiň BGCOLOR buýrugyna ýazylar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Gurluşy ýygna</h3>
+    <div class="goal">Setirlere dogry tertipde bas. Ýalňyş bassaň, hemmesi täzeden başlanýar.</div>
+    <div id="ordbox"></div>
+    <div class="msg" id="om"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ýumuş</h3>
+    <div id="tasks"></div>
+    <div class="row"><button class="btn primary" id="chk">Barla</button></div>
+    <div class="msg" id="tm"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">Jübüt elementli tege <b>konteýner</b> diýilýär. Iň soňky açylan teg
+      birinji ýapylmalydyr. Baş we setir harplaryň tapawudy ýokdur.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §1–§3</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const START =
+`<HTML>
+<HEAD>
+<TITLE>Meniň birinji sahypam</TITLE>
+</HEAD>
+<BODY BGCOLOR=white>
+<!-- şu ýerde sahypanyň mazmuny -->
+<H1>Salam, Watan!</H1>
+<P>Bu meniň ilkinji Web-sahypam.
+</BODY>
+</HTML>`;
+
+/* ------------------------------------------------- mini-brauzeriň hereketlendirijisi */
+const OK = "p br b i u s sup sub small big h1 h2 h3 h4 h5 h6 ul ol li hr font table tr td center a".split(" ");
+const OKA = "align color size face type start border cellspacing cellpadding width height href".split(" ");
+const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function attrs(str) {
+  let a = "", m, r = /([a-zA-Z]+)\s*=\s*("([^"]*)"|'([^']*)'|«([^»]*)»|([^\s>]+))/g;
+  while ((m = r.exec(str))) {
+    const k = m[1].toLowerCase();
+    if (OKA.indexOf(k) < 0) continue;
+    a += ' ' + k + '="' + (m[3] || m[4] || m[5] || m[6] || "").replace(/["<>]/g, "") + '"';
+  }
+  return a;
+}
+
+function body(src) {
+  const m = /<\s*body([^>]*)>([\s\S]*?)<\s*\/\s*body\s*>/i.exec(src);
+  return m ? { at: m[1], txt: m[2] } : { at: "", txt: src.replace(/<\/?\s*(html|head)[^>]*>/gi, "") };
+}
+
+function render(src) {
+  src = src.replace(/<!--[\s\S]*?-->/g, "");
+  const t = /<\s*title\s*>([\s\S]*?)<\s*\/\s*title\s*>/i.exec(src);
+  $("tt").textContent = t ? t[1].trim() || "Täze sahypa" : "Täze sahypa";
+  const b = body(src);
+  let out = "", last = 0, m, re = /<\s*(\/?)\s*([a-zA-Z0-9]+)([^>]*)>/g;
+  while ((m = re.exec(b.txt))) {
+    out += esc(b.txt.slice(last, m.index)); last = re.lastIndex;
+    const n = m[2].toLowerCase();
+    if (OK.indexOf(n) < 0) { out += esc(m[0]); continue; }
+    out += m[1] ? "</" + n + ">" : "<" + n + attrs(m[3]) + ">";
+  }
+  out += esc(b.txt.slice(last));
+  const pg = $("pg");
+  pg.innerHTML = out;
+  const bg = /bgcolor\s*=\s*"?«?([#\w]+)/i.exec(b.at);
+  const tx = /\btext\s*=\s*"?«?([#\w]+)/i.exec(b.at);
+  pg.style.background = bg ? bg[1] : "#fff";
+  pg.style.color = tx ? tx[1] : "#1e2a3a";
+  $("err").textContent = nest(src) || "";
+  $("err").className = "msg bad";
+}
+
+/* iç-içe ýerleşişi barlamak */
+function nest(src) {
+  const st = [], single = ["br", "hr", "img", "basefont", "li", "td", "tr", "p"];
+  let m, re = /<\s*(\/?)\s*([a-zA-Z0-9]+)([^>]*)>/g;
+  src = src.replace(/<!--[\s\S]*?-->/g, "");
+  while ((m = re.exec(src))) {
+    const n = m[2].toLowerCase();
+    if (single.indexOf(n) >= 0) continue;
+    if (!m[1]) st.push(n);
+    else {
+      if (!st.length) return "Artykmaç ýapyjy teg: </" + n + ">";
+      const o = st.pop();
+      if (o !== n) return "Tegleriň tertibi ýalňyş: <" + o + "> ýapylmady, ýöne </" + n + "> geldi.";
+    }
+  }
+  return st.length ? "Ýapylmadyk teg: <" + st[st.length - 1] + ">" : "";
+}
+
+/* ------------------------------------------------------------------ reňkler */
+const COLS = ["Black", "Maroon", "Green", "Olive", "Navy", "Purple", "Teal", "Gray",
+              "Silver", "Red", "Lime", "Yellow", "Blue", "Fuchsia", "Aqua", "White"];
+COLS.forEach(c => {
+  const b = document.createElement("button");
+  b.className = "swatch"; b.style.background = c; b.title = c; b.dataset.c = c;
+  b.onclick = () => {
+    let s = $("src").value;
+    s = /<\s*body[^>]*>/i.test(s)
+      ? s.replace(/<\s*body([^>]*)>/i, (a, at) =>
+          "<BODY" + (/bgcolor/i.test(at) ? at.replace(/bgcolor\s*=\s*"?«?[#\w]+»?"?/i, "BGCOLOR=" + c)
+                                         : at + " BGCOLOR=" + c) + ">")
+      : s;
+    $("src").value = s;
+    document.querySelectorAll(".swatch").forEach(x => x.classList.toggle("sel", x === b));
+    $("cn").innerHTML = "<b>&lt;BODY BGCOLOR=" + c + "&gt;</b> – 16 sany esasy reňkiň biri.";
+    render(s);
+  };
+  $("cols").appendChild(b);
+});
+
+/* -------------------------------------------------------------- gurluş ýygnamak */
+const ORD = ["<HTML>", "<HEAD>", "<TITLE>Sahypanyň ady</TITLE>", "</HEAD>",
+             "<BODY>", "Sahypanyň mazmuny", "</BODY>", "</HTML>"];
+let need = 0;
+function drawOrd() {
+  const box = $("ordbox"); box.innerHTML = "";
+  const sh = ORD.map((t, i) => ({ t, i })).sort(() => Math.random() - .5);
+  sh.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "ord"; b.textContent = o.t; b.dataset.i = o.i;
+    b.onclick = () => {
+      if (+b.dataset.i === need) {
+        b.classList.add("pick"); b.disabled = true; need++;
+        $("om").className = "msg ok";
+        $("om").textContent = need === ORD.length ? "Berekella! Gurluş doly dogry." : need + "/" + ORD.length;
+        if (need === ORD.length) $("om").textContent = "Berekella! Gurluş doly dogry.";
+      } else {
+        need = 0; $("om").className = "msg bad";
+        $("om").textContent = "Bu setir bu ýerde däl. Täzeden başla.";
+        drawOrd();
+      }
+    };
+    box.appendChild(b);
+  });
+}
+
+/* ------------------------------------------------------------------- ýumuşlar */
+const TASKS = [
+  { t: "Sahypanyň ady «Aşgabat» bolsun.",
+    f: s => /<\s*title\s*>\s*Aşgabat\s*<\s*\/\s*title\s*>/i.test(s) },
+  { t: "Fony sary (Yellow) et.", f: s => /bgcolor\s*=\s*"?«?yellow/i.test(s) },
+  { t: "Bir düşündiriş (comment) goş.", f: s => /<!--[\s\S]*?-->/.test(s) },
+  { t: "Birinji derejeli sözbaşy <H1> goý.", f: s => /<\s*h1[^>]*>[\s\S]*?<\s*\/\s*h1\s*>/i.test(s) },
+  { t: "Tegler dogry iç-içe ýerleşsin.", f: s => nest(s) === "" }
+];
+function drawTasks(res) {
+  $("tasks").innerHTML = TASKS.map((x, i) =>
+    '<div class="task">' + (res ? (res[i] ? "✅ " : "⬜️ ") : "• ") + x.t + "</div>").join("");
+}
+
+/* -------------------------------------------------------------------- baglama */
+const INS = {
+  h1: "<H1>Sözbaşy</H1>\n", p: "<P>Täze abzas\n", b: "<B>dok tekst</B>",
+  hr: "<HR SIZE=4 WIDTH=60%>\n", cmt: "<!-- düşündiriş -->\n"
+};
+document.querySelectorAll("[data-ins]").forEach(b => b.onclick = () => {
+  const ta = $("src"), p = ta.selectionStart, v = ta.value;
+  ta.value = v.slice(0, p) + INS[b.dataset.ins] + v.slice(p);
+  render(ta.value);
+});
+$("rst").onclick = () => { $("src").value = START; render(START); };
+$("src").oninput = () => render($("src").value);
+$("chk").onclick = () => {
+  const s = $("src").value, res = TASKS.map(x => x.f(s));
+  drawTasks(res);
+  const n = res.filter(Boolean).length;
+  $("tm").className = n === TASKS.length ? "msg ok" : "msg bad";
+  $("tm").textContent = n === TASKS.length ? "Ähli şert ýerine ýetdi!" : n + "/" + TASKS.length + " ýerine ýetdi.";
+};
+
+$("src").value = START;
+render(START);
+drawOrd();
+drawTasks(null);
+</script>
+</body>
+</html>

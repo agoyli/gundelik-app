@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wakalaryň ähtimallygy — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .coin { text-align: center; }
+  .coin .face { width: 64px; height: 64px; margin: 0 auto; border-radius: 50%;
+                background: linear-gradient(145deg, #f6d365, #d4a017); color: #6b4a00;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 27px; font-weight: 800; box-shadow: inset 0 0 0 4px #e8bf55; }
+  .chart { display: flex; align-items: flex-end; gap: 10px; height: 130px;
+           background: #f7fafd; border-radius: 11px; padding: 10px; }
+  .chart .col2 { flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+                 align-items: center; height: 100%; }
+  .chart .bar { width: 100%; border-radius: 8px 8px 0 0; min-height: 2px;
+                display: flex; align-items: flex-start; justify-content: center;
+                color: #fff; font-size: 12px; font-weight: 700; padding-top: 3px; }
+  .chart .cap { font-size: 12px; color: #5b6b80; margin-top: 4px; }
+  .scale { position: relative; height: 46px; background: #f7fafd; border-radius: 11px;
+           margin-top: 8px; }
+  .scale .ln { position: absolute; left: 22px; right: 22px; top: 22px; height: 5px;
+               border-radius: 4px;
+               background: linear-gradient(90deg, #b4232a, #f0a500, #1d7a3d); }
+  .scale .pin { position: absolute; top: 10px; width: 4px; height: 29px; border-radius: 3px;
+                background: #2456b0; }
+  .scale .t { position: absolute; top: 30px; font-size: 11px; color: #5b6b80;
+              transform: translateX(-50%); }
+  .bins { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 7px; }
+  .bin { background: #f7fafd; border-radius: 11px; padding: 9px; min-height: 70px; }
+  .bin h4 { margin: 0 0 5px; font-size: 12.5px; }
+  .bin span { display: block; background: #fff; border-radius: 8px; padding: 5px 8px;
+              font-size: 12.5px; margin-bottom: 4px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wakalaryň ähtimallygy</h1>
+  <div class="sub">Ähtimallyk · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <h3>Wakanyň görnüşini kesgitle</h3>
+    <div class="goal">Her ýazga bas – ol degişli sütüne geçsin.</div>
+    <div class="row tight" id="pool"></div>
+    <div class="bins" style="margin-top:9px">
+      <div class="bin"><h4 style="color:#1d7a3d">Hökmany (P = 1)</h4><div id="b1"></div></div>
+      <div class="bin"><h4 style="color:#b4232a">Mümkin däl (P = 0)</h4><div id="b0"></div></div>
+      <div class="bin"><h4 style="color:#2456b0">Tötänleýin (0 &lt; P &lt; 1)</h4><div id="bt"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <button class="btn ghost" id="br">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Teňňe okla</h3>
+    <div class="goal">Teňňäniň iki tarapy hem <b>deňmümkinçiliklidir</b>. Köp okladygyňça
+      ýygylyk 0,5-e ýakynlaşýar.</div>
+    <div class="coin" id="coin"><div class="face">?</div><div class="sub" style="margin:2px 0 0">heniz oklanmady</div></div>
+    <div class="row" style="justify-content:center;margin-top:6px">
+      <button class="btn primary" id="c1">1 gezek okla</button>
+      <button class="btn" id="c50">50 gezek</button>
+      <button class="btn" id="c500">500 gezek</button>
+      <button class="btn ghost" id="cr">Başdan</button>
+    </div>
+    <div class="chart" id="ch" style="margin-top:9px"></div>
+    <div class="calc" id="cc" style="margin-top:9px"></div>
+    <div class="hint">Fransuz alymy <b>Býuffon</b> 4040 gezek teňňe oklap, 2048 gezek şekil
+      alypdyr: 2048 : 4040 ≈ 0,51. <b>Pirson</b> 24 000 oklap, 0,5005 ýygylygy alypdyr.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ähtimallygy hasapla</h3>
+    <div class="goal">P(A) = amatly netijeleriň sany : ähli deňmümkinçilikli netijeleriň sany.</div>
+    <div class="slider"><span class="lbl">Amatly netijeler</span>
+      <input type="range" id="m" min="0" max="24" value="10"><span class="out" id="mo"></span></div>
+    <div class="slider"><span class="lbl">Ähli netijeler</span>
+      <input type="range" id="n" min="1" max="250" value="250"><span class="out" id="no"></span></div>
+    <div class="scale" id="sk"></div>
+    <div class="calc" id="pc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kitapdaky meseleler</h3>
+    <div class="row tight" id="ex"></div>
+    <div class="calc" id="exc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, II kitap (2018), §40</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+
+/* ---------------- wakalary toparlamak ---------------- */
+const EV = [
+  ["Ertir Gün dogar", 1, "Adaty şertlerde hökman ýüze çykýar"],
+  ["Suw 100 °C-de gaýnaýar", 1, "Adaty basyşda hemişe şeýle bolýar"],
+  ["Kubda 7 utuk düşer", 0, "Kubda diňe 1–6 utuk bar"],
+  ["Ýanwarda Aşgabatda gar ýagar", "t", "Bolmagy hem, bolmazlygy hem mümkin"],
+  ["Teňňede şekil düşer", "t", "Iki netijäniň biri – deňmümkinçilikli"],
+  ["Daş suwuň ýüzünde ýüzer", 0, "Adaty şertlerde beýle bolmaýar"],
+  ["Lotereýa petegi utar", "t", "Utmagy hem, utmazlygy hem mümkin"],
+];
+let left = [];
+function bins() {
+  left = EV.map((_, i) => i);
+  ["b1", "b0", "bt"].forEach(k => $(k).innerHTML = "");
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  pool();
+}
+function pool() {
+  $("pool").innerHTML = left.map(i => `<button class="btn" data-i="${i}">${EV[i][0]}</button>`)
+    .join("") || "<span class='hint' style='margin:0'>hemmesi ýerleşdirildi</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, [txt, kind, why] = EV[i];
+    $(kind === 1 ? "b1" : kind === 0 ? "b0" : "bt").innerHTML += `<span>${txt}</span>`;
+    left = left.filter(x => x !== i);
+    $("bmsg").innerHTML = `<b>${txt}</b> – ` +
+      (kind === 1 ? "hökmany waka, P = 1" : kind === 0 ? "mümkin däl waka, P = 0"
+        : "tötänleýin waka, 0 &lt; P &lt; 1") + `. ${why}.`;
+    $("bmsg").className = "msg ok";
+    pool();
+  });
+}
+$("br").onclick = bins;
+
+/* ---------------- teňňe ---------------- */
+let head = 0, tail = 0, last = null;
+function toss(k) {
+  for (let i = 0; i < k; i++) {
+    last = Math.random() < 0.5;
+    last ? head++ : tail++;
+  }
+  // soňky netijäni görkezýäris: şekil ýa-da san tarapy
+  $("coin").innerHTML = `<div class="face">${last ? "★" : "5"}</div>` +
+    `<div class="sub" style="margin:2px 0 0">soňky netije: ` +
+    `<b>${last ? "şekil" : "san"}</b></div>`;
+  chart();
+}
+function chart() {
+  const tot = head + tail;
+  const max = Math.max(head, tail, 1);
+  $("ch").innerHTML = [["şekil", head, "#2456b0"], ["san", tail, "#e5007d"]].map(([lab, v, c]) =>
+    `<div class="col2"><div class="bar" style="height:${(v / max) * 100}%;background:${c}">${v}</div>
+      <div class="cap">${lab}</div></div>`).join("");
+  $("cc").innerHTML = tot === 0
+    ? `Heniz oklanmady. Teňňäniň iki tarapy hem deňmümkinçiliklidir: P = 1 : 2 = 0,5.`
+    : `synaglaryň sany: <b>${tot}</b><br>` +
+      `şekil düşen sany: <b>${head}</b><br>` +
+      `ýygylyk = ${head} : ${tot} = <b>${N((head / tot).toFixed(3))}</b><br>` +
+      `nazary ähtimallyk: <b>0,5</b> – synag näçe köp bolsa, ýygylyk şonça ýakynlaşýar`;
+}
+$("c1").onclick = () => toss(1);
+$("c50").onclick = () => toss(50);
+$("c500").onclick = () => toss(500);
+$("cr").onclick = () => {
+  head = 0; tail = 0; last = null;
+  $("coin").innerHTML = '<div class="face">?</div>' + '<div class="sub" style="margin:2px 0 0">heniz oklanmady</div>';
+  chart();
+};
+
+/* ---------------- P hasaplamak ---------------- */
+function prob() {
+  const n = +$("n").value;
+  $("m").max = n;
+  const m = Math.min(+$("m").value, n);
+  $("mo").textContent = m; $("no").textContent = n;
+  const p = m / n;
+  $("sk").innerHTML = `<div class="ln"></div>
+    <div class="pin" style="left:calc(22px + ${p} * (100% - 44px) - 2px)"></div>
+    <div class="t" style="left:22px">0</div>
+    <div class="t" style="left:50%">0,5</div>
+    <div class="t" style="right:14px">1</div>`;
+  $("pc").innerHTML =
+    `P(A) = ${m} : ${n} = <b>${N((Math.round(p * 1000) / 1000))}</b> = ` +
+    `<b>${N(Math.round(p * 1000) / 10)}%</b><br>` +
+    (p === 0 ? `amatly netije ýok – waka <b>mümkin däldir</b>`
+      : p === 1 ? `ähli netijeler amatly – waka <b>hökmanydyr</b>`
+        : `0 bilen 1-iň arasynda – waka <b>tötänleýindir</b>`);
+}
+["m", "n"].forEach(k => $(k).addEventListener("input", prob));
+
+/* ---------------- mysallar ---------------- */
+const EX = [
+  ["Teňňe", "P = 1 : 2 = 0,5 = 50%", "Iki deňmümkinçilikli netijeden biri amatly."],
+  ["24 soragnama", "P = 1 : 24 ≈ 0,042",
+   "24 soragnamadan anyk birini çekmegiň ähtimallygy 1/24-e deňdir."],
+  ["250 lotereýa peteginden 10-sy utýar", "P = 10 : 250 = 1/25 = 0,04 = 4%",
+   "Amatly netijeleriň sanyny ähli netijeleriň sanyna bölýäris."],
+  ["Býuffonyň synagy", "2048 : 4040 ≈ 0,51",
+   "4040 gezek oklap alnan ýygylyk nazary 0,5-e örän ýakyn."],
+  ["1, 2, 3 sifrlerden ikibelgili san", "3 · 3 = 9 sany",
+   "Sifrler gaýtalanyp bilýär: her orun üçin 3 mümkinçilik – köpeltmek düzgüni."],
+];
+$("ex").innerHTML = EX.map((e, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${e[0]}</button>`).join("");
+$("ex").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("ex").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const e = EX[+b.dataset.i];
+  $("exc").innerHTML = `<b>${e[1]}</b><br>${e[2]}`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Hökmany wakanyň ähtimallygy näçä deň?", ["0", "0,5", "1", "100"], 2],
+  ["Teňňe oklananda şekiliň düşmeginiň ähtimallygy",
+   ["0,25", "0,5", "0,75", "1"], 1],
+  ["250 petekden 10-sy utsa, utmagyň ähtimallygy",
+   ["1/10", "1/25", "1/250", "10"], 1],
+  ["«Kubda 7 utuk düşer» – bu nähili waka?",
+   ["Hökmany", "Tötänleýin", "Mümkin däl", "Deňmümkinçilikli"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+bins(); chart(); prob();
+$("ex").querySelector("button").click();
+</script>
+</body>
+</html>

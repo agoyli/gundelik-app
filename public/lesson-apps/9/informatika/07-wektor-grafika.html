@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wektor grafika — 9-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .pair { display: flex; gap: 12px; flex-wrap: wrap; }
+  .half { flex: 1; min-width: 150px; text-align: center; }
+  .half .cap { font-size: 13px; font-weight: 700; color: #5b6b80; margin-bottom: 6px; }
+  .box { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; height: 168px;
+         overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .box img, .box svg { image-rendering: pixelated; }
+  .verdict { font-size: 12.5px; margin-top: 6px; font-weight: 700; }
+  .mix { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .chip { width: 84px; height: 84px; border-radius: 14px; border: 2px solid #d6e0ee; }
+  .rgbv { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; }
+  .cmyk { display: flex; gap: 6px; }
+  .cmyk div { flex: 1; text-align: center; font-size: 11.5px; color: #5b6b80; }
+  .cmyk i { display: block; height: 26px; border-radius: 7px; margin-bottom: 3px; }
+  .fmts { display: flex; flex-direction: column; gap: 6px; }
+  .fmt { display: flex; gap: 9px; align-items: center; background: #f7fafd; border-radius: 11px;
+         padding: 9px 11px; font-size: 14px; cursor: pointer; }
+  .fmt code { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700;
+              color: #2456b0; width: 54px; flex: 0 0 auto; }
+  .fmt .d { color: #93a2b5; font-size: 13px; }
+  .fmt.open .d { color: #5b6b80; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wektor grafikasy</h1>
+  <div class="sub">Rastr we wektor, reňk modelleri, CorelDRAW · Informatika · 9-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Möçberi ulalt we iki şekili deňeşdir. Rastr nokatlardan durýar,
+      wektor bolsa matematiki formulalardan gurulýar.</div>
+    <div class="pair">
+      <div class="half">
+        <div class="cap">Rastr (nokatlardan)</div>
+        <div class="box"><canvas id="raster" width="150" height="150"></canvas></div>
+        <div class="verdict" id="rv"></div>
+      </div>
+      <div class="half">
+        <div class="cap">Wektor (formuladan)</div>
+        <div class="box"><svg id="vector" width="150" height="150" viewBox="0 0 30 30"></svg></div>
+        <div class="verdict" style="color:#1d7a3d">Hili üýtgemeýär</div>
+      </div>
+    </div>
+    <div class="slider" style="margin-top:12px"><span class="lbl">Möçber</span>
+      <input type="range" id="zoom" min="10" max="120" value="10"><span class="out" id="zo">1×</span></div>
+    <div class="note" id="zexpl"></div>
+  </div>
+
+  <div class="card">
+    <h3>RGB reňk modeli</h3>
+    <div class="goal">Ekran üçin <b>RGB</b> ulanylýar: gyzyl, ýaşyl we gök ýagtylyklar
+      goşulýar. Her düzüjiniň bahasy 0-dan 255 aralygynda üýtgeýär.</div>
+    <div class="mix">
+      <div class="chip" id="chip"></div>
+      <div style="flex:1;min-width:180px">
+        <div class="slider"><span class="lbl">R gyzyl</span>
+          <input type="range" id="R" min="0" max="255" value="255"><span class="out" id="Ro">255</span></div>
+        <div class="slider"><span class="lbl">G ýaşyl</span>
+          <input type="range" id="G" min="0" max="255" value="255"><span class="out" id="Go">255</span></div>
+        <div class="slider"><span class="lbl">B gök</span>
+          <input type="range" id="B" min="0" max="255" value="0"><span class="out" id="Bo">0</span></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info rgbv" id="hex"></span>
+      <span class="score" id="rgbname"></span>
+    </div>
+    <div class="note" style="margin-top:10px"><b>CMYK</b> – çaphana üçin: mawy, goýy gyrmyzy,
+      sary we gara boýaglar. Şol bir reňkiň CMYK-daky bahalary:</div>
+    <div class="cmyk" id="cmyk" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Grafiki faýllaryň formatlary</h3>
+    <div class="fmts" id="fmts"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Wektor şekilleriň esasynda ýatýan çyzyga <b>sudur</b> diýilýär, sudury dolduran reňke
+      bolsa <b>boýag</b>. Eger obýektde boýag we abris ýok bolsa, ol ekranda görünmeýär.
+      CorelDRAW-yň hususy faýllary <b>.cdr</b> giňeltmede saklanýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 9 (2021)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// draw a small "9" once at 30×30, then blow it up — that is exactly the book's 3.1-nji surat
+const ctx = $("raster").getContext("2d");
+const src = document.createElement("canvas"); src.width = src.height = 30;
+const s = src.getContext("2d");
+s.fillStyle = "#fff"; s.fillRect(0, 0, 30, 30);
+s.fillStyle = "#2456b0"; s.font = "bold 26px Georgia"; s.textAlign = "center"; s.textBaseline = "middle";
+s.fillText("9", 15, 16);
+
+// Zooming into the middle of a "9" lands inside the bowl's white hole, so pick a centre
+// that actually sits on the stroke — the left edge of the bowl, found from the pixels.
+const ZC = (() => {
+  const d = s.getImageData(0, 0, 30, 30).data;
+  const ink = [];
+  for (let y = 0; y < 30; y++)
+    for (let x = 0; x < 30; x++)
+      if (d[(y * 30 + x) * 4] < 160) ink.push({ x, y });
+  if (!ink.length) return { x: 15, y: 15 };
+  const minY = Math.min(...ink.map(p => p.y)), maxY = Math.max(...ink.map(p => p.y));
+  const midY = (minY + maxY) / 2;
+  // among pixels near the vertical middle of the glyph, take the leftmost stroke
+  const band = ink.filter(p => Math.abs(p.y - midY) <= 1);
+  const pick = (band.length ? band : ink).reduce((a, b) => (b.x < a.x ? b : a));
+  return { x: pick.x + 0.5, y: pick.y + 0.5 };
+})();
+
+// At 1× show the whole image; as it magnifies, drift the frame onto the stroke.
+function centre(z) {
+  const t = Math.min(1, Math.max(0, (z - 1) / 1.5));
+  return { x: 15 + (ZC.x - 15) * t, y: 15 + (ZC.y - 15) * t };
+}
+
+function drawVector(z) {
+  const v = $("vector");
+  const side = 30 / z, c = centre(z);
+  v.setAttribute("viewBox", `${c.x - side / 2} ${c.y - side / 2} ${side} ${side}`);
+  v.innerHTML = `<rect x="-10" y="-10" width="50" height="50" fill="#fff"/>
+    <text x="15" y="16" font-family="Georgia" font-weight="bold" font-size="26"
+          text-anchor="middle" dominant-baseline="middle" fill="#2456b0">9</text>`;
+}
+
+function zoom() {
+  const z = +$("zoom").value / 10;
+  $("zo").textContent = z.toFixed(1).replace(/\.0$/, "") + "×";
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 150, 150);
+  const side = 30 / z, c = centre(z);
+  ctx.drawImage(src, c.x - side / 2, c.y - side / 2, side, side, 0, 0, 150, 150);
+  drawVector(z);
+
+  const px = Math.round(150 / (30 / z * 5) * 10) / 10;
+  $("rv").textContent = z <= 1.5 ? "Hili gowy" : z <= 4 ? "Nokatlar görnüp başlady" : "Hili peseldi";
+  $("rv").style.color = z <= 1.5 ? "#1d7a3d" : z <= 4 ? "#b25b12" : "#b02424";
+  $("zexpl").innerHTML = z <= 1.5
+    ? "Adaty möçberde iki şekil hem birmeňzeş görünýär. Süýşürgiji saga çek."
+    : `Möçber <b>${z.toFixed(1)}×</b>. Rastr şekilde her nokat kwadrada öwrüldi – hili peseldi.
+       Wektor şekil bolsa formuladan täzeden gurulýar, şonuň üçin gyralary tekiz galýar.`;
+}
+
+// ---- RGB → CMYK ----
+function rgb2cmyk(r, g, b) {
+  const R = r / 255, G = g / 255, B = b / 255;
+  const k = 1 - Math.max(R, G, B);
+  if (k === 1) return [0, 0, 0, 100];
+  return [ (1 - R - k) / (1 - k) * 100, (1 - G - k) / (1 - k) * 100,
+           (1 - B - k) / (1 - k) * 100, k * 100 ].map(v => Math.round(v));
+}
+const NAMES = [
+  [[255,255,255],"ak"], [[0,0,0],"gara"], [[255,0,0],"gyzyl"], [[0,255,0],"ýaşyl"],
+  [[0,0,255],"gök"], [[255,255,0],"sary"], [[255,0,255],"goýy gyrmyzy"], [[0,255,255],"mawy"]
+];
+function mix() {
+  const r = +$("R").value, g = +$("G").value, b = +$("B").value;
+  ["R", "G", "B"].forEach(k => $(k + "o").textContent = $(k).value);
+  const hex = "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+  $("chip").style.background = hex;
+  $("hex").textContent = `R=${r} G=${g} B=${b}`;
+
+  const near = NAMES.find(([c]) => c.every((v, i) => Math.abs(v - [r, g, b][i]) < 20));
+  $("rgbname").textContent = near
+    ? `Bu – ${near[1]} reňk` + (near[1] === "sary" ? " (gyzyl + ýaşyl, gök nol)" : "")
+    : "";
+
+  const [c, m, y, k] = rgb2cmyk(r, g, b);
+  $("cmyk").innerHTML = [["C", c, "#00b7eb"], ["M", m, "#e5007d"], ["Y", y, "#ffe800"], ["K", k, "#1e2a3a"]]
+    .map(([n, v, col]) => `<div><i style="background:${col};opacity:${.15 + v / 120}"></i>${n} ${v}%</div>`).join("");
+}
+
+const FORMATS = [
+  [".cdr", "CorelDRAW-yň hususy wektor formaty. Grafiki dokumentleri saklamak we geçirmek üçin."],
+  [".cdt", "CorelDRAWTemplate – ülňi (şablon) faýllary saklaýar."],
+  [".pdf", "Portable Document Format. Programmalaryň arasynda geçirmek we çap etmek üçin."],
+  [".svg", "Wektor şekilleri Internet sahypalarynda ýerleşdirmek üçin."],
+  [".ai",  "Adobe Illustrator redaktorda işlemeli bolanda saýlanýar."],
+  [".emf", "Şekili Word tekst dokumentinde goýmak üçin; goýlandan soň hem redaktirlenýär."],
+  [".jpg", "Rastr format – eksport edilende ulanylýar."]
+];
+FORMATS.forEach(([c, d]) => {
+  const e = document.createElement("div");
+  e.className = "fmt";
+  e.innerHTML = `<code>${c}</code><span class="d">${d}</span>`;
+  e.onclick = () => e.classList.toggle("open");
+  $("fmts").appendChild(e);
+});
+
+$("zoom").addEventListener("input", zoom);
+["R", "G", "B"].forEach(k => $(k).addEventListener("input", mix));
+zoom(); mix();
+</script>
+</body>
+</html>

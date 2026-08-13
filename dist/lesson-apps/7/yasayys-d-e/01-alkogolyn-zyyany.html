@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alkogolyň ynsan saglygyna zyýany — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Alkogol we onuň ynsan saglygyna ýetirýän zyýany</h1>
+  <div class="sub">Ýaşaýyş-durmuş esaslary · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Alkogol – adamyň ähli synalarynyň işine zyýanly täsir edýän <b>öýjük zäheridir</b>. Spirtli içgilerde serhoşlyk döredýän <b>etil spirti</b> bardyr.</div>
+    <div class="tbl" style="margin-top:8px">gana 2 minutdan soň düşýär&nbsp;&nbsp;|&nbsp;&nbsp; 80 g-yň täsiri 24 sagat&nbsp;&nbsp;|&nbsp;&nbsp; 1 kg agrama 7–8 g arassa spirt – ölüm howply</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy syna zyýan ýetýär?</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Netije haýsy syna bilen baglanyşykly?</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="bagyr">Bagyr</button><button class="btn" data-k="yurek">Ýürek we gan damarlary</button><button class="btn" data-k="beyni">Kelle beýnisi</button><button class="btn" data-k="mez">Aşgazanasty mäz</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Ýaşaýyş-durmuş esaslary 7 · 29–32-nji sahypalar</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Sirroz – çüýreme keseli döreýär.", "bagyr", "Bagyr bedeniň esasy biohimiki barlaghanasydyr."], ["Nekroz – dargama keseli döreýär.", "mez", "Spirtli içgi aşgazanasty mäze zyýanly täsir edýär."], ["Pikirlenmek ukyby we ýatkeşlik peselýär.", "beyni", "Alkogol uly ýarym şarlaryň gabygyna zyýan ýetirýär."], ["Gyzyl gan bedenjikleri ýelmeşip, kislorod barmaýar.", "yurek", "Netijede öýjükler ölýär, ýürek çalt-çaltdan işleýär."], ["Ownuk damarlar ilki giňeýär, soň uzak wagt gysylýar.", "yurek", "Şeýdip gan aýlanyşy bozulýar."], ["Ýaglar dargamagyny bes edip, diwara çökýär.", "bagyr", "Bu ysmaz keseline eltip bilýär."], ["Gaýtarma, başaýlanma we huşuny ýitirme ýüze çykýar.", "beyni", "Ilkinji gezek içilende täsiri has güýçli bolýar."]];
+var KN = {"bagyr": "bagyr", "yurek": "ýürek we gan damarlary", "beyni": "kelle beýnisi", "mez": "aşgazanasty mäz"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+var Q = [["Spirtli içgilerdäki zyýanly madda haýsy?", ["Etil spirti", "Endorfin", "Adrenalin"], 0], ["Alkogol gana näçe wagtdan düşýär?", ["2 minutdan soň", "2 sagatdan soň", "1 günden soň"], 0], ["Bagryň zaýalanmagy haýsy kesele eltýär?", ["Sirroz", "Nekroz", "Gipertoniýa"], 0], ["Alkogolyň zyýany barada haýsy resminama kabul edildi?", ["«Alkogolyň zyýanly täsiriniň öňüni almak hakynda» Kanun", "Ýol hereketi hakynda düzgün", "Bilim hakynda Kanun"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

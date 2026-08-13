@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Göni we ters proporsionallyk — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 17px; line-height: 2; text-align: center; font-weight: 700; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 17px; line-height: 1.6; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 50px; font-size: 16px; font-weight: 700; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; }
+  .grid div { background: #f7fafd; border-radius: 8px; padding: 8px 2px; font-size: 15px; font-weight: 700; }
+  .grid .hd { background: #e3edfd; font-size: 13px; color: #33506f; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Göni we ters proporsional ululyklar barada düşünje</h1>
+  <div class="sub">Algebra · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">x-iň bahasy birnäçe esse ulalanda y hem şonça esse ulalsa,
+      y ululyk x ululyga <b>göni proporsionaldyr</b>. y şonça esse kemelse,
+      ol <b>ters proporsionaldyr</b>. k sana proporsionallyk koeffisiýenti diýilýär.</div>
+    <div class="tbl" style="margin-top:8px">y : x = k&nbsp;&nbsp;|&nbsp;&nbsp;x · y = k</div>
+  </div>
+
+  <div class="card">
+    <h3>Baglanyşygy kesgitle</h3>
+    <div class="task" id="task"></div>
+    <div class="grid" id="grid" style="margin-top:8px"></div>
+    <div class="goal" id="ask" style="margin-top:8px"></div>
+    <div class="kinds" id="kinds">
+      <button class="btn" data-k="goni">Göni proporsional</button>
+      <button class="btn" data-k="ters">Ters proporsional</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="row"><button class="btn primary" id="next">Indiki mysal</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Näbellini tap</h3>
+    <div class="task" id="ctask"></div>
+    <div class="goal" id="cask"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><button class="btn ghost" id="cnext">Indiki mesele</button></div>
+    <div class="score" id="csc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Algebra 7 · 87–90-njy sahypalar</div>
+</div>
+
+<script>
+// [tekst, görnüş, x ady, y ady, x bahalary, y bahalary, k]
+var T = [
+  ["Kwadratyň perimetri onuň tarapyna baglydyr: P = 4a.", "goni", "a", "P",
+   [1, 2, 3, 5], [4, 8, 12, 20], "P : a = 4"],
+  ["30 km ýoly dürli tizlik bilen geçmegiň wagty.", "ters", "v", "t",
+   [5, 10, 15, 30], [6, 3, 2, 1], "v · t = 30"],
+  ["Deňölçegli hereketde 60 km/sag tizlik bilen geçilen ýol.", "goni", "t", "S",
+   [1, 2, 3, 4], [60, 120, 180, 240], "S : t = 60"],
+  ["Meýdany 36 kw. sm bolan gönüburçlugyň taraplary.", "ters", "a", "b",
+   [2, 3, 4, 6], [18, 12, 9, 6], "a · b = 36"]
+];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+function show() {
+  var t = T[ti];
+  document.getElementById("task").textContent = t[0];
+  var h = "", rows = [[t[2]].concat(t[4]), [t[3]].concat(t[5])];
+  for (var r = 0; r < 2; r++) {
+    for (var c = 0; c < 5; c++) {
+      if (c === 0) h += '<div class="hd">' + rows[r][0] + "</div>";
+      else h += "<div>" + rows[r][c] + "</div>";
+    }
+  }
+  document.getElementById("grid").innerHTML = h;
+  document.getElementById("ask").textContent = "Bu ululyklar nähili baglanyşykda?";
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  tlock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var k = this.getAttribute("data-k"), t = T[ti], m = document.getElementById("msg");
+    if (k === t[1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[6] + "."; }
+    else {
+      m.className = "msg bad";
+      m.textContent = "Ýalňyş. Bu ýerde " + t[6] + ", ýagny " +
+        (t[1] === "goni" ? "göni" : "ters") + " proporsionallyk.";
+    }
+    document.getElementById("sc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+show();
+
+// [tekst, sorag, jogap, düşündiriş]
+var C = [
+  ["2,5 kg erikden 750 g kişde alynýar.", "12,5 kg erikden näçe gram kişde alnar?",
+   3750, "12,5 : 2,5 = 5 esse köp, diýmek 750 · 5 = 3750 g."],
+  ["Işçi 6 sagatda 19 önüm ýasaýar.", "95 önüm üçin näçe sagat gerek?",
+   30, "95 : 19 = 5 esse köp, diýmek 6 · 5 = 30 sagat."],
+  ["Howzy 2,5 sagatda dolduryp bolýar.", "Göwrümi 5 esse kiçi howuz näçe sagatda dolar?",
+   Math.round(2.5 / 5 * 10) / 10, "2,5 : 5 = 0,5 sagat."],
+  ["3 traktor meýdany 60 sagatda sürýär.", "12 traktor şol meýdany näçe sagatda sürer?",
+   15, "12 : 3 = 4 esse köp, diýmek 60 : 4 = 15 sagat."]
+];
+var ci = 0, cd = 0, cok = 0, clock = 0;
+function showC() {
+  document.getElementById("ctask").textContent = C[ci][0];
+  document.getElementById("cask").textContent = C[ci][1];
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  clock = 0;
+}
+var CV = [0.5, 5, 12, 15, 20, 24, 30, 45, 150, 375, 1500, 3750];
+var h = "";
+for (var i = 0; i < CV.length; i++) {
+  var lbl = String(CV[i]).replace(".", ",");
+  h += '<button class="btn" data-n="' + CV[i] + '">' + lbl + "</button>";
+}
+document.getElementById("nums").innerHTML = h;
+var cb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < cb.length; i++) {
+  cb[i].onclick = function () {
+    if (clock) return;
+    clock = 1; cd++;
+    var v = parseFloat(this.getAttribute("data-n")), c = C[ci], m = document.getElementById("cmsg");
+    if (Math.abs(v - c[2]) < 1e-9) { cok++; m.className = "msg ok"; m.textContent = "Dogry! " + c[3]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + c[3]; }
+    document.getElementById("csc").textContent = "Netije: " + cok + " / " + cd;
+  };
+}
+document.getElementById("cnext").onclick = function () { ci = (ci + 1) % C.length; showC(); };
+showC();
+
+var Q = [
+  ["Göni proporsional ululyklar üçin haýsy deňlik dogry?", ["y : x = k", "x · y = k", "x + y = k"], 0],
+  ["Ters proporsional ululyklar üçin haýsy deňlik dogry?", ["x · y = k", "y : x = k", "x – y = k"], 0],
+  ["Tizlik 2 esse ulalsa, şol bir ýoly geçmek üçin wagt nähili üýtgeýär?",
+   ["2 esse kemelýär", "2 esse ulalýar", "üýtgemeýär"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýazuwyň dürslügi — 9-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .doc { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; padding: 14px;
+         font-size: 16px; line-height: 2; }
+  .w { cursor: pointer; padding-bottom: 2px; }
+  .w.sp { text-decoration: underline wavy #e2574c 2px; text-underline-offset: 4px; }
+  .w.gr { text-decoration: underline wavy #1d7a3d 2px; text-underline-offset: 4px; }
+  .w.fixed { background: #e0f5e6; border-radius: 3px; }
+  .menu { position: fixed; z-index: 20; background: #fff; border-radius: 12px;
+          box-shadow: 0 8px 26px rgba(30,42,58,.22); padding: 6px; min-width: 190px; }
+  .menu .it { padding: 10px 12px; border-radius: 8px; font-size: 15px; cursor: pointer; }
+  .menu .it:hover { background: #eef4fe; }
+  .menu .it.b { font-weight: 700; }
+  .menu .sep { height: 1px; background: #eef2f8; margin: 5px 0; }
+  .menu .it.gray { color: #93a2b5; font-size: 13.5px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; color: #5b6b80; }
+  .legend span i { display: inline-block; width: 26px; border-bottom: 2px solid; margin-right: 5px;
+                   vertical-align: 3px; }
+  .langs { display: flex; gap: 7px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ýazuwyň dürslügini barlamak</h1>
+  <div class="sub">Рецензирование → Правописание · Informatika · 9-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Çyzylan sözüň üstüne bas – gapdal menýu düzediş nusgalaryny hödürlär.
+      Ýöne programma <b>hemişe</b> dogry nusgany teklip edip bilmeýär.</div>
+    <div class="doc" id="doc"></div>
+    <div class="legend" style="margin-top:10px">
+      <span><i style="border-color:#e2574c"></i>orfografik ýalňyş</span>
+      <span><i style="border-color:#1d7a3d"></i>punktuasiýa / stil</span>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="score" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barlagyň dili</h3>
+    <div class="goal">Barlag netijesine ulanylýan diliň täsiri bardyr:
+      <b>Рецензирование → Язык</b>.</div>
+    <div class="langs" id="langs"></div>
+    <div class="hint" id="langInfo"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kömekçi sözlük</h3>
+    <div class="goal">Sözlükde ýok, ýöne dogry ýazylan sözi <b>Добавить в словарь</b> bilen
+      goşup bolýar. Şondan soň ol çyzylmaýar.</div>
+    <div class="row"><span class="score" id="dict">Sözlüge goşulan söz ýok</span></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Orfografiýa</b> – sözleriň dürs ýazuw kadasy, <b>grammatika</b> – sözlemiň
+      gurnalyşynda sözleriň ýasalyşynyň we baglanyşygynyň kadasy. Programma sözleri öz
+      sözlügindäki nusgalar bilen deňeşdirýär. Barlag serişdeleri ähli ýalňyşlyklary tapyp
+      bilmeýär, hatda dogry ýazylan sözi ýalňyş hökmünde hem görkezip biler.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 9 (2021)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+// kind: sp = orfografik, gr = punktuasiýa/stil, ok = dogry (ýöne sözlükde ýok bolmagy mümkin)
+const WORDS = [
+  { t: "Mekdebimiziň", k: "none" },
+  { t: "howlusynda", k: "none" },
+  { t: "köp", k: "none" },
+  { t: "sanly", k: "none" },
+  { t: "agaçlar", k: "none" },
+  { t: "ekildi", k: "none" },
+  { t: ",", k: "gr", fix: [], why: "Punktuasiýa: sanaw däl ýerde otur artykmaç. Programma teklip bermeýär – ýalňyşy özüň düzetmeli." },
+  { t: "olar", k: "none" },
+  { t: "ýylyň", k: "none" },
+  { t: "dowamynda", k: "none" },
+  { t: "gögerdi", k: "none" },
+  { t: ".", k: "none" },
+  { t: "Villoge", k: "sp", fix: ["Village", "Villager", "Villages"], why: "Söz sözlükde ýok. Programma üç sany düzediş nusgasyny hödürleýär." },
+  { t: "mekdebi", k: "none" },
+  { t: "biziň", k: "none" },
+  { t: "obamyzda", k: "none" },
+  { t: "ýerleşýär", k: "none" },
+  { t: ".", k: "none" },
+  { t: "Okuwçylar", k: "none" },
+  { t: "educm", k: "sp", fix: [], why: "Söz sözlükde ýok, emma programma bu ýerde düzediş nusgasyny hödürläp bilmeýär." },
+  { t: "sözüni", k: "none" },
+  { t: "ýazdylar", k: "none" },
+  { t: ".", k: "none" },
+  { t: "Köýtendag", k: "sp", fix: [], dict: true, why: "Söz dogry ýazylan – bu ýer ady. Programmanyň sözlüginde ýok, şonuň üçin çyzylýar. Ony sözlüge goşup bolýar." },
+  { t: "biziň", k: "none" },
+  { t: "iň", k: "none" },
+  { t: "beýik", k: "none" },
+  { t: "dagymyzdyr", k: "none" },
+  { t: ".", k: "none" }
+];
+let fixed = new Set(), added = [], lang = "türkmençe";
+
+function render() {
+  const D = $("doc"); D.innerHTML = "";
+  WORDS.forEach((w, i) => {
+    if (w.k === "none") { D.append(w.t + " "); return; }
+    const s = document.createElement("span");
+    const off = fixed.has(i) || (w.dict && added.includes(w.t)) || (lang === "iňlisçe" && w.t === "Village");
+    s.className = "w " + (off ? "fixed" : w.k);
+    s.textContent = w.t;
+    s.onclick = e => open(e, i);
+    D.appendChild(s); D.append(" ");
+  });
+  const bad = WORDS.filter((w, i) => w.k !== "none" && !fixed.has(i) && !(w.dict && added.includes(w.t))).length;
+  $("score").textContent = `Çyzylan ýer: ${bad} · düzedilen: ${fixed.size}`;
+  $("dict").textContent = added.length
+    ? "Sözlüge goşuldy: " + added.join(", ")
+    : "Sözlüge goşulan söz ýok";
+}
+
+let menu = null;
+function close() { if (menu) { menu.remove(); menu = null; } }
+document.addEventListener("click", e => { if (menu && !menu.contains(e.target)) close(); }, true);
+
+function open(e, i) {
+  e.stopPropagation(); close();
+  const w = WORDS[i];
+  const m = document.createElement("div");
+  m.className = "menu";
+  const r = e.target.getBoundingClientRect();
+  m.style.left = Math.min(window.innerWidth - 210, r.left) + "px";
+  m.style.top = (r.bottom + 6) + "px";
+
+  if (w.fix && w.fix.length) {
+    w.fix.forEach((f, n) => {
+      const d = document.createElement("div");
+      d.className = "it" + (n === 0 ? " b" : "");
+      d.textContent = f;
+      d.onclick = () => { WORDS[i].t = f; fixed.add(i); close(); done(w.why); };
+      m.appendChild(d);
+    });
+  } else {
+    const d = document.createElement("div");
+    d.className = "it gray"; d.textContent = "(Вариантов нет)";
+    m.appendChild(d);
+  }
+  m.innerHTML += '<div class="sep"></div>';
+  const skip = document.createElement("div");
+  skip.className = "it"; skip.textContent = "Пропустить все";
+  skip.onclick = () => { fixed.add(i); close(); done("Söz goýberildi – indi ol çyzylmaýar."); };
+  m.appendChild(skip);
+  const add = document.createElement("div");
+  add.className = "it"; add.textContent = "Добавить в словарь";
+  add.onclick = () => {
+    if (!added.includes(w.t)) added.push(w.t);
+    close(); done(`«${w.t}» kömekçi sözlüge goşuldy. Indi programma ony tanaýar.`);
+  };
+  m.appendChild(add);
+
+  document.body.appendChild(m); menu = m;
+  $("msg").textContent = w.why; $("msg").className = "msg";
+}
+
+function done(t) { $("msg").textContent = t; $("msg").className = "msg ok"; render(); }
+
+["türkmençe", "rus", "iňlis (ABŞ)"].forEach(l => {
+  const b = document.createElement("button");
+  b.className = "btn" + (l === "türkmençe" ? " sel" : ""); b.textContent = l;
+  b.onclick = () => {
+    lang = l === "iňlis (ABŞ)" ? "iňlisçe" : l;
+    [...$("langs").children].forEach(x => x.className = "btn");
+    b.className = "btn sel";
+    $("langInfo").innerHTML = lang === "iňlisçe"
+      ? "Dil <b>iňlisçe</b> saýlandy. Indi iňlis sözi «Village» dogry hasaplanýar, emma türkmen sözleri ýalňyş hökmünde görkeziler."
+      : `Dil <b>${l}</b> saýlandy. Barlag şol diliň sözlügi boýunça geçirilýär.`;
+    render();
+  };
+  $("langs").appendChild(b);
+});
+$("langInfo").innerHTML = "Dil <b>türkmençe</b> saýlanan. Başga dili synap gör.";
+
+render();
+</script>
+</body>
+</html>

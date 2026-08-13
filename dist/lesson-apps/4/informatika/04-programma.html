@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýerine ýetiriji üçin programma — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 14px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 11px;
+               max-width: 100%; height: auto; }
+  .cmds { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 7px; }
+  .cmds button { min-height: 48px; font-size: 13.5px; }
+  .prog { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .prog div { background: #f7fafd; border-radius: 12px; padding: 10px; font-size: 13px;
+              font-family: ui-monospace, Menlo, monospace; line-height: 1.75;
+              min-height: 60px; }
+  .prog h4 { margin: 0 0 5px; font-size: 12px; color: #2456b0; font-family: system-ui; }
+  .prog .now { background: #dbe7ff; border-radius: 5px; }
+  .prog .done { color: #93a2b5; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ýerine ýetiriji Galam üçin programma</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Kitap: «<b>Programma</b> – bu ýerine ýetirijileriň buýruklarynyň
+      we kompýuteriň kömegi bilen ýerine ýetirilýän algoritmleriň ýazgysydyr.»
+      Programma <b>iňlis dilinde</b> ýazylýar.</div>
+    <div class="stage" id="st"></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="task"></span>
+      <span class="badge purple" id="cnt"></span>
+    </div>
+
+    <div class="sub" style="margin:10px 0 5px">Näçe öýjük?</div>
+    <div class="cmds" id="nsel"></div>
+
+    <div class="sub" style="margin:10px 0 5px">Buýruklar:</div>
+    <div class="cmds">
+      <button class="btn" data-c="Up">Ýokary</button>
+      <button class="btn" data-c="Down">Aşak</button>
+      <button class="btn" data-c="Left">Çepe</button>
+      <button class="btn" data-c="Right">Saga</button>
+      <button class="btn" data-c="PencilDown">Galamy goýber</button>
+      <button class="btn" data-c="PencilUp">Galamy galdyr</button>
+      <button class="btn warn" data-c="Fly">Uç</button>
+      <button class="btn ghost" id="del">⌫ Aýyr</button>
+    </div>
+
+    <div class="prog" style="margin-top:10px">
+      <div><h4>Söz arkaly</h4><div id="pw"></div></div>
+      <div><h4>Programma</h4><div id="pe"></div></div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="run">▶️ Işlet</button>
+      <button class="btn" id="step">👣 Bir ädim</button>
+      <button class="btn ghost" id="clr">🧹 Arassala</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Galamyň buýruklar sistemasy</h3>
+    <div class="prog">
+      <div><h4>Söz arkaly</h4>Ýerine ýetiriji Galam<br>Başlangyjy<br>Ýokary 3;<br>
+        Aşak 2;<br>Saga 4;<br>Çepe 1;<br>Galamy aşak goýbermeli;<br>
+        Galamy ýokary galdyrmaly;<br>Soňy.</div>
+      <div><h4>Programma</h4>Uses pencil<br>Begin<br>Up 3;<br>Down 2;<br>Right 4;<br>
+        Left 1;<br>PencilDown;<br>PencilUp;<br>End.</div>
+    </div>
+    <div class="hint">Gysgaldyp hem bolýar: <b>U 3</b>, <b>D 2</b>, <b>R 4</b>,
+      <b>L 1</b>, <b>PD</b>, <b>PU</b>. Sistemada <b>ýok</b> buýruga (meselem «Uç»)
+      ýerine ýetiriji düşünmeýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const COLS = 10, ROWS = 8, CELL = 32;
+const SYS = ["Up", "Down", "Left", "Right", "PencilDown", "PencilUp"];
+const WORD = {Up: "Ýokary", Down: "Aşak", Left: "Çepe", Right: "Saga",
+              PencilDown: "Galamy aşak goýbermeli", PencilUp: "Galamy ýokary galdyrmaly",
+              Fly: "Uç"};
+const D = {Up: [0, -1], Down: [0, 1], Left: [-1, 0], Right: [1, 0]};
+
+/* ýumuşlar: her biri kesimleriň toplumy, "x1,y1-x2,y2" (kiçiden ula tertipde) */
+function seg(a, b, c, d) {
+  return (a < c || (a === c && b < d)) ? `${a},${b}-${c},${d}` : `${c},${d}-${a},${b}`;
+}
+function line(x, y, dx, dy, n) {
+  const s = [];
+  for (let i = 0; i < n; i++) { s.push(seg(x, y, x + dx, y + dy)); x += dx; y += dy; }
+  return s;
+}
+const TASKS = [
+  {name: "Basgançak", start: [1, 6], segs: [
+    ...line(1, 6, 0, -1, 2), ...line(1, 4, 1, 0, 2), ...line(3, 4, 0, -1, 2),
+    ...line(3, 2, 1, 0, 2)]},
+  {name: "Gönüburçluk", start: [2, 6], segs: [
+    ...line(2, 6, 1, 0, 5), ...line(7, 6, 0, -1, 3), ...line(7, 3, -1, 0, 5),
+    ...line(2, 3, 0, 1, 3)]},
+  {name: "Nagyş", start: [1, 5], segs: [
+    ...line(1, 5, 0, -1, 2), ...line(1, 3, 1, 0, 1), ...line(2, 3, 0, 1, 2),
+    ...line(2, 5, 1, 0, 1), ...line(3, 5, 0, -1, 2), ...line(3, 3, 1, 0, 1),
+    ...line(4, 3, 0, 1, 2)]},
+];
+let ti = 0;
+let nSteps = 1, prog = [], ptr = 0;
+let pos = TASKS[0].start.slice(), down = false, drawn = new Set(), solved = false;
+
+function reset() {
+  pos = TASKS[ti].start.slice(); down = false; drawn = new Set(); ptr = 0; solved = false;
+}
+function draw(msg) {
+  let grid = "";
+  for (let r = 0; r <= ROWS; r++)
+    grid += `<line x1="0" y1="${r * CELL}" x2="${COLS * CELL}" y2="${r * CELL}"
+      stroke="#e6ecf4" stroke-width="1"/>`;
+  for (let c = 0; c <= COLS; c++)
+    grid += `<line x1="${c * CELL}" y1="0" x2="${c * CELL}" y2="${ROWS * CELL}"
+      stroke="#e6ecf4" stroke-width="1"/>`;
+  const T = TASKS[ti];
+  const goal = T.segs.map(s => {
+    const [a, b] = s.split("-").map(p => p.split(",").map(Number));
+    return `<line x1="${a[0] * CELL}" y1="${a[1] * CELL}" x2="${b[0] * CELL}"
+      y2="${b[1] * CELL}" stroke="#cfd9e6" stroke-width="6" stroke-linecap="round"/>`;
+  }).join("");
+  const mine = [...drawn].map(s => {
+    const [a, b] = s.split("-").map(p => p.split(",").map(Number));
+    return `<line x1="${a[0] * CELL}" y1="${a[1] * CELL}" x2="${b[0] * CELL}"
+      y2="${b[1] * CELL}" stroke="#2456b0" stroke-width="4" stroke-linecap="round"/>`;
+  }).join("");
+  $("st").innerHTML = `<svg viewBox="0 0 ${COLS * CELL} ${ROWS * CELL}"
+    width="${COLS * CELL}" xmlns="http://www.w3.org/2000/svg">
+    ${grid}${goal}${mine}
+    <circle cx="${pos[0] * CELL}" cy="${pos[1] * CELL}" r="6"
+      fill="${down ? "#e5007d" : "#93a2b5"}"/>
+  </svg>`;
+  $("task").textContent = `Ýumuş: «${T.name}» şekilini çyz`;
+  $("cnt").textContent = `${prog.length} buýruk · galam ${down ? "aşakda" : "ýokarda"}`;
+  $("pw").innerHTML = prog.length
+    ? "Ýerine ýetiriji Galam<br>Başlangyjy<br>" + prog.map((c, i) =>
+        `<span class="${i < ptr ? "done" : i === ptr ? "now" : ""}">${
+          WORD[c.c]}${c.n ? " " + c.n : ""};</span>`).join("<br>") + "<br>Soňy."
+    : "<span style='color:#93a2b5'>boş</span>";
+  $("pe").innerHTML = prog.length
+    ? "Uses pencil<br>Begin<br>" + prog.map((c, i) =>
+        `<span class="${i < ptr ? "done" : i === ptr ? "now" : ""}">${
+          c.c}${c.n ? " " + c.n : ""};</span>`).join("<br>") + "<br>End."
+    : "<span style='color:#93a2b5'>boş</span>";
+  if (msg !== undefined) { $("msg").innerHTML = msg.t; $("msg").className = "msg " + msg.c; }
+  nbtns();
+}
+function nbtns() {
+  $("nsel").innerHTML = [1, 2, 3, 4, 5].map(n =>
+    `<button class="btn${n === nSteps ? " sel" : ""}" data-n="${n}">${n}</button>`).join("");
+  $("nsel").querySelectorAll("button").forEach(b => b.onclick = () => {
+    nSteps = +b.dataset.n; nbtns();
+  });
+}
+function exec(cmd) {
+  if (!SYS.includes(cmd.c))
+    return {ok: false, t: `❌ «${WORD[cmd.c]}» Galamyň buýruklar sistemasynda ýok – ` +
+                          `ýerine ýetiriji oňa düşünmeýär.`};
+  if (cmd.c === "PencilDown") { down = true; return {ok: true, t: "Galam kagyza goýberildi."}; }
+  if (cmd.c === "PencilUp") { down = false; return {ok: true, t: "Galam ýokary galdyryldy."}; }
+  const [dx, dy] = D[cmd.c];
+  for (let i = 0; i < cmd.n; i++) {
+    const nx = pos[0] + dx, ny = pos[1] + dy;
+    if (nx < 0 || ny < 0 || nx > COLS || ny > ROWS)
+      return {ok: false, t: "❌ Meýdandan çykyp bolmaýar."};
+    if (down) drawn.add(seg(pos[0], pos[1], nx, ny));
+    pos = [nx, ny];
+  }
+  return {ok: true, t: `${WORD[cmd.c]} ${cmd.n} öýjük ýerine ýetirildi.`};
+}
+function stepOnce() {
+  if (solved) return false;
+  if (ptr >= prog.length) {
+    draw({t: "Programma gutardy (End).", c: ""});
+    return false;
+  }
+  const res = exec(prog[ptr]);
+  ptr++;
+  if (!res.ok) { draw({t: res.t, c: "bad"}); return false; }
+  const T = TASKS[ti];
+  const need = new Set(T.segs);
+  const same = drawn.size === need.size && [...need].every(s => drawn.has(s));
+  if (same) {
+    solved = true;
+    draw({t: "🎉 Berekella! Şekil doly çyzyldy.", c: "ok"});
+    setTimeout(() => {
+      ti = (ti + 1) % TASKS.length;
+      prog = []; reset(); draw({t: "Täze ýumuş berildi.", c: ""});
+    }, 1700);
+    return false;
+  }
+  draw({t: res.t, c: ""});
+  return true;
+}
+document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
+  if (prog.length >= 20) return;
+  const c = b.dataset.c;
+  prog.push({c, n: (c === "PencilDown" || c === "PencilUp" || c === "Fly") ? 0 : nSteps});
+  reset();
+  draw({t: "Buýruk goşuldy. Programma iňlisçe ýazgyda hem görünýär.", c: ""});
+});
+$("del").onclick = () => { prog.pop(); reset(); draw({t: "Soňky buýruk aýryldy.", c: ""}); };
+$("clr").onclick = () => { prog = []; reset(); draw({t: "Programma arassalandy.", c: ""}); };
+$("step").onclick = () => { stepOnce(); };
+$("run").onclick = () => {
+  reset();
+  const t = setInterval(() => { if (!stepOnce()) clearInterval(t); }, 330);
+};
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Programma diýmek näme?",
+   ["Algoritmleriň ýazgysy", "Suratyň ölçegi", "Papkanyň ady"], 0],
+  ["Programmalar haýsy dilde ýazylýar?", ["Türkmen", "Iňlis", "Rus"], 1],
+  ["«Galamy aşak goýbermeli» programmada nähili?",
+   ["Down", "Begin", "PencilDown"], 2],
+  ["Buýruklar biri-birinden näme bilen tapawutlandyrylýar?",
+   ["Nokatly otur bilen", "Ýaý bilen", "Reňk bilen"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+reset(); draw({t: "Galamy goýber-de, ädimme-ädim şekili çyz.", c: ""});
+</script>
+</body>
+</html>

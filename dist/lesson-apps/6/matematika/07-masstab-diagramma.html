@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masştab we diagrammalar — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; max-width: 100%; height: auto;
+               background: #fff; border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  table.d { width: 100%; font-size: 13.5px; background: #fff; border-radius: 10px; }
+  table.d th, table.d td { padding: 6px 8px; }
+  table.d input { width: 68px; padding: 6px; border: 1px solid #d6e0ee; border-radius: 8px;
+                  font-size: 13.5px; text-align: right; }
+  table.d input:focus { outline: none; border-color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Masştab. Tablisalar we diagrammalar</h1>
+  <div class="sub">Onluk droblary köpeltmek we bölmek · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <h3>Masştab</h3>
+    <div class="goal">Masştab kartadaky uzaklygyň Ýer üstündäki uzaklyga gatnaşygydyr.
+      1 : 1000000 masştab kartadaky 1 sm-iň Ýer ýüzündäki 10 km-e deňdigini aňladýar.</div>
+    <div class="stage" id="map"></div>
+    <div class="slider"><span class="lbl">Kartadaky uzaklyk</span>
+      <input type="range" id="cm" min="5" max="150" value="45"><span class="out" id="cmo"></span></div>
+    <div class="row tight" id="ms"></div>
+    <div class="calc" id="mc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Diagrammany gur</h3>
+    <div class="goal">Sanlary üýtget – üç görnüşli diagramma hem şol bada gaýtadan gurulýar.</div>
+    <table class="d" id="tab"></table>
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn sel" data-k="line">Çyzykly</button>
+      <button class="btn" data-k="bar">Sütünleýin</button>
+      <button class="btn" data-k="pie">Tegelek</button>
+    </div>
+    <div class="stage" style="margin-top:9px" id="chart"></div>
+    <div class="calc" id="cc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §16–§17</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const T = x => (Math.round(x * 1000) / 1000).toString().replace(".", ",");
+
+/* ---------------- masştab ---------------- */
+const MS = [["1 : 100000", 100000], ["1 : 500000", 500000], ["1 : 1000000", 1000000]];
+let mi = 2;
+$("ms").innerHTML = MS.map((m, i) =>
+  `<button class="btn ${i === mi ? "sel" : ""}" data-i="${i}">${m[0]}</button>`).join("");
+$("ms").querySelectorAll("button").forEach(b => b.onclick = () => {
+  mi = +b.dataset.i;
+  $("ms").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  map();
+});
+function map() {
+  const cm = +$("cm").value / 10;      // sm
+  const k = MS[mi][1];
+  $("cmo").textContent = T(cm) + " sm";
+  const real = cm * k;                 // sm
+  const km = real / 100000;
+  const px = Math.min(cm * 18, 330);
+  $("map").innerHTML = `
+    <svg viewBox="0 0 380 120" width="380" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif" font-size="13">
+      <rect x="10" y="10" width="360" height="100" rx="10" fill="#f3f7fb"/>
+      <circle cx="25" cy="60" r="6" fill="#2456b0"/>
+      <circle cx="${25 + px}" cy="60" r="6" fill="#e5007d"/>
+      <line x1="25" y1="60" x2="${25 + px}" y2="60" stroke="#1e2a3a" stroke-width="3"/>
+      <text x="25" y="88" fill="#2456b0" font-weight="700">A</text>
+      <text x="${25 + px}" y="88" fill="#e5007d" font-weight="700">B</text>
+      <text x="${25 + px / 2}" y="44" text-anchor="middle" fill="#5b6b80">${T(cm)} sm</text>
+      <text x="${25 + px / 2}" y="106" text-anchor="middle" fill="#1d7a3d"
+        font-weight="700">${T(km)} km</text>
+    </svg>`;
+  $("mc").innerHTML =
+    `kartada: <b>${T(cm)} sm</b>, masştab <b>${MS[mi][0]}</b><br>` +
+    `Ýer üstünde: ${T(cm)} · ${k} = <b>${T(real)} sm</b><br>` +
+    `= ${T(real / 100)} m = <b>${T(km)} km</b><br>` +
+    `ters mesele: ${T(km)} km ýoly şu kartada ${T(cm)} sm kesim bilen görkezilýär`;
+}
+$("cm").addEventListener("input", map);
+
+/* ---------------- diagramma ---------------- */
+const NAMES = ["Ahal", "Balkan", "Daşoguz", "Lebap", "Mary"];
+let data = [95.4, 138.5, 73.6, 93.8, 86.8];
+let kind = "line";
+document.querySelectorAll("[data-k]").forEach(b => b.onclick = () => {
+  kind = b.dataset.k;
+  document.querySelectorAll("[data-k]").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  chart();
+});
+function table() {
+  $("tab").innerHTML =
+    "<thead><tr><th>Welaýat</th><th>Meýdany, müň km²</th></tr></thead><tbody>" +
+    data.map((v, i) => `<tr><td>${NAMES[i]}</td>` +
+      `<td><input data-i="${i}" value="${T(v)}" inputmode="decimal"></td></tr>`).join("") +
+    "</tbody>";
+  $("tab").querySelectorAll("input").forEach(inp => inp.oninput = () => {
+    const v = parseFloat(inp.value.replace(",", "."));
+    if (!isNaN(v) && v > 0) { data[+inp.dataset.i] = v; chart(); }
+  });
+}
+const COLORS = ["#2456b0", "#e5007d", "#1d7a3d", "#e08b00", "#6a4bb8"];
+function chart() {
+  const mx = Math.max(...data), sum = data.reduce((a, b) => a + b, 0);
+  let svg = "";
+  if (kind === "line") {
+    svg = `<svg viewBox="0 0 380 190" width="380" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif" font-size="12">` +
+      data.map((v, i) => {
+        const y = 22 + i * 33, w = (v / mx) * 250;
+        return `<text x="8" y="${y + 4}" fill="#5b6b80">${NAMES[i]}</text>
+                <line x1="82" y1="${y}" x2="${82 + w}" y2="${y}" stroke="${COLORS[i]}"
+                  stroke-width="6" stroke-linecap="round"/>
+                <text x="${88 + w}" y="${y + 4}" fill="#1e2a3a" font-weight="700">${T(v)}</text>`;
+      }).join("") + "</svg>";
+  } else if (kind === "bar") {
+    svg = `<svg viewBox="0 0 380 190" width="380" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif" font-size="12">
+      <line x1="20" y1="150" x2="365" y2="150" stroke="#93a2b5" stroke-width="2"/>` +
+      data.map((v, i) => {
+        const h = (v / mx) * 110, x = 34 + i * 66;
+        return `<rect x="${x}" y="${150 - h}" width="46" height="${h}" rx="4"
+                  fill="${COLORS[i]}"/>
+                <text x="${x + 23}" y="${144 - h}" text-anchor="middle" fill="#1e2a3a"
+                  font-weight="700">${T(v)}</text>
+                <text x="${x + 23}" y="167" text-anchor="middle" fill="#5b6b80">${NAMES[i]}</text>`;
+      }).join("") + "</svg>";
+  } else {
+    let ang = -Math.PI / 2;
+    const cx = 120, cy = 95, R = 78;
+    const parts = data.map((v, i) => {
+      const a = (v / sum) * Math.PI * 2;
+      const x1 = cx + R * Math.cos(ang), y1 = cy + R * Math.sin(ang);
+      ang += a;
+      const x2 = cx + R * Math.cos(ang), y2 = cy + R * Math.sin(ang);
+      const big = a > Math.PI ? 1 : 0;
+      return `<path d="M${cx} ${cy} L${x1.toFixed(1)} ${y1.toFixed(1)} ` +
+             `A${R} ${R} 0 ${big} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z" fill="${COLORS[i]}"
+               stroke="#fff" stroke-width="2"/>`;
+    }).join("");
+    const legend = data.map((v, i) =>
+      `<rect x="235" y="${26 + i * 26}" width="14" height="14" rx="3" fill="${COLORS[i]}"/>
+       <text x="256" y="${38 + i * 26}" fill="#1e2a3a">${NAMES[i]} – ` +
+      `${T(Math.round(v / sum * 1000) / 10)}%</text>`).join("");
+    svg = `<svg viewBox="0 0 380 190" width="380" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif" font-size="12">${parts}${legend}</svg>`;
+  }
+  $("chart").innerHTML = svg;
+  const perDeg = sum / 360;
+  $("cc").innerHTML =
+    `jemi: <b>${T(sum)} müň km²</b><br>` +
+    `tegelek diagrammada 1 gradusa: ${T(sum)} : 360 ≈ <b>${T(Math.round(perDeg * 100) / 100)} müň km²</b><br>` +
+    `${NAMES[0]} welaýatyna: ${T(data[0])} : ${T(Math.round(perDeg * 100) / 100)} ≈ ` +
+    `<b>${T(Math.round(data[0] / perDeg * 10) / 10)}°</b>`;
+}
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["1 : 100000 masştabda kartadaky 1 sm näçe km?", ["1 km", "10 km", "100 km", "0,1 km"], 0],
+  ["Tegelek diagrammada tegelek näçe gradus?", ["100", "180", "360", "90"], 2],
+  ["4 km ýol kartada 8 sm bolsa, 12 km näçe sm?", ["16 sm", "24 sm", "12 sm", "6 sm"], 1],
+  ["Masştab näme aňladýar?", ["Meýdany", "Kartadaky we hakyky uzaklygyň gatnaşygyny",
+                              "Diagrammanyň görnüşini", "Ortaça bahany"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+map(); table(); chart();
+</script>
+</body>
+</html>

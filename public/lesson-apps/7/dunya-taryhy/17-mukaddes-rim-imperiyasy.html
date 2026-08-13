@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mukaddes Rim imperiýasy — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mukaddes Rim imperiýasy</h1>
+  <div class="sub">Dünýä taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">962-nji ýylda Rim Papasy <b>Otton I</b>-niň başyna imperatorlyk täjini geýdiripdir. 1356-njy ýyldaky <b>«Altyn bulla»</b> imperatoryň <b>7 kurfýurst</b> tarapyndan saýlanmagyny tassyklapdyr.</div>
+    <div class="tbl" style="margin-top:8px">3 ýepiskop + 4 gersog = 7 kurfýurst</div>
+  </div>
+
+  <div class="card">
+    <h3>Waka tertibi</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Bu waka haýsy döwre degişli?</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="do">Döreýiş döwri</button><button class="btn" data-k="pa">Papalar bilen göreş</button><button class="btn" data-k="da">Dagynyklyk döwri</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Senäni tap</h3>
+    <div class="task" id="task" style="margin-top:8px"></div>
+    <div class="goal">Dogry sany saýla.</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row"><button class="btn ghost" id="next">Indiki sorag</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Dünýä taryhy 7 · 17-nji tema</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Genrih I Guştutaryň saýlanmagy.", "do", "919-njy ýylda bolupdyr."], ["Otton I-niň Lombardiýa ýörişi.", "do", "951-nji ýylda bolupdyr."], ["Kanossa galasyndaky waka.", "pa", "1077-nji ýylda Genrih IV bagyşlanmak sorapdyr."], ["Worms şertnamasynyň baglaşylmagy.", "pa", "1122-nji ýylda göreş çözülipdir."], ["«Altyn bullanyň» kabul edilmegi.", "da", "1356-njy ýylda dagynyklyk berkidilipdir."], ["Praga uniwersitetiniň açylmagy.", "da", "Karl I-niň döwründe bolupdyr."]];
+var KN = {"do": "döreýiş döwri", "pa": "papalar bilen göreş döwri", "da": "dagynyklyk döwri"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+// [sorag, jogap, düşündiriş]
+var T = [["Imperiýa haýsy ýylda döredilipdir?", "962", "Otton I imperator bolupdyr."], ["Genrih I haýsy ýylda saýlanypdyr?", "919", "919–936-njy ýyllarda dolandyrypdyr."], ["Kanossa wakasy haýsy ýylda bolupdyr?", "1077", "Genrih IV üç gün garaşypdyr."], ["Worms şertnamasy haýsy ýylda baglaşylypdyr?", "1122", "Göreş ylalaşyk bilen gutarypdyr."], ["«Altyn bulla» haýsy ýylda kabul edilipdir?", "1356", "Karl IV-niň döwründe."], ["Näçe kurfýurst imperatory saýlapdyr?", "7", "3 ýepiskop we 4 gersog."], ["Karlyň köprüsiniň uzynlygy näçe metr?", "520", "Pragada gurlupdyr."]];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+function show() {
+  document.getElementById("task").textContent = T[ti][0];
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  tlock = 0;
+}
+var VALS = ["919", "951", "962", "1077", "1122", "1202", "1356", "7", "520"];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + i + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = VALS[parseInt(this.getAttribute("data-n"), 10)], t = T[ti], m = document.getElementById("msg");
+    if (v === t[1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogrusy: " + t[1] + ". " + t[2]; }
+    document.getElementById("sc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+show();
+
+var Q = [["Imperiýa haçandan «Mukaddes Rim» diýlip atlandyrylypdyr?", ["XII asyrdan", "X asyrdan", "XIV asyrdan"], 0], ["Gylyç göterijiler ordeni haçan döredilipdir?", ["1202-nji ýylda", "1122-nji ýylda", "1356-njy ýylda"], 0], ["«Altyn bulla» nämä getiripdir?", ["Dagynyklygyň berkidilmegine", "Ýurduň birleşmegine", "Papanyň häkimiýetiniň güýçlenmegine"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

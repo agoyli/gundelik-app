@@ -49,7 +49,7 @@ import { tokens } from '../theme';
  * and teach that the app is unresponsive.
  */
 type WidgetId =
-  | 'bahalar' | 'nyşanlar' | 'öýIşi' | 'gol' | 'günler' | 'faýl' | 'bildiriş'
+  | 'bahalar' | 'ýyldyzlar' | 'öýIşi' | 'gol' | 'günler' | 'faýl' | 'bildiriş'
   | 'söhbet' | 'tarif' | 'kart' | 'test' | 'gulp' | 'hasabat' | 'rollar';
 
 const Panel = ({ children }: { children: ReactNode }) => (
@@ -99,7 +99,7 @@ const DayCell = ({ n, day, dot }: { n: number; day: string; dot: boolean }) => (
       borderRadius: '50%', bgcolor: tokens.dot,
     }} />}
     <Typography sx={{ fontSize: 16, fontWeight: 700, lineHeight: 1.1 }}>{n}</Typography>
-    <Typography sx={{ fontSize: 11.5, color: tokens.inkMuted }}>{day}</Typography>
+    <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>{day}</Typography>
   </Box>
 );
 
@@ -108,12 +108,12 @@ const Bubble = ({ mine, children }: { mine?: boolean; children: ReactNode }) => 
     maxWidth: '82%', p: '8px 12px', fontSize: 13.5, lineHeight: 1.45,
     ...(mine
       ? {
-        alignSelf: 'flex-end', bgcolor: tokens.blue, color: '#fff',
-        borderRadius: `${tokens.rRow}px ${tokens.rRow}px 4px ${tokens.rRow}px`,
+        alignSelf: 'flex-end', bgcolor: tokens.blueSolid, color: '#fff',
+        borderRadius: `${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px ${tokens.rRow}px`,
       }
       : {
         alignSelf: 'flex-start', bgcolor: tokens.surface, color: tokens.ink,
-        borderRadius: `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px 4px`,
+        borderRadius: `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px`,
       }),
   }}>{children}</Box>
 );
@@ -126,8 +126,8 @@ const Bar = ({ label, pct, tone }: { label: string; pct: number; tone: string })
         {pct}%
       </Typography>
     </Box>
-    <Box sx={{ height: 6, borderRadius: 3, bgcolor: tokens.surfacePress, overflow: 'hidden' }}>
-      <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: tone, borderRadius: 3 }} />
+    <Box sx={{ height: 6, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.surfacePress, overflow: 'hidden' }}>
+      <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: tone, borderRadius: `${tokens.rPill}px` }} />
     </Box>
   </Box>
 );
@@ -144,7 +144,7 @@ const WIDGETS: Record<WidgetId, ReactNode> = {
       </Box>
     </Panel>
   ),
-  'nyşanlar': (
+  'ýyldyzlar': (
     <Panel>
       <BadgeScore good={3} bad={1} />
     </Panel>
@@ -199,7 +199,7 @@ const WIDGETS: Record<WidgetId, ReactNode> = {
         border: `1px solid ${tokens.dividerSoft}`,
       }}>
         <Box sx={{
-          width: 22, height: 22, borderRadius: '6px', bgcolor: tokens.redTint,
+          width: 22, height: 22, borderRadius: `${tokens.rCell}px`, bgcolor: tokens.redTint,
           color: tokens.redText, display: 'grid', placeItems: 'center',
         }}><DocIcon size={13} /></Box>
         <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Rasporýaniýe.pdf</Typography>
@@ -211,7 +211,7 @@ const WIDGETS: Record<WidgetId, ReactNode> = {
         border: `1px solid ${tokens.dividerSoft}`,
       }}>
         <Box sx={{
-          width: 22, height: 22, borderRadius: '6px', bgcolor: tokens.purpleTint,
+          width: 22, height: 22, borderRadius: `${tokens.rCell}px`, bgcolor: tokens.purpleTint,
           color: tokens.purpleText, display: 'grid', placeItems: 'center',
         }}><ImageIcon size={13} /></Box>
         <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Mekdep-shemasy.png</Typography>
@@ -345,7 +345,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         blocks: [
           { p: 'Gündelik bir güni görkezýär. Ýokardaky hatardan güni saýlaýarsyňyz, aşagynda şol günüň sapaklary sagady bilen durýar.' },
           { w: 'günler', caption: 'Sag ýokarky nokat — şol güne gol çekilendigini aňladýar. Nokat ýok bolsa, gün heniz barlanmadyk.' },
-          { p: 'Sapagyň setirinde çepde sagat, ortada ders bilen tema, sagda bolsa mugallymyň ýazan zady — nyşan we baha durýar.' },
+          { p: 'Sapagyň setirinde çepde sagat, ortada ders bilen tema, sagda bolsa mugallymyň ýazan zady — ýyldyz we baha durýar.' },
           { note: 'Şenbe hem okuw güni. Diňe ýekşenbe kesgin dynç güni hökmünde solgun görkezilýär.' },
         ],
       },
@@ -364,13 +364,13 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         ],
       },
       {
-        title: 'Bahalar we nyşanlar',
+        title: 'Bahalar we ýyldyzlar',
         len: '3 min',
         blocks: [
           { p: 'Baha — işiň netijesi. Ol 2-den 5-e çenli bolýar we reňki bahanyň özünden gelýär, şonuň üçin sanawy sürüp geçeniňizde reňk ýalňyş düşünje bermeýär.' },
           { w: 'bahalar', caption: 'Iň sagdaky boş öýjük — «baha heniz goýulmadyk» diýmek. Ol hemişe şol bir ýerde durýar, şonuň üçin baha bilen başga zat çalyşmaýar.' },
-          { p: 'Nyşan — işiň nähili edilendigi: ýygnanyşyk, tertip, kömek. Ol baha täsir etmeýär, ýöne çärýegiň dowamynda surat berýär.' },
-          { w: 'nyşanlar', caption: 'Ýaşyl — ýagşy, gyzyl — üns bermeli. Iki san hemişe bilelikde görkezilýär.' },
+          { p: 'Ýyldyz — işiň nähili edilendigi: ýygnanyşyk, tertip, kömek. Ol baha täsir etmeýär, ýöne çärýegiň dowamynda surat berýär.' },
+          { w: 'ýyldyzlar', caption: 'Ýaşyl — ýagşy, gyzyl — üns bermeli. Iki san hemişe bilelikde görkezilýär.' },
         ],
       },
       {
@@ -499,24 +499,24 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         ],
       },
       {
-        title: 'Sapak ýoly (Temalar)',
+        title: 'Sapak ýoly (Sapaklar)',
         len: '2 min',
         blocks: [
-          { p: 'Temalar — 1-nji synpdan 12-nji synpa çenli uzalyp gidýän ýol. Programma seni hemişe indiki sapagyň üstüne getirýär.' },
+          { p: 'Sapaklar — 1-nji synpdan 12-nji synpa çenli uzalyp gidýän ýol. Programma seni hemişe indiki sapagyň üstüne getirýär.' },
           { w: 'gulp', caption: 'Gulply bölüm näçe sapagyň ýapykdygyny we ony näme açýandygyny aç-açan ýazýar.' },
           { steps: [
-            'Gollanmalar → Temalar.',
+            'Gollanmalar → Sapaklar.',
             '«Başla» ýazgyly düwme — seniň häzirki sapagyň.',
             'Tamamlanan synplar ýygrylýar, gerek bolsa açylýar.',
           ] },
         ],
       },
       {
-        title: 'Bäsleşikler we nyşanlar',
+        title: 'Bäsleşikler we ýyldyzlar',
         len: '2 min',
         blocks: [
           { p: 'Testler, kartlar we bäsleşikler bal getirýär. Ballar synpdaky ornuňy kesgitleýär we çärýek çalşanda pozulmaýar.' },
-          { w: 'nyşanlar', caption: 'Mugallymyň nyşanlary aýry hasaplanýar — olar bal däl, häsiýetnama.' },
+          { w: 'ýyldyzlar', caption: 'Mugallymyň ýyldyzlary aýry hasaplanýar — olar bal däl, häsiýetnama.' },
           { note: 'Bäsleşige gatnaşmak üçin öňünden ýazylmaly: sahypada galan wagt görkezilýär.' },
         ],
       },
@@ -543,7 +543,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
   {
     id: 'mugallym',
     label: 'Mugallym',
-    who: 'Baha we nyşan goýmak, öý işi bermek, synp bilen habarlaşmak.',
+    who: 'Baha we ýyldyz goýmak, öý işi bermek, synp bilen habarlaşmak.',
     docs: [
       {
         title: 'Synp žurnaly: baha goýmak',
@@ -560,11 +560,11 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         ],
       },
       {
-        title: 'Nyşanlar: ýagşy we üns bermeli',
+        title: 'Ýyldyzlar: ýagşy we üns bermeli',
         len: '2 min',
         blocks: [
-          { p: 'Baha — işiň netijesi, nyşan — işiň nähili edilendigi. Sapaga taýýarlyk, kömek, tertip — bular nyşan bilen bellenýär.' },
-          { w: 'nyşanlar', caption: 'Nyşanlar çärýegiň dowamynda jemlenýär we häsiýetnama üçin taýýar surat berýär.' },
+          { p: 'Baha — işiň netijesi, ýyldyz — işiň nähili edilendigi. Sapaga taýýarlyk, kömek, tertip — bular ýyldyz bilen bellenýär.' },
+          { w: 'ýyldyzlar', caption: 'Ýyldyzlar çärýegiň dowamynda jemlenýär we häsiýetnama üçin taýýar surat berýär.' },
           { note: '«Üns bermeli» — käýinç däl. Söz bilelikde işlemeli zady aňladýar we ene-ata şeýle okaýar.' },
         ],
       },
@@ -788,7 +788,7 @@ export function GuideScreen({ doc, onBack }: { doc: Doc; onBack: () => void }) {
                       bgcolor: tokens.blueTint, color: tokens.blueText,
                       fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center',
                     }}>{n + 1}</Box>
-                    <Typography sx={{ fontSize: 14.5, lineHeight: 1.5, color: tokens.ink2 }}>{s}</Typography>
+                    <Typography sx={{ fontSize: 15, lineHeight: 1.5, color: tokens.ink2 }}>{s}</Typography>
                   </Box>
                 ))}
               </Box>
@@ -976,7 +976,7 @@ export function AboutScreen({ onBack, toast, onUpdates }: {
             py: '13px',
             borderTop: i === 0 ? 'none' : `1px solid ${tokens.dividerSoft}`,
           }}>
-            <Typography sx={{ fontSize: 14.5, fontWeight: 700 }}>{u.role}</Typography>
+            <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{u.role}</Typography>
             <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '2px', lineHeight: 1.45 }}>
               {u.does}
             </Typography>
@@ -1093,6 +1093,20 @@ const RELEASES: {
   version: string; at: string; title: string; items: { kind: ChangeKind; text: string }[];
 }[] = [
   {
+    version: '1.5.0',
+    at: '2026-02-12',
+    title: 'Ýyldyzlar, Sapaklar we hünär synagy',
+    items: [
+      { kind: 'täze', text: 'Hünär synagy: 12 sowal — saňa iň laýyk üç hünäri görkezýär' },
+      { kind: 'täze', text: 'Her dersiň ýanynda test bankasy görünýär: näçe test, näçe sowal, näçe kart' },
+      { kind: 'gowulandy', text: 'Nyşanlar indi Ýyldyzlar diýlip atlandyrylýar' },
+      { kind: 'gowulandy', text: 'Temalar bölümi Sapaklar boldy' },
+      { kind: 'gowulandy', text: 'Mugt hasapda ýyldyzy kimiň ýazandygy görünýär, ýazgynyň özi ýapyk galýar' },
+      { kind: 'gowulandy', text: 'Analitikada ýapyk hasabatlar näçe orun üýtgändigini we iň güýçli dersi aýdýar' },
+      { kind: 'gowulandy', text: 'Hepdelik bir mugt test we bir gaýtalama aýryldy — testler we kartlar nyrhnama bilen açylýar' },
+    ],
+  },
+  {
     version: '1.4.0',
     at: '2026-02-10',
     title: 'Akylly mugallym, kömek merkezi we sadalaşdyrylan gündelik',
@@ -1125,7 +1139,7 @@ const RELEASES: {
     items: [
       { kind: 'täze', text: 'Dostuňy çagyr: kod, bonus we hyzmatdaş dükanlar' },
       { kind: 'täze', text: 'Kart goşmak sahypasy' },
-      { kind: 'gowulandy', text: 'Gollanmalar bäş bölüme jemlendi, interaktiw işler Temalaryň içinde' },
+      { kind: 'gowulandy', text: 'Gollanmalar bäş bölüme jemlendi, interaktiw işler Sapaklaryň içinde' },
       { kind: 'düzedildi', text: 'Sapak tertibi käbir günlerde boş açylýardy' },
     ],
   },
@@ -1261,7 +1275,7 @@ export const APP = {
   users: [
     { role: 'Ene-ata', does: 'Çagasynyň gününi okaýar we gol çekýär' },
     { role: 'Okuwçy', does: 'Sapaklary, öý işini, kartlary we testleri açýar' },
-    { role: 'Mugallym', does: 'Baha we nyşan goýýar, öý işi berýär' },
+    { role: 'Mugallym', does: 'Baha we ýyldyz goýýar, öý işi berýär' },
     { role: 'Mekdep müdiri', does: 'Bildiriş çap edýär, hasabat we hukuk dolandyrýar' },
   ],
 };
@@ -1351,7 +1365,7 @@ export function SupportScreen({ onBack, toast }: { onBack: () => void; toast: To
       </Box>
 
       <SheetDrawer open={report} onClose={() => setReport(false)}>
-        <Typography variant="h2" component="h2" sx={{ fontSize: 19 }}>Näsazlyk barada habar ber</Typography>
+        <Typography variant="h2" component="h2" sx={{ fontSize: 20 }}>Näsazlyk barada habar ber</Typography>
         <Typography variant="caption" sx={{ mb: '14px', display: 'block' }}>
           Näme bolandygyny ýazyň — hasabyň maglumatlary awtomatik goşulýar
         </Typography>

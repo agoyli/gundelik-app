@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wagt: sagat, minut, sekunt — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .clock { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .clock svg { display: block; width: 100%; height: auto; max-height: 220px; }
+  .opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .opts button { min-height: 48px; font-size: 17px; font-weight: 700; }
+  .nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wagt we onuň ölçeg birlikleri</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def"><b>1 gije-gündizde 24 sagat</b>, <b>1 sagatda 60 minut</b>,
+      <b>1 minutda 60 sekunt</b> bar. Gysgaça: 1 sag., 1 min., 1 s.</div>
+  </div>
+
+  <div class="card">
+    <h3>Sagat näçe?</h3>
+    <div class="clock"><svg id="cl" viewBox="0 0 200 200"></svg></div>
+    <div class="goal" id="cgoal">Sagadyň görkezýän wagtyny saýla.</div>
+    <div class="opts" id="copts"></div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><button class="btn primary" id="cnext">Wagty üýtget</button></div>
+    <div class="score" id="csc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Minuda geçir</h3>
+    <div class="goal" id="mgoal"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="mmsg"></div>
+    <div class="row"><button class="btn ghost" id="mnext">Indiki sorag</button></div>
+    <div class="score" id="msc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, I kitap · 114–117-nji sahypalar</div>
+</div>
+
+<script>
+var TM = [[3, 0], [7, 30], [9, 15], [5, 45], [11, 20]], ci = 0, cd = 0, cok = 0, clock = 0;
+function fmt(h, m) { return h + " sag " + (m < 10 ? "0" + m : m) + " min"; }
+function drawClock() {
+  var hh = TM[ci][0], mm = TM[ci][1];
+  var s = '<circle cx="100" cy="100" r="92" fill="#fff" stroke="#4a5a6a" stroke-width="4"/>';
+  for (var i = 1; i <= 12; i++) {
+    var a = (i * 30 - 90) * Math.PI / 180;
+    s += '<text x="' + (100 + 74 * Math.cos(a)) + '" y="' + (100 + 74 * Math.sin(a) + 6) +
+      '" font-size="17" text-anchor="middle" fill="#1e2a3a">' + i + "</text>";
+  }
+  var ha = ((hh % 12) * 30 + mm * 0.5 - 90) * Math.PI / 180;
+  var ma = (mm * 6 - 90) * Math.PI / 180;
+  s += '<line x1="100" y1="100" x2="' + (100 + 46 * Math.cos(ha)) + '" y2="' + (100 + 46 * Math.sin(ha)) +
+    '" stroke="#c1622a" stroke-width="7" stroke-linecap="round"/>';
+  s += '<line x1="100" y1="100" x2="' + (100 + 70 * Math.cos(ma)) + '" y2="' + (100 + 70 * Math.sin(ma)) +
+    '" stroke="#2456b0" stroke-width="4" stroke-linecap="round"/>';
+  s += '<circle cx="100" cy="100" r="6" fill="#1e2a3a"/>';
+  document.getElementById("cl").innerHTML = s;
+  var right = fmt(hh, mm);
+  var wrongs = [fmt(hh, (mm + 15) % 60), fmt((hh % 12) + 1, mm), fmt(hh === 1 ? 12 : hh - 1, mm)];
+  var arr = [right, wrongs[ci % 3]];
+  if (ci % 2 === 1) arr.reverse();
+  var h = "";
+  for (var k = 0; k < arr.length; k++) h += '<button class="btn" data-v="' + arr[k] + '">' + arr[k] + "</button>";
+  document.getElementById("copts").innerHTML = h;
+  var bs = document.getElementById("copts").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = cclick;
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  clock = 0;
+}
+function cclick() {
+  if (clock) return;
+  clock = 1; cd++;
+  var v = this.getAttribute("data-v"), right = fmt(TM[ci][0], TM[ci][1]), m = document.getElementById("cmsg");
+  if (v === right) { cok++; m.className = "msg ok"; m.textContent = "Dogry! Kiçi dil sagady, uly dil minudy görkezýär."; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + right + "."; }
+  document.getElementById("csc").textContent = "Netije: " + cok + " / " + cd;
+}
+document.getElementById("cnext").onclick = function () { ci = (ci + 1) % TM.length; drawClock(); };
+drawClock();
+
+var M = [[1, 15], [2, 0], [1, 5], [1, 47], [2, 45]], mi = 0, md = 0, mok = 0, mlock = 0;
+function want() { return M[mi][0] * 60 + M[mi][1]; }
+function showM() {
+  document.getElementById("mgoal").textContent =
+    M[mi][0] + " sag " + M[mi][1] + " min näçe minut edýär?";
+  document.getElementById("mmsg").className = "msg";
+  document.getElementById("mmsg").textContent = "";
+  mlock = 0;
+}
+var VALS = [60, 65, 75, 105, 107, 120, 135, 155, 165, 180];
+var h2 = "";
+for (var i = 0; i < VALS.length; i++) h2 += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h2;
+var mb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < mb.length; i++) {
+  mb[i].onclick = function () {
+    if (mlock) return;
+    mlock = 1; md++;
+    var v = parseInt(this.getAttribute("data-n"), 10), w = want(), m = document.getElementById("mmsg");
+    if (v === w) { mok++; m.className = "msg ok"; m.textContent = "Dogry! " + M[mi][0] + " · 60 + " + M[mi][1] + " = " + w + " min."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + M[mi][0] + " · 60 + " + M[mi][1] + " = " + w + " min."; }
+    document.getElementById("msc").textContent = "Netije: " + mok + " / " + md;
+  };
+}
+document.getElementById("mnext").onclick = function () { mi = (mi + 1) % M.length; showM(); };
+showM();
+
+var Q = [
+  ["1 sagatda näçe minut bar?", ["60", "24", "100"], 0],
+  ["1 gije-gündizde näçe sagat bar?", ["24", "12", "60"], 0],
+  ["1 minutda näçe sekunt bar?", ["60", "24", "10"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

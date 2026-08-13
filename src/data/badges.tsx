@@ -2,7 +2,7 @@ import { byDateDesc } from '../lib/date';
 import { tokens } from '../theme';
 
 /*
- * Mugallymyň nyşanlary — the marks a teacher gives during a lesson.
+ * Mugallymyň ýyldyzlary — the marks a teacher gives during a lesson.
  *
  * Grades say what a student produced; badges say how they behaved, which is
  * the part parents and students otherwise only hear at the end of a term.

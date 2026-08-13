@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masştab — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  svg { touch-action: none; }
+  .scale-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .scale-row .btn { font-size: 13.5px; padding: 9px 11px; }
+  .steps { font-size: 15.5px; line-height: 1.9; }
+  .steps b { color: #1d7a3d; }
+  .big-out { text-align: center; font-size: 20px; font-weight: 800; color: #1d7a3d; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Masştab</h1>
+  <div class="sub">Kartadaky aralykdan hakyky aralygy tap · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Iki şäheriň arasyny kartada ölç: gyzyl nokady süýşür. Aşakda hakyky aralyk hasaplanýar.</div>
+    <svg id="map" viewBox="0 0 440 250"></svg>
+    <div class="big-out" id="out"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kartanyň masştaby</h3>
+    <div class="scale-row" id="scales"></div>
+    <div class="note">Masştab <b>1 : 100 000</b> — kartadaky her kesim ýer üstündäki degişli kesimden 100 000 esse kiçi diýmekdir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Hasaplaýarys</h3>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, II kitap (2017)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const SVG = document.getElementById("map");
+const PXCM = 26;                    // 1 sm kartada = 26 px
+const SCALES = [10000, 100000, 500000, 1000000];
+let scale = 100000;
+let cm = 3;                          // measured length in cm (0.5 step)
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+function txt(x, y, s, o = {}) { const t = el("text", Object.assign({ x, y, "font-size": 13, "font-weight": 700, fill: "#1e2a3a" }, o)); t.textContent = s; return t; }
+function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+
+function render() {
+  SVG.innerHTML = "";
+  // map background
+  SVG.appendChild(el("rect", { x: 0, y: 0, width: 440, height: 250, fill: "#eef7ea", rx: 10 }));
+  for (let i = 0; i < 7; i++)
+    SVG.appendChild(el("circle", { cx: 40 + i * 62, cy: 40 + (i % 3) * 70, r: 16 + (i % 2) * 8, fill: "#dcecd2" }));
+  SVG.appendChild(el("path", { d: "M 0 190 Q 120 160 220 195 T 440 180 L 440 250 L 0 250 Z", fill: "#d7e9f7" }));
+  SVG.appendChild(txt(10, 240, "derýa", { fill: "#5b8fb8", "font-size": 12 }));
+
+  const ax = 60, ay = 90;
+  const bx = ax + cm * PXCM, by = ay;
+  SVG.appendChild(el("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "#e2574c", "stroke-width": 4, "stroke-dasharray": "7 4" }));
+  SVG.appendChild(el("circle", { cx: ax, cy: ay, r: 8, fill: "#fff", stroke: "#1e2a3a", "stroke-width": 3 }));
+  SVG.appendChild(txt(ax - 6, ay - 16, "Aşgabat"));
+  SVG.appendChild(el("circle", { cx: bx, cy: by, r: 13, fill: "#fff", stroke: "#e2574c", "stroke-width": 4, id: "handle", style: "cursor:grab" }));
+  SVG.appendChild(txt(bx - 10, by - 24, "B şäher", { fill: "#e2574c" }));
+  SVG.appendChild(txt((ax + bx) / 2 - 22, ay + 26, `${cm} sm`, { "font-size": 15, fill: "#e2574c" }));
+
+  // scale bar
+  SVG.appendChild(el("rect", { x: 300, y: 214, width: PXCM, height: 8, fill: "#1e2a3a" }));
+  SVG.appendChild(el("rect", { x: 300 + PXCM, y: 214, width: PXCM, height: 8, fill: "#fff", stroke: "#1e2a3a" }));
+  SVG.appendChild(txt(300, 208, "0", { "font-size": 11 }));
+  SVG.appendChild(txt(300 + 2 * PXCM - 6, 208, "2 sm", { "font-size": 11 }));
+  SVG.appendChild(txt(300, 240, `M 1 : ${fmt(scale)}`, { "font-size": 12, fill: "#5b6b80" }));
+
+  compute();
+}
+
+function compute() {
+  const realSm = cm * scale;
+  const realM = realSm / 100;
+  const realKm = realM / 1000;
+  document.getElementById("out").textContent =
+    `Hakyky aralyk ≈ ${realKm >= 1 ? realKm.toLocaleString("tk-TM").replace(",", ".") + " km" : fmt(realM) + " m"}`;
+  document.getElementById("steps").innerHTML =
+    `1. Kartada ölçedik: <b>${cm} sm</b>.<br>` +
+    `2. Masştab 1 : ${fmt(scale)} — her sm ${fmt(scale)} sm hakyky aralyga deň.<br>` +
+    `3. Hakyky aralyk = ${cm} · ${fmt(scale)} = <b>${fmt(realSm)} sm</b>.<br>` +
+    `4. sm → m: ${fmt(realSm)} : 100 = <b>${fmt(realM)} m</b>.<br>` +
+    `5. m → km: ${fmt(realM)} : 1000 = <b>${realKm} km</b>.`;
+}
+
+const box = document.getElementById("scales");
+SCALES.forEach(s => {
+  const b = document.createElement("button");
+  b.className = "btn" + (s === scale ? " sel" : "");
+  b.textContent = `1 : ${fmt(s)}`;
+  b.onclick = () => {
+    scale = s;
+    [...box.children].forEach(c => c.classList.remove("sel"));
+    b.classList.add("sel");
+    render();
+  };
+  box.appendChild(b);
+});
+
+let drag = false;
+SVG.addEventListener("pointerdown", e => { if (e.target.id === "handle") { drag = true; SVG.setPointerCapture(e.pointerId); } });
+SVG.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const r = SVG.getBoundingClientRect();
+  const sx = (e.clientX - r.left) * (440 / r.width);
+  cm = Math.max(0.5, Math.min(13, Math.round((sx - 60) / PXCM * 2) / 2));
+  render();
+});
+SVG.addEventListener("pointerup", () => drag = false);
+
+render();
+</script>
+</body>
+</html>

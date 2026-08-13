@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faýllar bilen işlemek — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .prog { background: #f7fafd; border-radius: 12px; padding: 10px 12px; min-height: 120px;
+          font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
+  .ln { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .ln .n { color: #8a97a8; width: 22px; flex: 0 0 auto; }
+  .ln .c { flex: 1; color: #2456b0; word-break: break-all; }
+  .ln .x { width: 34px; height: 34px; border: none; border-radius: 8px; background: #fbe3e3;
+           color: #b02424; cursor: pointer; flex: 0 0 auto; }
+  .disk { border: 2px solid #d6e0ee; border-radius: 12px; background: #fff; overflow: hidden; }
+  .disk .h { background: #eef2f8; padding: 8px 12px; font-size: 12.5px; font-weight: 800;
+             color: #5b6b80; }
+  .disk .b { padding: 10px 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
+             font-size: 13.5px; min-height: 70px; line-height: 1.8; }
+  .disk .b div.cur { background: #e3edfd; border-radius: 6px; }
+  .log { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.75;
+         background: #1e2a3a; color: #d8e4f4; border-radius: 12px; padding: 10px 12px;
+         min-height: 70px; white-space: pre-wrap; word-break: break-word; }
+  .log b { color: #7fd39b; } .log i { color: #ff9b9b; font-style: normal; }
+  .ref { font-size: 13.5px; line-height: 1.9; }
+  .ref b { color: #2456b0; font-family: ui-monospace, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Faýllar bilen işlemek</h1>
+  <div class="sub">ASSIGN · RESET · REWRITE · APPEND · READ · WRITE · CLOSE · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Buýruklara basyp programma düz, soňra <b>Işlet</b> düwmesine bas.
+      Ýalňyş tertip goýberilse, Paskal ýalňyşlyk berýär.</div>
+    <div class="row tight">
+      <button class="btn" data-op="assign">Assign(f,'text1.txt')</button>
+      <button class="btn" data-op="reset">Reset(f)</button>
+      <button class="btn" data-op="rewrite">Rewrite(f)</button>
+      <button class="btn" data-op="append">Append(f)</button>
+    </div>
+    <div class="row tight">
+      <button class="btn ghost" data-op="write">Writeln(f, setir)</button>
+      <button class="btn ghost" data-op="read">Read(f, s)</button>
+      <button class="btn ghost" data-op="eof">Eof(f) barla</button>
+      <button class="btn ghost" data-op="close">Close(f)</button>
+    </div>
+    <div class="prog" id="prog"></div>
+    <div class="row">
+      <button class="btn primary" id="run">▶ Işlet</button>
+      <button class="btn ghost" id="clr">Programmany arassala</button>
+      <button class="btn warn" id="dsk">Diski başdaky ýagdaýa getir</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Netije</h3>
+    <div class="cols">
+      <div class="col">
+        <div class="disk">
+          <div class="h">💽 text1.txt — diskdäki faýl</div>
+          <div class="b" id="file"></div>
+        </div>
+      </div>
+      <div class="col"><div class="log" id="log">Programmany işlet…</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Ýumuş</h3>
+    <div class="goal" id="tg"></div>
+    <div class="row"><button class="btn" id="nx">Indiki ýumuş</button></div>
+    <div class="msg" id="tm"></div>
+    <div class="score" id="ts">0 ýumuş ýerine ýetdi</div>
+  </div>
+
+  <div class="card">
+    <h3>Esasy proseduralar we funksiýalar</h3>
+    <div class="ref">
+      <b>Assign(f, at)</b> – fiziki faýly logiki faýl bilen baglanyşdyrýar<br>
+      <b>Reset(f)</b> – bar bolan faýly okamak üçin açýar<br>
+      <b>Rewrite(f)</b> – täze faýl döredýär (bar bolsa mazmuny öçürilýär)<br>
+      <b>Append(f)</b> – görkezijini faýlyň soňuna eltip, goşmaga açýar<br>
+      <b>Read / Write</b> – okaýar we ýazýar &nbsp; <b>Close(f)</b> – faýly ýapýar<br>
+      <b>Eof(f)</b> – faýlyň soňuna ýetilende TRUE gaýtarýar
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §12–§15</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const INIT = ["Salam PASCAL!", "Informatika 12"];
+const LBL = {
+  assign: "Assign(f,'text1.txt');", reset: "Reset(f);", rewrite: "Rewrite(f);",
+  append: "Append(f);", write: "Writeln(f,'setir');", read: "Read(f,s); Write(s);",
+  eof: "if Eof(f) then …", close: "Close(f);"
+};
+let prog = [], disk = INIT.slice(), wrote = 0;
+
+document.querySelectorAll("[data-op]").forEach(b => b.onclick = () => {
+  prog.push(b.dataset.op); drawProg();
+});
+$("clr").onclick = () => { prog = []; drawProg(); };
+$("dsk").onclick = () => { disk = INIT.slice(); drawFile(-1); log("Disk başdaky ýagdaýyna getirildi."); };
+
+function drawProg() {
+  const p = $("prog"); p.innerHTML = "";
+  if (!prog.length) { p.innerHTML = '<span style="color:#8a97a8">Programma boş</span>'; return; }
+  prog.forEach((op, i) => {
+    const d = document.createElement("div"); d.className = "ln";
+    d.innerHTML = '<span class="n">' + (i + 1) + '</span><span class="c">' + LBL[op] + "</span>";
+    const x = document.createElement("button");
+    x.className = "x"; x.textContent = "✕";
+    x.onclick = () => { prog.splice(i, 1); drawProg(); };
+    d.appendChild(x); p.appendChild(d);
+  });
+}
+function drawFile(cur) {
+  const b = $("file"); b.innerHTML = "";
+  if (!disk.length) { b.innerHTML = '<span style="color:#8a97a8">(boş faýl)</span>'; return; }
+  disk.forEach((l, i) => {
+    const d = document.createElement("div");
+    if (i === cur) d.className = "cur";
+    d.textContent = (i === cur ? "▶ " : "  ") + l;
+    b.appendChild(d);
+  });
+}
+let LOG = [];
+function log(t, bad) { LOG.push(bad ? "<i>" + t + "</i>" : t); $("log").innerHTML = LOG.join("\n"); }
+
+/* ------------------------------------------------------------------- işletmek */
+let last = null;
+$("run").onclick = () => {
+  LOG = []; wrote = 0;
+  let bound = false, mode = null, pos = 0, err = false, closed = false;
+  disk = disk.slice();
+  const st = { read: 0, written: 0, err: null, closed: false };
+
+  for (const op of prog) {
+    if (err) break;
+    if (op === "assign") { bound = true; log("<b>Assign</b> — 'text1.txt' logiki faýl f bilen baglanyşdyryldy."); continue; }
+    if (!bound) { log("Ýalňyşlyk: faýl ASSIGN bilen baglanyşdyrylmadyk.", 1); err = 1; break; }
+    if (op === "reset") {
+      mode = "r"; pos = 0;
+      log("<b>Reset</b> — faýl okamak üçin açyldy, görkeziji 1-nji setirde.");
+    } else if (op === "rewrite") {
+      mode = "w"; disk = []; pos = 0;
+      log("<b>Rewrite</b> — täze faýl döredildi, öňki mazmun öçürildi.");
+    } else if (op === "append") {
+      mode = "w"; pos = disk.length;
+      log("<b>Append</b> — görkeziji faýlyň soňuna eltildi (" + disk.length + " setir bar).");
+    } else if (op === "write") {
+      if (mode !== "w") { log("Ýalňyşlyk: faýl ýazmak üçin açylmadyk (Rewrite ýa-da Append gerek).", 1); err = 1; break; }
+      wrote++; disk.push("Setir " + wrote); st.written++;
+      log("<b>Writeln</b> — faýla «Setir " + wrote + "» ýazyldy.");
+    } else if (op === "read") {
+      if (mode !== "r") { log("Ýalňyşlyk: faýl okamak üçin açylmadyk (Reset gerek).", 1); err = 1; break; }
+      if (pos >= disk.length) { log("Ýalňyşlyk: faýlyň soňy — okap bolmaýar (Eof = TRUE).", 1); err = 1; break; }
+      log("<b>Read</b> — okaldy: «" + disk[pos] + "»"); pos++; st.read++;
+    } else if (op === "eof") {
+      const e = mode === "r" ? pos >= disk.length : true;
+      log("<b>Eof(f)</b> = " + (e ? "TRUE" : "FALSE"));
+    } else if (op === "close") {
+      if (!mode) { log("Ýalňyşlyk: açylmadyk faýly ýapyp bolmaýar.", 1); err = 1; break; }
+      mode = null; closed = true; st.closed = true;
+      log("<b>Close</b> — faýl ýapyldy, maglumat diskde galdy.");
+    }
+  }
+  if (!err && mode) log("Duýduryş: faýl ýapylmady — CLOSE goýmaly.", 1);
+  if (!prog.length) log("Programma boş.");
+  st.err = err;
+  drawFile(mode === "r" ? Math.min(pos, disk.length - 1) : -1);
+  last = st;
+  check();
+};
+
+/* ------------------------------------------------------------------- ýumuşlar */
+const T = [
+  { t: "Faýly baglanyşdyr, täzeden döret, iki setir ýaz we ýap.",
+    f: s => s && !s.err && s.written === 2 && s.closed },
+  { t: "Faýly okamak üçin aç we iki setir oka.", f: s => s && !s.err && s.read === 2 },
+  { t: "Faýlyň soňuna Append bilen bir setir goş we ýap.",
+    f: s => s && !s.err && s.written === 1 && s.closed && prog.indexOf("append") >= 0 },
+  { t: "Eof funksiýasyny ulanyp, faýlyň soňuna ýetendigiňi görkez.",
+    f: s => s && !s.err && prog.indexOf("eof") >= 0 && s.read > 0 }
+];
+let ti = 0, td = 0;
+function drawT() { $("tg").textContent = (ti + 1) + ". " + T[ti].t; $("tm").textContent = ""; }
+function check() {
+  const ok = T[ti].f(last);
+  $("tm").className = "msg " + (ok ? "ok" : "bad");
+  if (ok && !T[ti].done) { T[ti].done = 1; td++; }
+  $("tm").textContent = ok ? "Ýumuş ýerine ýetdi! ✅" : "Bu ýumuş entek çözülmedi.";
+  $("ts").textContent = td + " ýumuş ýerine ýetdi";
+}
+$("nx").onclick = () => { ti = (ti + 1) % T.length; drawT(); };
+
+drawProg(); drawFile(-1); drawT();
+</script>
+</body>
+</html>

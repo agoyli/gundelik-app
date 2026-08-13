@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bezemegiň elementleri we ses — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .brow { border: 2px solid #d6e0ee; border-radius: 12px; background: #fff; padding: 14px 16px;
+          min-height: 150px; font-size: 15px; line-height: 1.6; overflow: hidden; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #2456b0;
+          background: #f7fafd; border-radius: 10px; padding: 10px 12px; line-height: 1.7;
+          overflow-x: auto; white-space: pre-wrap; }
+  .sw { width: 44px; height: 44px; border-radius: 10px; border: 2px solid #d6e0ee; padding: 0;
+        cursor: pointer; }
+  .sw.sel { border-color: #2456b0; border-width: 3px; }
+  .lab { font-weight: 800; font-size: 13.5px; color: #5b6b80; margin: 10px 0 5px; }
+  .player { border: 2px solid #4a637f; border-radius: 8px; background: #eef2f8; display: flex;
+            align-items: center; gap: 8px; padding: 6px 8px; }
+  .player .pb { width: 34px; height: 34px; border: none; border-radius: 50%; background: #2456b0;
+                color: #fff; font-size: 14px; cursor: pointer; flex: 0 0 auto; }
+  .eq { display: flex; align-items: flex-end; gap: 3px; height: 26px; flex: 1; }
+  .eq i { flex: 1; background: #9db6dc; border-radius: 2px; height: 20%; transition: height .18s; }
+  .fixed { background-attachment: fixed; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Web-sahypalary bezemegiň elementleri</h1>
+  <div class="sub">TEXT · FONT COLOR we FACE · fon · &lt;EMBED&gt; ses · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Bezemegiň buýruklaryny üýtget – aşakdaky sahypa şol bada üýtgeýär.</div>
+    <div class="lab">BODY TEXT — tutuş tekstiň reňki</div>
+    <div class="row tight" id="ct"></div>
+    <div class="lab">FONT COLOR — tapawutlandyrylan bölegiň reňki</div>
+    <div class="row tight" id="cf"></div>
+    <div class="lab">FONT FACE — şriftiň stili</div>
+    <div class="row tight" id="face"></div>
+    <div class="lab">Fon</div>
+    <div class="row tight">
+      <button class="btn sel" data-bg="ak">Ak</button>
+      <button class="btn" data-bg="sur">Şekil (fon1.jpg)</button>
+      <button class="btn ghost" id="fx">BGPROPERTIES: adaty</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Brauzeriň penjiresi</h3>
+    <div class="brow" id="pg">
+      <h2 style="margin:.2em 0">Türkmenistanyň tebigaty</h2>
+      <p>Bu sahypanyň tutuş teksti <b>TEXT</b> buýrugy bilen boýalýar,
+        <span id="frag">şu bölek bolsa FONT tegi bilen aýratyn tapawutlandyrylandyr</span>.
+        Şriftiň stilini <b>FACE</b> buýrugy kesgitleýär.</p>
+      <div class="player" id="pl">
+        <button class="pb" id="pb">▶</button>
+        <div class="eq" id="eq"></div>
+        <span style="font-size:12px;color:#5b6b80" id="pt">001_muz.mp3</span>
+      </div>
+    </div>
+    <div class="code" id="code"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ses — &lt;EMBED&gt;</h3>
+    <div class="slider"><span class="lbl">WIDTH</span>
+      <input type="range" id="w" min="100" max="320" value="200" step="10"><span class="out" id="wo">200</span></div>
+    <div class="slider"><span class="lbl">HEIGHT</span>
+      <input type="range" id="h" min="30" max="70" value="46" step="2"><span class="out" id="ho">46</span></div>
+    <div class="row tight">
+      <button class="btn" id="as">AUTOSTART: TRUE</button>
+      <button class="btn ghost" id="bd">BORDER: 2</button>
+    </div>
+    <div class="note" id="an"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">Ses faýly sahypanyň papkasynda saklanmalydyr. Bolmasa SRC buýrugynda
+      faýlyň <b>doly ady</b> görkezilmeli bolýar.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §8</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let text = "black", fcol = "red", face = "Times New Roman", bg = "ak", fixed = false;
+let auto = true, border = 2, playing = false, timer = null;
+
+function sw(box, list, get, set) {
+  list.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "sw" + (get() === c ? " sel" : ""); b.style.background = c; b.title = c;
+    b.onclick = () => {
+      set(c);
+      $(box).querySelectorAll(".sw").forEach(x => x.classList.toggle("sel", x === b));
+      draw();
+    };
+    $(box).appendChild(b);
+  });
+}
+sw("ct", ["black", "navy", "green", "maroon"], () => text, v => text = v);
+sw("cf", ["red", "blue", "olive", "purple"], () => fcol, v => fcol = v);
+
+["Times New Roman", "Arial", "Courier New"].forEach(f => {
+  const b = document.createElement("button");
+  b.className = "btn" + (f === face ? " sel" : ""); b.textContent = f;
+  b.style.fontFamily = f;
+  b.onclick = () => {
+    face = f;
+    $("face").querySelectorAll(".btn").forEach(x => x.classList.toggle("sel", x === b));
+    draw();
+  };
+  $("face").appendChild(b);
+});
+document.querySelectorAll("[data-bg]").forEach(b => b.onclick = () => {
+  bg = b.dataset.bg;
+  document.querySelectorAll("[data-bg]").forEach(x => x.classList.toggle("sel", x === b));
+  draw();
+});
+$("fx").onclick = () => { fixed = !fixed; draw(); };
+$("as").onclick = () => { auto = !auto; draw(); };
+$("bd").onclick = () => { border = border ? 0 : 2; draw(); };
+
+function draw() {
+  const pg = $("pg");
+  pg.style.color = text;
+  pg.style.background = bg === "ak" ? "#fff"
+    : "repeating-linear-gradient(135deg,#eaf3ff 0 14px,#dbe9fb 14px 28px)";
+  pg.style.backgroundAttachment = fixed ? "fixed" : "scroll";
+  $("frag").style.color = fcol;
+  $("frag").style.fontFamily = face;
+  $("fx").textContent = "BGPROPERTIES: " + (fixed ? "FIXED" : "adaty");
+  $("as").textContent = "AUTOSTART: " + (auto ? "TRUE" : "FALSE");
+  $("bd").textContent = "BORDER: " + border;
+
+  const w = +$("w").value, h = +$("h").value;
+  $("wo").textContent = w; $("ho").textContent = h;
+  $("pl").style.width = w + "px"; $("pl").style.height = h + "px";
+  $("pl").style.borderWidth = border + "px";
+  $("an").innerHTML = auto
+    ? "AUTOSTART=TRUE — sahypa açylan badyna oýnadyjy <b>işe girýär</b>."
+    : "AUTOSTART=FALSE — ses diňe ▶ düwmesine basylanda başlaýar.";
+
+  $("code").textContent =
+    "<BODY " + (bg === "ak" ? "BGCOLOR=white" : "BACKGROUND=fon1.jpg" + (fixed ? " BGPROPERTIES=FIXED" : "")) +
+    " TEXT=" + text + ">\n" +
+    "<FONT COLOR=" + fcol + " FACE=«" + face + "»> … </FONT>\n" +
+    "<EMBED SRC=001_muz.mp3 WIDTH=" + w + " HEIGHT=" + h +
+    " BORDER=" + border + " AUTOSTART=" + (auto ? "TRUE" : "FALSE") + ">";
+}
+
+/* ---------------------------------------------------------------- oýnadyjy */
+for (let i = 0; i < 12; i++) $("eq").appendChild(document.createElement("i"));
+function tick() {
+  $("eq").querySelectorAll("i").forEach(b =>
+    b.style.height = (playing ? 20 + Math.random() * 80 : 18) + "%");
+}
+$("pb").onclick = () => {
+  playing = !playing;
+  $("pb").textContent = playing ? "❚❚" : "▶";
+  $("pt").textContent = playing ? "001_muz.mp3 — oýnaýar" : "001_muz.mp3";
+  if (playing && !timer) timer = setInterval(tick, 200);
+  if (!playing && timer) { clearInterval(timer); timer = null; tick(); }
+};
+["w", "h"].forEach(i => $(i).oninput = draw);
+tick(); draw();
+</script>
+</body>
+</html>

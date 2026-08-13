@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýazgyny formatlaşdyrmak — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .paper { background: #fff; border: 2px solid #d6e0ee; border-radius: 12px; padding: 14px;
+           min-height: 118px; }
+  .paper p { margin: 0 0 8px; }
+  .grp { background: #f7fafd; border-radius: 12px; padding: 9px; margin-bottom: 7px; }
+  .grp h4 { margin: 0 0 6px; font-size: 12.5px; color: #5b6b80; text-transform: uppercase;
+            letter-spacing: .4px; }
+  .grp .row { gap: 6px; }
+  .grp button { min-height: 44px; min-width: 46px; font-size: 14px; }
+  .sw { width: 46px; height: 44px; border-radius: 10px; }
+  .state { background: #f2edfd; border-radius: 12px; padding: 9px 11px; font-size: 13px;
+           font-family: ui-monospace, Menlo, monospace; color: #6a4bb8; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ýazgyny formatlaşdyrmak</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Kitap: «<b>Ýazgyny formatlaşdyrmak – bu ýazgynyň daş görnüşini
+      üýtgetmekdir.</b>» Munuň üçin reňkini, ölçegini, şriftiň ýazylyşyny we şekilini
+      çalyşmaly.</div>
+    <div class="paper" id="pp">
+      <p id="t1">Watan – iň mukaddes söz.</p>
+      <p id="t2">Kompýuter biziň kömekçimizdir.</p>
+    </div>
+
+    <div class="grp" style="margin-top:10px">
+      <h4>Şriftiň görnüşi</h4>
+      <div class="row tight" id="fam"></div>
+    </div>
+    <div class="grp">
+      <h4>Ölçegi</h4>
+      <div class="slider"><span class="lbl">Ölçeg</span>
+        <input type="range" id="sz" min="12" max="34" value="18">
+        <span class="out" id="szo"></span></div>
+    </div>
+    <div class="grp">
+      <h4>Ýazuwyň görnüşi</h4>
+      <div class="row tight">
+        <button class="btn" data-s="b" style="font-weight:900">Ж</button>
+        <button class="btn" data-s="i" style="font-style:italic">К</button>
+        <button class="btn" data-s="u" style="text-decoration:underline">Ч</button>
+        <button class="btn" data-s="s" style="text-decoration:line-through">abc</button>
+      </div>
+      <div class="hint">Şriftiň ýazylyşy <b>ýarym ýogyn (Ж)</b>, <b>kursiw (К)</b>,
+        <b>aşagy çyzylan (Ч)</b> we <b>üsti çyzylan (abc)</b> görnüşde bolup biler.</div>
+    </div>
+    <div class="grp">
+      <h4>Reňki</h4>
+      <div class="row tight" id="col"></div>
+    </div>
+    <div class="grp">
+      <h4>Deňleme</h4>
+      <div class="row tight" id="ali"></div>
+    </div>
+    <div class="grp">
+      <h4>Ak setir (abzasyň birinji setiri)</h4>
+      <div class="slider"><span class="lbl">Boş goýulýan ýer</span>
+        <input type="range" id="ind" min="0" max="3" step="1" value="0">
+        <span class="out" id="indo"></span></div>
+      <div class="hint">Ak setiri döretmek üçin <b>çyzgyjyň ýokarky görkezijisi</b>
+        ulanylýar. Tekstiň çep gyrasyny çyzgyjyň aşaky görkezijisi kesgitleýär.</div>
+    </div>
+    <div class="grp">
+      <h4>Setir aralygy (Межстрочный интервал)</h4>
+      <div class="row tight" id="lh"></div>
+    </div>
+    <div class="state" id="st"></div>
+    <button class="btn ghost" id="rst" style="margin-top:8px">🔄 Formaty aýyr</button>
+  </div>
+
+  <div class="card">
+    <h3>Nusga boýunça formatla</h3>
+    <div class="goal" id="task"></div>
+    <button class="btn primary" id="chk">✅ Barla</button>
+    <button class="btn ghost" id="next">🔀 Başga ýumuş</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const FAMS = [["Arial", "Arial, sans-serif"],
+              ["Times New Roman", "'Times New Roman', Georgia, serif"],
+              ["Courier", "ui-monospace, Menlo, monospace"]];
+const COLS = [["gara", "#1e2a3a"], ["gök", "#2456b0"], ["gyzyl", "#c62828"],
+              ["ýaşyl", "#1d7a3d"]];
+const ALIS = [["⬅️ çepden", "left"], ["↔️ ortada", "center"], ["➡️ sagdan", "right"]];
+
+const LHS = [["1,0", 1.0], ["1,15", 1.15], ["1,5", 1.5], ["2", 2]];
+let st = {fam: 0, size: 18, b: false, i: false, u: false, s: false, col: 0, ali: 0,
+          ind: 0, lh: 0};
+
+$("fam").innerHTML = FAMS.map((f, i) =>
+  `<button class="btn" data-f="${i}" style="font-family:${f[1]}">${f[0]}</button>`).join("");
+$("col").innerHTML = COLS.map((c, i) =>
+  `<button class="btn sw" data-c="${i}" style="background:${c[1]}" aria-label="${c[0]}"></button>`)
+  .join("");
+$("ali").innerHTML = ALIS.map((a, i) =>
+  `<button class="btn" data-al="${i}">${a[0]}</button>`).join("");
+$("lh").innerHTML = LHS.map((l, i) =>
+  `<button class="btn" data-lh="${i}">${l[0]}</button>`).join("");
+
+function apply() {
+  const p = $("pp");
+  p.style.fontFamily = FAMS[st.fam][1];
+  p.style.fontSize = st.size + "px";
+  p.style.fontWeight = st.b ? "800" : "400";
+  p.style.fontStyle = st.i ? "italic" : "normal";
+  p.style.textDecoration = [st.u ? "underline" : "", st.s ? "line-through" : ""]
+    .filter(Boolean).join(" ") || "none";
+  p.style.lineHeight = LHS[st.lh][1];
+  p.style.textIndent = st.ind + "em";
+  p.style.color = COLS[st.col][1];
+  p.style.textAlign = ALIS[st.ali][1];
+  $("szo").textContent = st.size;
+  $("fam").querySelectorAll("button").forEach((b, i) =>
+    b.classList.toggle("sel", i === st.fam));
+  $("col").querySelectorAll("button").forEach((b, i) =>
+    b.classList.toggle("sel", i === st.col));
+  $("ali").querySelectorAll("button").forEach((b, i) =>
+    b.classList.toggle("sel", i === st.ali));
+  ["b", "i", "u", "s"].forEach(k =>
+    document.querySelector(`[data-s="${k}"]`).classList.toggle("sel", st[k]));
+  $("lh").querySelectorAll("button").forEach((b, i) =>
+    b.classList.toggle("sel", i === st.lh));
+  $("indo").textContent = st.ind ? st.ind + " sm" : "ýok";
+  $("st").innerHTML =
+    `şrift: <b>${FAMS[st.fam][0]}</b> · ölçeg: <b>${st.size}</b> · reňk: <b>${COLS[st.col][0]}</b><br>` +
+    `ýarym ýogyn: <b>${st.b ? "hawa" : "ýok"}</b> · kursiw: <b>${st.i ? "hawa" : "ýok"}</b> · ` +
+    `aşagy çyzylan: <b>${st.u ? "hawa" : "ýok"}</b> · ` +
+    `üsti çyzylan: <b>${st.s ? "hawa" : "ýok"}</b><br>` +
+    `ak setir: <b>${st.ind}</b> · setir aralygy: <b>${LHS[st.lh][0]}</b><br>` +
+    `deňleme: <b>${ALIS[st.ali][0].slice(3)}</b>`;
+}
+$("fam").querySelectorAll("button").forEach(b =>
+  b.onclick = () => { st.fam = +b.dataset.f; apply(); });
+$("col").querySelectorAll("button").forEach(b =>
+  b.onclick = () => { st.col = +b.dataset.c; apply(); });
+$("ali").querySelectorAll("button").forEach(b =>
+  b.onclick = () => { st.ali = +b.dataset.al; apply(); });
+document.querySelectorAll("[data-s]").forEach(b =>
+  b.onclick = () => { st[b.dataset.s] = !st[b.dataset.s]; apply(); });
+document.querySelectorAll("[data-lh]").forEach(b =>
+  b.onclick = () => { st.lh = +b.dataset.lh; apply(); });
+document.getElementById("ind").addEventListener("input", e => {
+  st.ind = +e.target.value; apply();
+});
+$("sz").addEventListener("input", () => { st.size = +$("sz").value; apply(); });
+$("rst").onclick = () => {
+  st = {fam: 0, size: 18, b: false, i: false, u: false, s: false, col: 0, ali: 0,
+        ind: 0, lh: 0};
+  $("sz").value = 18; $("ind").value = 0; apply();
+  $("msg").textContent = ""; $("msg").className = "msg";
+};
+
+/* ---------------- ýumuşlar ---------------- */
+const TASKS = [
+  {txt: "Ýazgyny <b>Times New Roman</b> şriftinde, <b>24</b> ölçegde, <b>gyzyl</b> " +
+        "reňkde we <b>ýarym ýogyn</b> ýaz.",
+   need: {fam: 1, size: 24, col: 2, b: true}},
+  {txt: "Kitapdaky ýumuş: bir sözlemi <b>Times New Roman</b> şriftde, <b>14</b> " +
+        "ölçegde, <b>gök</b> reňkde ýaz we <b>1 sm ak setir</b> döret.",
+   need: {fam: 1, size: 14, col: 1, ind: 1}},
+  {txt: "Ýazgyny <b>Arial</b> şriftinde, <b>30</b> ölçegde, <b>gök</b> reňkde, " +
+        "<b>kursiw</b>, <b>sagdan</b> deňlenen we setir aralygy <b>1,5</b> ýaz.",
+   need: {fam: 0, size: 30, col: 1, i: true, ali: 2, lh: 2}},
+];
+let ti = 0;
+const LBL = {fam: "şrift", size: "ölçeg", col: "reňk", b: "ýarym ýogyn", i: "kursiw",
+             u: "aşagy çyzylan", s: "üsti çyzylan", ali: "deňleme", ind: "ak setir",
+             lh: "setir aralygy"};
+function showTask() { $("task").innerHTML = TASKS[ti].txt; }
+$("chk").onclick = () => {
+  const need = TASKS[ti].need;
+  const bad = Object.keys(need).filter(k => st[k] !== need[k]).map(k => LBL[k]);
+  if (!bad.length) {
+    $("msg").textContent = "🎉 Berekella! Format nusga bilen doly gabat gelýär.";
+    $("msg").className = "msg ok";
+  } else {
+    $("msg").textContent = `Entek gabat gelmeýär: ${bad.join(", ")}.`;
+    $("msg").className = "msg bad";
+  }
+};
+$("next").onclick = () => {
+  ti = (ti + 1) % TASKS.length; showTask();
+  $("msg").textContent = ""; $("msg").className = "msg";
+};
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Ýazgyny formatlaşdyrmak diýmek näme?",
+   ["Daş görnüşini üýtgetmek", "Faýly saklamak", "Papka döretmek"], 0],
+  ["Şriftiň näçe ýazylyş görnüşi bar?", ["Iki", "Dört", "Alty"], 1],
+  ["Ak setiri döretmek üçin näme ulanylýar?",
+   ["Enter düwmesi", "Setir aralygy", "Çyzgyjyň ýokarky görkezijisi"], 2],
+  ["Haýsy şrift giňden ýaýran görnüş?",
+   ["Times New Roman", "Cambria Italic", "Albertus Medium"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+apply(); showTask();
+</script>
+</body>
+</html>

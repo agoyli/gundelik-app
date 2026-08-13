@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ortak işlikleriň atlaşmagy — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(1, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ortak işlikleriň atlaşmagy we sintaktik hyzmaty</h1>
+  <div class="sub">Türkmen dili · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ortak işlik <b>aýyklaýan sözi galdyrylanda atlaşýar</b> we sözlemde <b>eýe, aýyrgyç ýa-da doldurgyç</b> bolup gelýär.</div>
+    <div class="tbl" style="margin-top:8px">ýazan – öten &nbsp;|&nbsp; ýazýan – häzirki &nbsp;|&nbsp; ýazjak – geljek zaman</div>
+  </div>
+
+  <div class="card">
+    <h3>Sözlemiň haýsy agzasy?</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Goýy ýazylan ortak işligiň agza hyzmatyny saýla.</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="eye">eýe</button><button class="btn" data-k="ayyrgyc">aýyrgyç</button><button class="btn" data-k="doldurgyc">doldurgyç</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Zamanyny kesgitle</h3>
+    <div class="task" id="task" style="margin-top:8px"></div>
+    <div class="goal">Ortak işligiň aňladýan zamanyny saýla.</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row"><button class="btn ghost" id="next">Indiki sorag</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Türkmen dili 7 · 113–114-nji sahypalar</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Işlemedik – dişlemez. – «işlemedik»", "eye", "Atlaşyp, kim? soragyna jogap bolýar."], ["Okaýan oglan tapawutlandy. – «okaýan»", "ayyrgyc", "Oglan sözüni aýyklaýar."], ["Ýeňiş gazananlary gutladylar. – «gazananlary»", "doldurgyc", "Kimleri? soragyna jogap bolýar."], ["Ýazjak hatym taýýar. – «ýazjak»", "ayyrgyc", "Hatym sözüni aýyklaýar."], ["Giden getirer. – «giden»", "eye", "Atlaşyp, eýe bolup gelýär."], ["Bilýänden sorap öwren. – «bilýänden»", "doldurgyc", "Kimden? soragyna jogap bolýar."], ["Gelen myhmanlar garşylandy. – «gelen»", "ayyrgyc", "Myhmanlar sözüni aýyklaýar."], ["Okanlar üstün çykdy. – «okanlar»", "eye", "Kimler? soragyna jogap bolýar."]];
+var KN = {"eye": "eýe", "ayyrgyc": "aýyrgyç", "doldurgyc": "doldurgyç"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+// [sorag, jogap, düşündiriş]
+var T = [["ýazan", "öten zaman", "-an, -en goşulmasy öten zamany aňladýar."], ["ýazýan", "häzirki zaman", "-ýan, -ýän goşulmasy häzirki zamany aňladýar."], ["ýazjak", "geljek zaman", "-jak, -jek goşulmasy geljek zamany aňladýar."], ["okan", "öten zaman", "-an goşulmasy."], ["okaýan", "häzirki zaman", "-ýan goşulmasy."], ["okajak", "geljek zaman", "-jak goşulmasy."]];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+function show() {
+  document.getElementById("task").textContent = T[ti][0];
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  tlock = 0;
+}
+var VALS = ["öten zaman", "häzirki zaman", "geljek zaman"];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + i + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = VALS[parseInt(this.getAttribute("data-n"), 10)], t = T[ti], m = document.getElementById("msg");
+    if (v === t[1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogrusy: " + t[1] + ". " + t[2]; }
+    document.getElementById("sc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+show();
+
+var Q = [["Ortak işlik haçan atlaşýar?", ["Aýyklaýan sözi galdyrylanda", "Zamany üýtgände", "Ýokluk goşulanda"], 0], ["«Işlemedik – dişlemez» sözleminde işlemedik haýsy agza?", ["Eýe", "Habar", "Aýyrgyç"], 0], ["Ortak işlik haýsy soraglara jogap bolýar?", ["nähili?, haýsy?", "kim?, näme?", "haçan?"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

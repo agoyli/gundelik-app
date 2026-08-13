@@ -20,7 +20,7 @@ import type { Award } from '../data/badges';
 import { absDate, fmtDate } from '../lib/date';
 import { inboxUnread } from '../data/inbox';
 import { useSchedule } from '../hooks/useSchedule';
-import { tierFor, useCan, usePrefs } from '../state/prefs';
+import { tierFor, useCan } from '../state/prefs';
 import { tokens } from '../theme';
 import type { Lesson } from '../types';
 
@@ -61,7 +61,7 @@ function SummaryCell({ value, label, color, last, onClick }: {
       }}
     >
       <Box sx={{
-        fontSize: 19, fontWeight: 700, letterSpacing: '-.2px', color: color ?? tokens.ink,
+        fontSize: 20, fontWeight: 700, letterSpacing: '-.2px', color: color ?? tokens.ink,
         fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', minHeight: 24,
       }}>{value}</Box>
       <Typography sx={{ fontSize: 12.5, color: tokens.ink3 }} noWrap>{label}</Typography>
@@ -72,11 +72,11 @@ function SummaryCell({ value, label, color, last, onClick }: {
 /*
  * A badge, for an account that has not paid for badges.
  *
- * The emoji and the date stay — that a badge happened, and when, is a fact
- * about the reader's own day. Who gave it and what they wrote is the value,
- * and it stays behind a real blur rather than a grey placeholder: the point is
- * that there is a sentence there, unread. Same line the badge history draws —
- * how much there is is free, what it says is paid.
+ * The emoji, the date and the teacher's name stay — that a star happened, when,
+ * and from whom are facts about the reader's own day. What the teacher *wrote*
+ * is the value, and it stays behind a blur rather than a grey placeholder: the
+ * point is that there is a sentence there, unread. Same line the star history
+ * draws — how much there is is free, what it says is paid.
  */
 function LockedAward({ award, onUpgrade }: { award: Award; onUpgrade: () => void }) {
   const t = badgeType(award.typeId);
@@ -85,7 +85,7 @@ function LockedAward({ award, onUpgrade }: { award: Award; onUpgrade: () => void
   return (
     <ButtonBase
       onClick={onUpgrade}
-      aria-label={`Nyşan, ${fmtDate(award.date)} — mugallym we teswir ${plan?.name} bilen açylýar`}
+      aria-label={`Ýyldyz, ${fmtDate(award.date)}, ${award.teacher} — teswir ${plan?.name} bilen açylýar`}
       sx={{
         display: 'flex', alignItems: 'center', gap: '11px', width: '100%', textAlign: 'left',
         p: '9px 11px', borderRadius: `${tokens.rRow}px`, bgcolor: tone.tint,
@@ -98,20 +98,20 @@ function LockedAward({ award, onUpgrade }: { award: Award; onUpgrade: () => void
       }}>{t?.emoji}</Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 13, fontWeight: 700, color: tone.ink }}>
-          {fmtDate(award.date)}
+        <Typography noWrap sx={{ fontSize: 13, fontWeight: 700, color: tone.ink }}>
+          {award.teacher} · {fmtDate(award.date)}
         </Typography>
-        {/* the teacher's name and words, present but unreadable */}
+        {/* the teacher's words, present but unreadable */}
         <Box aria-hidden sx={{ display: 'flex', flexDirection: 'column', gap: '4px', mt: '6px' }}>
-          <Box sx={{ height: 8, width: '52%', borderRadius: 4, bgcolor: '#fff', opacity: .9 }} />
-          <Box sx={{ height: 8, width: '78%', borderRadius: 4, bgcolor: '#fff', opacity: .6 }} />
+          <Box sx={{ height: 8, width: '78%', borderRadius: `${tokens.rPill}px`, bgcolor: '#fff', opacity: .9 }} />
+          <Box sx={{ height: 8, width: '52%', borderRadius: `${tokens.rPill}px`, bgcolor: '#fff', opacity: .6 }} />
         </Box>
       </Box>
 
       <Box sx={{
         display: 'inline-flex', alignItems: 'center', gap: '5px', flex: 'none',
         px: '9px', height: 24, borderRadius: `${tokens.rPill}px`,
-        bgcolor: '#fff', color: tone.ink, fontSize: 11.5, fontWeight: 700,
+        bgcolor: '#fff', color: tone.ink, fontSize: 12, fontWeight: 700,
       }}>
         <LockIcon size={12} />{plan?.name}
       </Box>
@@ -121,8 +121,8 @@ function LockedAward({ award, onUpgrade }: { award: Award; onUpgrade: () => void
 
 export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
   const s = useSchedule();
-  const { premium } = usePrefs();
   const canBadges = useCan('badges');
+  const canNotes = useCan('notes');
   const [sheet, setSheet] = useState<SheetState>(null);
   const [page, setPage] = useState<Page>('diary');
   const close = () => setSheet(null);
@@ -234,7 +234,7 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
             value={badgeTotals.good + badgeTotals.bad === 0
               ? '—'
               : <BadgeScore good={badgeTotals.good} bad={badgeTotals.bad} plain />}
-            label="Nyşan"
+            label="Ýyldyz"
             onClick={() => setPage('badges')}
           />
           <SummaryCell
@@ -377,7 +377,7 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
             )}
             {/* what the teacher marked about behaviour, with their own words */}
             {awardsForLesson(sheet.lesson.subject, s.dateKey).length > 0 && (
-              <SheetSection title={<><TrophyIcon size={15} />Mugallymyň nyşanlary</>}>
+              <SheetSection title={<><TrophyIcon size={15} />Mugallymyň ýyldyzlary</>}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {awardsForLesson(sheet.lesson.subject, s.dateKey).map((a) => (
                     canBadges ? (
@@ -419,17 +419,18 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
             <>
               {/* the free tier reads the first note in full — enough to know a
                   real comment is there, and never a wall in front of nothing */}
-              {s.day.lessons.slice(0, premium ? 3 : FREE_NOTES).map((l, i) => (
+              {s.day.lessons.slice(0, canNotes ? 3 : FREE_NOTES).map((l, i) => (
                 <SheetSection key={l.id} title={<>{l.subject} · {l.teacher}</>}>
                   <Typography variant="body2">{NOTE_TEXTS[i % NOTE_TEXTS.length]}</Typography>
                 </SheetSection>
               ))}
-              {!premium && (
+              {!canNotes && (
                 <Box sx={{ mt: '14px' }}>
                   <TeaserCard
                     compact
                     title={`Ýene ${Math.max(0, (s.day.notes ?? 0) - FREE_NOTES)} bellik ýapyk`}
-                    note="Mugallymlaryň ähli belliklerini we olaryň taryhyny Premium bilen oka."
+                    note={`Mugallymlaryň ähli belliklerini we olaryň taryhyny ${tierFor('notes')?.name} bilen oka.`}
+                    feature="notes"
                     icon={<NotesIcon />}
                     onUpgrade={() => { close(); setPage('upgrade'); }}
                     preview={(

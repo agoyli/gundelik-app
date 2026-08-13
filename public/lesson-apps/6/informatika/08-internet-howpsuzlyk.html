@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internetde howpsuzlyk — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .card2 { background: #f7fafd; border-radius: 12px; padding: 12px; font-size: 14.5px; line-height: 1.6; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .bin { background: #eef2f8; border-radius: 12px; padding: 10px; min-height: 74px; }
+  .bin h4 { margin: 0 0 6px; font-size: 13px; color: #5b6b80; }
+  .bin.ok h4 { color: #1d7a3d; } .bin.no h4 { color: #b02424; }
+  .bin span { display: inline-block; background: #fff; border-radius: 8px; padding: 5px 8px;
+              font-size: 12.5px; margin: 0 4px 4px 0; }
+  .sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 6px; }
+  .sites div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13px; cursor: pointer; }
+  .sites div.on { background: #fbe3e3; }
+  .sites b { display: block; color: #b02424; margin-bottom: 3px; }
+  .sites small { color: #93a2b5; display: block; line-height: 1.5; }
+  .sites div.on small { color: #5b6b80; }
+  .sh { display: flex; align-items: center; gap: 9px; background: #f7fafd; border-radius: 11px;
+        padding: 10px 11px; margin-bottom: 5px; font-size: 14px; }
+  .sh .txt { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tordaky howply maglumatlardan ägä bolmak</h1>
+  <div class="sub">Internet · Informatika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Bu maglumaty torda ýerleşdirmek bolýarmy? Her setir üçin saýla.</div>
+    <div id="sh"></div>
+    <div class="bins">
+      <div class="bin ok"><h4>Bolýar</h4><div id="binOk"></div></div>
+      <div class="bin no"><h4>Bermeli däl</h4><div id="binNo"></div></div>
+    </div>
+    <div class="row"><span class="score" id="ssc"></span>
+      <button class="btn ghost" id="sr">Täzeden</button></div>
+    <div class="msg" id="smsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ägä bolmaly saýtlar</h3>
+    <div class="goal">Kitapda howply saýtlaryň <b>6 sany</b> topary sanalýar. Her birine basyp,
+      onuň nämedigini oka.</div>
+    <div class="sites" id="sites"></div>
+  </div>
+
+  <div class="card">
+    <h3>Näme etmeli?</h3>
+    <div class="card2" id="sc"></div>
+    <div class="row tight" id="opts" style="margin-top:8px"></div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><span class="score" id="csc"></span>
+      <button class="btn ghost" id="cr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Goranmagyň serişdeleri</h3>
+    <div class="row tight" id="tools"></div>
+    <div class="note" id="tx">Serişdä bas.</div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Internetde peýdaly maglumatlar bilen bir hatarda <b>jenaýatçylyk, kezzapçylyk we
+      hyýanatçylyk</b> ýaly howplar hem bar. Şahsy maglumatlaryňy bermeli däl, tanşan
+      adamlaryň bilen duşuşmaly däl, alnan maglumaty bolsa beýleki çeşmelerden barlamaly.
+      Internetde geçirýän wagtyň <b>kadalaýyk (norma)</b> bolmalydyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 6 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- bolýar / bermeli däl ---------------- */
+const SH = [
+  ["Halaýan kitabyňyň ady", true], ["Öý salgyň", false],
+  ["Telefon belgiň", false], ["Halaýan sport görnüşiň", true],
+  ["Okaýan mekdebiň belgisi", false], ["Söýgüli reňkiň", true],
+  ["Gezelenç edýän ýerleriň", false], ["Paroluň", false]
+];
+let sdone = 0, sok = 0, okList = [], noList = [];
+function sh() {
+  $("sh").innerHTML = SH.map(([t], i) =>
+    `<div class="sh" data-i="${i}"><span class="txt">${t}</span>
+      <button class="btn" data-v="1">Bolýar</button>
+      <button class="btn" data-v="0">Bermeli däl</button></div>`).join("");
+  $("sh").querySelectorAll(".sh").forEach(d => d.querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +d.dataset.i, good = (b.dataset.v === "1") === SH[i][1];
+    if (good) sok++;
+    sdone++;
+    (SH[i][1] ? okList : noList).push(SH[i][0]);
+    d.remove();
+    $("binOk").innerHTML = okList.map(t => `<span>${t}</span>`).join("");
+    $("binNo").innerHTML = noList.map(t => `<span>${t}</span>`).join("");
+    $("ssc").textContent = `${sok} / ${sdone}`;
+    $("smsg").textContent = good ? "Dogry." :
+      SH[i][1] ? "Bu maglumat howply däl – ony paýlaşmak bolýar."
+               : "Bu şahsy maglumat, ony torda ýerleşdirmeli däl.";
+    $("smsg").className = good ? "msg ok" : "msg bad";
+    if (sdone === SH.length) {
+      $("smsg").textContent = `Tamamlandy: ${sok} / ${SH.length} dogry.`;
+      $("smsg").className = "msg ok";
+    }
+  }));
+}
+$("sr").onclick = () => { sdone = 0; sok = 0; okList = []; noList = [];
+  $("binOk").innerHTML = ""; $("binNo").innerHTML = ""; $("smsg").textContent = ""; sh(); };
+
+/* ---------------- howply saýtlar ---------------- */
+const SITES = [
+  ["Göçgünli oýunlar", "Puluň üstünde oýnalýan oýunlaryň saýtlary. Olar wagty we serişdäni ýitirmäge getirýär."],
+  ["Narkotik", "Narkotik bilen meşgullanmagy ündeýän saýtlar. Olar saglyga we durmuşa howp salýar."],
+  ["Ekstremistik", "«Ekstremizm» latynça extremus – «iň soňky, baryp ýatan» diýmekdir. Zorluk bilen gurluşyň esasyny üýtgetmegi ündeýär."],
+  ["Sektant", "«Sekta» latynça «mekdep, okuw» sözünden gelip çykyp, dini toparlary atlandyrmak üçin ulanylýar."],
+  ["Terrorçylyk", "«Terror» latynça gorky, elhençlik diýmegi aňladýar: zorluk, gorkuzma, gorka salma."],
+  ["Milletçilik", "Fransuzça nationalisme – bir milletiň bähbitlerini artykmaç görýän syýasy hereket."]
+];
+$("sites").innerHTML = SITES.map(([n], i) =>
+  `<div data-i="${i}"><b>${n}</b><small>Basyp gör</small></div>`).join("");
+$("sites").querySelectorAll("div").forEach(d => d.onclick = () => {
+  const [n, t] = SITES[+d.dataset.i];
+  d.className = "on";
+  d.innerHTML = `<b>${n}</b><small>${t}</small>`;
+});
+
+/* ---------------- ýagdaýlar ---------------- */
+const CASE = [
+  ["Onlaýn oýunda bellige alynmak üçin öý salgyň we telefon belgiň soralýar.",
+   ["Şahsy maglumatlary ýazmaly däl", "Diňe telefon belgini ýazmaly", "Ählisini ýazmaly"], 0,
+   "Hasaba alynmakda şahsy maglumatlary bermeli däl."],
+  ["Torda tanşan adamyň seni duşuşyga çagyrýar.",
+   ["Duşuşmaly", "Ene-ataňa duýdurmaly we duşuşmaly däl", "Dostuňy hem alyp gitmeli"], 1,
+   "Torda tanşan adamlar öz barada ýalan maglumat berip bilýär, şonuň üçin duşuşmaly däl."],
+  ["Referat üçin gerekli maglumaty bir saýtdan tapdyň.",
+   ["Göni göçürip almaly", "Beýleki çeşmelerden barlamaly", "Ynanmaly däl we ulanmaly däl"], 1,
+   "Internetde islendik adam maglumat ýerleşdirip bilýär, şonuň üçin ony barlamaly."],
+  ["Saýt tölegsiz aýdym-saz nusgalamagy teklip edýär.",
+   ["Almaly", "Almaly däl – bu ogurlyk", "Dostlaryňa ibermeli"], 1,
+   "Bikanun nusgalanan sazlary, tekstleri we programmalary almak ogurlyk hasaplanýar."],
+  ["Internetde saňa gelen habar seni birahatlandyrdy.",
+   ["Jogap ýazmaly", "Ene-ataňa duýdurmaly", "Hiç kime aýtmaly däl"], 1,
+   "Birahatlandyrýan islendik ýagdaý barada dessine ene-ataňa duýdurmaly."]
+];
+let ci = 0, cok = 0;
+function cs() {
+  if (ci >= CASE.length) {
+    $("sc").textContent = "Ähli ýagdaýlar seredildi.";
+    $("opts").innerHTML = "";
+    $("cmsg").textContent = `Netije: ${cok} / ${CASE.length}`;
+    $("cmsg").className = "msg ok";
+    return;
+  }
+  const [t, o] = CASE[ci];
+  $("sc").textContent = t;
+  $("opts").innerHTML = o.map((x, i) => `<button class="btn" data-o="${i}">${x}</button>`).join("");
+  $("opts").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const good = +b.dataset.o === CASE[ci][2];
+    if (good) cok++;
+    $("cmsg").textContent = (good ? "Dogry. " : "Ýalňyş. ") + CASE[ci][3];
+    $("cmsg").className = good ? "msg ok" : "msg bad";
+    ci++; cs();
+  });
+  $("csc").textContent = `${ci} / ${CASE.length}`;
+}
+$("cr").onclick = () => { ci = 0; cok = 0; $("cmsg").textContent = ""; cs(); };
+
+/* ---------------- serişdeler ---------------- */
+const TOOLS = [
+  ["Süzgüç programmalar", "Zyýanly maglumatlardan goraýan ýörite programmalar."],
+  ["Internetiň parametrleri", "Brauzeriň howpsuzlyk sazlamalary dogry goýulmalydyr."],
+  ["Dogry parol", "Bellige alynýan at we parol dogry saýlanmalydyr, ony hiç kime aýtmaly däl."],
+  ["Wagt kadasy", "Internetde geçirilýän wagt kadalaýyk (norma) bolmalydyr."],
+  ["Ene-ata bilen maslahat", "Okan we gören zatlaryň barada ene-ataň bilen maslahatlaşmaly."]
+];
+$("tools").innerHTML = TOOLS.map(([n], i) => `<button class="btn" data-t="${i}">${n}</button>`).join("");
+$("tools").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("tools").querySelectorAll("button").forEach(x => x.className = "btn");
+  b.className = "btn sel";
+  const [n, t] = TOOLS[+b.dataset.t];
+  $("tx").innerHTML = `<b>${n}</b> — ${t}`;
+});
+
+sh(); cs();
+</script>
+</body>
+</html>

@@ -1,6 +1,5 @@
-import {
-  BooksIcon, ComputerIcon, GameIcon, MathIcon, SocietyIcon,
-} from '../components/Icons';
+import { GameIcon } from '../components/Icons';
+import { USER_GRADE, look, pathLength, subjectLook, subjectsForGrade } from './curriculum';
 import { tokens } from '../theme';
 
 /*
@@ -9,20 +8,29 @@ import { tokens } from '../theme';
  * a number its own page contradicts.
  */
 
-/* ---------------- Temalar ---------------- */
+/* ---------------- Sapaklar ----------------
+ * The subject list is the real curriculum now: the subjects this grade is
+ * actually taught, each carrying its own themes. `SUBJECT_LOOK` moved to
+ * `curriculum.tsx` with the subjects themselves — see `look()` there, which the
+ * decks, games and tests below still read so one subject keeps one colour.
+ */
 
 export type Subject = {
   id: string; label: string; icon: React.ReactNode;
   accent: string; tint: string; done: number; total: number;
 };
 
-export const TEMA_SUBJECTS: Subject[] = [
-  { id: 'matematika', label: 'Matematika', icon: <MathIcon size={24} />, accent: tokens.blueText, tint: tokens.blueTint, done: 5, total: 20 },
-  { id: 'fizika', label: 'Fizika', icon: <BooksIcon size={24} />, accent: tokens.purpleText, tint: tokens.purpleTint, done: 12, total: 18 },
-  { id: 'himiya', label: 'Himiýa', icon: <BooksIcon size={24} />, accent: tokens.tealText, tint: tokens.tealTint, done: 3, total: 16 },
-  { id: 'informatika', label: 'Informatika', icon: <ComputerIcon size={24} />, accent: tokens.orangeText, tint: tokens.orangeTint, done: 9, total: 14 },
-  { id: 'taryh', label: 'Türkmenistanyň taryhy', icon: <SocietyIcon size={24} />, accent: tokens.redText, tint: tokens.redTint, done: 7, total: 15 },
-];
+/* A subject starts at zero: the path inside it begins at its first theme, and
+   the row says so rather than opening halfway through someone else's account.
+   The total is the path's own length — every stop on it, reading, interactive
+   and checkpoint alike — so the row and the page inside it count the same. */
+export const SAPAK_SUBJECTS: Subject[] = subjectsForGrade(USER_GRADE).map((s) => ({
+  id: s.slug,
+  label: s.name,
+  ...subjectLook(s.slug),
+  done: 0,
+  total: pathLength(s),
+}));
 
 /* ---------------- Öwrediji kartlar ---------------- */
 
@@ -36,8 +44,8 @@ export type Deck = {
 
 export const DECKS: Deck[] = [
   {
-    id: 'formulalar', label: 'Algebra formulalary', subject: 'Matematika',
-    accent: tokens.blueText, tint: tokens.blueTint, known: 2, due: 2, studiedAt: '2026-02-11',
+    id: 'formulalar', label: 'Algebra formulalary', subject: 'Algebra',
+    ...look('Algebra'), known: 2, due: 2, studiedAt: '2026-02-11',
     cards: [
       { front: 'Diskriminant', back: 'D = b² − 4ac' },
       { front: 'Wiýeta teoremasy', back: 'x₁ + x₂ = −b/a,  x₁·x₂ = c/a' },
@@ -47,7 +55,7 @@ export const DECKS: Deck[] = [
   },
   {
     id: 'himiya', label: 'Himiki elementler', subject: 'Himiýa',
-    accent: tokens.tealText, tint: tokens.tealTint, known: 1, due: 2, studiedAt: '2026-02-09',
+    ...look('Himiýa'), known: 1, due: 2, studiedAt: '2026-02-09',
     cards: [
       { front: 'Fe', back: 'Demir — 26-njy element' },
       { front: 'Au', back: 'Altyn — 79-njy element' },
@@ -56,7 +64,7 @@ export const DECKS: Deck[] = [
   },
   {
     id: 'inlis', label: 'Iňlis dili — 100 söz', subject: 'Iňlis dili',
-    accent: tokens.purpleText, tint: tokens.purpleTint, known: 0, due: 3,
+    ...look('Iňlis dili'), known: 0, due: 3,
     cards: [
       { front: 'achievement', back: 'üstünlik, gazanylan netije' },
       { front: 'knowledge', back: 'bilim' },
@@ -180,7 +188,7 @@ export type Game = {
 export const GAMES: Game[] = [
   {
     id: 'hasap', label: 'Çalt hasap', sub: 'Matematika · 2 min', subject: 'Matematika', minutes: 2,
-    best: 320, played: 14, avg: 245, accent: tokens.blueText, tint: tokens.blueTint,
+    best: 320, played: 14, avg: 245, ...look('Matematika'),
     about: 'Iki minutda näçe mysal çözüp bilersiň? Her dogry jogap bal, her ýalňyş bolsa wagt aýyrýar.',
     how: [
       'Ekranda goşmak, aýyrmak we köpeltmek mysallary çykýar.',
@@ -195,7 +203,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'sozluk', label: 'Söz tapmaça', sub: 'Iňlis dili · 3 min', subject: 'Iňlis dili', minutes: 3,
-    best: 210, played: 6, avg: 160, accent: tokens.purpleText, tint: tokens.purpleTint,
+    best: 210, played: 6, avg: 160, ...look('Iňlis dili'),
     about: 'Garyşyk harplardan iňlis sözüni ýygna. Sözler «100 söz» kart toplumyndan alynýar.',
     how: [
       'Harplar garyşyk görnüşde berilýär.',
@@ -210,7 +218,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'element', label: 'Element ýygna', sub: 'Himiýa · 4 min', subject: 'Himiýa', minutes: 4,
-    best: 0, played: 0, avg: 0, accent: tokens.tealText, tint: tokens.tealTint,
+    best: 0, played: 0, avg: 0, ...look('Himiýa'),
     about: 'Elementiň belgisini onuň ady bilen jübütle. Tablisany ýatda saklamagyň iň çalt ýoly.',
     how: [
       'Ekranyň bir tarapynda belgiler, beýlekisinde atlar.',
@@ -225,7 +233,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'karta', label: 'Karta boýunça', sub: 'Geografiýa · 5 min', subject: 'Geografiýa', minutes: 5,
-    best: 145, played: 3, avg: 120, accent: tokens.orangeText, tint: tokens.orangeTint,
+    best: 145, played: 3, avg: 120, ...look('Geografiýa'),
     about: 'Welaýatlary, şäherleri we derýalary kartada tap. Her dogry görkezme bal getirýär.',
     how: [
       'Sorag berilýär: «Lebap welaýaty nirede?»',
@@ -306,14 +314,15 @@ export type TestItem = {
 };
 
 export type TestSubject = {
-  id: string; label: string; icon: React.ReactNode; tint: string; color: string;
+  id: string; label: string; icon: React.ReactNode; tint: string; accent: string;
   tests: TestItem[];
 };
 
 export const TEST_SUBJECTS: TestSubject[] = [
   {
-    id: 'matematika', label: 'Matematika', icon: <MathIcon size={26} />,
-    tint: tokens.blueTint, color: tokens.blueText,
+    /* the tests are algebra topics and this student's grade is taught Algebra,
+       not the 1–6 Matematika course — so the bank hangs off the real subject */
+    id: 'algebra', label: 'Algebra', ...subjectLook('algebra'),
     tests: [
       {
         id: 'm1', title: 'Kwadrat deňlemeler', tema: 'Algebra · 8-nji synp', questions: 12, minutes: 15,
@@ -334,8 +343,7 @@ export const TEST_SUBJECTS: TestSubject[] = [
     ],
   },
   {
-    id: 'informatika', label: 'Informatika', icon: <ComputerIcon size={26} />,
-    tint: tokens.surface, color: tokens.ink2,
+    id: 'informatika', label: 'Informatika', ...subjectLook('informatika'),
     tests: [
       {
         id: 'i1', title: 'Algoritmler', tema: 'Informatika · 8-nji synp', questions: 10, minutes: 12,
@@ -348,8 +356,7 @@ export const TEST_SUBJECTS: TestSubject[] = [
     ],
   },
   {
-    id: 'jemgyyet', label: 'Jemgyýet', icon: <SocietyIcon size={26} />,
-    tint: tokens.tealTint, color: tokens.tealText,
+    id: 'jemgyyet', label: 'Jemgyýet', ...subjectLook('jemgyyet'),
     tests: [
       {
         id: 'j1', title: 'Raýatyň hukuklary', tema: 'Jemgyýeti öwreniş', questions: 15, minutes: 18,
@@ -371,3 +378,25 @@ export const RATING = [
 ];
 
 export const GAME_ICON = <GameIcon size={24} />;
+
+/* ---------------- what the bank holds ----------------
+ * Counted from the tests and the decks themselves, never written down twice.
+ * A subject row that says "4 test · 40 sowal" and the test list behind it are
+ * then the same fact printed at two sizes — add a test, and the row moves.
+ */
+export const subjectBank = (label: string) => {
+  const s = TEST_SUBJECTS.find((t) => t.label === label);
+  return {
+    tests: s?.tests.length ?? 0,
+    questions: s?.tests.reduce((n, t) => n + t.questions, 0) ?? 0,
+    cards: DECKS.filter((d) => d.subject === label).reduce((n, d) => n + d.cards.length, 0),
+  };
+};
+
+/** The whole bank, for the lines that state what a plan opens. */
+export const BANK_TOTAL = {
+  tests: TEST_SUBJECTS.reduce((n, s) => n + s.tests.length, 0),
+  questions: TEST_SUBJECTS.reduce((n, s) => n + s.tests.reduce((m, t) => m + t.questions, 0), 0),
+  decks: DECKS.length,
+  cards: DECKS.reduce((n, d) => n + d.cards.length, 0),
+};

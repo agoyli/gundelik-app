@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ştangensirkul — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .board { background: #fdfaf2; border-radius: 13px; padding: 8px; }
+  .board svg { display: block; width: 100%; height: auto; max-height: 190px; }
+  .pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .pad button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ştangensirkul. Onuň gurluşy we ulanylyşy</h1>
+  <div class="sub">Durmuş zähmeti · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Nonius şkalasy 19 mm uzynlykda bolup, <b>10 deň bölege</b> bölünendir.
+      Her bölüm <b>1,9 mm</b>, tapawut bolsa <b>0,1 mm</b>-dir (ŞS-I).</div>
+    <div class="tbl">ölçeg = doly mm + 0,1 mm · (gabat gelýän nonius çyzygy)</div>
+  </div>
+
+  <div class="card">
+    <h3>Noniusy süýşür – hasaby çykar</h3>
+    <div class="board"><svg id="bd" viewBox="0 0 340 170"></svg></div>
+    <div class="goal" id="goal"></div>
+    <div class="pad">
+      <button class="btn" data-d="-1">− 1 mm</button>
+      <button class="btn" data-d="-0.1">− 0,1</button>
+      <button class="btn" data-d="0.1">+ 0,1</button>
+      <button class="btn" data-d="1">+ 1 mm</button>
+    </div>
+    <div class="msg ok" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kitapdaky hasaplar</h3>
+    <div class="task" id="task"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><button class="btn ghost" id="next">Indiki sorag</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Durmuş zähmeti 7 · 31–36-njy sahypalar</div>
+</div>
+
+<script>
+var PX = 12, x = 24.7;
+function fmt(v) { return v.toFixed(1).replace(".", ","); }
+function draw() {
+  var whole = Math.floor(x + 1e-9);
+  var k = Math.round((x - whole) * 10);
+  var s0 = Math.max(0, whole - 5);
+  var s = '<rect x="0" y="0" width="340" height="170" fill="#fdfaf2"/>';
+  // ştanga
+  s += '<rect x="10" y="30" width="320" height="34" fill="#e8e2d2" stroke="#8a7c58"/>';
+  for (var m = s0; m <= s0 + 26; m++) {
+    var px = 10 + (m - s0) * PX;
+    if (px > 330) break;
+    var big = m % 5 === 0;
+    s += '<line x1="' + px + '" y1="' + (big ? 34 : 42) + '" x2="' + px +
+      '" y2="64" stroke="#3b2c10" stroke-width="' + (big ? 1.6 : 1) + '"/>';
+    if (big) s += '<text x="' + (px - 6) + '" y="28" font-size="10" fill="#3b2c10">' + m + "</text>";
+  }
+  s += '<text x="286" y="20" font-size="10" fill="#7a5c1e">ştanga (mm)</text>';
+  // nonius
+  var nx = 10 + (x - s0) * PX;
+  s += '<rect x="' + nx + '" y="64" width="' + (19 * PX) + '" height="34" fill="#dce9f7" stroke="#4d7d9b"/>';
+  for (var i = 0; i <= 10; i++) {
+    var px2 = nx + i * 1.9 * PX;
+    var on = i === k;
+    s += '<line x1="' + px2 + '" y1="64" x2="' + px2 + '" y2="' + (on ? 98 : 90) +
+      '" stroke="' + (on ? "#b0407a" : "#204a63") + '" stroke-width="' + (on ? 2.4 : 1.2) + '"/>';
+    if (i === 0 || i === 10)
+      s += '<text x="' + (px2 - 3) + '" y="112" font-size="10" fill="#204a63">' + i + "</text>";
+    if (on) s += '<text x="' + (px2 - 5) + '" y="126" font-size="11" fill="#b0407a">x</text>';
+  }
+  s += '<text x="' + nx + '" y="140" font-size="10" fill="#4d7d9b">nonius · 0,1 mm</text>';
+  document.getElementById("bd").innerHTML = s;
+  document.getElementById("goal").textContent =
+    whole + " mm + 0,1 mm · " + k + " = " + fmt(x) + " mm";
+  document.getElementById("msg").textContent = k === 0 ?
+    "Noniusyň «0» çyzygy ştanganyň " + whole + " mm belgisi bilen gabat gelýär." :
+    "Gabat gelýän çyzyk – noniusyň " + k + "-nji çyzygy («x» bilen bellenen).";
+}
+var pb = document.getElementById("nums");
+var pad = document.getElementsByClassName("pad")[0].getElementsByTagName("button");
+for (var i = 0; i < pad.length; i++) {
+  pad[i].onclick = function () {
+    var d = parseFloat(this.getAttribute("data-d"));
+    x = Math.round((x + d) * 10) / 10;
+    if (x < 0) x = 0;
+    if (x > 60) x = 60;
+    draw();
+  };
+}
+draw();
+
+// [sorag, jogap, düşündiriş]
+var T = [
+  ["Nonius 12 mm-den geçip, 3-nji çyzykda gabat gelse (0,05 mm takyklyk)?", "12,15 mm",
+   "12 mm + 0,05 · 3 = 12,15 mm."],
+  ["Nonius 71 mm-den geçip, 75-den soňky 2-nji çyzykda gabat gelse?", "71,85 mm",
+   "71 + 0,75 + 0,05 · 2 = 71,85 mm."],
+  ["Içki ölçeg 19,75 mm, dodaklaryň ölçegi 10 mm bolsa?", "29,75 mm",
+   "19,75 + 10 = 29,75 mm."],
+  ["Nonius 24 mm-den geçip, 7-nji çyzykda gabat gelse (0,1 mm takyklyk)?", "24,7 mm",
+   "24 + 0,1 · 7 = 24,7 mm."],
+  ["ŞS-II noniusynyň bir bölüminiň ölçegi?", "1,95 mm", "39 : 20 = 1,95 mm."],
+  ["ŞS-I noniusynyň bir bölüminiň ölçegi?", "1,9 mm", "19 : 10 = 1,9 mm."]
+];
+var VALS = ["12,15 mm", "71,85 mm", "29,75 mm", "24,7 mm", "1,95 mm", "1,9 mm"];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + i + '">' + VALS[i] + "</button>";
+pb.innerHTML = h;
+function show() {
+  document.getElementById("task").textContent = T[ti][0];
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  tlock = 0;
+}
+var nb = pb.getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = VALS[parseInt(this.getAttribute("data-n"), 10)], m = document.getElementById("cmsg");
+    if (v === T[ti][1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + T[ti][2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogrusy: " + T[ti][1] + ". " + T[ti][2]; }
+    document.getElementById("sc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+show();
+
+var Q = [
+  ["ŞS-I ştangensirkul haýsy aralygy ölçeýär?", ["0...125 mm", "0...500 mm", "0...2000 mm"], 0],
+  ["ŞS-II-niň noniusynyň bir bölümi näçe mm?", ["1,95 mm", "2,0 mm", "0,05 mm"], 0],
+  ["Nonius şkalasyny kim döredipdir?",
+   ["Portugaliýaly matematik Nunişa", "Golland ussasy", "Iňlis inženeri"], 0]
+];
+var qd = 0, qok = 0, hq = "";
+for (var i = 0; i < Q.length; i++) {
+  hq += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hq += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hq += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hq;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kesimleri we burçlary ölçemek — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .board { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .board svg { display: block; width: 100%; height: auto; max-height: 190px; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 17px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15.5px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kesimleri ölçemek. Burçlary ölçemek</h1>
+  <div class="sub">Geometriýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Kesimiň uzynlygy masştably çyzgyç bilen, burçuň ululygy transportir
+      bilen ölçelýär. <b>Ýazgyn burçuň 1/180 bölegine deň bolan burça gradus diýilýär.</b></div>
+    <div class="tbl" style="margin-top:8px">
+      1 sm = 10 mm&nbsp;&nbsp; 1 m = 100 sm&nbsp;&nbsp; 1 km = 1000 m<br>
+      1° = 60′&nbsp;&nbsp; 1′ = 60″&nbsp;&nbsp; ýazgyn burç = 180°
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Kesimleri hasapla</h3>
+    <div class="board"><svg id="sg" viewBox="0 0 320 120"></svg></div>
+    <div class="task" id="stask" style="margin-top:8px"></div>
+    <div class="nums" id="snums"></div>
+    <div class="msg" id="smsg"></div>
+    <div class="row"><button class="btn primary" id="snext">Indiki mesele</button></div>
+    <div class="score" id="ssc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Burçy tana we hasapla</h3>
+    <div class="board"><svg id="ag" viewBox="0 0 320 170"></svg></div>
+    <div class="task" id="atask" style="margin-top:8px"></div>
+    <div class="kinds" id="kinds">
+      <button class="btn" data-k="yiti">Ýiti burç</button>
+      <button class="btn" data-k="goni">Göni burç</button>
+      <button class="btn" data-k="kutek">Kütek burç</button>
+      <button class="btn" data-k="yazgyn">Ýazgyn burç</button>
+    </div>
+    <div class="msg" id="amsg"></div>
+    <div class="row"><button class="btn ghost" id="anext">Indiki burç</button></div>
+    <div class="score" id="asc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geometriýa 7 · 26–32-nji sahypalar</div>
+</div>
+
+<script>
+// [AB, CD, sorag görnüşi, jogap, düşündiriş]
+var S = [
+  [20.5, 15.8, "jem", 36.3, "AB + CD = 20,5 + 15,8 = 36,3 sm."],
+  [20.5, 15.8, "tapawut", 4.7, "AB – CD = 20,5 – 15,8 = 4,7 sm."],
+  [6, 9, "jem", 15, "AC = AB + BC = 6 + 9 = 15 sm."],
+  [12, 3, "tapawut", 9, "MK = MP – KP = 12 – 3 = 9 sm."],
+  [20.5, 0, "iki", 41, "2AB = 20,5 · 2 = 41 sm."]
+];
+var si = 0, sd = 0, sok = 0, slock = 0;
+function nm(x) { return String(x).replace(".", ","); }
+function drawS() {
+  var s = S[si], u = 260 / Math.max(s[0], 20.5);
+  var w1 = s[0] * u, w2 = s[1] * u;
+  var t = '<line x1="20" y1="40" x2="' + (20 + w1) + '" y2="40" stroke="#2456b0" stroke-width="4"/>';
+  t += '<circle cx="20" cy="40" r="5" fill="#2456b0"/><circle cx="' + (20 + w1) + '" cy="40" r="5" fill="#2456b0"/>';
+  t += '<text x="20" y="28" font-size="14" fill="#33506f">A</text>';
+  t += '<text x="' + (20 + w1 - 8) + '" y="28" font-size="14" fill="#33506f">B</text>';
+  t += '<text x="' + (20 + w1 / 2 - 20) + '" y="60" font-size="14" fill="#1e2a3a">' + nm(s[0]) + " sm</text>";
+  if (s[1]) {
+    t += '<line x1="20" y1="90" x2="' + (20 + w2) + '" y2="90" stroke="#2b7a4a" stroke-width="4"/>';
+    t += '<circle cx="20" cy="90" r="5" fill="#2b7a4a"/><circle cx="' + (20 + w2) + '" cy="90" r="5" fill="#2b7a4a"/>';
+    t += '<text x="20" y="80" font-size="14" fill="#33506f">C</text>';
+    t += '<text x="' + (20 + w2 - 8) + '" y="80" font-size="14" fill="#33506f">D</text>';
+    t += '<text x="' + (20 + w2 / 2 - 20) + '" y="110" font-size="14" fill="#1e2a3a">' + nm(s[1]) + " sm</text>";
+  }
+  document.getElementById("sg").innerHTML = t;
+}
+function showS() {
+  var s = S[si];
+  drawS();
+  document.getElementById("stask").textContent =
+    s[2] === "jem" ? ("Kesimleriň jemi näçe sm?") :
+    (s[2] === "tapawut" ? "Kesimleriň tapawudy näçe sm?" : "2AB näçe sm bolar?");
+  document.getElementById("smsg").className = "msg";
+  document.getElementById("smsg").textContent = "";
+  slock = 0;
+}
+var SV = [4.7, 5.3, 9, 12, 15, 18, 21, 36.3, 38.3, 41, 43, 45];
+var h = "";
+for (var i = 0; i < SV.length; i++) h += '<button class="btn" data-n="' + SV[i] + '">' + nm(SV[i]) + "</button>";
+document.getElementById("snums").innerHTML = h;
+var sb = document.getElementById("snums").getElementsByTagName("button");
+for (var i = 0; i < sb.length; i++) {
+  sb[i].onclick = function () {
+    if (slock) return;
+    slock = 1; sd++;
+    var v = parseFloat(this.getAttribute("data-n")), s = S[si], m = document.getElementById("smsg");
+    if (Math.abs(v - s[3]) < 1e-9) { sok++; m.className = "msg ok"; m.textContent = "Dogry! " + s[4]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + s[4]; }
+    document.getElementById("ssc").textContent = "Netije: " + sok + " / " + sd;
+  };
+}
+document.getElementById("snext").onclick = function () { si = (si + 1) % S.length; showS(); };
+showS();
+
+var A = [35, 90, 128, 180, 62, 155];
+var ai = 0, ad = 0, aok = 0, alock = 0;
+function kindOf(deg) {
+  return deg === 180 ? "yazgyn" : (deg === 90 ? "goni" : (deg < 90 ? "yiti" : "kutek"));
+}
+var KN = { yiti: "ýiti burç", goni: "göni burç", kutek: "kütek burç", yazgyn: "ýazgyn burç" };
+function drawA() {
+  var deg = A[ai], cx = 160, cy = 130, r = 100;
+  var s = "";
+  for (var d = 0; d <= 180; d += 10) {
+    var rad = Math.PI * d / 180;
+    var x1 = cx - r * Math.cos(rad), y1 = cy - r * Math.sin(rad);
+    var x2 = cx - (r - 8) * Math.cos(rad), y2 = cy - (r - 8) * Math.sin(rad);
+    s += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 +
+      '" stroke="#c9d8e8" stroke-width="' + (d % 30 === 0 ? 2 : 1) + '"/>';
+  }
+  s += '<path d="M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy +
+    '" fill="none" stroke="#c9d8e8" stroke-width="2"/>';
+  s += '<line x1="' + (cx - r) + '" y1="' + cy + '" x2="' + (cx + r) + '" y2="' + cy +
+    '" stroke="#94aec9" stroke-width="2"/>';
+  s += '<line x1="' + cx + '" y1="' + cy + '" x2="' + (cx + r) + '" y2="' + cy +
+    '" stroke="#2456b0" stroke-width="4"/>';
+  var rad2 = Math.PI * deg / 180;
+  s += '<line x1="' + cx + '" y1="' + cy + '" x2="' + (cx + r * Math.cos(rad2)) + '" y2="' +
+    (cy - r * Math.sin(rad2)) + '" stroke="#b0407a" stroke-width="4"/>';
+  s += '<circle cx="' + cx + '" cy="' + cy + '" r="5" fill="#1e2a3a"/>';
+  s += '<text x="' + (cx - 18) + '" y="' + (cy - 14) + '" font-size="15" fill="#1e2a3a">' + deg + "°</text>";
+  document.getElementById("ag").innerHTML = s;
+}
+function showA() {
+  drawA();
+  document.getElementById("atask").textContent =
+    "Transportir " + A[ai] + "° görkezýär. Bu nähili burç?";
+  document.getElementById("amsg").className = "msg";
+  document.getElementById("amsg").textContent = "";
+  alock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (alock) return;
+    alock = 1; ad++;
+    var k = this.getAttribute("data-k"), w = kindOf(A[ai]), m = document.getElementById("amsg");
+    var ek = A[ai] < 180 ? (" Çatyk burçy: 180° – " + A[ai] + "° = " + (180 - A[ai]) + "°.") : "";
+    if (k === w) { aok++; m.className = "msg ok"; m.textContent = "Dogry, bu – " + KN[w] + "." + ek; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[w] + "." + ek; }
+    document.getElementById("asc").textContent = "Netije: " + aok + " / " + ad;
+  };
+}
+document.getElementById("anext").onclick = function () { ai = (ai + 1) % A.length; showA(); };
+showA();
+
+var Q = [
+  ["Gradus diýip nämä aýdylýar?",
+   ["Ýazgyn burçuň 1/180 bölegine", "Ýazgyn burçuň 1/90 bölegine", "Töweregiň 1/100 bölegine"], 0],
+  ["Ýazgyn burç näçe gradusa deň?", ["180°", "90°", "360°"], 0],
+  ["90°-dan uly, 180°-dan kiçi burça näme diýilýär?", ["Kütek burç", "Ýiti burç", "Göni burç"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

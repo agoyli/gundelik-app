@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animasiýalary döretmegiň gurallary — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; }
+  .ui { display: grid; grid-template-columns: 46px 1fr 78px; grid-template-rows: 26px 1fr 54px;
+        gap: 5px; height: 220px; }
+  .ui div { border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            text-align: center; font-size: 11.5px; font-weight: 700; color: #5b6b80;
+            background: #dbe4f0; cursor: pointer; padding: 3px; line-height: 1.25; }
+  .ui div.on { background: #2456b0; color: #fff; }
+  .ui .menu { grid-column: 1 / 4; }
+  .ui .work { background: #fff; }
+  .ui .time { grid-column: 1 / 3; }
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .tool { background: #f7fafd; border-radius: 11px; padding: 10px 11px; cursor: pointer; font-size: 14px; }
+  .tool b { color: #2456b0; }
+  .tool span { display: block; font-size: 12.5px; color: #93a2b5; margin-top: 3px; line-height: 1.4; }
+  .tool.on span { color: #5b6b80; }
+  .fps { display: flex; align-items: center; justify-content: center; height: 150px; }
+  .verd { font-size: 13.5px; font-weight: 700; margin-top: 6px; }
+  .fmt { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fmt div { flex: 1; min-width: 140px; background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13.5px; }
+  .fmt code { font-weight: 800; color: #2456b0; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Animasiýalary döretmegiň gurallary</h1>
+  <div class="sub">Kadrlar, Flash penjiresi we gurallar paneli · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sekuntdaky kadrlaryň sanyny üýtget. Göz hereketi akgynly kabul eder ýaly
+      bir sekuntda iň bolmanda <b>12–16 kadr</b> geçmelidir.</div>
+    <div class="stage"><div class="fps"><canvas id="cv" width="300" height="130"></canvas></div></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Kadr/sekunt</span>
+      <input type="range" id="fps" min="1" max="30" value="4"><span class="out" id="fo">4</span></div>
+    <div class="row tight">
+      <button class="btn" data-f="2">2</button>
+      <button class="btn" data-f="12">12</button>
+      <button class="btn" data-f="16">16</button>
+      <button class="btn" data-f="24">24 (kino)</button>
+      <button class="btn" data-f="30">30 (TW)</button>
+    </div>
+    <div class="verd" id="verd"></div>
+  </div>
+
+  <div class="card">
+    <h3>Flash programmasynyň penjiresi</h3>
+    <div class="goal">Bölege bas – onuň wezipesi ýazylar.</div>
+    <div class="ui" id="ui">
+      <div class="menu" data-k="menu">Menýular setiri</div>
+      <div data-k="tools">Gurallar<br>paneli</div>
+      <div class="work" data-k="work">Iş meýdany</div>
+      <div data-k="props">Häsiýetler</div>
+      <div class="time" data-k="time">Gatlak we wagt şkalasy</div>
+      <div data-k="lib">Kitaphana</div>
+    </div>
+    <div class="msg" id="uix"></div>
+  </div>
+
+  <div class="card">
+    <h3>Gurallar paneli</h3>
+    <div class="tools" id="tools"></div>
+  </div>
+
+  <div class="card">
+    <h3>Flash faýllaryň formatlary</h3>
+    <div class="fmt">
+      <div><code>.fla</code><br>Flash-filmiň başdaky faýly. Ony redaktirläp bolýar.</div>
+      <div><code>.swf</code><br>Görmäge taýýar film. Redaktorda üýtgedip bolmaýar.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Animasiýa</b> – gozganmaýan obýektiň «janlandyrylmagy» ýa-da formasynyň üýtgedilmegidir.
+      Obýektleriň hereketleriniň yzygiderlikde çekilen şekillerine <b>kadrlar</b> diýilýär.
+      Kompýuterde diňe daýanç kadrlar çekilýär, aralyk kadrlary programma döredýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---- kadr ýygylygy: 24 sany öňünden hasaplanan kadr, olar saýlanan tizlikde çalşyrylýar ---- */
+const ctx = $("cv").getContext("2d");
+const TOTAL = 24;
+let frame = 0, last = 0;
+
+function drawFrame(k) {
+  const t = k / TOTAL;
+  ctx.clearRect(0, 0, 300, 130);
+  ctx.strokeStyle = "#cfdcee"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(10, 112); ctx.lineTo(290, 112); ctx.stroke();
+  const x = 26 + t * 248;
+  const y = 96 - Math.abs(Math.sin(t * Math.PI * 2)) * 56;
+  ctx.fillStyle = "#2456b0";
+  ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#93a2b5"; ctx.font = "12px system-ui";
+  ctx.fillText(`${k + 1}-nji kadr`, 10, 18);
+}
+
+function loop(ts) {
+  const fps = +$("fps").value;
+  if (ts - last >= 1000 / fps) { last = ts; frame = (frame + 1) % TOTAL; drawFrame(frame); }
+  requestAnimationFrame(loop);
+}
+
+function fpsLabel() {
+  const f = +$("fps").value;
+  $("fo").textContent = f;
+  const v = $("verd");
+  if (f < 12) { v.textContent = "Hereket bökjekleýär – kadrlar seýrek geçýär."; v.style.color = "#b02424"; }
+  else if (f < 16) { v.textContent = "Hereket indi «janlandy» – 12 kadrdan başlap göz akgynly kabul edýär."; v.style.color = "#b25b12"; }
+  else { v.textContent = "Hereket akgynly. Kinoda 24, telewideniýede 25 ýa-da 30 kadr ulanylýar."; v.style.color = "#1d7a3d"; }
+}
+$("fps").addEventListener("input", fpsLabel);
+document.querySelectorAll("[data-f]").forEach(b =>
+  b.onclick = () => { $("fps").value = b.dataset.f; fpsLabel(); });
+
+/* ---- penjiräniň bölekleri ---- */
+const UI = {
+  menu: "Menýular setiri – ähli buýruklar şu ýerden berilýär (Faýl, Modifikasiýa, Wstawka…).",
+  tools: "Gurallar paneli – surat çekmek, tapawutlandyrmak we redaktirlemek gurallary.",
+  work: "Iş meýdany (ak meýdança) – filmiň görünýän bölegi şu ýerde çekilýär.",
+  props: "Häsiýetler paneli – saýlanan obýektiň ýa-da guralyň parametrlerini görkezýär.",
+  time: "Gatlak meýdany we wagt şkalasy – dokumentiň düzümi wagta görä tertipleşdirilýär.",
+  lib: "Kitaphana – import edilen we döredilen simwollar şu ýerde saklanýar."
+};
+document.querySelectorAll("#ui div").forEach(d => d.onclick = () => {
+  document.querySelectorAll("#ui div").forEach(x => x.classList.remove("on"));
+  d.classList.add("on");
+  $("uix").textContent = UI[d.dataset.k];
+  $("uix").className = "msg ok";
+});
+
+/* ---- gurallar ---- */
+const TOOLS = [
+  ["Ugur görkezgiç", "Obýekti saýlamaga we ony süýşürmäge mümkinçilik berýär."],
+  ["Ýörite tapawutlandyrma", "Obýektiň formasyny üýtgetmek üçin ulanylýar."],
+  ["Kement (Lasso)", "Erkin formada bölekleri tapawutlandyrýar."],
+  ["Pero", "Göni we egri çyzyklaryň segmentlerini döredýär."],
+  ["Çyzyk", "Göni çyzyklary şekillendirmek üçin ulanylýar."],
+  ["Galam", "Erkin çyzyklaryň suratyny çekmekde ulanylýar."],
+  ["Gönüburçluk", "Gönüburçlugy, kwadraty, owaly, köpburçlugy we ýyldyzy çekýär."],
+  ["Çotga", "Ýörite effektleri döredýär we nokatlaryň suratyny reňkleýär."],
+  ["Reňkli bedre", "Çyzyklar bilen çäklenen bölegi reňkleýär."],
+  ["Bozguç", "Çyzyklary we boýaglary öçürmekde ulanylýar."],
+  ["Ulaltgyç (Lupa)", "Şekili ulaldýan we kiçeldýän gural."],
+  ["El", "Iş meýdanyny süýşürmekde ulanylýar."]
+];
+TOOLS.forEach(([n, d]) => {
+  const e = document.createElement("div");
+  e.className = "tool";
+  e.innerHTML = `<b>${n}</b><span>? basyp gör</span>`;
+  e.onclick = () => { e.className = "tool on"; e.innerHTML = `<b>${n}</b><span>${d}</span>`; };
+  $("tools").appendChild(e);
+});
+
+fpsLabel(); drawFrame(0); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

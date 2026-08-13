@@ -243,7 +243,7 @@ export function ReferralScreen({ onBack, toast }: { onBack: () => void; toast: (
         p: '18px 14px 20px', textAlign: 'center',
       }}>
         <ReferralArt />
-        <Typography sx={{ fontSize: 21, fontWeight: 700, letterSpacing: '-.3px', mt: '10px' }}>
+        <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', mt: '10px' }}>
           Her tölegli dost — {PLAN.referralReward} manat bonus
         </Typography>
         <Typography sx={{ fontSize: 13.5, color: tokens.ink2, lineHeight: 1.5, mt: '6px', px: '10px' }}>
@@ -355,7 +355,7 @@ export function ReferralScreen({ onBack, toast }: { onBack: () => void; toast: (
               display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700,
             }}>{i + 1}</Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontSize: 14.5, fontWeight: 700 }}>{s.title}</Typography>
+              <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{s.title}</Typography>
               <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '2px', lineHeight: 1.45 }}>{s.note}</Typography>
             </Box>
           </Box>
@@ -463,7 +463,7 @@ export function ReferralRow({ onClick }: { onClick: () => void }) {
     >
       <IconBadge bg="#fff" color={tokens.orangeText} size={44}><CoinIcon size={22} /></IconBadge>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 15.5, fontWeight: 700 }}>Dostuňy çagyr</Typography>
+        <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Dostuňy çagyr</Typography>
         <Typography sx={{ fontSize: 12.5, color: tokens.ink2, mt: '2px' }}>
           Her tölegli dost üçin {PLAN.referralReward} manat bonus
         </Typography>

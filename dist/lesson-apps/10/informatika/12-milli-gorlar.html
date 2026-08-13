@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milli informasiýa gorlary — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .bins { display: flex; gap: 8px; flex-wrap: wrap; }
+  .bin { flex: 1; min-width: 145px; background: #f7fafd; border-radius: 12px; padding: 10px; min-height: 92px; }
+  .bin h4 { font-size: 12px; color: #93a2b5; margin-bottom: 6px; font-weight: 800; }
+  .chip { display: inline-block; background: #e0f5e6; color: #1d7a3d; border-radius: 999px;
+          padding: 6px 11px; font-size: 13px; font-weight: 700; margin: 0 4px 4px 0; }
+  .sites div { background: #f7fafd; border-radius: 11px; padding: 10px 11px; font-size: 14px;
+               margin-bottom: 5px; cursor: pointer; }
+  .sites b { color: #2456b0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
+  .sites small { display: block; font-size: 12.5px; color: #93a2b5; margin-top: 3px; }
+  .sites div.on { background: #e3edfd; }
+  .sites div.on small { color: #5b6b80; }
+  .save { display: flex; gap: 6px; flex-wrap: wrap; }
+  .files { background: #f7fafd; border-radius: 12px; padding: 11px; font-family: ui-monospace,
+           Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.8; }
+  .files i { color: #93a2b5; font-style: normal; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Milli informasiýa gorlary</h1>
+  <div class="sub">Gorlaryň görnüşleri, saýtlar we ýatda saklamak · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Dünýä informasiýa gorlary <b>üç görnüşde</b> bolýar. Berlen mysalyň
+      haýsy topara degişlidigini saýla.</div>
+    <div class="bins">
+      <div class="bin"><h4>MILLI (DÖWLET)</h4><div id="b1"></div></div>
+      <div class="bin"><h4>KÄRHANALARYŇ</h4><div id="b2"></div></div>
+      <div class="bin"><h4>PERSONAL</h4><div id="b3"></div></div>
+    </div>
+    <div class="row" style="margin-top:10px"><span class="badge purple" id="item"></span></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" data-b="1">Milli</button>
+      <button class="btn" data-b="2">Kärhanalaryň</button>
+      <button class="btn" data-b="3">Personal</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="msg" id="qx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Türkmenistanyň informasiýa saýtlary</h3>
+    <div class="goal">Saýta bas – onda nämeleriň bardygy ýazylar.</div>
+    <div class="sites" id="sites"></div>
+  </div>
+
+  <div class="card">
+    <h3>Web sahypany ýatda saklamak</h3>
+    <div class="goal">Faýlyň tipini saýla we diskde nämeleriň saklanýandygyny gör.</div>
+    <div class="save" id="save"></div>
+    <div class="files" id="files" style="margin-top:10px"></div>
+    <div class="note" id="sx"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Aýry-aýry dokumentler we dokumentleriň massiwleri <b>informasiýa gorlaryny</b> emele
+      getirýär. Maglumaty ýeriň kartasynda saklaýan sistemalara <b>geoinformasion sistemalar</b>
+      diýilýär – Google Maps we Google Earth şolara mysal bolýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- gorlaryň görnüşleri ---------------- */
+const ITEMS = [
+  ["Döwlet kitaphanasynyň elektron katalogy", 1],
+  ["Ýurduň arhiw gorlary", 1],
+  ["Hukuk kanunlarynyň gory", 1],
+  ["Kärhananyň ylmy-tehniki hasabatlary", 2],
+  ["Patent gullugynyň işleri", 2],
+  ["Öz kompýuteriňdäki suratlaryň papkasy", 3],
+  ["Köpçüligiň sarp edýän elektron žurnaly", 3]
+];
+const WHY = {
+  1: "Bu döwlet edaralarynyň, kitaphanalaryň we arhiwleriň gory – milli informasiýa gorudyr.",
+  2: "Bu kärhananyň ylmy-tehniki we ýörite informasiýa sektory.",
+  3: "Bu köpçüligiň sarp edýän personal informasiýa sektory."
+};
+let queue = [], wrong = 0;
+
+function nextItem() {
+  if (!queue.length) {
+    $("item").textContent = "Hemmesi ýerleşdirildi";
+    document.querySelectorAll("[data-b]").forEach(b => b.disabled = true);
+    $("qx").textContent = wrong === 0
+      ? "Ähli mysallar birinji synanyşykda dogry ýerleşdirildi."
+      : `Tamamlandy. ${wrong} sany ýalňyşlyk goýberildi.`;
+    $("qx").className = "msg " + (wrong ? "bad" : "ok");
+    return;
+  }
+  $("item").textContent = queue[0][0];
+  document.querySelectorAll("[data-b]").forEach(b => b.disabled = false);
+}
+function answer(k) {
+  const [name, want] = queue[0];
+  if (k !== want) { wrong++; $("qx").textContent = WHY[want]; $("qx").className = "msg bad"; return; }
+  queue.shift();
+  const c = document.createElement("span");
+  c.className = "chip"; c.textContent = name;
+  $("b" + k).appendChild(c);
+  $("qx").textContent = "Dogry."; $("qx").className = "msg ok";
+  nextItem();
+}
+function resetQ() {
+  queue = ITEMS.slice(); wrong = 0;
+  ["b1", "b2", "b3"].forEach(i => $(i).innerHTML = "");
+  $("qx").textContent = ""; nextItem();
+}
+document.querySelectorAll("[data-b]").forEach(b => b.onclick = () => answer(+b.dataset.b));
+$("again").onclick = resetQ;
+
+/* ---------------- saýtlar ---------------- */
+const SITES = [
+  ["www.turkmenistan.gov.tm", "Türkmenistanyň resmi informasion saýty."],
+  ["www.tdh.gov.tm", "Döwlet informasion agentliginiň saýty."],
+  ["www.science.gov.tm", "Türkmenistanyň Ylymlar akademiýasynyň saýty."],
+  ["minjust.gov.tm", "Adalat ministrliginiň saýty – hukuk meseleleri boýunça bilimler."],
+  ["medeniyet.gov.tm", "Medeniýet baradaky giňişleýin informasiýalar."],
+  ["http://katalog.iot.ru", "Bilim gorlarynyň internet katalogy – dersler boýunça žurnallar."],
+  ["www.turkmeninform.com", "«Türkmeninform» informasion portaly."],
+  ["www.turkmenbuziness.org", "Informasion işewür merkez."]
+];
+$("sites").innerHTML = SITES.map(([u], i) =>
+  `<div data-i="${i}"><b>${u}</b><small>? basyp gör</small></div>`).join("");
+$("sites").querySelectorAll("div").forEach(d => d.onclick = () => {
+  const [u, t] = SITES[+d.dataset.i];
+  d.className = "on";
+  d.innerHTML = `<b>${u}</b><small>${t}</small>`;
+});
+
+/* ---------------- ýatda saklamak ---------------- */
+const FMT = [
+  ["Web sahypa, doly", "sahypa.html + sahypa.files\\ papkasy",
+   ["sahypa.html <i>— tekst we bellikler</i>", "sahypa.files\\logo.png <i>— surat</i>",
+    "sahypa.files\\stil.css <i>— bezeg</i>"],
+   "Sahypa .html formatda saklanýar, suratlar we beýleki obýektler bolsa şol bir atly .files papkasynda."],
+  ["Web arhiw, bir faýl", "sahypa.mht",
+   ["sahypa.mht <i>— tekst, bezeg we ähli suratlar bir faýlda</i>"],
+   "Sahypa ähli obýektleri bilen tutuşlygyna bir .mht faýlynda saklanýar."],
+  ["Web sahypa, diňe HTML", "sahypa.html",
+   ["sahypa.html <i>— diňe tekst we bellikler</i>"],
+   "Diňe sahypanyň teksti saklanýar. Bezegler we suratlar saklanmaýar, sahypanyň görnüşi üýtgeýär."],
+  ["Tekst faýly", "sahypa.txt",
+   ["sahypa.txt <i>— diňe arassa tekst</i>"],
+   "Diňe tekst .txt formatda saklanýar. Ony Bloknot bilen açyp, redaktirläp bolýar."]
+];
+$("save").innerHTML = FMT.map(([n], i) => `<button class="btn" data-f="${i}">${n}</button>`).join("");
+function pick(i) {
+  document.querySelectorAll("[data-f]").forEach(b =>
+    b.className = "btn" + (+b.dataset.f === i ? " sel" : ""));
+  const [, , list, note] = FMT[i];
+  $("files").innerHTML = list.map(l => "📄 " + l).join("<br>");
+  $("sx").textContent = note;
+}
+document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => pick(+b.dataset.f));
+
+resetQ(); pick(0);
+</script>
+</body>
+</html>

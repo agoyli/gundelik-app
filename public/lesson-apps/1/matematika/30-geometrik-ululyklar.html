@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geometrik maglumatlar, ululyklar — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .shapes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .shapes button { min-height: 74px; padding: 5px; }
+  .shapes svg { width: 100%; height: 46px; }
+  .clock { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .clock svg { display: block; width: 100%; height: auto; max-height: 210px; }
+  .hours { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .hours button { min-height: 44px; font-size: 16px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Geometrik maglumatlar, ululyklar</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def"><b>Kesim</b> – iki nokady birleşdirýän göni çyzygyň bölegi.
+      Ululyklar: <b>uzynlyk (sm)</b>, <b>agram (kg)</b>, <b>göwrüm (l)</b> we <b>wagt</b>.
+      Wagty dogry kesgitlemek üçin <b>sagat</b> ulanylýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Şekili tap</h3>
+    <div class="goal" id="sgoal"></div>
+    <div class="shapes" id="shapes"></div>
+    <div class="msg" id="smsg"></div>
+    <div class="row"><button class="btn primary" id="snext">Indiki sorag</button></div>
+    <div class="score" id="ssc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sagat näçe?</h3>
+    <div class="goal">Uly dil 12-niň üstünde. Kiçi dil haýsy sanyň üstünde dursa,
+      sagat şol wagty görkezýär.</div>
+    <div class="clock"><svg id="cl" viewBox="0 0 200 200"></svg></div>
+    <div class="hours" id="hours" style="margin-top:8px"></div>
+    <div class="msg" id="cmsg"></div>
+    <div class="row"><button class="btn ghost" id="cnext">Sagady üýtget</button></div>
+    <div class="score" id="csc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, II kitap · 40–41, 114-nji sahypalar</div>
+</div>
+
+<script>
+var SH = [
+  ["Üçburçluk", '<svg viewBox="0 0 60 46"><polygon points="30,6 56,42 4,42" fill="#dbe6f5" stroke="#2456b0" stroke-width="2"/></svg>'],
+  ["Kwadrat", '<svg viewBox="0 0 60 46"><rect x="12" y="4" width="38" height="38" fill="#f5e6db" stroke="#c1622a" stroke-width="2"/></svg>'],
+  ["Tegelek", '<svg viewBox="0 0 60 46"><circle cx="30" cy="23" r="19" fill="#dff0e4" stroke="#2b7a4a" stroke-width="2"/></svg>'],
+  ["Kesim", '<svg viewBox="0 0 60 46"><line x1="6" y1="23" x2="54" y2="23" stroke="#1e2a3a" stroke-width="3"/><circle cx="6" cy="23" r="4"/><circle cx="54" cy="23" r="4"/></svg>']
+];
+var ASK = [0, 1, 3, 2], si = 0, sd = 0, sok = 0, slock = 0;
+function showS() {
+  document.getElementById("sgoal").innerHTML = "<b>" + SH[ASK[si]][0] + "</b> şekiline bas.";
+  var order = si % 2 === 0 ? [0, 1, 2, 3] : [3, 2, 1, 0], h = "";
+  for (var k = 0; k < 4; k++) {
+    var i = order[k];
+    h += '<button class="btn" data-i="' + i + '">' + SH[i][1] + "</button>";
+  }
+  document.getElementById("shapes").innerHTML = h;
+  var bs = document.getElementById("shapes").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = sclick;
+  document.getElementById("smsg").className = "msg";
+  document.getElementById("smsg").textContent = "";
+  slock = 0;
+}
+function sclick() {
+  if (slock) return;
+  slock = 1; sd++;
+  var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("smsg");
+  if (i === ASK[si]) { sok++; m.className = "msg ok"; m.textContent = "Dogry! Bu – " + SH[i][0] + "."; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + SH[i][0] + "."; }
+  document.getElementById("ssc").textContent = "Netije: " + sok + " / " + sd;
+}
+document.getElementById("snext").onclick = function () { si = (si + 1) % ASK.length; showS(); };
+showS();
+
+var HRS = [3, 5, 9, 7, 11, 2], hi = 0, hd = 0, hok = 0, hlock = 0;
+function drawClock() {
+  var s = '<circle cx="100" cy="100" r="92" fill="#fff" stroke="#4a5a6a" stroke-width="4"/>';
+  for (var i = 1; i <= 12; i++) {
+    var a = (i * 30 - 90) * Math.PI / 180;
+    s += '<text x="' + (100 + 74 * Math.cos(a)) + '" y="' + (100 + 74 * Math.sin(a) + 6) +
+      '" font-size="17" text-anchor="middle" fill="#1e2a3a">' + i + "</text>";
+  }
+  var ha = (HRS[hi] * 30 - 90) * Math.PI / 180;
+  s += '<line x1="100" y1="100" x2="' + (100 + 46 * Math.cos(ha)) + '" y2="' + (100 + 46 * Math.sin(ha)) +
+    '" stroke="#c1622a" stroke-width="7" stroke-linecap="round"/>';
+  s += '<line x1="100" y1="100" x2="100" y2="24" stroke="#2456b0" stroke-width="4" stroke-linecap="round"/>';
+  s += '<circle cx="100" cy="100" r="6" fill="#1e2a3a"/>';
+  document.getElementById("cl").innerHTML = s;
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  hlock = 0;
+}
+var h = "";
+for (var i = 1; i <= 12; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("hours").innerHTML = h;
+var hb = document.getElementById("hours").getElementsByTagName("button");
+for (var i = 0; i < hb.length; i++) {
+  hb[i].onclick = function () {
+    if (hlock) return;
+    hlock = 1; hd++;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("cmsg");
+    if (v === HRS[hi]) { hok++; m.className = "msg ok"; m.textContent = "Dogry! Sagat " + v + "."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Kiçi dil " + HRS[hi] + " sanyň üstünde dur."; }
+    document.getElementById("csc").textContent = "Netije: " + hok + " / " + hd;
+  };
+}
+document.getElementById("cnext").onclick = function () { hi = (hi + 1) % HRS.length; drawClock(); };
+drawClock();
+
+var Q = [
+  ["Üçburçlugyň näçe gyrasy bar?", ["Üç", "Dört", "Bäş"], 0],
+  ["Wagty kesgitlemek üçin näme ulanylýar?", ["Sagat", "Terezi", "Çyzgyç"], 0],
+  ["Iki nokady birleşdirýän göni çyzygyň bölegine näme diýilýär?", ["Kesim", "Tegelek", "Kwadrat"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

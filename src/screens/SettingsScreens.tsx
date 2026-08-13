@@ -53,7 +53,7 @@ export function ProfileEditScreen({ onBack, toast }: { onBack: () => void; toast
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', pt: '16px' }}>
         <Box aria-hidden sx={{
           width: 88, height: 88, borderRadius: '50%',
-          background: `linear-gradient(150deg, #5B93F5 0%, ${tokens.blue} 70%)`,
+          background: `linear-gradient(150deg, ${tokens.blue} 0%, ${tokens.bluePress} 70%)`,
           color: '#fff', display: 'grid', placeItems: 'center', fontSize: 30, fontWeight: 700,
         }}>MM</Box>
         <Button
@@ -283,7 +283,7 @@ export function LanguageScreen({ onBack, toast }: { onBack: () => void; toast: T
               }}
             >
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 15.5, fontWeight: 600, color: on ? tokens.blueText : tokens.ink }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 600, color: on ? tokens.blueText : tokens.ink }}>
                   {l.label}
                 </Typography>
                 <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }}>{l.native}</Typography>
@@ -326,7 +326,7 @@ export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
           <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px' }}>{plan.name}</Typography>
           <Box sx={{
             px: '9px', height: 22, borderRadius: `${tokens.rPill}px`, bgcolor: 'rgba(255,255,255,.22)',
-            fontSize: 11.5, fontWeight: 700, display: 'grid', placeItems: 'center',
+            fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center',
           }}>{PLAN.status}</Box>
         </Box>
         <Typography sx={{ fontSize: 13.5, opacity: .9, mt: '4px' }}>
@@ -453,7 +453,7 @@ export function PayMethodsScreen({ onBack, toast }: { onBack: () => void; toast:
                   {rowIcon(<CardIcon size={22} />, tone.tint, tone.ink)}
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                      <Typography sx={{ fontSize: 15.5, fontWeight: 600 }} noWrap>
+                      <Typography sx={{ fontSize: 15, fontWeight: 600 }} noWrap>
                         {methodLabel(m)}
                       </Typography>
                       {m.main && (
@@ -598,11 +598,11 @@ export function AddCardScreen({ onBack, toast }: { onBack: () => void; toast: To
         boxShadow: tokens.shadowFloat,
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ width: 38, height: 28, borderRadius: '6px', bgcolor: 'rgba(255,255,255,.35)' }} />
+          <Box sx={{ width: 38, height: 28, borderRadius: `${tokens.rCell}px`, bgcolor: 'rgba(255,255,255,.35)' }} />
           <Typography sx={{ fontSize: 14, fontWeight: 700, opacity: .9 }}>{b.name}</Typography>
         </Box>
         <Typography sx={{
-          fontSize: 19, fontWeight: 600, letterSpacing: '1.5px', fontVariantNumeric: 'tabular-nums',
+          fontSize: 20, fontWeight: 600, letterSpacing: '1.5px', fontVariantNumeric: 'tabular-nums',
           opacity: nDigits.length ? 1 : .55,
         }}>
           {fmtCardNumber(number) || '•••• •••• •••• ••••'}
@@ -726,7 +726,7 @@ export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () 
               }}
             >
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 15.5, fontWeight: 600, color: on ? tokens.blueText : tokens.ink }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 600, color: on ? tokens.blueText : tokens.ink }}>
                   {o.label}
                 </Typography>
                 <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }}>{o.note}</Typography>
@@ -778,7 +778,7 @@ export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () 
               bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, p: '10px 10px 10px 14px',
             }}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 14.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                   {n.number}
                 </Typography>
                 <Typography noWrap sx={{ fontSize: 12, color: tokens.ink3, mt: '1px' }}>{n.operator}</Typography>
@@ -981,17 +981,12 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
                 return (
                   <ButtonBase
                     key={id}
-                    onClick={() => {
-                      setTier(id);
-                      /* a fresh free week — otherwise the meters look spent on entry */
-                      if (id === 'free') { setPref('usedTest', false); setPref('usedCards', false); }
-                      toast(`${tierName(id)} rejimi açyldy`);
-                    }}
+                    onClick={() => { setTier(id); toast(`${tierName(id)} rejimi açyldy`); }}
                     aria-pressed={on}
                     sx={{
                       flex: 1, minHeight: 34, borderRadius: `${tokens.rPill}px`,
                       fontSize: 13, fontWeight: on ? 700 : 600,
-                      bgcolor: on ? tokens.blue : tokens.surfacePress,
+                      bgcolor: on ? tokens.blueSolid : tokens.surfacePress,
                       color: on ? '#fff' : tokens.ink2,
                       transition: 'background .15s ease,color .15s ease',
                     }}
@@ -1013,7 +1008,7 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
       </RowGroup>
       <Typography sx={{ fontSize: 12.5, color: tokens.ink3, lineHeight: 1.5, px: '6px', pt: '10px' }}>
         Mugt rejimde mahabat, çäkler we teklipler görüner. Göreldeli — bildirişler,
-        nyşanlar, testler we bäsleşikler. Zehinli — ählisi. Beta —
+        ýyldyzlar, testler we bäsleşikler. Zehinli — ählisi. Beta —
         taýýar bolmadyk aýratynlyklar: AI gysgaça mazmun, hepdelik grafikler.
       </Typography>
 
@@ -1029,7 +1024,7 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
       <Typography sx={{
         fontSize: 12, color: tokens.inkDisabled, textAlign: 'center', pt: '16px', pb: '8px',
       }}>
-        Gündelik · 1.0.0
+        {`Gündelik · ${APP.version}`}
       </Typography>
 
       {/* leaving the account is destructive enough to confirm */}

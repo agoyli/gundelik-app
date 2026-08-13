@@ -1,14 +1,15 @@
 import { Box, Button, ButtonBase, InputBase, Typography } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
-  BooksIcon, CheckIcon, ChevronIcon, GameIcon, LockIcon, QuizIcon, SearchIcon,
-  SparkleIcon, TrendUpIcon, VideoIcon,
+  BooksIcon, CheckIcon, GameIcon, LockIcon, QuizIcon, SearchIcon,
+  SparkleIcon, TrendUpIcon,
 } from '../components/Icons';
 import { BookmarkButton, DoneBadge, PillHeader, SheetDrawer, SheetSection } from '../components/Ui';
-import { usePrefs } from '../state/prefs';
+import { tierFor, useCan } from '../state/prefs';
+import type { CurriculumSubject, LessonKind, PathNode } from '../data/curriculum';
+import { pathFor } from '../data/curriculum';
 import { LessonScreen } from './LessonScreen';
-import { TEST_LENGTH } from './LessonScreen';
-import type { LessonKind } from './LessonScreen';
 import { tokens } from '../theme';
 
 /* ---------------- Activity kinds ---------------- */
@@ -19,46 +20,22 @@ const KIND_META: Record<Kind, {
   label: string; color: string; ink: string; tint: string; icon: (size: number) => React.ReactNode;
 }> = {
   text: { label: 'Tekst', color: tokens.blue, ink: tokens.blueText, tint: tokens.blueTint, icon: (s) => <BooksIcon size={s} /> },
-  video: { label: 'Wideo', color: tokens.purple, ink: tokens.purpleText, tint: tokens.purpleTint, icon: (s) => <VideoIcon size={s} /> },
   interactive: { label: 'Interaktiw', color: tokens.teal, ink: tokens.tealText, tint: tokens.tealTint, icon: (s) => <GameIcon size={s} /> },
   test: { label: 'Test', color: tokens.orange, ink: tokens.orangeText, tint: tokens.orangeTint, icon: (s) => <QuizIcon size={s} /> },
 };
 const KINDS = Object.keys(KIND_META) as Kind[];
 
-/* ---------------- Mock data (grades 1–12) ---------------- */
-type RoadLesson = { id: string; title: string; done: boolean; kind: Kind; extent: string };
+/* ---------------- The path (grades 1–12) ---------------- */
+/* The path itself is the curriculum's — which grades, which themes, in which
+   order, and which of them are a reading, an interactive or a checkpoint. All
+   this screen adds is what the reader has finished. */
+type RoadLesson = PathNode & { done: boolean };
 type GradeSection = { grade: number; lessons: RoadLesson[] };
 
-const USER_GRADE = 8;
-
-const TITLES = [
-  'Köpeldijilere dagytmak', 'Horner shemasy ýa-da bölmek', 'Kwadrat kökli deňlemeler',
-  'Diskriminant we kökler', 'Wiýeta teoremasy', 'Funksiýanyň grafigi',
-  'Deňsizlikler ulgamy', 'Progressiýalar',
-];
-/* every 6th activity is a test, the rest rotate text → video → interactive */
-const KIND_CYCLE: Kind[] = ['text', 'video', 'interactive', 'text', 'video', 'test'];
-
-const GRADES: GradeSection[] = Array.from({ length: 12 }, (_, gi) => {
-  const grade = gi + 1;
-  const count = grade === USER_GRADE ? 20 : 8;
-  return {
-    grade,
-    lessons: Array.from({ length: count }, (_, i) => {
-      const kind = KIND_CYCLE[(i + grade) % KIND_CYCLE.length];
-      return {
-        id: `g${grade}-${i}`,
-        title: TITLES[(i + grade) % TITLES.length],
-        done: grade < USER_GRADE || (grade === USER_GRADE && i < 5),
-        kind,
-        /* tests advertise the count the test page actually asks (TEST_LENGTH) */
-        extent: kind === 'test' ? `${TEST_LENGTH} sorag` : `${4 + ((i * 3 + grade) % 8)} min`,
-      };
-    }),
-  };
-});
-
 const gradeLabel = (n: number) => `${n}-${[6, 9, 10].includes(n) ? 'njy' : 'nji'} synp`;
+
+/* the plan that opens the grades past the free one — named, never "Premium" */
+const planName = tierFor('roadmap')?.name ?? '';
 
 /* capsule header height — grade bands stick right below it */
 const HEADER_H = 84;
@@ -66,8 +43,42 @@ const HEADER_H = 84;
 /* ---------------- Winding lesson path ---------------- */
 const ROW = 118;
 const TILE = 68;
+/* how far the current lesson's flag floats above its tile (plus its bob) */
+const LABEL_LIFT = 30;
 const OFF = 54;
 const GAP = 12;
+
+/* the exact height a grade's path occupies — the placeholder below stands in
+   for it, so scrolling past an unmounted grade costs the same as scrolling
+   through it and nothing jumps when it mounts */
+const pathHeight = (n: number) => n * ROW + LABEL_LIFT + 24;
+
+/*
+ * A grade draws itself when you come near it.
+ *
+ * Iňlis dili has 811 themes across twelve grades; mounting all of them is 800
+ * absolutely-positioned rows and a page that stutters while it scrolls. Each
+ * grade instead reserves its full height and only mounts its path when it is
+ * within about a screen of the viewport — the scroll bar, the jump button and
+ * the grade bands all behave as if the whole path were there, because as far as
+ * layout is concerned it is.
+ */
+function LazyPath({ height, children }: { height: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [near, setNear] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    /* a screen and a half of runway either way — enough that a fast fling never
+       overtakes the mount */
+    const io = new IntersectionObserver(([e]) => setNear(e.isIntersecting), { rootMargin: '1200px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return <Box ref={ref} sx={{ minHeight: `${height}px` }}>{near ? children : null}</Box>;
+}
 
 function PathSection({ lessons, currentId, onPick }: {
   lessons: RoadLesson[]; currentId?: string; onPick: (l: RoadLesson) => void;
@@ -77,7 +88,11 @@ function PathSection({ lessons, currentId, onPick }: {
     `M ${a.x} ${a.y} C ${a.x} ${a.y + ROW * 0.55}, ${b.x} ${b.y - ROW * 0.55}, ${b.x} ${b.y}`;
 
   return (
-    <Box sx={{ position: 'relative', height: lessons.length * ROW, my: '10px' }}>
+    /* The top margin is the BAŞLA flag's room, not decoration: the label floats
+       26px above its tile and bobs 4px higher still, and the current lesson is
+       now the first one in its grade — with the old 10px it sat behind the
+       sticky grade band. `LABEL_LIFT` keeps the two numbers tied together. */
+    <Box sx={{ position: 'relative', height: lessons.length * ROW, mt: `${LABEL_LIFT + 14}px`, mb: '10px' }}>
       <Box component="svg" aria-hidden
         sx={{ position: 'absolute', left: '50%', top: 0, width: '1px', height: '100%', overflow: 'visible' }}>
         {pts.slice(1).map((p, i) => {
@@ -142,7 +157,7 @@ function PathSection({ lessons, currentId, onPick }: {
               )}
               {current && (
                 <Box sx={{
-                  position: 'absolute', top: -26, left: '50%', transform: 'translateX(-50%)',
+                  position: 'absolute', top: `-${LABEL_LIFT - 4}px`, left: '50%', transform: 'translateX(-50%)',
                   bgcolor: meta.ink, color: '#fff', fontSize: 11, fontWeight: 700,
                   letterSpacing: '.8px', px: '9px', height: 20, lineHeight: '20px',
                   borderRadius: `${tokens.rPill}px`, whiteSpace: 'nowrap',
@@ -154,16 +169,30 @@ function PathSection({ lessons, currentId, onPick }: {
                 }}>BAŞLA</Box>
               )}
             </Box>
+            {/* Centred on the tile and free to be taller than it: pinned to the
+                row's own height, the flex box shrank the title instead of
+                clamping it, which cut the third line through the middle of the
+                letters and left no room for the ellipsis. Rows are 118px apart
+                and a three-line label is ~77px, so growing past the 68px tile
+                stays clear of the neighbours. */}
             <Box sx={{
-              position: 'absolute', top: 0, height: '100%',
+              position: 'absolute', top: '50%', transform: 'translateY(-50%)',
               display: 'flex', flexDirection: 'column', justifyContent: 'center',
               ...(right
                 ? { left: '16px', right: `calc(50% - ${OFF - TILE / 2 - GAP}px)`, alignItems: 'flex-end', textAlign: 'right' }
                 : { right: '16px', left: `calc(50% - ${OFF - TILE / 2 - GAP}px)`, textAlign: 'left' }),
             }}>
+              {/* Curriculum themes run long — one of Algebra's is a hundred
+                  characters. Three lines is what fits between two tiles on the
+                  winding path, and the third ends in an ellipsis so a clipped
+                  title reads as clipped; the sheet behind the tile prints the
+                  whole thing, so nothing is lost. `anywhere` is for the terms
+                  that arrive as one unbroken 30-letter word. */}
               <Typography sx={{
                 fontSize: 15, fontWeight: 600, lineHeight: 1.25,
                 color: locked ? tokens.ink3 : tokens.ink,
+                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                overflow: 'hidden', textOverflow: 'ellipsis', overflowWrap: 'anywhere',
               }}>{l.title}</Typography>
               <Typography sx={{ fontSize: 12.5, mt: '3px', color: locked ? tokens.inkMuted : meta.ink, fontWeight: 600 }}>
                 {meta.label} · {l.extent}
@@ -176,39 +205,61 @@ function PathSection({ lessons, currentId, onPick }: {
   );
 }
 
-/* the grade the free tier gets in full — enough to finish a real topic before
-   being asked for anything */
-const FREE_GRADE = 1;
-
 /* ---------------- Screen ---------------- */
-export function RoadmapScreen({ onBack, toast, onUpgrade }: {
+export function RoadmapScreen({ subject, onBack, toast, onUpgrade }: {
+  subject: CurriculumSubject;
   onBack: () => void; toast: (m: string) => void; onUpgrade: () => void;
 }) {
-  const { premium } = usePrefs();
+  const canRoadmap = useCan('roadmap');
+  const GRADES = useMemo(() => pathFor(subject), [subject]);
+  /* the grade the free tier gets in full — the subject's own first grade, which
+     is 1 for Informatika and 7 for Algebra; "grade 1" was only ever a stand-in
+     for "where this subject starts" */
+  const freeGrade = GRADES[0].grade;
   const [query, setQuery] = useState('');
   const [kindFilter, setKindFilter] = useState<Kind | null>(null);
-  const [activeGrade, setActiveGrade] = useState(USER_GRADE);
+  const [activeGrade, setActiveGrade] = useState(freeGrade);
   const [sheet, setSheet] = useState<RoadLesson | null>(null);
   const [lessonOpen, setLessonOpen] = useState<RoadLesson | null>(null);
   /* lessons completed in this session — the path advances live */
   const [doneIds, setDoneIds] = useState<string[]>([]);
-  /* fully-completed grades collapse to summary rows; user can expand them */
-  const [expandedDone, setExpandedDone] = useState<Record<number, boolean>>({});
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const sectionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const filterActive = !!kindFilter || !!query.trim();
 
-  const resolved = useMemo(() => GRADES.map((g) => ({
+  const resolved: GradeSection[] = useMemo(() => GRADES.map((g) => ({
     ...g,
-    lessons: g.lessons.map((l) => (doneIds.includes(l.id) ? { ...l, done: true } : l)),
-  })), [doneIds]);
+    lessons: g.lessons.map((l) => ({ ...l, done: doneIds.includes(l.id) })),
+  })), [GRADES, doneIds]);
 
-  const me = resolved[USER_GRADE - 1];
-  const currentId = me.lessons.find((l) => !l.done)?.id;
-  const currentLesson = me.lessons.find((l) => l.id === currentId);
+  /* grades are looked up by number, never by position: a subject is taught in
+     the grades the programme gives it — Algebra starts at 7, Himiýa at 8 — so
+     `resolved[grade - 1]` was an index into a list that no longer starts at 1 */
+  const gradeOf = (grade: number) => resolved.find((g) => g.grade === grade) ?? resolved[0];
+
+  /* Where you are is the first lesson you have not finished — anywhere in the
+     path, starting at 1-nji synp. It used to be read out of the grade the
+     student sits in at school, which opened the page in the middle of a road
+     they had not walked yet. */
+  const current = resolved
+    .flatMap((g) => g.lessons.map((l) => ({ lesson: l, grade: g.grade })))
+    .find((x) => !x.lesson.done);
+  const currentId = current?.lesson.id;
+  const currentGrade = current?.grade ?? resolved[resolved.length - 1].grade;
+  const me = gradeOf(currentGrade);
+  const currentLesson = current?.lesson;
   const doneCount = me.lessons.filter((l) => l.done).length;
   const pct = Math.round((doneCount / me.lessons.length) * 100);
+
+  /* Only the kinds this subject actually has get a chip. Lesson kinds are read
+     off the material now, so a subject with no interactive lesson has no
+     Interaktiw filter — a chip that can only ever return "hiç zat tapylmady" is
+     a promise the data cannot keep. */
+  const kindsPresent = useMemo(
+    () => KINDS.filter((k) => GRADES.some((g) => g.lessons.some((l) => l.kind === k))),
+    [GRADES],
+  );
 
   const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -228,7 +279,7 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
     const el = scrollRef.current;
     if (!el) return;
     const probe = el.scrollTop + el.clientHeight * 0.35;
-    let current = sections[0]?.grade ?? 1;
+    let current = sections[0]?.grade ?? freeGrade;
     for (const g of sections) {
       const node = sectionRefs.current[g.grade];
       if (node && node.offsetTop <= probe) current = g.grade;
@@ -237,19 +288,27 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
   };
   useEffect(onScroll, [sections]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* land on the lesson to take next, not on grade 1 */
+  /* A search rewrites the page under you: the grades keep their order but not
+     their heights, so wherever you were standing means nothing afterwards.
+     Start the results from the top, next to the box you typed in. */
   useEffect(() => {
-    scrollRef.current?.querySelector('[data-current="true"]')?.scrollIntoView({ block: 'center' });
+    if (filterActive) scrollRef.current?.scrollTo({ top: 0 });
+  }, [query, kindFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Land on the lesson to take next, not on grade 1 — one frame late, because
+     the grade holding it mounts when the observer above first reports it. */
+  useEffect(() => {
+    const t = setTimeout(() => {
+      scrollRef.current?.querySelector('[data-current="true"]')?.scrollIntoView({ block: 'center' });
+    }, 60);
+    return () => clearTimeout(t);
   }, []);
 
-  const isGradeCollapsed = (grade: number) =>
-    resolved[grade - 1].lessons.every((l) => l.done) && !filterActive && !expandedDone[grade];
-
-  /* One button at a time; collapsed grades are skipped so the jump always lands on a visible path */
-  const navGrades = sections.map((s) => s.grade).filter((g) => !isGradeCollapsed(g));
+  /* One button at a time */
+  const navGrades = sections.map((s) => s.grade);
   const nextG = navGrades.find((g) => g > activeGrade);
   const prevG = [...navGrades].reverse().find((g) => g < activeGrade);
-  const up = activeGrade > USER_GRADE || nextG === undefined;
+  const up = activeGrade > currentGrade || nextG === undefined;
   const target = up ? prevG : nextG;
 
   const jump = () => {
@@ -270,8 +329,7 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
   const sheetMeta = sheet ? KIND_META[sheet.kind] : null;
   const sheetLocked = !!sheet && !sheet.done && sheet.id !== currentId;
   /* free users own the first grade outright; beyond it the path is a preview */
-  const sheetGrade = sheet ? Number(sheet.id.slice(1).split('-')[0]) : 0;
-  const sheetPaid = !premium && sheetGrade > FREE_GRADE;
+  const sheetPaid = !canRoadmap && !!sheet && sheet.grade > freeGrade;
 
   return (
     <Box sx={{ position: 'absolute', inset: 0, bgcolor: '#fff' }}>
@@ -281,12 +339,20 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
           scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
         }}>
         <PillHeader
-          title="Algebra"
+          title={subject.name}
           onBack={onBack}
           /* the shared bookmark, not a second private one: this page used to
              keep its own `saved` flag, which meant the star here and the
              collection under Gollanmalar knew nothing about each other */
-          action={<BookmarkButton item={{ kind: 'tema', id: 'algebra', title: 'Algebra', sub: 'Matematika · 1–12 synp' }} />}
+          action={(
+            <BookmarkButton item={{
+              kind: 'tema',
+              id: subject.slug,
+              title: subject.name,
+              /* the grades this subject is actually taught, not a blanket 1–12 */
+              sub: `${gradeLabel(freeGrade)} – ${gradeLabel(GRADES[GRADES.length - 1].grade)}`,
+            }} />
+          )}
         />
 
         <Box sx={{ px: tokens.gutter, pt: '2px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -318,10 +384,10 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
                 height: 32, px: '14px', borderRadius: `${tokens.rPill}px`, flex: 'none',
                 fontSize: 13.5, fontWeight: 600,
                 transition: 'background .15s ease,color .15s ease',
-                bgcolor: kindFilter === null ? tokens.blue : tokens.surface,
+                bgcolor: kindFilter === null ? tokens.blueSolid : tokens.surface,
                 color: kindFilter === null ? '#fff' : tokens.ink2,
               }}>Ähli</ButtonBase>
-            {KINDS.map((k) => {
+            {kindsPresent.map((k) => {
               const m = KIND_META[k];
               const on = kindFilter === k;
               return (
@@ -372,7 +438,7 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
                 </Box>
                 <Box aria-hidden sx={{
                   height: 36, px: '16px', borderRadius: `${tokens.rPill}px`, flex: 'none',
-                  bgcolor: '#fff', color: tokens.blue, fontSize: 14, fontWeight: 700,
+                  bgcolor: '#fff', color: tokens.blueText, fontSize: 14, fontWeight: 700,
                   display: 'inline-flex', alignItems: 'center',
                 }}>Başla</Box>
               </Box>
@@ -381,14 +447,14 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
             )}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <Box role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}
-                sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,.3)', overflow: 'hidden' }}>
-                <Box sx={{ width: `${pct}%`, height: '100%', borderRadius: 4, bgcolor: tokens.gold, transition: 'width .4s ease' }} />
+                sx={{ height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: 'rgba(255,255,255,.3)', overflow: 'hidden' }}>
+                <Box sx={{ width: `${pct}%`, height: '100%', borderRadius: `${tokens.rPill}px`, bgcolor: tokens.gold, transition: 'width .4s ease' }} />
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography sx={{ fontSize: 13, fontWeight: 600, opacity: .85 }}>
                   {doneCount}/{me.lessons.length} sapak tamamlandy
                 </Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{gradeLabel(USER_GRADE)}</Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{gradeLabel(currentGrade)}</Typography>
               </Box>
             </Box>
           </ButtonBase>
@@ -410,37 +476,22 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
           </Box>
         )}
         {sections.map((g) => {
-          const all = resolved[g.grade - 1].lessons;
+          const all = gradeOf(g.grade).lessons;
           const total = all.length;
           const doneN = all.filter((l) => l.done).length;
           const complete = doneN === total;
-          const toggleable = complete && !filterActive;
-          const collapsed = toggleable && !expandedDone[g.grade];
-          /* Free tier keeps the first grade; the rest say so in the band
-             rather than only when a lesson sheet opens. */
-          const paidGrade = !premium && g.grade > FREE_GRADE;
+          /* Free tier keeps the subject's first grade; the rest say so in the
+             band rather than only when a lesson sheet opens. */
+          const paidGrade = !canRoadmap && g.grade > freeGrade;
           const caption = filterActive
             ? `${g.lessons.length} sapak tapyldy`
-            : paidGrade ? `Premium · ${total} sapak`
+            : paidGrade ? `${planName} · ${total} sapak`
               : complete ? `${total} sapak tamamlandy`
-                : doneN > 0 ? `${doneN}/${total} tamamlandy`
-                  : `gulply · ${total} sapak`;
-          const toggle = () => {
-            setExpandedDone((s) => ({ ...s, [g.grade]: collapsed }));
-            /* collapsing shrinks the page — keep the band in view */
-            if (!collapsed) requestAnimationFrame(() =>
-              sectionRefs.current[g.grade]?.scrollIntoView({ block: 'center' }));
-          };
+                : `${doneN}/${total} tamamlandy`;
           return (
             <Box key={g.grade} ref={(el: HTMLDivElement | null) => { sectionRefs.current[g.grade] = el; }}>
-              {/* One band for every grade & state: sticky below the header while its path scrolls;
-                  the chevron flip is the only visual difference between open/closed */}
+              {/* One band for every grade: sticky below the header while its path scrolls */}
               <Box
-                component={toggleable ? ButtonBase : 'div'}
-                onClick={toggleable ? toggle : undefined}
-                {...(toggleable
-                  ? { 'aria-expanded': !collapsed, 'aria-label': `${gradeLabel(g.grade)}, ${collapsed ? 'aç' : 'ýygna'}` }
-                  : {})}
                 sx={{
                   position: 'sticky', top: `calc(${HEADER_H}px + env(safe-area-inset-top))`, zIndex: 3,
                   width: '100%', py: '11px', mt: '10px',
@@ -453,21 +504,14 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
                   <Typography variant="h2" component="span" sx={{ color: tokens.blueText }}>
                     {gradeLabel(g.grade)}
                   </Typography>
-                  {toggleable && (
-                    <Box sx={{
-                      color: tokens.blueText, display: 'flex', opacity: .7,
-                      transform: collapsed ? 'rotate(90deg)' : 'rotate(-90deg)',
-                      transition: 'transform .18s ease',
-                    }}>
-                      <ChevronIcon size={11} />
-                    </Box>
-                  )}
                 </Box>
                 <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: tokens.blueText }}>
                   {caption}
                 </Typography>
               </Box>
-              {!collapsed && <PathSection lessons={g.lessons} currentId={currentId} onPick={setSheet} />}
+              <LazyPath height={pathHeight(g.lessons.length)}>
+                <PathSection lessons={g.lessons} currentId={currentId} onPick={setSheet} />
+              </LazyPath>
             </Box>
           );
         })}
@@ -515,15 +559,17 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
             <SheetSection>
               {sheetPaid ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: tokens.blueText, fontSize: 14, fontWeight: 600 }}>
-                  <SparkleIcon size={16} />{gradeLabel(FREE_GRADE)} mugt — galan synplar Premium bilen
+                  <SparkleIcon size={16} />{`${gradeLabel(freeGrade)} mugt — galan synplar ${planName} bilen`}
                 </Box>
               ) : sheet.done ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: tokens.greenText, fontSize: 14, fontWeight: 600 }}>
                   <CheckIcon size={15} />Tamamlandy — gaýtadan geçip bilersiňiz
                 </Box>
               ) : sheetLocked ? (
+                /* The lock marks where you are on the path, it does not shut the
+                   door: a student who wants to read ahead — or back — may. */
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: tokens.inkMuted, fontSize: 14, fontWeight: 600 }}>
-                  <LockIcon size={16} />Açmak üçin öňki sapaklary tamamlaň
+                  <LockIcon size={16} />Nobaty entek gelmedi — isleseňiz häzir okap bilersiňiz
                 </Box>
               ) : (
                 <Typography variant="body2">Indiki sapagyňyz — başlamaga taýyn!</Typography>
@@ -535,14 +581,13 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
               </Button>
               <Button
                 fullWidth variant="contained" disableElevation
-                disabled={sheetLocked && !sheetPaid}
                 onClick={() => {
                   if (!sheet) return;
                   if (sheetPaid) { setSheet(null); onUpgrade(); return; }
                   openLesson(sheet);
                 }}
               >
-                {sheetPaid ? 'Premium al' : sheet.done ? 'Gaýtadan gör' : sheetLocked ? 'Gulply' : 'Başla'}
+                {sheetPaid ? `${planName} al` : sheet.done ? 'Gaýtadan gör' : sheetLocked ? 'Öňünden oka' : 'Başla'}
               </Button>
             </Box>
           </>
@@ -553,6 +598,7 @@ export function RoadmapScreen({ onBack, toast, onUpgrade }: {
       {lessonOpen && (
         <LessonScreen
           lesson={lessonOpen}
+          subjectSlug={subject.slug}
           meta={KIND_META[lessonOpen.kind]}
           onClose={() => setLessonOpen(null)}
           onComplete={completeLesson}

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arhiwlemek — 11-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  input[type=text] { width: 100%; padding: 12px; font-size: 15px; border-radius: 12px;
+                     border: 2px solid #d6e0ee; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  input[type=text]:focus { outline: none; border-color: #2456b0; }
+  .strip { display: flex; gap: 2px; flex-wrap: wrap; margin: 10px 0; }
+  .run { border-radius: 7px; padding: 5px 7px; font-family: ui-monospace, Menlo, Consolas, monospace;
+         font-size: 13px; font-weight: 700; }
+  .bars { margin-top: 8px; }
+  .bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .bar span.l { width: 92px; color: #5b6b80; font-weight: 700; flex: 0 0 auto; }
+  .bar i { display: block; height: 20px; border-radius: 6px; }
+  .bar b { font-variant-numeric: tabular-nums; }
+  .files div.f { display: flex; gap: 9px; align-items: center; background: #f7fafd;
+                 border-radius: 11px; padding: 9px 11px; margin-bottom: 5px; cursor: pointer;
+                 font-size: 14px; }
+  .files .bx { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #c3d2e6;
+               background: #fff; flex: 0 0 auto; color: #fff; text-align: center;
+               line-height: 20px; font-size: 14px; }
+  .files div.f.on .bx { background: #1d7a3d; border-color: #1d7a3d; }
+  .files .sz { margin-left: auto; color: #93a2b5; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .arc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+         background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.75; }
+  .arc b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Arhiwlemek</h1>
+  <div class="sub">Gysmak, arhiw döretmek we arhiwden çykarmak · Informatika · 11-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Setiri ýaz. Gaýtalanýan harplaryň topary <b>«san + harp»</b> görnüşinde
+      ýazylýar – ine, gysmagyň iň ýönekeý algoritmi.</div>
+    <input type="text" id="s" spellcheck="false" maxlength="90">
+    <div class="row tight" style="margin-top:8px">
+      <button class="btn" data-t="kitap">Kitapdaky mysal</button>
+      <button class="btn" data-t="tekst">Adaty tekst</button>
+      <button class="btn" data-t="surat">Rastr setiri</button>
+    </div>
+    <div class="strip" id="strip"></div>
+    <div class="arc" id="rle"></div>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="card">
+    <h3>Arhiw döretmek</h3>
+    <div class="goal">Faýllary belle we <b>Добавить</b> düwmesine bas. Her formatyň gysylyşy
+      deň däldir.</div>
+    <div class="files" id="files"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="add">Добавить (arhiwe goşmak)</button>
+      <button class="btn" id="ext">Извлечь (arhiwden çykarmak)</button>
+    </div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Tomuň ölçegi</span>
+      <input type="range" id="vol" min="0" max="3" value="0">
+      <span class="out" id="volo" style="font-size:14px">bölünmeýär</span></div>
+    <div class="arc" id="out" style="margin-top:8px"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Berlenleri gysylan görnüşe özgertmeklige <b>arhiwlemek</b> diýilýär. Başdaky faýlyň
+      möçberiniň gysylandan soňky möçberine gatnaşygyna <b>gysylma koeffisiýenti</b> diýilýär.
+      <b>.txt</b> we <b>.bmp</b> faýllar gowy gysylýar, <b>.GIF</b>, <b>.JPG</b> we <b>.MP3</b>
+      faýllar bolsa gysylmaýar – olar eýýäm gysylan formatlardyr.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 11 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const PAL = ["#e3edfd", "#e0f5e6", "#fdeee0", "#efe9fb", "#fbe3e3", "#e8f4f8"];
+
+const TEXTS = {
+  kitap: "a".repeat(20) + "b".repeat(20) + "ç".repeat(20),
+  tekst: "informatika sapagy",
+  surat: "s".repeat(30) + "g".repeat(50) + "ý".repeat(20)
+};
+
+function runs(s) {
+  const out = [];
+  for (const ch of s) {
+    if (out.length && out[out.length - 1][0] === ch) out[out.length - 1][1]++;
+    else out.push([ch, 1]);
+  }
+  return out;
+}
+
+function rle() {
+  const s = $("s").value;
+  const r = runs(s);
+  $("strip").innerHTML = r.map(([c, n], i) =>
+    `<span class="run" style="background:${PAL[i % PAL.length]}">${n > 1 ? n : ""}${c === " " ? "␣" : c}</span>`).join("");
+  const enc = r.map(([c, n]) => (n > 1 ? n : "") + c).join("");
+  const orig = s.length;              // her simwol – 1 baýt
+  const comp = r.length * 2;          // her topar – 1 baýt san + 1 baýt simwol
+  const k = comp ? orig / comp : 0;
+  const num = x => String(Math.round(x * 100) / 100).replace(".", ",");
+  $("rle").innerHTML =
+    `başdaky setir: <b>${orig} baýt</b> (${orig} simwol)<br>` +
+    `gysylan ýazgy: <b>${enc || "—"}</b><br>` +
+    `toparlaryň sany: ${r.length} → gysylan möçber ${r.length} · 2 = <b>${comp} baýt</b><br>` +
+    `gysylma koeffisiýenti = ${orig} : ${comp} = <b>${num(k)}</b>` +
+    (k < 1 ? "  ⚠️ gaýtalanma az – gysylan ýazgy has uly boldy" : "");
+  const w = x => Math.max(3, Math.round(x / Math.max(orig, comp) * 100));
+  $("bars").innerHTML =
+    `<div class="bar"><span class="l">başdaky</span><i style="width:${w(orig)}%;background:#2456b0"></i><b>${orig} baýt</b></div>` +
+    `<div class="bar"><span class="l">gysylan</span><i style="width:${w(comp)}%;background:${k >= 1 ? "#1d7a3d" : "#b02424"}"></i><b>${comp} baýt</b></div>`;
+}
+$("s").addEventListener("input", rle);
+document.querySelectorAll("[data-t]").forEach(b =>
+  b.onclick = () => { $("s").value = TEXTS[b.dataset.t]; rle(); });
+
+/* ---------------- arhiw ---------------- */
+const FILES = [
+  { n: "Paýhas çeşmesi.doc", sz: 12.0, k: 3.0, on: true },
+  { n: "Meseleler.txt", sz: 4.0, k: 4.0, on: true },
+  { n: "bedew.bmp", sz: 300.0, k: 6.0, on: false },
+  { n: "bedew.jpg", sz: 120.0, k: 1.02, on: false },
+  { n: "nyşan.gif", sz: 40.0, k: 1.01, on: false },
+  { n: "aýdym.mp3", sz: 900.0, k: 1.0, on: false }
+];
+const VOLS = [0, 100, 700, 1000];
+const VOLN = ["bölünmeýär", "100 MB", "700 MB (CD)", "1000 MB"];
+let made = false;
+
+function files() {
+  $("files").innerHTML = FILES.map((f, i) =>
+    `<div class="f${f.on ? " on" : ""}" data-i="${i}"><span class="bx">${f.on ? "✓" : ""}</span>
+      <span>${f.n}</span><span class="sz">${f.sz.toLocaleString("ru-RU")} MB</span></div>`).join("");
+  $("files").querySelectorAll(".f").forEach(d => d.onclick = () => {
+    FILES[+d.dataset.i].on = !FILES[+d.dataset.i].on; made = false; files();
+  });
+  const v = +$("vol").value;
+  $("volo").textContent = VOLN[v];
+  const sel = FILES.filter(f => f.on);
+  const orig = sel.reduce((a, f) => a + f.sz, 0);
+  const comp = sel.reduce((a, f) => a + f.sz / f.k, 0);
+  const num = x => (Math.round(x * 100) / 100).toLocaleString("ru-RU");
+  if (!sel.length) { $("out").textContent = "Faýl saýlanmadyk."; return; }
+  const vsz = VOLS[v];
+  const toms = vsz ? Math.ceil(comp / vsz) : 1;
+  $("out").innerHTML =
+    `saýlanan faýllar: <b>${sel.length}</b>, jemi möçber: <b>${num(orig)} MB</b><br>` +
+    (made
+      ? `arhiw: <b>mysal.rar</b> – ${num(comp)} MB<br>` +
+        `gysylma koeffisiýenti = ${num(orig)} : ${num(comp)} = <b>${num(orig / comp)}</b><br>` +
+        (toms > 1
+          ? `tom ölçegi ${VOLN[v]} → <b>${toms} tom</b>: ` +
+            Array.from({ length: Math.min(toms, 4) }, (_, i) =>
+              `mysal.part${String(i + 1).padStart(2, "0")}.rar`).join(", ") + (toms > 4 ? " …" : "")
+          : "arhiw bir faýlda ýerleşdi")
+      : "arhiw entek döredilmedik – Добавить düwmesine bas");
+}
+$("add").onclick = () => {
+  if (!FILES.some(f => f.on)) { $("msg").textContent = "Ilki arhiwlemäge degişli faýllary belle."; $("msg").className = "msg bad"; return; }
+  made = true; files();
+  $("msg").textContent = "Имя и параметры архива penjiresinde ady goýlup, arhiw döredildi.";
+  $("msg").className = "msg ok";
+};
+$("ext").onclick = () => {
+  if (!made) { $("msg").textContent = "Arhiw ýok. Ilki ony döretmeli."; $("msg").className = "msg bad"; return; }
+  $("msg").textContent = "Путь и параметры извлечения penjiresinde ýol saýlanyp, " +
+    "faýllar arhiwden çykaryldy. Maglumatlar ilkibaşdaky ýagdaýyna dikeldildi.";
+  $("msg").className = "msg ok";
+};
+$("vol").addEventListener("input", files);
+
+$("s").value = TEXTS.kitap;
+rle(); files();
+</script>
+</body>
+</html>

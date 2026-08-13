@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Görnüşleri özgertmek — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .cells { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+  .cell { flex: 1; min-width: 150px; border-radius: 14px; padding: 12px; text-align: center; }
+  .cell.int { background: #e3edfd; } .cell.real { background: #efe9fb; }
+  .cell .t { font-size: 12.5px; font-weight: 700; color: #5b6b80; }
+  .cell .v { font-size: 26px; font-weight: 800; margin: 4px 0; font-variant-numeric: tabular-nums; }
+  .cell .b { font-size: 12px; color: #93a2b5; }
+  .flow { text-align: center; font-size: 15px; font-weight: 700; margin: 12px 0 4px; }
+  .code { background: #1e2a3a; color: #d8e4f5; border-radius: 12px; padding: 12px 14px;
+          font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+          line-height: 1.65; overflow-x: auto; white-space: pre; }
+  .code .kw { color: #7fc7ff; } .code .er { color: #ff9c8f; } .code .cm { color: #8ea3bd; }
+  .lines { display: flex; flex-direction: column; gap: 8px; }
+  .line { display: flex; align-items: center; gap: 10px; background: #f7fafd;
+          border-radius: 12px; padding: 10px 12px; }
+  .line code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; flex: 1; }
+  .line .mark { font-size: 20px; width: 26px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>San görnüşlerini özgertmek</h1>
+  <div class="sub">integer we real · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Hakyky sany üýtget we bitin görnüşe geçirmegiň iki usulyny deňeşdir.</div>
+    <div class="slider"><span class="lbl">a (real)</span>
+      <input type="range" id="a" min="-1000" max="1000" value="57"><span class="out" id="ao">5.7</span></div>
+    <div class="cells">
+      <div class="cell real"><div class="t">a : real</div><div class="v" id="va">5.7</div>
+        <div class="b">ýatda 8 baýt</div></div>
+      <div class="cell int"><div class="t">trunc(a) : integer</div><div class="v" id="vt">5</div>
+        <div class="b">drob bölegi aýrylýar</div></div>
+      <div class="cell int"><div class="t">round(a) : integer</div><div class="v" id="vr">6</div>
+        <div class="b">ýakyn bitin sana çenli</div></div>
+    </div>
+    <div class="flow" id="flow"></div>
+    <div class="note" id="explain"></div>
+  </div>
+
+  <div class="card">
+    <h3>Bölmek amaly</h3>
+    <div class="row">
+      <div class="slider" style="flex:1"><span class="lbl">c</span>
+        <input type="range" id="c" min="1" max="40" value="10"><span class="out" id="co">10</span></div>
+    </div>
+    <div class="row">
+      <div class="slider" style="flex:1"><span class="lbl">d</span>
+        <input type="range" id="d" min="1" max="12" value="3"><span class="out" id="do">3</span></div>
+    </div>
+    <div class="code" id="divcode"></div>
+    <div class="note">Bölmek (/) amalynyň netijesi <b>hemişe hakyky</b> bolýar,
+      div amalynyň netijesi bolsa <b>hemişe bitin</b> bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy setir dogry?</h3>
+    <div class="goal">Her setire bas: geçirmek bolýan bolsa ✅, bolmaýan bolsa ❌ çykar.</div>
+    <div class="lines" id="lines"></div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="score" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Hakyky</b> görnüşli üýtgeýäne bitin sanyň bahasyny ýazmak <b>bolýar</b>.
+      <b>Bitin</b> görnüşli üýtgeýäne hakyky sanyň bahasyny ýazmak <b>bolmaýar</b> –
+      ilki trunc ýa-da round bilen özgertmeli. Netije uzyn drob bolanda çykyş formaty berilýär:
+      <b>Writeln (a:6:2)</b>.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function draw() {
+  const a = Math.round(+$("a").value) / 10;
+  const t = Math.trunc(a), r = Math.round(a);
+  $("ao").textContent = a; $("va").textContent = a;
+  $("vt").textContent = t; $("vr").textContent = r;
+
+  $("flow").innerHTML = t === r
+    ? `trunc we round bu ýerde <b>deň</b> netije berýär: ${t}`
+    : `trunc <b>${t}</b>, round bolsa <b>${r}</b> berýär – tapawut ${Math.abs(r - t)}`;
+
+  const frac = Math.round((a - t) * 100) / 100;
+  $("explain").innerHTML =
+    `a = ${a}. Onuň bitin bölegi <b>${t}</b>, drob bölegi <b>${frac}</b>. ` +
+    (Math.abs(a - t) >= 0.5
+      ? `Drob bölegi 0.5-den kiçi däl, şonuň üçin round ony ${r} çenli tegelekleýär.`
+      : `Drob bölegi 0.5-den kiçi, şonuň üçin round hem ${r} berýär.`);
+
+  const c = +$("c").value, d = +$("d").value;
+  $("co").textContent = c; $("do").textContent = d;
+  const q = c / d, qs = Number.isInteger(q) ? q.toFixed(1) : q.toFixed(14).replace(/0+$/, "");
+  $("divcode").innerHTML =
+`<span class="kw">Var</span> c,d: integer; a: real;
+<span class="kw">Begin</span>
+  c:= ${c}; d:= ${d};
+  a:= c / d;      <span class="cm">{ ${qs} — hakyky }</span>
+  Writeln (a:6:2); <span class="cm">{ ${q.toFixed(2)} }</span>
+  Writeln (c <span class="kw">div</span> d);  <span class="cm">{ ${Math.floor(c / d)} — bitin }</span>
+<span class="kw">End.</span>`;
+}
+
+const LINES = [
+  { c: "b := c;",              ok: true,  w: "c bitin, b hakyky – bitinden hakykydygyna geçirmek bolýar." },
+  { c: "c := b;",              ok: false, w: "b hakyky, c bitin – drob bölegi ýitjek, şonuň üçin bolmaýar." },
+  { c: "c := trunc(b);",       ok: true,  w: "trunc drob bölegini aýyrýar, netije bitin bolýar." },
+  { c: "c := round(b);",       ok: true,  w: "round ýakyn bitin sany berýär." },
+  { c: "c := 7 / 2;",          ok: false, w: "Bölmek hakyky baha (3.5) berýär, ony bitin c-ä ýazyp bolmaýar." },
+  { c: "c := 7 div 2;",        ok: true,  w: "div amaly bitin netije (3) berýär." },
+  { c: "b := 5;",              ok: true,  w: "Hakyky üýtgeýäne bitin sany ýazmak bolýar: b = 5.0." }
+];
+let asked = new Set(), right = 0;
+
+const L = $("lines");
+LINES.forEach((x, i) => {
+  const d = document.createElement("div");
+  d.className = "line";
+  d.innerHTML = `<code>${x.c}</code><span class="mark" id="m${i}"></span>`;
+  d.onclick = () => {
+    $("m" + i).textContent = x.ok ? "✅" : "❌";
+    $("msg").textContent = x.w;
+    $("msg").className = "msg " + (x.ok ? "ok" : "bad");
+    if (!asked.has(i)) { asked.add(i); if (x.ok) right++; }
+    $("score").textContent = `Barlanan setir: ${asked.size} / ${LINES.length} · dogrusy ${right}`;
+  };
+  L.appendChild(d);
+});
+
+["a", "c", "d"].forEach(id => $(id).addEventListener("input", draw));
+draw();
+</script>
+</body>
+</html>

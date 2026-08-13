@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rastr şekiller we piksel — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .cvs { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .cvs figure { text-align: center; margin: 0; }
+  .cvs canvas { border-radius: 10px; border: 2px solid #d6e0ee; background: #fff;
+                image-rendering: pixelated; }
+  .cvs figcaption { font-size: 12.5px; color: #93a2b5; font-weight: 700; margin-top: 5px; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; }
+  .grid { display: grid; gap: 1px; background: #d6e0ee; border-radius: 8px; overflow: hidden;
+          width: max-content; margin: 0 auto; }
+  .grid div { width: 22px; height: 22px; background: #fff; cursor: pointer; }
+  .grid div.on { background: #2456b0; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Rastr şekiller. Piksel</h1>
+  <div class="sub">Grafiki informasiýalar bilen işlemek · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Öýjüklere basyp, öz şekiliňi çek. Her öýjük – bir <b>piksel</b>, ýagny
+      şekiliň iň kiçi, bölüp bolmaýan bölegi.</div>
+    <div class="stage"><div class="grid" id="grid"></div></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="clr">Arassala</button>
+      <button class="btn" id="heart">Nusga: ýürek</button>
+      <span class="badge info" id="cnt"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Çözüji ukyp we basgançak görnüşi</h3>
+    <div class="goal">Şekil kiçeldilende goňşy pikseller bir piksele öwrülýär, ulaldylanda bolsa
+      her nokadyň ölçegi ulalyp, <b>basgançak</b> görnüşi ýüze çykýar.</div>
+    <div class="stage"><div class="cvs">
+      <figure><canvas id="src" width="180" height="140"></canvas>
+        <figcaption>başdaky şekil</figcaption></figure>
+      <figure><canvas id="out" width="180" height="140"></canvas>
+        <figcaption>pikssellere bölünen</figcaption></figure>
+    </div></div>
+    <div class="slider" style="margin-top:10px"><span class="lbl">Pikseliň ölçegi</span>
+      <input type="range" id="px" min="1" max="20" value="1"><span class="out" id="pxo">1</span></div>
+    <div class="row"><span class="badge info" id="res"></span><span class="badge purple" id="sz"></span></div>
+    <div class="note" id="nx"></div>
+  </div>
+
+  <div class="card">
+    <h3>dpi – bir dýuýma düşýän nokatlar</h3>
+    <div class="goal">Rastr şekiliň ölçeg birligi <b>dpi</b> (dot per inch).
+      <b>1 dýuým = 2,54 sm</b>.</div>
+    <div class="slider"><span class="lbl">Çözüji ukyp</span>
+      <input type="range" id="dpi" min="72" max="600" step="24" value="96">
+      <span class="out" id="dpio">96</span></div>
+    <div class="slider"><span class="lbl">Ini (dýuým)</span>
+      <input type="range" id="inch" min="1" max="12" value="8"><span class="out" id="incho">8</span></div>
+    <div class="calc" id="dc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Aýry-aýry nokatlardan – <b>pikssellerden</b> gurlan şekile <b>rastr şekil</b> diýilýär.
+      Piksel şekiliň iň kiçi, bölüp bolmaýan bölegidir. Suratkeşleriň çeken suratlary ýa-da
+      fotografiýalar skanirlenende rastr şekiller alynýar. Rastr grafiki redaktorlar:
+      <b>Paint.net</b>, Photoshop, Corel Draw.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const dec = (x, d) => x.toFixed(d).replace(".", ",");
+const num = x => x.toLocaleString("ru-RU");
+
+/* ---------------- piksel gözenegi ---------------- */
+const W = 14, H = 12;
+let on = new Set();
+function grid() {
+  $("grid").style.gridTemplateColumns = `repeat(${W}, 22px)`;
+  $("grid").innerHTML = Array.from({length: W * H}, (_, i) =>
+    `<div class="${on.has(i) ? "on" : ""}" data-i="${i}"></div>`).join("");
+  $("grid").querySelectorAll("div").forEach(d => d.onclick = () => {
+    const i = +d.dataset.i;
+    on.has(i) ? on.delete(i) : on.add(i);
+    grid();
+  });
+  $("cnt").textContent = `${W} × ${H} = ${W * H} piksel, ${on.size} sanysy reňklenen`;
+}
+$("clr").onclick = () => { on = new Set(); grid(); };
+$("heart").onclick = () => {
+  on = new Set();
+  const P = [[3,1],[4,1],[9,1],[10,1],[2,2],[3,2],[4,2],[5,2],[8,2],[9,2],[10,2],[11,2],
+             [2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],[9,3],[10,3],[11,3],
+             [2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[11,4],
+             [3,5],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],
+             [4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[5,7],[6,7],[7,7],[8,7],[6,8],[7,8]];
+  P.forEach(([x, y]) => on.add(y * W + x));
+  grid();
+};
+
+/* ---------------- basgançak ---------------- */
+const s = $("src").getContext("2d", {willReadFrequently: true});
+const o = $("out").getContext("2d");
+(function scene() {
+  s.fillStyle = "#fff"; s.fillRect(0, 0, 180, 140);
+  s.fillStyle = "#1e2a3a"; s.font = "bold 64px Georgia"; s.fillText("A", 14, 96);
+  s.strokeStyle = "#2456b0"; s.lineWidth = 4;
+  s.beginPath(); s.arc(126, 44, 26, 0, Math.PI * 2); s.stroke();
+  s.fillStyle = "#e5007d";
+  s.beginPath(); s.moveTo(92, 128); s.lineTo(126, 78); s.lineTo(160, 128); s.closePath(); s.fill();
+})();
+function pix() {
+  const step = +$("px").value;
+  $("pxo").textContent = step;
+  const img = s.getImageData(0, 0, 180, 140);
+  o.clearRect(0, 0, 180, 140);
+  for (let y = 0; y < 140; y += step) for (let x = 0; x < 180; x += step) {
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let dy = 0; dy < step && y + dy < 140; dy++)
+      for (let dx = 0; dx < step && x + dx < 180; dx++) {
+        const i = ((y + dy) * 180 + (x + dx)) * 4;
+        r += img.data[i]; g += img.data[i + 1]; b += img.data[i + 2]; n++;
+      }
+    o.fillStyle = `rgb(${r / n | 0},${g / n | 0},${b / n | 0})`;
+    o.fillRect(x, y, step, step);
+  }
+  const w = Math.ceil(180 / step), h = Math.ceil(140 / step);
+  $("res").textContent = `${w} × ${h} = ${num(w * h)} piksel`;
+  $("sz").textContent = `möçberi ≈ ${dec(w * h * 3 / 1024, 1)} Kbaýt`;
+  $("nx").textContent = step === 1
+    ? "Her nokat aýratyn: şekil aýdyň, ýöne faýl uly bolýar."
+    : step <= 5 ? "Pikseller görnüp başlady, ýöne şekil entek tanalýar."
+    : "Pikseliň ölçegi uly: harplar basgançak görnüşine geçdi we saýgarmak kynlaşdy.";
+}
+$("px").addEventListener("input", pix);
+
+/* ---------------- dpi ---------------- */
+function dpi() {
+  const d = +$("dpi").value, i = +$("inch").value;
+  $("dpio").textContent = d + " dpi"; $("incho").textContent = i;
+  const px = d * i, sm = i * 2.54;
+  $("dc").innerHTML =
+    `ini: ${i} dýuým = ${i} · 2,54 = <b>${dec(sm, 2)} sm</b><br>` +
+    `pikselleriň sany: ${i} · ${d} = <b>${num(px)} piksel</b><br>` +
+    `1 sm-de: ${num(px)} : ${dec(sm, 2)} ≈ <b>${dec(px / sm, 0)} piksel</b>`;
+}
+["dpi", "inch"].forEach(i => $(i).addEventListener("input", dpi));
+
+grid(); pix(); dpi();
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanlary deňeşdirmek — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center;
+          background: #fff6e0; border-radius: 13px; padding: 14px 10px; }
+  .pair .n { font-size: 30px; font-weight: 800; text-align: center; }
+  .pair .s { font-size: 30px; font-weight: 800; text-align: center; color: #c1622a; min-width: 40px; }
+  .signs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .signs button { min-height: 54px; font-size: 24px; font-weight: 800; }
+  .cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+  .cells div { background: #f7fafd; border-radius: 10px; padding: 8px; font-size: 15px; font-weight: 700; }
+  .cells .hd { background: #e3edfd; font-size: 13px; color: #33506f; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sanlary deňeşdirmek</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ilki <b>belgileriň sanyna</b>, soňra <b>ýüzlüklere</b>, soňra
+      <b>onluklara</b>, iň soňunda <b>birliklere</b> seredilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Degişli belgini goý</h3>
+    <div class="pair">
+      <div class="n" id="l"></div><div class="s" id="s">*</div><div class="n" id="r"></div>
+    </div>
+    <div class="signs" id="signs" style="margin-top:8px">
+      <button class="btn" data-v="&gt;">&gt;</button>
+      <button class="btn" data-v="&lt;">&lt;</button>
+      <button class="btn" data-v="=">=</button>
+    </div>
+    <div class="msg" id="cmsg"></div>
+    <div class="cells" id="cells" style="margin-top:8px"></div>
+    <div class="row"><button class="btn primary" id="cnext">Indiki jübüt</button></div>
+    <div class="score" id="csc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, I kitap · 135–136-njy sahypalar</div>
+</div>
+
+<script>
+var P = [[570, 630], [518, 581], [899, 900], [740, 380], [696, 769], [980, 970], [325, 325]];
+var pi = 0, cd = 0, cok = 0, clock = 0;
+function sign() {
+  var a = P[pi][0], b = P[pi][1];
+  return a > b ? ">" : (a < b ? "<" : "=");
+}
+function why() {
+  var a = P[pi][0], b = P[pi][1];
+  if (a === b) return "Sanlaryň ähli öýjükleri deň.";
+  if (Math.floor(a / 100) !== Math.floor(b / 100)) return "Ýüzlükleri deň däl, şoňa görä deňeşdirdik.";
+  if (Math.floor(a / 10) % 10 !== Math.floor(b / 10) % 10) return "Ýüzlükleri deň, onluklara seretdik.";
+  return "Ýüzlükleri we onluklary deň, birliklere seretdik.";
+}
+function cells() {
+  var a = P[pi][0], b = P[pi][1];
+  var h = '<div class="hd">san</div><div class="hd">ýüzl.</div><div class="hd">onl.</div><div class="hd">birl.</div>';
+  h += "<div>" + a + "</div><div>" + Math.floor(a / 100) + "</div><div>" + (Math.floor(a / 10) % 10) + "</div><div>" + (a % 10) + "</div>";
+  h += "<div>" + b + "</div><div>" + Math.floor(b / 100) + "</div><div>" + (Math.floor(b / 10) % 10) + "</div><div>" + (b % 10) + "</div>";
+  document.getElementById("cells").innerHTML = h;
+}
+function show() {
+  document.getElementById("l").textContent = P[pi][0];
+  document.getElementById("r").textContent = P[pi][1];
+  document.getElementById("s").textContent = "*";
+  document.getElementById("cmsg").className = "msg";
+  document.getElementById("cmsg").textContent = "";
+  cells();
+  clock = 0;
+}
+var sb = document.getElementById("signs").getElementsByTagName("button");
+for (var i = 0; i < sb.length; i++) {
+  sb[i].onclick = function () {
+    if (clock) return;
+    clock = 1; cd++;
+    var v = this.getAttribute("data-v"), w = sign(), m = document.getElementById("cmsg");
+    document.getElementById("s").textContent = w;
+    if (v === w) { cok++; m.className = "msg ok"; m.textContent = "Dogry! " + why(); }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry belgi: " + w + ". " + why(); }
+    document.getElementById("csc").textContent = "Netije: " + cok + " / " + cd;
+  };
+}
+document.getElementById("cnext").onclick = function () { pi = (pi + 1) % P.length; show(); };
+show();
+
+var Q = [
+  ["570 bilen 630-yň haýsysy uly?", ["630", "570", "Ikisi deň"], 0],
+  ["Sanlary deňeşdirende ilki nämä seredilýär?", ["Ýüzlüklere", "Birliklere", "Onluklara"], 0],
+  ["899 bilen 900-i deňeşdir.", ["899 < 900", "899 > 900", "899 = 900"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

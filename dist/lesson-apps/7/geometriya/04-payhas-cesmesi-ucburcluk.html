@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>«Paýhas çeşmesi» we üçburçluk — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.65; }
+  .word { background: #f7fafd; border-radius: 13px; padding: 12px; text-align: center; font-size: 26px; font-weight: 800; letter-spacing: 4px; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15.5px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>«Paýhas çeşmesi» atly kitapdaky üçburçluk bilen baglanyşykly aýdylan atalar sözi we nakyllar</h1>
+  <div class="sub">Geometriýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Üçburçluga degişli meseleleri dogry çözseň, jogaplara degişli harplar
+      <b>«Paýhas çeşmesi»</b> kitabyndaky atalar sözüni emele getirýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Meseläni çöz – harpy al</h3>
+    <div class="word" id="word"></div>
+    <div class="task" id="task" style="margin-top:8px"></div>
+    <div class="goal" id="ask"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki nakyl</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geometriýa 7 · 80–83-nji sahypalar</div>
+</div>
+
+<script>
+// [nakyl, sahypa, [mesele, jogap, birlik, harp, düşündiriş]]
+var N = [
+  ["SAGLYK", "«Paýhas çeşmesi», 447-nji sahypa", [
+    ["Deňýanly üçburçlugyň perimetri 36 sm. Gapdal tarapy esasyndan 3 sm kiçi bolsa, esasyny tapyň.",
+     14, "sm", "S", "x + 2(x – 3) = 36, 3x = 42, x = 14 sm."],
+    ["Deňýanly üçburçlugyň esasy gapdal tarapyndan 2 esse kiçi. Perimetri 20 sm bolsa, esasyny tapyň.",
+     4, "sm", "A", "x + 2 · 2x = 20, 5x = 20, x = 4 sm."],
+    ["ABC üçburçlugyň BK medianasy geçirilen. AB = BK we ∠A = 40° bolsa, ∠BKC näçe?",
+     140, "°", "G", "∠AKB = ∠A = 40°, ∠BKC = 180° – 40° = 140°."],
+    ["ABC üçburçlugyň BK bissektrisasy geçirilen. AB = BK we ∠A = 60° bolsa, ∠BKC näçe?",
+     120, "°", "L", "∠AKB = ∠A = 60°, ∠BKC = 180° – 60° = 120°."],
+    ["Üçburçlugyň perimetri 40 sm. Iki tarapy 15 sm we 11 sm bolsa, üçünji tarapy näçe?",
+     14, "sm", "Y", "40 – 15 – 11 = 14 sm."],
+    ["Deňtaraply üçburçlugyň perimetri 21 sm bolsa, bir tarapy näçe?",
+     7, "sm", "K", "21 : 3 = 7 sm."]
+  ]],
+  ["BITIN", "«Paýhas çeşmesi», 427-nji sahypa", [
+    ["Deňýanly üçburçlugyň perimetri 24 sm. Gapdal tarapy esasyndan 3 sm uly bolsa, gapdal tarapy näçe?",
+     9, "sm", "B", "x + 2(x + 3) = 24, 3x = 18, x = 6, gapdal tarap 9 sm."],
+    ["Deňýanly üçburçlugyň esasy 8 sm, perimetri 26 sm bolsa, gapdal tarapy näçe?",
+     9, "sm", "I", "(26 – 8) : 2 = 9 sm."],
+    ["Üçburçlugyň iki burçy 40° we 60° bolsa, üçünji burçy näçe?",
+     80, "°", "T", "180° – 40° – 60° = 80°."],
+    ["Deňýanly üçburçlugyň esasyndaky burçy 65° bolsa, depedäki burçy näçe?",
+     50, "°", "I", "180° – 2 · 65° = 50°."],
+    ["Deňtaraply üçburçlugyň her burçy näçe gradusa deň?",
+     60, "°", "N", "180° : 3 = 60°."]
+  ]]
+];
+var ni = 0, stage = 0, d = 0, ok = 0;
+function tasks() { return N[ni][2]; }
+function show() {
+  var n = N[ni], w = "";
+  for (var i = 0; i < tasks().length; i++) w += i < stage ? tasks()[i][3] : "·";
+  document.getElementById("word").textContent = w;
+  if (stage < tasks().length) {
+    document.getElementById("task").textContent = (stage + 1) + ") " + tasks()[stage][0];
+    document.getElementById("ask").textContent = "Jogaby saýla.";
+  } else {
+    document.getElementById("task").textContent = "Ähli meseleler çözüldi.";
+    document.getElementById("ask").textContent = "";
+  }
+  var m = document.getElementById("msg");
+  m.className = stage >= tasks().length ? "msg ok" : "msg";
+  m.textContent = stage >= tasks().length ?
+    ("Nakyl: «" + n[0] + "» – " + n[1] + ".") : "";
+}
+var VALS = [4, 7, 9, 11, 12, 14, 16, 18, 50, 60, 80, 100, 110, 120, 130, 140];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + VALS[i] + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (stage >= tasks().length) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), t = tasks()[stage], m = document.getElementById("msg");
+    d++;
+    if (v === t[1]) {
+      stage++; ok++; show();
+      if (stage < tasks().length) {
+        m.className = "msg ok";
+        m.textContent = "Dogry! " + t[4] + " Harp: " + t[3] + ".";
+      }
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Ýalňyş. " + t[4];
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+document.getElementById("next").onclick = function () { ni = (ni + 1) % N.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["Meseleleriň jogaplary haýsy kitap bilen baglanyşdyrylýar?",
+   ["«Paýhas çeşmesi»", "«Başlangyçlar»", "«Bilim»"], 0],
+  ["Deňýanly üçburçlugyň perimetri 36 sm, gapdal tarapy esasyndan 3 sm kiçi bolsa, esasy näçe?",
+   ["14 sm", "11 sm", "12 sm"], 0],
+  ["Deňýanly üçburçlugyň esasyna geçirilen bissektrisa ýene näme bolýar?",
+   ["Mediana we beýiklik", "Diňe mediana", "Orta çyzyk"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

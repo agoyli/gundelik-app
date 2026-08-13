@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Položitel we otrisatel sanlary goşmak — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px 6px; overflow-x: auto; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .big3 { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 26px;
+          font-weight: 800; text-align: center; color: #2456b0; margin: 4px 0; }
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+  .rule { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13px;
+          line-height: 1.6; }
+  .rule b { color: #2456b0; display: block; margin-bottom: 3px;
+            font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Položitel we otrisatel sanlary goşmak</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Goşmak – koordinata göni çyzygynda <b>süýşme</b>. Položitel san saga,
+      otrisatel san çepe süýşürýär. Sürgüleri üýtgedip, netijä seret.</div>
+    <div class="stage" id="ax"></div>
+    <div class="slider"><span class="lbl">a</span>
+      <input type="range" id="a" min="-7" max="7" value="5"><span class="out" id="ao"></span></div>
+    <div class="slider"><span class="lbl">b</span>
+      <input type="range" id="b" min="-7" max="7" value="-3"><span class="out" id="bo"></span></div>
+    <div class="big3" id="big"></div>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Düzgünler</h3>
+    <div class="rules">
+      <div class="rule"><b>(−a) + (−b) = −(a + b)</b>Alamatlar birmeňzeş bolsa, modullar
+        goşulýar we öňünde «−» goýulýar.</div>
+      <div class="rule"><b>uly modul − kiçi modul</b>Alamatlar dürli bolsa, uly moduldan
+        kiçi modul aýrylýar.</div>
+      <div class="rule"><b>alamat = uly modulyňky</b>Jemiň alamaty moduly uly bolan
+        goşulyjynyň alamatyna deňdir.</div>
+      <div class="rule"><b>a + (−a) = 0</b>Garşylykly sanlaryň jemi nola deňdir.</div>
+      <div class="rule"><b>a − b = a + (−b)</b>Aýyrmak – kemelijä garşylykly sany goşmakdyr.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Aýyrmagy goşmaga öwür</h3>
+    <div class="row tight" id="conv"></div>
+    <div class="calc" id="cc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Köp goşulyjyly aňlatma</h3>
+    <div class="goal">Položitelleri we otrisatelleri aýratyn toplasaň, hasaplamak aňsatlaşýar.</div>
+    <div class="row tight" id="grp"></div>
+    <div class="calc" id="gc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Hasapla</h3>
+    <div class="goal">Dogry jogaby saýla.</div>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+    <button class="btn ghost" id="again">Täze soraglar</button>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Gije temperatura −6° bolup, soňra ýene −3° üýtgese, jemi üýtgeme
+      <b>−6 + (−3) = −9°</b> bolýar. Öýlän ol 4° galsa, <b>−9 + 4 = −5°</b> alynýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, II kitap (2018), §26–29</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+const LO = -14, HI = 14, W = 640, PAD = 26;
+const px = v => PAD + ((v - LO) / (HI - LO)) * (W - 2 * PAD);
+
+/* ---------------- süýşme ---------------- */
+function axis() {
+  const a = +$("a").value, b = +$("b").value, s = a + b;
+  $("ao").textContent = N(a); $("bo").textContent = N(b);
+  const y = 84;
+  let ticks = "";
+  for (let v = LO; v <= HI; v++) {
+    const x = px(v), big = v === 0;
+    ticks += `<line x1="${x}" y1="${y - (big ? 11 : 6)}" x2="${x}" y2="${y + (big ? 11 : 6)}"
+                stroke="${big ? "#1e2a3a" : "#93a2b5"}" stroke-width="${big ? 2.5 : 1.2}"/>
+              <text x="${x}" y="${y + 26}" text-anchor="middle" font-size="10"
+                fill="#5b6b80">${N(v)}</text>`;
+  }
+  const arrow = (from, to, yy, color, lab) => {
+    if (from === to) return "";
+    const x1 = px(from), x2 = px(to), dir = to > from ? -1 : 1;
+    return `<line x1="${x1}" y1="${yy}" x2="${x2}" y2="${yy}" stroke="${color}"
+              stroke-width="3"/>
+            <polygon points="${x2},${yy} ${x2 + dir * 9},${yy - 5} ${x2 + dir * 9},${yy + 5}"
+              fill="${color}"/>
+            <text x="${(x1 + x2) / 2}" y="${yy - 8}" text-anchor="middle" font-size="12"
+              font-weight="700" fill="${color}">${lab}</text>`;
+  };
+  $("ax").innerHTML = `
+    <svg viewBox="0 0 ${W} 116" width="${W}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      <line x1="${PAD - 14}" y1="${y}" x2="${W - PAD + 8}" y2="${y}" stroke="#5b6b80"
+        stroke-width="2"/>
+      ${ticks}
+      ${arrow(0, a, y - 22, "#2456b0", N(a))}
+      ${arrow(a, s, y - 46, "#e5007d", (b >= 0 ? "+" : "") + N(b))}
+      <circle cx="${px(s)}" cy="${y}" r="7" fill="#1d7a3d"/>
+      <text x="${px(s)}" y="${y + 42}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="#1d7a3d">${N(s)}</text>
+    </svg>`;
+  // otrisatel goşulyjy ýaýyň içinde ýazylýar, položitel bolsa ýaýsyz
+  $("big").textContent = `${N(a)} + ${b < 0 ? `(${N(b)})` : N(b)} = ${N(s)}`;
+  const ma = Math.abs(a), mb = Math.abs(b);
+  let why;
+  if (a === 0 || b === 0)
+    why = `Nol goşulanda san üýtgemeýär: a + 0 = a.`;
+  else if (a === -b)
+    why = `${N(a)} we ${N(b)} – garşylykly sanlar, olaryň jemi hemişe <b>0</b>-a deňdir.`;
+  else if (a > 0 === b > 0)
+    why = `Alamatlar birmeňzeş: modullary goşýarys, ${ma} + ${mb} = ${ma + mb}, ` +
+          `öňünde ${a > 0 ? "«+»" : "«−»"} goýýarys → <b>${N(s)}</b>.`;
+  else
+    why = `Alamatlar dürli: uly moduldan kiçisini aýyrýarys, ` +
+          `${Math.max(ma, mb)} − ${Math.min(ma, mb)} = ${Math.abs(ma - mb)}. ` +
+          `Moduly uly bolan ${ma > mb ? N(a) : N(b)} sanyň alamaty alynýar → <b>${N(s)}</b>.`;
+  $("calc").innerHTML =
+    `|${N(a)}| = ${ma},  |${N(b)}| = ${mb}<br>${why}`;
+}
+["a", "b"].forEach(k => $(k).addEventListener("input", axis));
+
+/* ---------------- aýyrmak → goşmak ---------------- */
+const CONV = [
+  ["−12 − 15", "−12 + (−15)", "−27"],
+  ["34 − (−16)", "34 + 16", "50"],
+  ["−8 − (−20)", "−8 + 20", "12"],
+  ["7 − 19", "7 + (−19)", "−12"],
+];
+$("conv").innerHTML = CONV.map((c, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${c[0]}</button>`).join("");
+$("conv").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("conv").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const c = CONV[+b.dataset.i];
+  $("cc").innerHTML = `${c[0]}<br>= ${c[1]}<br>= <b>${c[2]}</b><br>` +
+    `Aýyrmak amaly kemelijä <b>garşylykly</b> sany goşmak bilen çalşyryldy.`;
+});
+
+/* ---------------- toparlamak ---------------- */
+const GRP = [
+  [[-15, 8, -3, 20, -7], "−15 + 8 + (−3) + 20 + (−7)"],
+  [[13, -25, 12, -4, 9], "13 + (−25) + 12 + (−4) + 9"],
+  [[-6, -14, 30, -10], "−6 + (−14) + 30 + (−10)"],
+];
+$("grp").innerHTML = GRP.map((g, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${g[1]}</button>`).join("");
+$("grp").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("grp").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const [nums, txt] = GRP[+b.dataset.i];
+  const pos = nums.filter(n => n > 0), neg = nums.filter(n => n < 0);
+  const sp = pos.reduce((s, n) => s + n, 0), sn = neg.reduce((s, n) => s + n, 0);
+  // bir goşulyjy galsa, «= jem» ýazgysyny gaýtalamaýarys
+  const line = (arr, sum, par) => arr.length > 1
+    ? `${arr.map(v => par ? `(${N(v)})` : N(v)).join(" + ")} = <b>${N(sum)}</b>`
+    : `<b>${N(sum)}</b>`;
+  $("gc").innerHTML =
+    `${txt}<br>` +
+    `položitelleri topla: ${line(pos, sp, false)}<br>` +
+    `otrisatelleri topla: ${line(neg, sn, true)}<br>` +
+    `${N(sp)} + (${N(sn)}) = <b>${N(sp + sn)}</b>`;
+});
+
+/* ---------------- test ---------------- */
+let d = 0, r = 0;
+function make() {
+  d = 0; r = 0; $("sc").textContent = "";
+  const items = [];
+  for (let i = 0; i < 5; i++) {
+    const a = Math.round(Math.random() * 24) - 12;
+    const b = Math.round(Math.random() * 24) - 12;
+    if (a === 0 || b === 0) { i--; continue; }
+    const ans = a + b;
+    const opts = new Set([ans]);
+    for (const alt of [a - b, -(a + b), Math.abs(a) + Math.abs(b), ans + 1, ans - 2]) {
+      if (opts.size === 4) break;
+      opts.add(alt);
+    }
+    const arr = [...opts].sort(() => Math.random() - 0.5);
+    items.push({q: `${N(a)} + (${N(b)})`, arr, ans});
+  }
+  $("q").innerHTML = items.map((it, i) =>
+    `<div class="qa"><b>${i + 1}. ${it.q} = ?</b><div class="row tight" style="margin-top:6px">` +
+    it.arr.map(o => `<button class="btn" data-i="${i}" data-v="${o}">${N(o)}</button>`).join("") +
+    `</div><div class="expl" id="e${i}"></div></div>`).join("");
+  $("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    if ($("e" + i).textContent) return;
+    const good = +b.dataset.v === items[i].ans;
+    b.classList.add("sel");
+    $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${N(items[i].ans)}.`;
+    d++; if (good) r++;
+    $("sc").textContent = `${r} / ${d}` + (d === items.length ? " – tamam" : "");
+  });
+}
+$("again").onclick = make;
+
+axis(); make();
+$("conv").querySelector("button").click();
+$("grp").querySelector("button").click();
+</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Öňünde, yzynda, arasynda — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .line { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .line button { min-height: 70px; font-size: 28px; }
+  .line small { display: block; font-size: 11px; }
+  .ask { background: #fff6e0; border-radius: 13px; padding: 11px 13px; font-size: 16.5px; line-height: 1.6; min-height: 46px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Öňünde, yzynda, arasynda</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def">Hatarda duran zatlaryň ornuny <b>öňünde</b>, <b>yzynda</b> we
+      <b>arasynda</b> diýen sözler bilen aýdýarys. Hatary çepden saga okaýarys.</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýwanlar hatara düzüldi</h3>
+    <div class="line" id="line"></div>
+    <div class="ask" id="ask" style="margin-top:9px"></div>
+    <div class="msg" id="lmsg"></div>
+    <div class="row"><button class="btn primary" id="next">Indiki sorag</button></div>
+    <div class="score" id="lsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Öz-özüň barla</h3>
+    <div class="goal">Islendik haýwana bas – onuň ýerleşişi düşündiriler.</div>
+    <div class="line" id="line2"></div>
+    <div class="ask" id="say" style="margin-top:9px">Haýwana bas.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, I kitap · 19–21-nji sahypalar</div>
+</div>
+
+<script>
+var A = [["It", "🐕"], ["Düýe", "🐫"], ["At", "🐎"], ["Goýun", "🐑"], ["Geçi", "🐐"]];
+function draw(id, fn) {
+  var h = "";
+  for (var i = 0; i < A.length; i++) h += '<button class="btn" data-i="' + i + '">' + A[i][1] + '<small>' + A[i][0] + '</small></button>';
+  document.getElementById(id).innerHTML = h;
+  var bs = document.getElementById(id).getElementsByTagName("button");
+  for (var k = 0; k < bs.length; k++) bs[k].onclick = fn;
+}
+
+var QS = [
+  ["Düýäniň öň ýanynda haýsy haýwan dur?", 0],
+  ["Düýäniň yz ýanynda haýsy haýwan dur?", 2],
+  ["Aty bilen geçiniň arasyndaky haýwana bas.", 3],
+  ["Hatarda iň öňde duran haýwana bas.", 0],
+  ["Hatarda iň yzda duran haýwana bas.", 4],
+  ["Goýnuň öň ýanynda haýsy haýwan dur?", 2]
+];
+var qi = 0, d = 0, ok = 0, lock = 0;
+function showQ() {
+  document.getElementById("ask").textContent = QS[qi][0];
+  document.getElementById("lmsg").className = "msg";
+  document.getElementById("lmsg").textContent = "";
+  lock = 0;
+}
+draw("line", function () {
+  if (lock) return;
+  lock = 1; d++;
+  var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("lmsg");
+  if (i === QS[qi][1]) { ok++; m.className = "msg ok"; m.textContent = "Dogry! Ol – " + A[i][0] + "."; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + A[QS[qi][1]][0] + "."; }
+  document.getElementById("lsc").textContent = "Netije: " + ok + " / " + d;
+});
+document.getElementById("next").onclick = function () { qi = (qi + 1) % QS.length; showQ(); };
+showQ();
+
+draw("line2", function () {
+  var i = parseInt(this.getAttribute("data-i"), 10), s = "";
+  if (i === 0) s = A[i][0] + " hemmesiniň öňünde dur. Onuň yz ýanynda " + A[1][0] + " dur.";
+  else if (i === A.length - 1) s = A[i][0] + " hemmesiniň yzynda dur. Onuň öň ýanynda " + A[i - 1][0] + " dur.";
+  else s = A[i][0] + " " + A[i - 1][0] + " bilen " + A[i + 1][0] + " zatlaryň arasynda dur.";
+  document.getElementById("say").innerHTML = "<b>" + A[i][1] + "</b> " + s;
+});
+
+var Q = [
+  ["Iki zadyň ortasynda duran zat nirede?", ["Olaryň arasynda", "Olaryň öňünde", "Olaryň yzynda"], 0],
+  ["Hatarda iň soňky duran zat nirede?", ["Hemmesiniň yzynda", "Hemmesiniň öňünde", "Ortada"], 0],
+  ["«Öňünde» sözi nämäni aňladýar?", ["Hatarda öň gelýän ýeri", "Ýokarky ýeri", "Aşaky ýeri"], 0]
+];
+var qd = 0, qok = 0, h = "";
+for (var i = 0; i < Q.length; i++) {
+  h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = h;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

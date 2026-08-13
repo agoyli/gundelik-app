@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iş stoly we meseleler paneli — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .desk { position: relative; height: 340px; border-radius: 12px; overflow: hidden;
+          background: linear-gradient(160deg, #23405f, #0e1b2c); border: 3px solid #d6e0ee; }
+  .ico { position: absolute; width: 76px; text-align: center; cursor: pointer;
+         color: #fff; font-size: 11.5px; line-height: 1.3; user-select: none; }
+  .ico .sq { width: 42px; height: 42px; margin: 0 auto 4px; border-radius: 9px;
+             display: grid; place-items: center; font-size: 21px; position: relative; }
+  .ico.sel { background: rgba(255,255,255,.18); border-radius: 8px; }
+  .ico .ar { position: absolute; left: -3px; bottom: -3px; width: 15px; height: 15px;
+             background: #fff; border-radius: 3px; color: #2456b0; font-size: 11px;
+             display: grid; place-items: center; }
+  .win { position: absolute; background: #fff; border-radius: 8px; overflow: hidden;
+         box-shadow: 0 8px 26px rgba(0,0,0,.4); display: flex; flex-direction: column; }
+  .win .tb { background: #e3edfd; padding: 6px 8px; display: flex; align-items: center;
+             gap: 6px; font-size: 12.5px; font-weight: 700; color: #2456b0; cursor: move; }
+  .win.act .tb { background: #2456b0; color: #fff; }
+  .win .tb .btns { margin-left: auto; display: flex; gap: 4px; }
+  .win .tb button { width: 22px; height: 20px; border: 0; border-radius: 4px; cursor: pointer;
+                    background: rgba(255,255,255,.4); font-size: 12px; line-height: 1; }
+  .win .mn { background: #f7fafd; font-size: 11px; padding: 4px 8px; color: #5b6b80;
+             border-bottom: 1px solid #e2e9f2; }
+  .win .bd { flex: 1; padding: 9px; font-size: 12.5px; color: #1e2a3a; overflow: auto; }
+  .win .st { background: #f7fafd; font-size: 10.5px; padding: 3px 8px; color: #93a2b5;
+             border-top: 1px solid #e2e9f2; }
+  .tbar { position: absolute; left: 0; right: 0; bottom: 0; height: 38px; background: #16283d;
+          display: flex; align-items: center; gap: 5px; padding: 0 6px; }
+  .tbar .st { background: #2456b0; color: #fff; border: 0; border-radius: 6px; height: 26px;
+              padding: 0 11px; font-size: 12px; font-weight: 800; cursor: pointer; }
+  .tbar .tk { background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 6px;
+              height: 26px; padding: 0 9px; font-size: 11.5px; cursor: pointer; max-width: 120px;
+              overflow: hidden; white-space: nowrap; }
+  .tbar .tk.act { background: rgba(255,255,255,.4); }
+  .tbar .clock { margin-left: auto; color: #cfe0f5; font-size: 11.5px;
+                 font-variant-numeric: tabular-nums; }
+  .menu { position: absolute; left: 6px; bottom: 40px; background: #fff; border-radius: 8px;
+          box-shadow: 0 8px 26px rgba(0,0,0,.4); padding: 5px; width: 178px; }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; background: none;
+                 padding: 8px 9px; border-radius: 6px; font-size: 12.5px; cursor: pointer; }
+  .menu button:hover { background: #e3edfd; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Iş stoly we meseleler paneli</h1>
+  <div class="sub">Windows operasion sistemasy · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Nyşanjyga <b>iki gezek çalt</b> bas – programma açylar. Penjiräniň
+      sözbaşysyny tutup çekseň, onuň orny üýtgär.</div>
+    <div class="desk" id="desk">
+      <div class="tbar" id="tbar">
+        <button class="st" id="start">Пуск</button>
+        <div id="tasks" style="display:flex;gap:5px"></div>
+        <span class="clock" id="clock"></span>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Penjiräniň elementleri</h3>
+    <div class="row tight" id="el"></div>
+    <div class="note" id="ex">Elemente bas.</div>
+  </div>
+
+  <div class="card">
+    <h3>Nyşanjykmy ýa-da ýarlyk?</h3>
+    <div class="row" style="margin-bottom:8px"><span class="badge purple" id="q"></span></div>
+    <div class="row tight">
+      <button class="btn" data-q="0">Nyşanjyk</button>
+      <button class="btn" data-q="1">Ýarlyk</button>
+    </div>
+    <div class="msg" id="qmsg"></div>
+    <div class="row"><span class="score" id="qsc"></span>
+      <button class="btn ghost" id="qr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Iş stoly</b> – operasion sistema ýüklenenden soň ekranda peýda bolýan şekildir.
+      <b>Nyşanjyk</b> obýekti aňladýan şekiljikdir, <b>ýarlyk</b> bolsa obýektlere salgylanma
+      bolup, hemişe egri ugur görkezgijiň şekilini özünde saklaýar. Işjeň penjiräniň sözbaşysy
+      has ýagty reňk bilen tapawutlanýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- iş stoly ---------------- */
+const ICONS = [
+  {k: "pc", n: "Kompýuter", i: "🖥", x: 14, y: 14, lnk: false,
+   body: "Kompýuteriň diskindäki ähli faýllaryň we papkalaryň sanawyny saklaýan papka.<br><br>Ýerli disk (C:)<br>Ýerli disk (D:)<br>DVD RW disk (E:)"},
+  {k: "bin", n: "Sebet", i: "🗑", x: 14, y: 104, lnk: false,
+   body: "Ýok edilen obýektler – faýllar we papkalar – wagtlaýyn şu ýerde saklanýar. Sebet arassalananda olar bütinleý ýok bolýar."},
+  {k: "calc", n: "Kalkulýator", i: "🧮", x: 14, y: 194, lnk: true,
+   body: "Arifmetik hasaplamalary geçirmäge mümkinçilik berýän standart programma."},
+  {k: "note", n: "Bloknot", i: "📝", x: 104, y: 14, lnk: true,
+   body: "Ýönekeý tekst resminamalaryny taýýarlamak üçin ulanylýan standart programma."},
+  {k: "paint", n: "Paint.net", i: "🎨", x: 104, y: 104, lnk: true,
+   body: "Şekiller we suratlar bilen işlemek üçin niýetlenen grafiki redaktor."}
+];
+let wins = [], z = 10, act = null;
+function icons() {
+  ICONS.forEach(o => {
+    const d = document.createElement("div");
+    d.className = "ico"; d.style.left = o.x + "px"; d.style.top = o.y + "px";
+    d.innerHTML = `<div class="sq" style="background:${o.lnk ? "#e3edfd" : "#cfe0f5"}">${o.i}` +
+      (o.lnk ? `<span class="ar">↗</span>` : "") + `</div>${o.n}`;
+    d.onclick = () => {
+      $("desk").querySelectorAll(".ico").forEach(x => x.classList.remove("sel"));
+      d.classList.add("sel");
+      $("msg").textContent = o.lnk
+        ? "Bu – ýarlyk. Egri ugur görkezgijiň şekili bar. Açmak üçin iki gezek çalt bas."
+        : "Bu – nyşanjyk. Ol obýektiň özüni aňladýar. Açmak üçin iki gezek çalt bas.";
+      $("msg").className = "msg";
+    };
+    d.ondblclick = () => open(o);
+    $("desk").insertBefore(d, $("tbar"));
+  });
+}
+function open(o) {
+  if (wins.find(w => w.k === o.k)) { front(o.k); return; }
+  const w = document.createElement("div");
+  w.className = "win";
+  const n = wins.length;
+  Object.assign(w.style, {left: (168 + n * 22) + "px", top: (22 + n * 20) + "px",
+                          width: "216px", height: "168px", zIndex: ++z});
+  w.innerHTML =
+    `<div class="tb"><span>${o.i}</span><span>${o.n}</span><div class="btns">
+       <button data-a="min">–</button><button data-a="max">▢</button><button data-a="close">✕</button>
+     </div></div>
+     <div class="mn">Faýl · Prawka · Wid · Kömek</div>
+     <div class="bd">${o.body}</div>
+     <div class="st">Elementler: ${o.k === "pc" ? 9 : 1}</div>`;
+  $("desk").insertBefore(w, $("tbar"));
+  const rec = {k: o.k, n: o.n, i: o.i, el: w, min: false, max: false, r: null};
+  wins.push(rec);
+  w.querySelector('[data-a="close"]').onclick = e => { e.stopPropagation(); close(o.k); };
+  w.querySelector('[data-a="min"]').onclick = e => { e.stopPropagation(); mini(o.k); };
+  w.querySelector('[data-a="max"]').onclick = e => { e.stopPropagation(); maxi(o.k); };
+  w.onmousedown = () => front(o.k);
+  drag(w, w.querySelector(".tb"), rec);
+  front(o.k);
+  $("msg").textContent = `«${o.n}» penjiresi açyldy. Ol meseleler panelinde hem peýda boldy.`;
+  $("msg").className = "msg ok";
+}
+function drag(w, h, rec) {
+  let sx, sy, ox, oy, on = false;
+  const down = e => {
+    if (rec.max) return;
+    on = true; const p = e.touches ? e.touches[0] : e;
+    sx = p.clientX; sy = p.clientY; ox = w.offsetLeft; oy = w.offsetTop;
+    e.preventDefault();
+  };
+  const move = e => {
+    if (!on) return;
+    const p = e.touches ? e.touches[0] : e;
+    w.style.left = Math.max(0, Math.min(ox + p.clientX - sx, $("desk").clientWidth - w.offsetWidth)) + "px";
+    w.style.top = Math.max(0, Math.min(oy + p.clientY - sy, $("desk").clientHeight - 60)) + "px";
+  };
+  h.addEventListener("mousedown", down); h.addEventListener("touchstart", down, {passive: false});
+  document.addEventListener("mousemove", move); document.addEventListener("touchmove", move);
+  document.addEventListener("mouseup", () => on = false);
+  document.addEventListener("touchend", () => on = false);
+}
+function front(k) {
+  act = k;
+  wins.forEach(w => {
+    w.el.classList.toggle("act", w.k === k);
+    if (w.k === k) { w.el.style.zIndex = ++z; w.min = false; w.el.style.display = "flex"; }
+  });
+  tasks();
+}
+function close(k) {
+  const i = wins.findIndex(w => w.k === k);
+  if (i < 0) return;
+  wins[i].el.remove(); wins.splice(i, 1);
+  act = wins.length ? wins[wins.length - 1].k : null;
+  tasks();
+  $("msg").textContent = "Penjire ýapyldy.";
+  $("msg").className = "msg";
+}
+function mini(k) {
+  const w = wins.find(x => x.k === k);
+  w.min = true; w.el.style.display = "none";
+  $("msg").textContent = "Penjire meseleler paneline ýygnaldy. Ony yzyna getirmek üçin " +
+    "meseleler panelindäki adyna bas.";
+  $("msg").className = "msg";
+  tasks();
+}
+function maxi(k) {
+  const w = wins.find(x => x.k === k);
+  if (!w.max) {
+    w.r = {l: w.el.style.left, t: w.el.style.top, w: w.el.style.width, h: w.el.style.height};
+    Object.assign(w.el.style, {left: "0px", top: "0px", width: "100%", height: "302px"});
+    w.max = true;
+  } else {
+    Object.assign(w.el.style, {left: w.r.l, top: w.r.t, width: w.r.w, height: w.r.h});
+    w.max = false;
+  }
+  front(k);
+}
+function tasks() {
+  $("tasks").innerHTML = wins.map(w =>
+    `<button class="tk${w.k === act && !w.min ? " act" : ""}" data-t="${w.k}">${w.i} ${w.n}</button>`).join("");
+  $("tasks").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const w = wins.find(x => x.k === b.dataset.t);
+    if (w.min || act !== w.k) front(w.k); else mini(w.k);
+  });
+}
+$("start").onclick = e => {
+  e.stopPropagation();
+  const old = document.querySelector(".menu");
+  if (old) { old.remove(); return; }
+  const m = document.createElement("div");
+  m.className = "menu";
+  m.innerHTML = `<div style="font-size:11px;color:#93a2b5;padding:4px 9px">Все программы</div>` +
+    ICONS.filter(o => o.lnk).map(o => `<button data-o="${o.k}">${o.i} ${o.n}</button>`).join("") +
+    `<button data-o="off">⏻ Завершение работы</button>`;
+  m.querySelectorAll("button").forEach(b => b.onclick = () => {
+    m.remove();
+    if (b.dataset.o === "off") {
+      wins.slice().forEach(w => close(w.k));
+      $("msg").textContent = "Ähli penjireler ýapyldy – kompýuter öçürildi.";
+      $("msg").className = "msg ok";
+    } else open(ICONS.find(o => o.k === b.dataset.o));
+  });
+  $("desk").appendChild(m);
+};
+$("desk").onclick = () => { const m = document.querySelector(".menu"); if (m) m.remove(); };
+setInterval(() => {
+  const d = new Date();
+  $("clock").textContent = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}, 1000);
+$("clock").textContent = "—:—";
+
+/* ---------------- penjiräniň elementleri ---------------- */
+const EL = [
+  ["Sözbaşy setiri", "Penjiräniň ýokarsynda: çepde nyşanjyk we programmanyň ady, sagda dolandyryjy düwmeler."],
+  ["Menýu setiri", "Programma bilen işlemek üçin zerur buýruklaryň elýeterli bolmagyny üpjün edýär."],
+  ["Iş meýdany", "Penjiräniň esasy bölegi – şu ýerde resminama ýerleşdirilýär."],
+  ["Ýagdaýlar setiri", "Işlenýän wagtynda zerur informasiýalar şu ýerde şekillendirilýär."],
+  ["Süýşürme zolaklary", "Görünmeýän bölege geçmek üçin ulanylýar."]
+];
+$("el").innerHTML = EL.map(([n], i) => `<button class="btn" data-e="${i}">${n}</button>`).join("");
+$("el").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("el").querySelectorAll("button").forEach(x => x.className = "btn");
+  b.className = "btn sel";
+  const [n, t] = EL[+b.dataset.e];
+  $("ex").innerHTML = `<b>${n}</b> — ${t}`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Kompýuter", 0], ["Kalkulýatoryň şekiljigi (egri ugur görkezgiçli)", 1],
+  ["Sebet", 0], ["Word programmasyna salgylanma", 1],
+  ["Paint.net-iň şekiljigi (egri ugur görkezgiçli)", 1], ["Papkanyň özi", 0]
+];
+let qi = 0, qok = 0;
+function q() {
+  if (qi >= Q.length) {
+    $("q").textContent = "Tamamlandy";
+    $("qmsg").textContent = `Netije: ${qok} / ${Q.length}`;
+    $("qmsg").className = "msg ok";
+    return;
+  }
+  $("q").textContent = Q[qi][0];
+  $("qsc").textContent = `${qi} / ${Q.length}`;
+}
+document.querySelectorAll("[data-q]").forEach(b => b.onclick = () => {
+  if (qi >= Q.length) return;
+  const good = +b.dataset.q === Q[qi][1];
+  if (good) qok++;
+  $("qmsg").textContent = good ? "Dogry."
+    : Q[qi][1] ? "Bu – ýarlyk: onda egri ugur görkezgiç bar."
+               : "Bu – nyşanjyk: ol obýektiň özüni aňladýar.";
+  $("qmsg").className = good ? "msg ok" : "msg bad";
+  qi++; q();
+});
+$("qr").onclick = () => { qi = 0; qok = 0; $("qmsg").textContent = ""; q(); };
+
+icons(); tasks(); q();
+</script>
+</body>
+</html>

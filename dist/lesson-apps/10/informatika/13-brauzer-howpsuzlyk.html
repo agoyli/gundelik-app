@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brauzeriň howpsuzlygy — 10-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .opt { display: flex; align-items: center; gap: 10px; background: #f7fafd; border-radius: 11px;
+         padding: 10px 11px; margin-bottom: 6px; cursor: pointer; }
+  .opt .bx { width: 24px; height: 24px; border-radius: 7px; border: 2px solid #c3d2e6;
+             flex: 0 0 auto; background: #fff; display: flex; align-items: center;
+             justify-content: center; font-size: 15px; color: #fff; }
+  .opt.on .bx { background: #1d7a3d; border-color: #1d7a3d; }
+  .opt .tx { flex: 1; font-size: 14px; }
+  .opt .tx small { display: block; font-size: 12.5px; color: #93a2b5; margin-top: 2px; line-height: 1.4; }
+  .lvl { height: 12px; background: #eef2f8; border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+  .lvl i { display: block; height: 100%; width: 0; transition: width .2s, background .2s; }
+  .log { background: #f7fafd; border-radius: 11px; padding: 11px; font-size: 13.5px;
+         line-height: 1.7; min-height: 74px; }
+  .log b { color: #2456b0; }
+  .path { font-size: 12.5px; color: #5b6b80; background: #eef2f8; border-radius: 9px;
+          padding: 8px 10px; line-height: 1.5; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Brauzeriň howpsuzlygyny sazlamak</h1>
+  <div class="sub">Kukiler, parollar we goragyň derejesi · Informatika · 10-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sazlamalary üýtget. Aşakda goragyň derejesi we her saýlawyň netijesi
+      görkezilýär.</div>
+    <div id="opts"></div>
+    <div class="lvl"><i id="bar"></i></div>
+    <div class="row"><span class="badge" id="badge"></span><span class="score" id="pts"></span></div>
+    <div class="msg" id="tip"></div>
+    <div class="path">Firefox: <b>Настройки – Приватность и Защита</b><br>
+      Windows: Dolandyryş paneli – <b>Сеть и Интернет – Свойства браузера – Безопасность</b></div>
+  </div>
+
+  <div class="card">
+    <h3>Kukiler nähili işleýär?</h3>
+    <div class="goal">Saýta gir we ikinji gezek gaýdyp gel. Kukiler açyk bolsa, saýt seni «tanaýar».</div>
+    <div class="log" id="log"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="visit">Saýta girmek</button>
+      <button class="btn warn" id="clear">Taryhy we kukileri pozmak</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Kukiler</b> – Web saýt tarapyndan ulanyjynyň kompýuterinde galdyrylýan informasiýadyr.
+      Olar hemme saýtlar üçin däl-de, adatça elýeterliligi çäklendirilen saýtlarda talap edilýär.
+      Kukiler täsir ediş möhleti gutaranda, brauzer ýapylanda ýa-da ulanyjynyň özi pozanda
+      ýatdan aýrylýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 10 (2022)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const OPTS = [
+  { k: "track", n: "Izleýji mazmuny blokirlemek", d: "Saýtlaryň arasynda seni yzarlaýan skriptleri saklaýar.",
+    on: true, w: 2, tip: "Izleýji mazmun blokirlenende saýtlar seniň gezelençleriňi ýygnap bilmeýär." },
+  { k: "crypt", n: "Kriptomaýnerleri blokirlemek", d: "Kompýuteriňi rugsatsyz hasaplamalara ulanmagyň öňüni alýar.",
+    on: true, w: 2, tip: "Kriptomaýnerler kompýuteriň kuwwatyny gizlin ulanýar – olary blokirlemek dogry." },
+  { k: "print", n: "Sifr barmak yzyny ýygnaýjylary blokirlemek", d: "Enjamyň özboluşly belgisini ýygnamagy saklaýar.",
+    on: true, w: 1, tip: "Bu sazlama enjamyňy tanamak synanyşyklaryny kesýär." },
+  { k: "cook", n: "Kukileri kabul etmek", d: "Saýt kompýuteriňde kiçijik maglumat galdyryp bilýär.",
+    on: true, w: -1, tip: "Kukiler amatly, ýöne ulanyjy hakynda informasiýa çeşmesi bolup bilýär." },
+  { k: "pass", n: "Parollary brauzerde ýatda saklamak", d: "Login we parol her gezek soralmaýar.",
+    on: true, w: -3, tip: "Parollary saklamak howplydyr – kompýutere başga adam ýetse, olara elýeterlilik açylýar." },
+  { k: "master", n: "Master-paroly ulanmak", d: "Şahsy maglumatlar şifrlenip saklanýar.",
+    on: false, w: 2, tip: "Master-parol saklanan parollary we sertifikatlary şifrlemek arkaly gorap saklaýar." },
+  { k: "upd", n: "Brauzeri öz wagtynda täzelemek", d: "Täzelenmeler awtomatik ýagdaýda gurulýar.",
+    on: false, w: 3, tip: "Brauzeri öz wagtynda täzelemek – howpsuzlygyň birinji talabydyr." },
+  { k: "priv", n: "Keseki kompýuterde şahsy gözleg kadasy", d: "Taryh, kukiler we parollar saklanmaýar.",
+    on: false, w: 3, tip: "Keseki kompýuterde işläniňde şahsy gözleg kadasyndan peýdalanmaly." }
+];
+const MAX = OPTS.reduce((s, o) => s + Math.max(0, o.w), 0);
+
+function draw(tip) {
+  $("opts").innerHTML = OPTS.map((o, i) =>
+    `<div class="opt${o.on ? " on" : ""}" data-i="${i}">
+       <span class="bx">${o.on ? "✓" : ""}</span>
+       <span class="tx">${o.n}<small>${o.d}</small></span>
+     </div>`).join("");
+  $("opts").querySelectorAll(".opt").forEach(d => d.onclick = () => {
+    const o = OPTS[+d.dataset.i];
+    o.on = !o.on;
+    draw(o.tip);
+  });
+
+  let s = 0;
+  OPTS.forEach(o => { if (o.on) s += o.w; });
+  s = Math.max(0, s);
+  const pct = Math.round(s / MAX * 100);
+  const col = pct >= 75 ? "#1d7a3d" : pct >= 45 ? "#b25b12" : "#b02424";
+  $("bar").style.width = pct + "%";
+  $("bar").style.background = col;
+  $("badge").textContent = pct >= 75 ? "Goragyň derejesi ýokary"
+    : pct >= 45 ? "Goragyň derejesi orta" : "Goragyň derejesi pes";
+  $("badge").className = "badge " + (pct >= 75 ? "ok" : pct >= 45 ? "warn" : "bad");
+  $("pts").textContent = `${s} / ${MAX} bal`;
+  if (tip) { $("tip").textContent = tip; $("tip").className = "msg " + (pct >= 45 ? "ok" : "bad"); }
+  log();
+}
+
+/* ---------------- kukiler ---------------- */
+let visits = 0, stored = false;
+function log() {
+  const cook = OPTS.find(o => o.k === "cook").on;
+  const pass = OPTS.find(o => o.k === "pass").on;
+  const priv = OPTS.find(o => o.k === "priv").on;
+  const L = [];
+  if (visits === 0) L.push("Saýta entek girilmedik.");
+  for (let v = 1; v <= visits; v++) {
+    if (v === 1) {
+      L.push(`<b>${v}-nji gezek:</b> saýt ady we paroly soraýar.`);
+      if (cook && !priv) L.push("&nbsp;&nbsp;→ Saýt kompýuterde kuki galdyrdy.");
+      else L.push("&nbsp;&nbsp;→ Kuki saklanmady.");
+    } else {
+      if (stored) L.push(`<b>${v}-nji gezek:</b> saýt kuki boýunça seni tanady – parol soralmady.`);
+      else L.push(`<b>${v}-nji gezek:</b> saýt seni tanamady – ady we paroly ýene soraýar.`);
+    }
+  }
+  if (visits && stored && pass) L.push("⚠️ Parol brauzerde hem saklandy – kompýutere başga adam ýetse, hasabyňa girip biler.");
+  if (visits && priv) L.push("Şahsy gözleg kadasy açyk – brauzer ýapylanda hemme zat pozulýar.");
+  $("log").innerHTML = L.join("<br>");
+}
+$("visit").onclick = () => {
+  const cook = OPTS.find(o => o.k === "cook").on;
+  const priv = OPTS.find(o => o.k === "priv").on;
+  visits++;
+  if (visits === 1) stored = cook && !priv;
+  log();
+};
+$("clear").onclick = () => { visits = 0; stored = false; log(); };
+
+draw("Sazlamalary üýtget – her saýlawyň düşündirişi şu ýerde çykar.");
+</script>
+</body>
+</html>

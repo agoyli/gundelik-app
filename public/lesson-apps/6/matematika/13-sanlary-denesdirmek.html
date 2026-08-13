@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanlary deňeşdirmek — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px 6px; overflow-x: auto; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
+  .cmp { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .cmp .n { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 26px;
+            font-weight: 800; background: #f7fafd; border-radius: 12px; padding: 10px 16px; }
+  .cmp .op { font-size: 30px; font-weight: 800; color: #e5007d; min-width: 40px;
+             text-align: center; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .sortbox { display: flex; flex-wrap: wrap; gap: 6px; min-height: 46px;
+             background: #f7fafd; border-radius: 11px; padding: 8px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sanlary deňeşdirmek</h1>
+  <div class="sub">Položitel we otrisatel sanlar · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Koordinata göni çyzygynda <b>çepde</b> ýerleşýän san <b>kiçidir</b>.
+      Iki otrisatel sandan bolsa moduly uly bolany kiçidir.</div>
+    <div class="stage" id="ax"></div>
+    <div class="cmp" style="margin-top:6px">
+      <span class="n" id="a"></span><span class="op" id="op">?</span><span class="n" id="b"></span>
+    </div>
+    <div class="row" style="justify-content:center;margin-top:9px">
+      <button class="btn" data-c="&lt;">&lt;</button>
+      <button class="btn" data-c="=">=</button>
+      <button class="btn" data-c="&gt;">&gt;</button>
+      <button class="btn ghost" id="next">Indiki</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Artýan tertipde düz</h3>
+    <div class="goal">Sanlara yzygiderlikde bas – iň kiçiden iň ula çenli.</div>
+    <div class="sortbox" id="pool"></div>
+    <div class="sub" style="margin:8px 0 4px">Saýlananlar:</div>
+    <div class="sortbox" id="line"></div>
+    <div class="msg" id="smsg"></div>
+    <button class="btn ghost" id="sr">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Sözlemi deňsizlik görnüşinde ýaz</h3>
+    <div class="row tight" id="sent"></div>
+    <div class="calc" id="sc2" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Howa maglumatynda «Daşoguzda −7, Marynda −4» diýlip habar berlende, Daşoguzda sowugrakdyr,
+      çünki <b>−7 &lt; −4</b>. Ýöne modullary deňeşdirseň, tersine: <b>|−7| &gt; |−4|</b>.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §23</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = v => String(v).replace(".", ",").replace("-", "−");
+const LO = -8, HI = 8, W = 620, PAD = 34;
+const px = v => PAD + ((v - LO) / (HI - LO)) * (W - 2 * PAD);
+
+/* ---------------- deňeşdirmek ---------------- */
+const PAIRS = [[-7, -4], [21, 27], [-6.5, 4], [-100, -100.1], [0, -0.5], [-3, -0.4],
+               [-1000, -1], [2, -2], [-9.8, 0], [47, -8]];
+let idx = 0, done = 0, right = 0;
+function show() {
+  const [x, y] = PAIRS[idx % PAIRS.length];
+  $("a").textContent = N(x); $("b").textContent = N(y);
+  $("op").textContent = "?";
+  $("msg").textContent = ""; $("msg").className = "msg";
+  document.querySelectorAll("[data-c]").forEach(b => b.classList.remove("sel"));
+  const yy = 60;
+  let ticks = "";
+  for (let v = LO; v <= HI; v++) {
+    const px1 = px(v), big = v === 0;
+    ticks += `<line x1="${px1}" y1="${yy - (big ? 12 : 7)}" x2="${px1}" y2="${yy + (big ? 12 : 7)}"
+                stroke="${big ? "#1e2a3a" : "#93a2b5"}" stroke-width="${big ? 2.5 : 1.5}"/>
+              <text x="${px1}" y="${yy + 30}" text-anchor="middle" font-size="12"
+                fill="#5b6b80">${v}</text>`;
+  }
+  const dot = (v, c, lab) => `<circle cx="${px(v)}" cy="${yy}" r="7" fill="${c}"/>
+    <text x="${px(v)}" y="${yy - 18}" text-anchor="middle" font-size="13" font-weight="700"
+      fill="${c}">${lab}</text>`;
+  $("ax").innerHTML = `
+    <svg viewBox="0 0 ${W} 98" width="${W}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      <line x1="${PAD - 20}" y1="${yy}" x2="${W - PAD + 8}" y2="${yy}" stroke="#5b6b80"
+        stroke-width="2"/>
+      ${ticks}${dot(x, "#2456b0", N(x))}${dot(y, "#e5007d", N(y))}
+    </svg>`;
+}
+document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
+  if ($("msg").textContent) return;
+  const [x, y] = PAIRS[idx % PAIRS.length];
+  const real = x < y ? "<" : x > y ? ">" : "=";
+  b.classList.add("sel");
+  $("op").textContent = real;
+  const good = b.dataset.c === real;
+  done++; if (good) right++;
+  let why;
+  if (x < 0 && y < 0)
+    why = `Iki san hem otrisatel: |${N(x)}| = ${N(Math.abs(x))}, |${N(y)}| = ${N(Math.abs(y))}. ` +
+          `Moduly uly bolan kiçidir.`;
+  else if (x * y < 0)
+    why = `Otrisatel san hemişe položitel sandan kiçidir.`;
+  else
+    why = `Koordinata göni çyzygynda çepde ýerleşýän san kiçidir.`;
+  $("msg").textContent = (good ? "Dogry. " : `Nädogry, dogrusy ${N(x)} ${real} ${N(y)}. `) + why;
+  $("msg").className = good ? "msg ok" : "msg bad";
+  $("sc").textContent = `${right} / ${done}`;
+});
+$("next").onclick = () => { idx++; show(); };
+
+/* ---------------- tertipläp düzmek ---------------- */
+const SETS = [[-11, -13, 0, 8, 4, -4, 7], [-1.5, 4.5, 3.98, -3.99, 0, 0.6],
+              [-33.7, 58.6, -13.8, 13.9, -16.7]];
+let bank = [], chosen = [];
+function sortNew() {
+  bank = SETS[Math.floor(Math.random() * SETS.length)].slice().sort(() => Math.random() - 0.5);
+  chosen = [];
+  $("smsg").textContent = ""; $("smsg").className = "msg";
+  renderSort();
+}
+function renderSort() {
+  $("pool").innerHTML = bank.map((v, i) =>
+    v === null ? "" : `<button class="btn" data-i="${i}">${N(v)}</button>`).join("") ||
+    "<span class='hint' style='margin:0'>hemmesi saýlanyldy</span>";
+  $("line").innerHTML = chosen.map(v => `<span class="badge info">${N(v)}</span>`).join(" ") ||
+    "<span class='hint' style='margin:0'>heniz boş</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, v = bank[i];
+    const last = chosen.length ? chosen[chosen.length - 1] : -Infinity;
+    if (v < last) {
+      $("smsg").textContent = `${N(v)} sany ${N(last)} sandan kiçi – artýan tertip bozulýar.`;
+      $("smsg").className = "msg bad";
+      return;
+    }
+    chosen.push(v); bank[i] = null;
+    const left = bank.filter(x => x !== null).length;
+    $("smsg").textContent = left ? `Dogry. Ýene ${left} san galdy.` : "Tertip doly dogry düzüldi.";
+    $("smsg").className = "msg ok";
+    renderSort();
+  });
+}
+$("sr").onclick = sortNew;
+
+/* ---------------- sözlemler ---------------- */
+const SENT = [
+  ["40 – položitel san", "40 > 0"],
+  ["−1000 – otrisatel san", "−1000 < 0"],
+  ["−t – otrisatel san", "−t < 0"],
+  ["n – položitel san", "n > 0"],
+];
+$("sent").innerHTML = SENT.map((s, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${s[0]}</button>`).join("");
+$("sent").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("sent").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const s = SENT[+b.dataset.i];
+  $("sc2").innerHTML = `«${s[0]}» sözlemi deňsizlik görnüşinde: <b>${s[1]}</b><br>` +
+    `Položitel san noldan uly, otrisatel san bolsa noldan kiçidir.`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Haýsy san iň kiçi?", ["−9,8", "0", "−14,7", "1"], 2],
+  ["Haýsy deňsizlik dogry?", ["93 < 0", "−2,5 < 4,1", "−0,6 < −1", "2 < −(−2)"], 1],
+  ["Iki otrisatel sanyň haýsysy uly?", ["Moduly uly bolan", "Moduly kiçi bolan",
+                                        "Hemişe birinjisi", "Olar hemişe deň"], 1],
+  ["−100 we −100,1 sanlaryň haýsysy uly?", ["−100", "−100,1", "Deň", "Bilip bolmaýar"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("qsc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+show(); sortNew();
+$("sent").querySelector("button").click();
+</script>
+</body>
+</html>

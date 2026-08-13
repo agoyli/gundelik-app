@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kwadrat — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .figs button { min-height: 96px; padding: 6px; }
+  .figs svg { width: 100%; height: 72px; }
+  .board { background: #f7fafd; border-radius: 13px; padding: 10px; }
+  .board svg { display: block; width: 100%; height: auto; max-height: 170px; }
+  .nums { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 17px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kwadrat</h1>
+  <div class="sub">Matematika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ähli taraplary deň bolan gönüburçluga <b>kwadrat</b> diýilýär.
+      Onuň dört burçy hem göni, dört tarapy hem deň.</div>
+  </div>
+
+  <div class="card">
+    <h3>Kwadratlary tap</h3>
+    <div class="goal">Diňe kwadratlara bas.</div>
+    <div class="figs" id="figs"></div>
+    <div class="msg" id="fmsg"></div>
+    <div class="row"><button class="btn ghost" id="freset">Täzeden</button></div>
+    <div class="score" id="fsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Beýleki taraplary näçe?</h3>
+    <div class="board"><svg id="bd" viewBox="0 0 300 160"></svg></div>
+    <div class="goal" id="ggoal"></div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="gmsg"></div>
+    <div class="row"><button class="btn primary" id="gnext">Indiki kwadrat</button></div>
+    <div class="score" id="gsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 2, II kitap · 92-nji sahypa</div>
+</div>
+
+<script>
+// [kwadratmy, ady, svg]
+var F = [
+  [1, "kwadrat", '<svg viewBox="0 0 80 72"><rect x="16" y="6" width="52" height="52" fill="#dff0e4" stroke="#2b7a4a" stroke-width="3"/></svg>'],
+  [0, "gönüburçluk", '<svg viewBox="0 0 80 72"><rect x="6" y="16" width="68" height="34" fill="#dbe6f5" stroke="#2456b0" stroke-width="3"/></svg>'],
+  [0, "üçburçluk", '<svg viewBox="0 0 80 72"><polygon points="40,8 72,58 8,58" fill="#f5e6db" stroke="#c1622a" stroke-width="3"/></svg>'],
+  [1, "kwadrat", '<svg viewBox="0 0 80 72"><rect x="22" y="14" width="40" height="40" fill="#dff0e4" stroke="#2b7a4a" stroke-width="3"/></svg>'],
+  [0, "gönüburçluk", '<svg viewBox="0 0 80 72"><rect x="26" y="6" width="30" height="58" fill="#dbe6f5" stroke="#2456b0" stroke-width="3"/></svg>'],
+  [1, "kwadrat", '<svg viewBox="0 0 80 72"><rect x="12" y="8" width="56" height="56" fill="#dff0e4" stroke="#2b7a4a" stroke-width="3"/></svg>']
+];
+var fd = 0, fok = 0, found = 0;
+function drawF() {
+  var h = "";
+  for (var i = 0; i < F.length; i++) h += '<button class="btn" data-i="' + i + '">' + F[i][2] + "</button>";
+  document.getElementById("figs").innerHTML = h;
+  var bs = document.getElementById("figs").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = fclick;
+  document.getElementById("fmsg").className = "msg";
+  document.getElementById("fmsg").textContent = "";
+  found = 0;
+}
+function fclick() {
+  if (this.getAttribute("data-done")) return;
+  this.setAttribute("data-done", "1"); fd++;
+  var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("fmsg");
+  if (F[i][0]) {
+    fok++; found++; this.className = "btn sel";
+    m.className = "msg ok";
+    m.textContent = found === 3 ? "Ähli kwadratlar tapyldy! 🎉" : "Dogry! Ähli taraplary deň.";
+  } else {
+    m.className = "msg bad";
+    m.textContent = "Ýalňyş. Bu – " + F[i][1] + ", taraplarynyň hemmesi deň däl.";
+  }
+  document.getElementById("fsc").textContent = "Netije: " + fok + " / " + fd;
+}
+document.getElementById("freset").onclick = drawF;
+drawF();
+
+var S = [4, 6, 3, 5], si = 0, gd = 0, gok = 0, glock = 0;
+function drawB() {
+  var a = S[si] * 20, x = (300 - a) / 2, y = (150 - a) / 2 + 5;
+  var s = '<rect x="' + x + '" y="' + y + '" width="' + a + '" height="' + a + '" fill="#dff0e4" stroke="#2b7a4a" stroke-width="4"/>';
+  s += '<text x="' + (x + a / 2) + '" y="' + (y - 8) + '" font-size="15" text-anchor="middle" fill="#1e2a3a">' + S[si] + ' sm</text>';
+  s += '<text x="' + (x + a / 2) + '" y="' + (y + a / 2 + 6) + '" font-size="15" text-anchor="middle" fill="#2b7a4a">? sm</text>';
+  document.getElementById("bd").innerHTML = s;
+  document.getElementById("ggoal").textContent =
+    "Kwadratyň bir tarapy " + S[si] + " sm. Beýleki taraplary näçe sm?";
+  document.getElementById("gmsg").className = "msg";
+  document.getElementById("gmsg").textContent = "";
+  glock = 0;
+}
+var h = "";
+for (var i = 1; i <= 12; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (glock) return;
+    glock = 1; gd++;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("gmsg");
+    if (v === S[si]) { gok++; m.className = "msg ok"; m.textContent = "Dogry! Kwadratyň ähli tarapy deň – " + S[si] + " sm."; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Ähli taraplary deň, ýagny " + S[si] + " sm."; }
+    document.getElementById("gsc").textContent = "Netije: " + gok + " / " + gd;
+  };
+}
+document.getElementById("gnext").onclick = function () { si = (si + 1) % S.length; drawB(); };
+drawB();
+
+var Q = [
+  ["Ähli taraplary deň bolan gönüburçluga näme diýilýär?", ["Kwadrat", "Üçburçluk", "Tegelek"], 0],
+  ["Kwadratyň näçe tarapy deň?", ["Dördüsi hem", "Ikisi", "Üçüsi"], 0],
+  ["Tarapy 5 sm bolan kwadratyň beýleki taraplary näçe?", ["5 sm", "10 sm", "2 sm"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

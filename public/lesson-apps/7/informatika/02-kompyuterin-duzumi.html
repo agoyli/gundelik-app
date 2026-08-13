@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kompýuteriň düzümi — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; max-width: 100%; }
+  .stage svg g.p { cursor: pointer; }
+  .kb { background: #eef2f8; border-radius: 12px; padding: 9px; overflow-x: auto; }
+  .kb .r { display: flex; gap: 3px; margin-bottom: 3px; min-width: 470px; }
+  .kb span { min-width: 30px; height: 32px; border-radius: 7px; border: 2px solid #d6e0ee;
+             background: #fff; font-size: 11.5px; font-weight: 700; color: #1e2a3a;
+             display: grid; place-items: center; padding: 0 5px; }
+  .kb span.on { border-color: #2456b0; }
+  .g0 { background: #e3edfd !important; } .g1 { background: #e0f5e6 !important; }
+  .g2 { background: #fdeee0 !important; } .g3 { background: #efe9fb !important; }
+  .g4 { background: #fbe3e3 !important; }
+  .tree { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 6px; }
+  .tree div { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13px; }
+  .tree b { display: block; color: #2456b0; margin-bottom: 4px; }
+  .files { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kompýuteriň düzümi</h1>
+  <div class="sub">Gurluşlar, programma üpjünçiligi we faýllar · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Personal kompýuteriň <b>4 sany</b> esasy gurluşy bar. Suratdaky islendik
+      bölege bas.</div>
+    <div class="stage"><svg id="pc" width="420" height="240" viewBox="0 0 420 240"></svg></div>
+    <div class="note" id="px">Gurluşa bas.</div>
+  </div>
+
+  <div class="card">
+    <h3>Giriş, çykyş ýa-da ikisi hem?</h3>
+    <div class="row" style="margin-bottom:8px"><span class="badge purple" id="dev"></span></div>
+    <div class="row tight">
+      <button class="btn" data-d="in">Giriş gurluşy</button>
+      <button class="btn" data-d="out">Çykyş gurluşy</button>
+      <button class="btn" data-d="both">Giriş-çykyş</button>
+    </div>
+    <div class="msg" id="dmsg"></div>
+    <div class="row"><span class="score" id="dsc"></span>
+      <button class="btn ghost" id="dr">Täzeden</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Klawişleriň bäş topary</h3>
+    <div class="row tight" id="grp"></div>
+    <div class="kb" id="kb" style="margin-top:8px"></div>
+    <div class="note" id="gx"></div>
+  </div>
+
+  <div class="card">
+    <h3>Programma üpjünçiligi</h3>
+    <div class="tree">
+      <div><b>Sistemalaýyn</b>Operasion sistemalar, draýwerler, hyzmat ediji programmalar
+        (arhiwleýji, antiwirus).</div>
+      <div><b>Amaly</b>Tekst we grafiki redaktorlar, standart programmalar, ulanyjynyň
+        programmalary.</div>
+      <div><b>Ýörite</b>Programmalaşdyrma dilleri: Pascal ABC, C++, Java, Delphi.</div>
+    </div>
+    <div class="row" style="margin-top:8px"><span class="badge info" id="pq"></span></div>
+    <div class="row tight">
+      <button class="btn" data-p="0">Sistemalaýyn</button>
+      <button class="btn" data-p="1">Amaly</button>
+      <button class="btn" data-p="2">Ýörite</button>
+    </div>
+    <div class="msg" id="pmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Faýlyň giňeltmesi</h3>
+    <div class="goal">Giňeltme faýlda nähili informasiýanyň saklanýandygyny görkezýär.
+      Basyp gör.</div>
+    <div class="files" id="ext"></div>
+    <div class="note" id="ex">Giňeltmä bas.</div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Personal kompýuteriň esasy gurluşlary: <b>sistema blogy, monitor, klawiatura we syçan</b>.
+      Kompýuterdäki programmalaryň toplumyna <b>programma üpjünçiligi</b> diýilýär, ol üç topara
+      bölünýär. Informasiýa diskde <b>faýl</b> görnüşinde saklanýar, faýlyň ady bolsa ad we
+      giňeltme diýen iki bölekden durýar.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- kompýuter ---------------- */
+const PARTS = {
+  sys: ["Sistema blogy", "Informasiýalary işläp taýýarlamagy we saklamagy amala aşyrýan möhüm gurluşlar şu ýerde ýerleşýär. Giriş we çykyş gurluşlary hem şoňa çatylýar."],
+  mon: ["Monitor", "Işlenip taýýarlanan informasiýalaryň netijelerini ekrana çykarýan gurluşdyr. Oňa displeý hem diýilýär."],
+  kb:  ["Klawiatura", "Kompýutere tekst informasiýalaryny we buýruklary girizmek üçin ulanylýar. Ol informasiýa girizýän esasy gurluş hasaplanýar."],
+  ms:  ["Syçan", "Ekrandaky obýektleri görkezmek, saýlamak we surat çekmek üçin ulanylýar. Onuň bir tigirjigi we iki gulagy bolýar."]
+};
+$("pc").innerHTML = `
+  <g class="p" data-k="mon">
+    <rect x="112" y="24" width="150" height="98" rx="7" fill="#e3edfd" stroke="#2456b0" stroke-width="2.5"/>
+    <rect x="126" y="36" width="122" height="74" rx="3" fill="#fff"/>
+    <rect x="172" y="122" width="30" height="14" fill="#c3d2e6"/>
+    <rect x="150" y="136" width="74" height="7" rx="3" fill="#c3d2e6"/></g>
+  <g class="p" data-k="sys">
+    <rect x="290" y="24" width="66" height="132" rx="7" fill="#e0f5e6" stroke="#1d7a3d" stroke-width="2.5"/>
+    <rect x="302" y="38" width="42" height="8" rx="2" fill="#1d7a3d" opacity=".5"/>
+    <circle cx="323" cy="70" r="7" fill="#1d7a3d" opacity=".5"/>
+    <rect x="302" y="92" width="42" height="5" rx="2" fill="#1d7a3d" opacity=".3"/>
+    <rect x="302" y="104" width="42" height="5" rx="2" fill="#1d7a3d" opacity=".3"/></g>
+  <g class="p" data-k="kb">
+    <rect x="96" y="168" width="180" height="48" rx="7" fill="#fdeee0" stroke="#c26a1e" stroke-width="2.5"/>
+    ${[0, 1, 2].map(r => [0, 1, 2, 3, 4, 5, 6, 7].map(c =>
+      `<rect x="${106 + c * 21}" y="${178 + r * 13}" width="16" height="9" rx="2" fill="#c26a1e" opacity=".35"/>`).join("")).join("")}</g>
+  <g class="p" data-k="ms">
+    <rect x="296" y="172" width="42" height="60" rx="20" fill="#efe9fb" stroke="#6a4bb8" stroke-width="2.5"/>
+    <path d="M317,174 V196" stroke="#6a4bb8" stroke-width="2"/>
+    <rect x="313" y="182" width="8" height="14" rx="4" fill="#6a4bb8" opacity=".5"/></g>`;
+$("pc").querySelectorAll("g.p").forEach(g => g.onclick = () => {
+  const [n, t] = PARTS[g.dataset.k];
+  $("px").innerHTML = `<b>${n}</b> — ${t}`;
+});
+
+/* ---------------- giriş / çykyş ---------------- */
+const DEV = [
+  ["Printer", "out"], ["Skaner", "in"], ["Mikrofon", "in"], ["Ses kolonkalary", "out"],
+  ["Joýstik", "in"], ["Monitor", "out"], ["Klawiatura", "in"],
+  ["Fleş-göteriji", "both"], ["Disk hereketlendiriji", "both"], ["Web kamera", "in"]
+];
+let di = 0, dok = 0, dord = [];
+function dNext() {
+  if (!dord.length) dord = DEV.map((_, i) => i).sort(() => Math.random() - 0.5).slice(0, 8);
+  if (di >= dord.length) {
+    $("dev").textContent = "Tamamlandy";
+    $("dmsg").textContent = `Netije: ${dok} / ${dord.length}`;
+    $("dmsg").className = "msg ok";
+    return;
+  }
+  $("dev").textContent = DEV[dord[di]][0];
+  $("dsc").textContent = `${di} / ${dord.length}`;
+}
+const DN = {in: "giriş gurluşy", out: "çykyş gurluşy", both: "giriş-çykyş gurluşy"};
+document.querySelectorAll("[data-d]").forEach(b => b.onclick = () => {
+  if (di >= dord.length) return;
+  const want = DEV[dord[di]][1], good = b.dataset.d === want;
+  if (good) dok++;
+  $("dmsg").textContent = good ? "Dogry." : `Ýalňyş. Bu – ${DN[want]}.`;
+  $("dmsg").className = good ? "msg ok" : "msg bad";
+  di++; dNext();
+});
+$("dr").onclick = () => { di = 0; dok = 0; dord = []; $("dmsg").textContent = ""; dNext(); };
+
+/* ---------------- klawişler ---------------- */
+const GR = [
+  ["Elipbiý-sifrli", "belgileri girizmek üçin niýetlenendir"],
+  ["Dolandyryjy", "klawiaturanyň iş kadasyny üýtgedýär: Shift, Ctrl, Alt, Caps Lock"],
+  ["Kursory dolandyryjy", "kursory aşak-ýokary, çepe-saga süýşürýär"],
+  ["Sifr", "sanlary we arifmetik amallaryň belgilerini girizýär (goşmaça klawişler)"],
+  ["Funksional", "dürli programmalarda dürli işleri ýerine ýetirýär: F1 – kömekçi"]
+];
+const ROWS = [
+  [["Esc", 4], ["F1", 4], ["F2", 4], ["F3", 4], ["F4", 4], ["F5", 4], ["F6", 4]],
+  [["`", 0], ["1", 0], ["2", 0], ["3", 0], ["4", 0], ["5", 0], ["6", 0], ["7", 0], ["Bksp", 1]],
+  [["Tab", 1], ["Q", 0], ["W", 0], ["E", 0], ["R", 0], ["T", 0], ["Y", 0], ["7", 3], ["8", 3], ["9", 3]],
+  [["Caps", 1], ["A", 0], ["S", 0], ["D", 0], ["F", 0], ["G", 0], ["H", 0], ["4", 3], ["5", 3], ["6", 3]],
+  [["Shift", 1], ["Z", 0], ["X", 0], ["C", 0], ["V", 0], ["↑", 2], ["1", 3], ["2", 3], ["+", 3]],
+  [["Ctrl", 1], ["Alt", 1], ["Boşluk", 0], ["←", 2], ["↓", 2], ["→", 2], ["Enter", 1]]
+];
+let sel = -1;
+function kb() {
+  $("grp").innerHTML = GR.map(([n], i) =>
+    `<button class="btn${sel === i ? " sel" : ""}" data-g="${i}">${i + 1}. ${n}</button>`).join("");
+  $("grp").querySelectorAll("button").forEach(b =>
+    b.onclick = () => { sel = +b.dataset.g; kb(); });
+  $("kb").innerHTML = ROWS.map(r => `<div class="r">` + r.map(([k, g]) =>
+    `<span class="${sel === g ? "g" + g + " on" : ""}">${k}</span>`).join("") + `</div>`).join("");
+  $("gx").innerHTML = sel < 0 ? "Ýokardaky toparlaryň birine bas."
+    : `<b>${GR[sel][0]} klawişler</b> — ${GR[sel][1]}.`;
+}
+document.querySelectorAll;
+
+/* ---------------- programma üpjünçiligi ---------------- */
+const PS = [
+  ["Windows operasion sistemasy", 0], ["Paint.net grafiki redaktory", 1],
+  ["Antiwirus programmasy", 0], ["Pascal ABC", 2], ["Microsoft Word", 1],
+  ["Printeriň draýweri", 0], ["Kalkulýator", 1], ["C++ dili", 2]
+];
+let pi = 0;
+function pq() {
+  if (pi >= PS.length) {
+    $("pq").textContent = "Ähli programmalar toparlara bölündi.";
+    return;
+  }
+  $("pq").textContent = PS[pi][0];
+}
+document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
+  if (pi >= PS.length) return;
+  const good = +b.dataset.p === PS[pi][1];
+  const nm = ["sistemalaýyn", "amaly", "ýörite"][PS[pi][1]];
+  $("pmsg").textContent = good ? "Dogry." : `Ýalňyş. Bu – ${nm} programma üpjünçiligi.`;
+  $("pmsg").className = good ? "msg ok" : "msg bad";
+  pi++; pq();
+});
+
+/* ---------------- giňeltmeler ---------------- */
+const EXT = [
+  ["com, exe", "ýerine ýetirilýän faýllar"], ["txt, doc, rtf", "tekst faýllary"],
+  ["bmp, jpg, gif", "şekilleri özünde saklaýan grafiki faýllar"],
+  ["wav, mp3, wma", "sesleri we sazlary özünde saklaýan ses faýllary"]
+];
+$("ext").innerHTML = EXT.map(([e], i) =>
+  `<button class="btn" data-e="${i}">${e}</button>`).join("");
+$("ext").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("ext").querySelectorAll("button").forEach(x => x.className = "btn");
+  b.className = "btn sel";
+  const [e, t] = EXT[+b.dataset.e];
+  $("ex").innerHTML = `<b>${e}</b> — ${t}.`;
+});
+
+dNext(); kb(); pq();
+</script>
+</body>
+</html>

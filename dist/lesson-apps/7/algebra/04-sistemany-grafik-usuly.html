@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistemany grafik usuly bilen çözmek — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .sys { background: #fff6e0; border-radius: 13px; padding: 13px; text-align: center; font-size: 19px; font-weight: 800; line-height: 1.8; }
+  .plane { background: #f7fafd; border-radius: 13px; padding: 8px; }
+  .plane svg { display: block; width: 100%; height: auto; max-height: 320px; }
+  .chain { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16.5px; line-height: 1.9; text-align: center; }
+  .opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .opts button { min-height: 48px; font-size: 16px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: 1fr; gap: 7px; }
+  .kinds button { min-height: 46px; font-size: 15.5px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Iki näbellili çyzykly deňlemeleriň sistemasyny grafik usuly bilen çözmek</h1>
+  <div class="sub">Algebra · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Sistemanyň her deňlemesinde y-i x arkaly aňladyp, grafikleri gurmaly.
+      Grafikler <b>kesişse</b> – ýeke-täk çözüw, <b>parallel</b> bolsa – çözüw ýok,
+      <b>gabat gelse</b> – tükeniksiz köp çözüw.</div>
+  </div>
+
+  <div class="card">
+    <h3>Iki ädimde çöz</h3>
+    <div class="sys" id="sys"></div>
+    <div class="plane"><svg id="pl" viewBox="0 0 320 300"></svg></div>
+    <div class="chain" id="chain"></div>
+    <div class="goal" id="ask"></div>
+    <div class="kinds" id="kinds">
+      <button class="btn" data-k="bir">Ýeke-täk çözüw</button>
+      <button class="btn" data-k="yok">Çözüwi ýok</button>
+      <button class="btn" data-k="kop">Tükeniksiz köp çözüw</button>
+    </div>
+    <div class="opts" id="opts"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" id="next">Indiki sistema</button>
+      <button class="btn ghost" id="again">Täzeden</button>
+    </div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Algebra 7 · 132–134-nji sahypalar</div>
+</div>
+
+<script>
+// [deňleme1, deňleme2, y1 görnüşi, y2 görnüşi, k1, b1, k2, b2, görnüş, çözüw, ýalňyş çözüw]
+var S = [
+  ["x + y = 1", "x – 2y = –8", "y = –x + 1", "y = 0,5x + 4", -1, 1, 0.5, 4, "bir", "(–2; 3)", "(2; –3)"],
+  ["2x – y = –1", "2x – y = 2", "y = 2x + 1", "y = 2x – 2", 2, 1, 2, -2, "yok", "", ""],
+  ["5x + 2y = 8", "10x + 4y = 16", "y = –2,5x + 4", "y = –2,5x + 4", -2.5, 4, -2.5, 4, "kop", "", ""],
+  ["x + y = 6", "x – y = 2", "y = –x + 6", "y = x – 2", -1, 6, 1, -2, "bir", "(4; 2)", "(2; 4)"]
+];
+var si = 0, stage = 0, d = 0, ok = 0;
+var CX = 160, CY = 150, U = 24;   // merkez we bir birligiň piksel ölçegi
+function px(x) { return CX + x * U; }
+function py(y) { return CY - y * U; }
+function lineFor(k, b) {
+  // grafigi çyzgy çäginde kesip al
+  var x1 = -6, x2 = 6;
+  return [px(x1), py(k * x1 + b), px(x2), py(k * x2 + b)];
+}
+function draw() {
+  var s = "", i;
+  for (i = -6; i <= 6; i++) {
+    s += '<line x1="' + px(i) + '" y1="' + py(6) + '" x2="' + px(i) + '" y2="' + py(-6) +
+      '" stroke="#dde7f2" stroke-width="1"/>';
+    s += '<line x1="' + px(-6) + '" y1="' + py(i) + '" x2="' + px(6) + '" y2="' + py(i) +
+      '" stroke="#dde7f2" stroke-width="1"/>';
+  }
+  s += '<line x1="' + px(-6) + '" y1="' + py(0) + '" x2="' + px(6) + '" y2="' + py(0) +
+    '" stroke="#33506f" stroke-width="2"/>';
+  s += '<line x1="' + px(0) + '" y1="' + py(6) + '" x2="' + px(0) + '" y2="' + py(-6) +
+    '" stroke="#33506f" stroke-width="2"/>';
+  s += '<text x="' + (px(6) - 12) + '" y="' + (py(0) - 6) + '" font-size="13" fill="#33506f">x</text>';
+  s += '<text x="' + (px(0) + 6) + '" y="' + (py(6) + 12) + '" font-size="13" fill="#33506f">y</text>';
+  var t = S[si];
+  if (stage >= 1) {
+    var a = lineFor(t[4], t[5]);
+    s += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + a[2] + '" y2="' + a[3] +
+      '" stroke="#2456b0" stroke-width="3"/>';
+    var b = lineFor(t[6], t[7]);
+    s += '<line x1="' + b[0] + '" y1="' + b[1] + '" x2="' + b[2] + '" y2="' + b[3] +
+      '" stroke="#b0407a" stroke-width="3" stroke-dasharray="' + (t[8] === "kop" ? "9 7" : "none") + '"/>';
+  }
+  if (stage >= 2 && t[8] === "bir") {
+    var x0 = (t[7] - t[5]) / (t[4] - t[6]), y0 = t[4] * x0 + t[5];
+    s += '<circle cx="' + px(x0) + '" cy="' + py(y0) + '" r="7" fill="#2b7a4a"/>';
+    s += '<text x="' + (px(x0) + 10) + '" y="' + (py(y0) - 8) + '" font-size="14" fill="#2b7a4a">' +
+      t[9] + "</text>";
+  }
+  document.getElementById("pl").innerHTML = s;
+}
+var KIND = { bir: "Ýeke-täk çözüw", yok: "Çözüwi ýok", kop: "Tükeniksiz köp çözüw" };
+var WHY = {
+  bir: "Grafikler kesişýär, kesişme nokady sistemanyň çözüwidir.",
+  yok: "Burç koeffisiýentleri deň, grafikler parallel – umumy nokat ýok.",
+  kop: "Iki deňleme hem şol bir göni çyzygy berýär, grafikler gabat gelýär."
+};
+function show() {
+  var t = S[si];
+  document.getElementById("sys").innerHTML = t[0] + "<br>" + t[1];
+  draw();
+  var l = stage >= 1 ? (t[2] + "<br>" + t[3]) : "y-i x arkaly aňlat we grafikleri gur.";
+  document.getElementById("chain").innerHTML = l;
+  document.getElementById("ask").textContent =
+    stage === 0 ? "1-nji ädim: grafikler nähili ýerleşýär?" :
+    (stage === 1 && t[8] === "bir") ? "2-nji ädim: kesişme nokadyny saýla." : "Sistema derňeldi.";
+  var h = "";
+  if (stage === 1 && t[8] === "bir") {
+    var arr = [t[9], t[10]];
+    if (si % 2 === 1) arr.reverse();
+    for (var k = 0; k < arr.length; k++) h += '<button class="btn" data-v="' + arr[k] + '">' + arr[k] + "</button>";
+  }
+  document.getElementById("opts").innerHTML = h;
+  var bs = document.getElementById("opts").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = pickPoint;
+  var m = document.getElementById("msg");
+  if (stage >= 2 || (stage === 1 && t[8] !== "bir")) {
+    m.className = "msg ok";
+    m.textContent = KIND[t[8]] + ". " + WHY[t[8]] + (t[9] ? (" Çözüw: " + t[9] + ".") : "");
+  } else { m.className = "msg"; m.textContent = ""; }
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (stage !== 0) return;
+    var k = this.getAttribute("data-k"), t = S[si], m = document.getElementById("msg");
+    d++;
+    if (k === t[8]) { ok++; stage = 1; show(); }
+    else {
+      m.className = "msg bad";
+      m.textContent = "Ýalňyş. Burç koeffisiýentlerini deňeşdir.";
+    }
+    document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+  };
+}
+function pickPoint() {
+  if (stage !== 1) return;
+  var t = S[si], v = this.getAttribute("data-v"), m = document.getElementById("msg");
+  d++;
+  if (v === t[9]) { ok++; stage = 2; show(); }
+  else {
+    m.className = "msg bad";
+    m.textContent = "Ýalňyş. Ilki abssissa, soňra ordinata ýazylýar.";
+  }
+  document.getElementById("sc").textContent = "Netije: " + ok + " / " + d;
+}
+document.getElementById("next").onclick = function () { si = (si + 1) % S.length; stage = 0; show(); };
+document.getElementById("again").onclick = function () { stage = 0; show(); };
+show();
+
+var Q = [
+  ["Grafik usulda sistemanyň çözüwi haýsy nokatdyr?",
+   ["Göni çyzyklaryň kesişme nokady", "Koordinatalaryň başlangyjy", "Grafigiň iň ýokary nokady"], 0],
+  ["Grafikler parallel bolsa, sistemanyň näçe çözüwi bar?",
+   ["Çözüwi ýok", "Bir çözüw", "Tükeniksiz köp"], 0],
+  ["x + y = 1 we x – 2y = –8 sistemanyň çözüwi nähili?", ["(–2; 3)", "(2; –3)", "(3; –2)"], 0]
+];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

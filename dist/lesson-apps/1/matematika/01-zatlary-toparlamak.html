@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zatlary toparlamak we sanamak — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .pool { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .pool button { min-height: 58px; font-size: 14px; line-height: 1.3; }
+  .pool .em { display: block; font-size: 24px; }
+  .bins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 9px; }
+  .bin { background: #f7fafd; border-radius: 12px; padding: 8px; min-height: 82px; }
+  .bin h4 { margin: 0 0 5px; font-size: 12.5px; }
+  .bin span { display: block; background: #fff; border-radius: 8px; padding: 4px 6px; font-size: 12px; margin-bottom: 4px; }
+  .cnt { font-size: 28px; letter-spacing: 3px; min-height: 40px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Zatlary toparlamak we sanamak</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def">Zatlary <b>reňki</b>, <b>nämeden ýasalandygy</b> we <b>ulanylyşy</b>
+      boýunça toparlara bölmek bolýar. Soňra her topardaky zatlary sanaýarys.</div>
+  </div>
+
+  <div class="card">
+    <h3>Nämeden ýasalan?</h3>
+    <div class="goal">Zada bas, soňra onuň toparyna bas.</div>
+    <div class="pool" id="pool"></div>
+    <div class="bins">
+      <div class="bin" data-k="0"><h4 style="color:#8a5a20">🪵 Agaçdan</h4><div id="b0"></div></div>
+      <div class="bin" data-k="1"><h4 style="color:#3a5a80">🔩 Demirden</h4><div id="b1"></div></div>
+      <div class="bin" data-k="2"><h4 style="color:#2b7a6a">🔷 Aýnadan</h4><div id="b2"></div></div>
+    </div>
+    <div class="msg" id="gmsg"></div>
+    <div class="score" id="gsc"></div>
+    <button class="btn ghost" id="gr" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Sanap gör</h3>
+    <div class="goal">Zatlara bassaň, olar birlän-birlän sanalýar.</div>
+    <div class="cnt" id="cnt"></div>
+    <div class="row">
+      <button class="btn primary" id="add">Bir zat goş</button>
+      <button class="btn ghost" id="clr">Arassala</button>
+    </div>
+    <div class="msg" id="cmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, I kitap · 7–11-nji sahypalar</div>
+</div>
+
+<script>
+var ITEMS = [
+  ["Stol", "🪑", 0], ["Şkaf", "🚪", 0], ["Galam", "✏️", 0],
+  ["Pyçak", "🔪", 1], ["Açar", "🔑", 1], ["Çemçe", "🥄", 1],
+  ["Bulgur", "🥛", 2], ["Aýna", "🪟", 2], ["Çüýşe", "🍾", 2]
+];
+var sel = null, done = 0, ok = 0;
+
+function drawPool() {
+  var h = "";
+  for (var i = 0; i < ITEMS.length; i++) {
+    if (ITEMS[i][3]) continue;
+    h += '<button class="btn" data-i="' + i + '"><span class="em">' + ITEMS[i][1] + '</span>' + ITEMS[i][0] + '</button>';
+  }
+  document.getElementById("pool").innerHTML = h || '<div class="note">Hemmesi ýerleşdirildi! 🎉</div>';
+  var bs = document.getElementById("pool").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = pick;
+}
+function pick() {
+  var bs = document.getElementById("pool").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].className = "btn";
+  this.className = "btn sel";
+  sel = parseInt(this.getAttribute("data-i"), 10);
+  document.getElementById("gmsg").className = "msg";
+  document.getElementById("gmsg").textContent = ITEMS[sel][0] + " – indi topara bas.";
+}
+function drop(k) {
+  var m = document.getElementById("gmsg");
+  if (sel === null) { m.className = "msg"; m.textContent = "Ilki zady saýla."; return; }
+  var it = ITEMS[sel];
+  if (it[2] === k) {
+    it[3] = 1; done++; ok++;
+    document.getElementById("b" + k).innerHTML += "<span>" + it[1] + " " + it[0] + "</span>";
+    m.className = "msg ok"; m.textContent = "Dogry! " + it[0] + " – şu toparda.";
+  } else {
+    done++;
+    m.className = "msg bad"; m.textContent = "Ýalňyş. " + it[0] + " başga topara degişli.";
+  }
+  sel = null;
+  document.getElementById("gsc").textContent = "Dogry: " + ok + " / " + done;
+  drawPool();
+}
+var bins = document.getElementsByClassName("bin");
+for (var i = 0; i < bins.length; i++) {
+  (function (b) { b.onclick = function () { drop(parseInt(b.getAttribute("data-k"), 10)); }; })(bins[i]);
+}
+document.getElementById("gr").onclick = function () {
+  for (var i = 0; i < ITEMS.length; i++) ITEMS[i][3] = 0;
+  done = 0; ok = 0; sel = null;
+  for (var k = 0; k < 3; k++) document.getElementById("b" + k).innerHTML = "";
+  document.getElementById("gsc").textContent = "";
+  document.getElementById("gmsg").className = "msg";
+  document.getElementById("gmsg").textContent = "";
+  drawPool();
+};
+drawPool();
+
+var n = 0;
+function showCnt() {
+  var s = "";
+  for (var i = 0; i < n; i++) s += "🍎";
+  document.getElementById("cnt").textContent = s;
+  document.getElementById("cmsg").className = "msg" + (n ? " ok" : "");
+  document.getElementById("cmsg").textContent = n ? "Jemi " + n + " sany alma." : "Entek alma ýok.";
+}
+document.getElementById("add").onclick = function () { if (n < 10) n++; showCnt(); };
+document.getElementById("clr").onclick = function () { n = 0; showCnt(); };
+showCnt();
+
+var Q = [
+  ["Çemçe, käse we çäýnek haýsy topara girýär?", ["Gap-gaçlara", "Ulaglara", "Oýnawaçlara"], 0],
+  ["Bulgur nämeden ýasalýar?", ["Aýnadan", "Agaçdan", "Kagyzdan"], 0],
+  ["Zatlary näme boýunça toparlamak bolýar?", ["Reňki we ýasalan zady boýunça", "Diňe bahasy boýunça", "Hiç zat boýunça"], 0]
+];
+var qd = 0, qok = 0, h = "";
+for (var i = 0; i < Q.length; i++) {
+  h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = h;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var qi = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + qi);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[qi][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[qi][1][Q[qi][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

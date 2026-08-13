@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablisalar we şekiller — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tw { overflow-x: auto; }
+  table.t { border-collapse: collapse; background: #fff; width: 100%; font-size: 13.5px; }
+  table.t caption { caption-side: top; font-weight: 800; color: #1e2a3a; padding: 7px;
+                    font-size: 14.5px; }
+  table.t th, table.t td { border: 1px solid #b9c8dc; padding: 8px 9px; text-align: left;
+                           min-width: 74px; }
+  table.t th { background: #eef2f8; color: #2456b0; }
+  table.t td { cursor: text; }
+  table.t td.hl { background: #fff6e0; }
+  table.t td.sym { text-align: center; font-weight: 800; color: #6a4bb8; cursor: pointer; }
+  .rules { list-style: none; padding: 0; margin: 0; }
+  .rules li { background: #f7fafd; border-radius: 11px; padding: 9px 11px; margin-bottom: 5px;
+              font-size: 13.5px; display: flex; gap: 8px; }
+  .rules li b { color: #2456b0; flex: 0 0 auto; }
+  .txt { background: #fff; border: 2px solid #d6e0ee; border-radius: 11px; padding: 13px;
+         font-size: 14px; line-height: 1.75; overflow: hidden; }
+  .txt svg { border-radius: 8px; background: #eaf1ff; }
+  .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+  .legend div { background: #f7fafd; border-radius: 10px; padding: 9px; font-size: 13px; }
+  .legend b { color: #6a4bb8; font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tekste tablisalary we şekilleri goýmak</h1>
+  <div class="sub">Tekst informasiýalary bilen işlemek · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <h3>Tablisany öz eliň bilen döret</h3>
+    <div class="goal">Sütünleriň we setirleriň sanyny ber, soňra öýjüklere basyp doldur.
+      Sütün bilen setiriň kesişmesine <b>öýjük</b> diýilýär.</div>
+    <div class="slider"><span class="lbl">Sütünler</span>
+      <input type="range" id="c" min="2" max="6" value="4"><span class="out" id="co"></span></div>
+    <div class="slider"><span class="lbl">Setirler</span>
+      <input type="range" id="r" min="2" max="7" value="4"><span class="out" id="ro"></span></div>
+    <div class="tw"><table class="t" id="tab"></table></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="cell"></span>
+      <button class="btn ghost" id="fill">Nusga bilen doldur</button>
+      <button class="btn ghost" id="clr">Arassala</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tablisany düzmegiň düzgünleri</h3>
+    <ul class="rules">
+      <li><b>1.</b> Tablisanyň sözbaşysy onda saklanýan maglumat hakda düşünje bermelidir.</li>
+      <li><b>2.</b> Sütünleriň we setirleriň sözbaşylary gysga bolmalydyr.</li>
+      <li><b>3.</b> Ölçeg birligi sözbaşyda görkezilýär, her öýjükde gaýtalanmaýar.</li>
+      <li><b>4.</b> Mümkinçilige görä ähli öýjükler doldurylmalydyr.</li>
+      <li><b>5.</b> Boş öýjüge şertli belgi girizilýär.</li>
+    </ul>
+    <div class="row"><button class="btn" id="bad">Nädogry düzülen tablisa</button>
+      <button class="btn primary" id="good">Dogry düzülen tablisa</button></div>
+    <div class="tw" style="margin-top:8px"><table class="t" id="ex"></table></div>
+    <div class="msg" id="emsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Şertli belgiler</h3>
+    <div class="goal">Aşakdaky tablisanyň boş öýjüklerine basyp, şertli belgini üýtget.</div>
+    <div class="tw"><table class="t" id="sy"></table></div>
+    <div class="legend" style="margin-top:9px">
+      <div><b>?</b> – maglumat näbelli</div>
+      <div><b>×</b> – bu öýjüge maglumat degişli däl</div>
+      <div><b>↓</b> – ýokardaky öýjükdäki ýaly</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tekste şekil goý</h3>
+    <div class="goal">Şekiliň ölçegini we tekste görä ýerleşişini sazla.</div>
+    <div class="row tight">
+      <button class="btn sel" data-p="left">Çepde, tekst gapdalynda</button>
+      <button class="btn" data-p="right">Sagda, tekst gapdalynda</button>
+      <button class="btn" data-p="block">Aýratyn setirde, merkezde</button>
+    </div>
+    <div class="slider"><span class="lbl">Şekiliň ini</span>
+      <input type="range" id="iw" min="70" max="220" value="130"><span class="out" id="iwo"></span></div>
+    <div class="txt" id="txt"></div>
+    <div class="hint">Şekil saýlananda onuň töwereginde markerler peýda bolýar – şolar bilen
+      ölçegi üýtgedilýär.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------------- tablisa gurluşy ---------------- */
+const SAMPLE = {
+  head: ["Göterijiniň ady", "Göwrümi, Gbaýt", "Ýazyp bolýarmy", "Ulanylyşy"],
+  rows: [["CD", "0,7", "hawa", "aýdym, surat"],
+         ["DVD", "4,7", "hawa", "wideo, arhiw"],
+         ["Blu-ray", "25", "hawa", "ýokary hilli wideo"],
+         ["Fleş ýat", "64", "hawa", "gündelik göçürme"],
+         ["Gaty disk", "1000", "hawa", "kompýuteriň esasy ýady"],
+         ["Disket", "0,0014", "hawa", "häzir ulanylmaýar"]]
+};
+let data = [], filled = false;
+function build() {
+  const C = +$("c").value, R = +$("r").value;
+  $("co").textContent = C; $("ro").textContent = R;
+  // nusga bilen doldurylan bolsa, täze setirler hem nusgadan alynýar
+  while (data.length < R) data.push(filled ? (SAMPLE.rows[data.length] || []).slice() : []);
+  data.length = R;
+  data.forEach(row => { while (row.length < C) row.push(""); row.length = C; });
+  let h = '<caption>Maglumat göterijiler</caption><thead><tr>';
+  for (let j = 0; j < C; j++) h += `<th contenteditable data-j="${j}">${
+    SAMPLE.head[j] || "sözbaşy " + (j + 1)}</th>`;
+  h += "</tr></thead><tbody>";
+  for (let i = 0; i < R; i++) {
+    h += "<tr>";
+    for (let j = 0; j < C; j++) h += `<td contenteditable data-i="${i}" data-j="${j}">${data[i][j]}</td>`;
+    h += "</tr>";
+  }
+  $("tab").innerHTML = h + "</tbody>";
+  $("tab").querySelectorAll("td").forEach(td => {
+    td.oninput = () => { data[+td.dataset.i][+td.dataset.j] = td.textContent; };
+    td.onfocus = () => {
+      $("tab").querySelectorAll("td").forEach(x => x.classList.remove("hl"));
+      td.classList.add("hl");
+      $("cell").textContent =
+        `saýlanan öýjük: ${+td.dataset.i + 1}-nji setir, ${+td.dataset.j + 1}-nji sütün`;
+    };
+  });
+  $("cell").textContent = `${C} sütün × ${R} setir = ${C * R} öýjük`;
+}
+["c", "r"].forEach(k => $(k).addEventListener("input", build));
+$("fill").onclick = () => {
+  filled = true;
+  data = SAMPLE.rows.slice(0, +$("r").value).map(r => r.slice());
+  build();
+};
+$("clr").onclick = () => { filled = false; data = []; build(); };
+
+/* ---------------- dogry / nädogry mysal ---------------- */
+function ex(good) {
+  if (good) {
+    $("ex").innerHTML =
+      `<caption>Optiki disklerdäki maglumatyň göwrümi</caption>
+       <thead><tr><th>Disk</th><th>Göwrümi, Gbaýt</th><th>Ýyly</th></tr></thead>
+       <tbody>
+        <tr><td>CD</td><td>0,7</td><td>1982</td></tr>
+        <tr><td>DVD</td><td>4,7</td><td>1995</td></tr>
+        <tr><td>Blu-ray</td><td>25</td><td>2006</td></tr>
+       </tbody>`;
+    $("emsg").textContent = "Sözbaşy düşnükli, sütün atlary gysga, ölçeg birligi sözbaşyda bir gezek ýazylan.";
+    $("emsg").className = "msg ok";
+  } else {
+    $("ex").innerHTML =
+      `<caption>Tablisa</caption>
+       <thead><tr><th>Diskiň doly ady we görnüşi</th>
+       <th>Şol diskde ýerleşdirip bolýan maglumatyň göwrümi</th><th>Ýyly</th></tr></thead>
+       <tbody>
+        <tr><td>CD</td><td>0,7 Gbaýt</td><td>1982</td></tr>
+        <tr><td>DVD</td><td>4,7 Gbaýt</td><td></td></tr>
+        <tr><td>Blu-ray</td><td>25 Gbaýt</td><td></td></tr>
+       </tbody>`;
+    $("emsg").innerHTML = "Ýalňyşlar: sözbaşy hiç zat aňlatmaýar, sütün atlary uzyn, " +
+      "«Gbaýt» her öýjükde gaýtalanýar, iki öýjük boş galan – şertli belgi ýok.";
+    $("emsg").className = "msg bad";
+  }
+}
+$("good").onclick = () => ex(true);
+$("bad").onclick = () => ex(false);
+
+/* ---------------- şertli belgiler ---------------- */
+const SY = ["?", "×", "↓"];
+const SROWS = [["Aýgül", "Informatika", "5"], ["Merdan", "Informatika", ""],
+               ["Serdar", "Aýdym-saz", ""], ["Maýa", "", ""]];
+function sym() {
+  let h = `<caption>Gurnaklara gatnaýan okuwçylar</caption>
+    <thead><tr><th>Okuwçy</th><th>Gurnak</th><th>Bahasy</th></tr></thead><tbody>`;
+  SROWS.forEach((r, i) => {
+    h += "<tr>";
+    r.forEach((v, j) => h += v
+      ? `<td>${v}</td>`
+      : `<td class="sym" data-i="${i}" data-j="${j}">?</td>`);
+    h += "</tr>";
+  });
+  $("sy").innerHTML = h + "</tbody>";
+  $("sy").querySelectorAll(".sym").forEach(td => td.onclick = () => {
+    td.textContent = SY[(SY.indexOf(td.textContent) + 1) % SY.length];
+  });
+}
+sym();
+
+/* ---------------- şekil goýmak ---------------- */
+const PIC = `<svg width="W" viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="46" width="46" height="34" fill="#c98a4b"/>
+  <path d="M4 48 L29 28 L54 48 Z" fill="#c62828"/>
+  <rect x="20" y="60" width="14" height="20" fill="#7a4b1e"/>
+  <circle cx="94" cy="24" r="12" fill="#f6c343"/>
+  <path d="M60 80 q14-22 28 0 z" fill="#2e7d32"/>
+  <rect x="0" y="80" width="120" height="10" fill="#a3c893"/></svg>`;
+const TX = "Tekst resminamasyna diňe bir tablisalar däl, eýsem şekiller we grafiki obýektler " +
+  "hem goýlup bilner. Şekil saýlanandan soň onuň ölçegini üýtgetmek, tekste görä ýerleşişini " +
+  "sazlamak we oňa gol ýazgysyny goşmak mümkindir. Şekil tekstiň manysyny açyp görkezmelidir.";
+function pic() {
+  const w = +$("iw").value;
+  $("iwo").textContent = w + " px";
+  const pos = document.querySelector("[data-p].sel").dataset.p;
+  const style = pos === "block"
+    ? "display:block;margin:0 auto 9px"
+    : `float:${pos};margin:0 ${pos === "left" ? "11px" : "0"} 7px ${pos === "right" ? "11px" : "0"}`;
+  $("txt").innerHTML = PIC.replace("W", w).replace("<svg", `<svg style="${style}"`) + TX;
+}
+document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-p]").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel"); pic();
+});
+$("iw").addEventListener("input", pic);
+
+build(); ex(true); pic();
+</script>
+</body>
+</html>

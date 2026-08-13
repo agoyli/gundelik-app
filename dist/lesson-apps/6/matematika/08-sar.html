@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şar — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; display: flex;
+           justify-content: center; }
+  .stage svg { background: #fff; border-radius: 10px; max-width: 100%; height: auto; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .objs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .obj { background: #f7fafd; border-radius: 11px; padding: 10px; text-align: center;
+         font-size: 13px; cursor: pointer; border: 2px solid transparent; }
+  .obj.on { border-color: #2456b0; background: #eaf1ff; }
+  .obj .em { font-size: 34px; display: block; }
+  .planets { font-size: 13.5px; }
+  .planets td { padding: 6px 8px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Şar we sfera</h1>
+  <div class="sub">Onluk droblary köpeltmek we bölmek · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Şaryň üstüne <b>sfera</b> diýilýär. Sferanyň ähli nokatlary merkezden
+      deň uzaklykda ýerleşýär.</div>
+    <div class="stage" id="fig"></div>
+    <div class="slider"><span class="lbl">Radius r</span>
+      <input type="range" id="r" min="4" max="120" step="2" value="60">
+      <span class="out" id="ro"></span></div>
+    <div class="row tight">
+      <button class="btn sel" data-s="r">Radius</button>
+      <button class="btn" data-s="d">Diametr</button>
+      <button class="btn" data-s="p">Deň uzaklyk</button>
+    </div>
+    <div class="calc" id="calc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsylary şara meňzeýär?</h3>
+    <div class="goal">Şar görnüşli zatlara bas.</div>
+    <div class="objs" id="objs"></div>
+    <div class="msg" id="omsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Planetalary deňeşdir</h3>
+    <table class="planets" id="pl"></table>
+    <div class="calc" id="plc" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §18</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const T = x => (Math.round(x * 100) / 100).toString().replace(".", ",");
+
+/* ---------------- şar ---------------- */
+let show = "r";
+document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+  show = b.dataset.s;
+  document.querySelectorAll("[data-s]").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  fig();
+});
+function fig() {
+  const r = +$("r").value;
+  $("ro").textContent = r + " sm";
+  const S = 300, c = S / 2, rr = Math.min(r, 120);
+  let extra = "";
+  if (show === "r")
+    extra = `<line x1="${c}" y1="${c}" x2="${c + rr * 0.71}" y2="${c - rr * 0.71}"
+               stroke="#e5007d" stroke-width="3"/>
+             <text x="${c + rr * 0.4}" y="${c - rr * 0.45}" fill="#e5007d" font-weight="700"
+               font-size="14">r = ${r}</text>`;
+  if (show === "d")
+    extra = `<line x1="${c - rr}" y1="${c}" x2="${c + rr}" y2="${c}" stroke="#e5007d"
+               stroke-width="3"/>
+             <text x="${c}" y="${c - 9}" text-anchor="middle" fill="#e5007d" font-weight="700"
+               font-size="14">d = ${2 * r}</text>`;
+  if (show === "p")
+    extra = [0, 60, 120, 180, 240, 300].map(a => {
+      const x = c + rr * Math.cos(a * Math.PI / 180), y = c + rr * Math.sin(a * Math.PI / 180);
+      return `<line x1="${c}" y1="${c}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"
+                stroke="#e5007d" stroke-width="2" stroke-dasharray="4 3"/>
+              <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#e5007d"/>`;
+    }).join("");
+  $("fig").innerHTML = `
+    <svg viewBox="0 0 ${S} ${S}" width="${S}" xmlns="http://www.w3.org/2000/svg"
+      font-family="system-ui, sans-serif">
+      <defs><radialGradient id="g" cx="35%" cy="32%">
+        <stop offset="0%" stop-color="#bcd4fb"/><stop offset="100%" stop-color="#5f89d6"/>
+      </radialGradient></defs>
+      <circle cx="${c}" cy="${c}" r="${rr}" fill="url(#g)" stroke="#2456b0" stroke-width="2"/>
+      <ellipse cx="${c}" cy="${c}" rx="${rr}" ry="${(rr * 0.32).toFixed(1)}" fill="none"
+        stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+      ${extra}
+      <circle cx="${c}" cy="${c}" r="4" fill="#1e2a3a"/>
+      <text x="${c - 16}" y="${c + 18}" fill="#1e2a3a" font-size="14" font-weight="700">O</text>
+    </svg>`;
+  $("calc").innerHTML =
+    `radius: <b>${r} sm</b><br>` +
+    `diametr: d = 2r = 2 · ${r} = <b>${2 * r} sm</b><br>` +
+    `ters mesele: r = d : 2 = ${2 * r} : 2 = <b>${r} sm</b>`;
+}
+$("r").addEventListener("input", fig);
+
+/* ---------------- şar görnüşli zatlar ---------------- */
+const OBJ = [
+  ["⚽", "futbol pökgüsi", true], ["🍉", "garpyz", true], ["🎈", "çişirilen şar", true],
+  ["🧊", "kub", false], ["🥫", "silindr", false], ["🌍", "Ýer şary", true],
+  ["📦", "guty", false], ["🔴", "tegelek", false],
+];
+let left = OBJ.filter(o => o[2]).length, wrong = 0;
+$("objs").innerHTML = OBJ.map((o, i) =>
+  `<div class="obj" data-i="${i}"><span class="em">${o[0]}</span>${o[1]}</div>`).join("");
+$("objs").querySelectorAll(".obj").forEach(d => d.onclick = () => {
+  const o = OBJ[+d.dataset.i];
+  if (d.classList.contains("on")) return;
+  if (o[2]) {
+    d.classList.add("on"); left--;
+    $("omsg").textContent = left
+      ? `Dogry! Ýene ${left} sany şar görnüşli zat bar.`
+      : "Ähli şarlar tapyldy. Tegelek bolsa tekiz figura – ol şar däldir.";
+    $("omsg").className = "msg ok";
+  } else {
+    wrong++;
+    $("omsg").textContent = `«${o[1]}» şar däl – ol başga geometrik figura.`;
+    $("omsg").className = "msg bad";
+  }
+});
+
+/* ---------------- planetalar ---------------- */
+const PL = [["Ýer", 12800], ["Aý", 3480], ["Merkuriý", 5000], ["Wenera", 12100]];
+$("pl").innerHTML = "<thead><tr><th>Jisim</th><th>Diametri, km</th><th>Radiusy, km</th></tr>" +
+  "</thead><tbody>" +
+  PL.map(([n, d]) => `<tr><td>${n}</td><td>${d}</td><td>${T(d / 2)}</td></tr>`).join("") +
+  "</tbody>";
+$("plc").innerHTML =
+  `Ýeriň diametri Aýyňkydan ${12800} : ${3480} ≈ <b>${T(Math.round(12800 / 3480 * 10) / 10)} esse</b> uly<br>` +
+  `Ýeriň diametri Merkuriýiňkiden ${12800} : ${5000} = <b>${T(12800 / 5000)} esse</b> uly`;
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Şaryň üstüne näme diýilýär?", ["Tegelek", "Sfera", "Töwerek", "Radius"], 1],
+  ["Şaryň diametri 4,04 dm bolsa, radiusy", ["8,08 dm", "2,02 dm", "1,01 dm", "4,04 dm"], 1],
+  ["Sferanyň nokatlary merkezden nähili ýerleşýär?",
+   ["Dürli uzaklykda", "Deň uzaklykda", "Bir tarapda", "Merkeziň üstünde"], 1],
+  ["Şaryň radiusy 0,25 m bolsa, diametri", ["0,125 m", "0,5 m", "2,5 m", "0,25 m"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+fig();
+</script>
+</body>
+</html>

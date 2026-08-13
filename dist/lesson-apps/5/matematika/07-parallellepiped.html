@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gönüburçly parallellepiped — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 11px 6px; border-radius: 12px; font-size: 14px; font-weight: 700; background: #e8eef7; color: #5b6b80; }
+  .tab.active { background: #2456b0; color: #fff; }
+  .calc { font-size: 15.5px; line-height: 1.9; }
+  .calc b { color: #1d7a3d; }
+  .facts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .fact { background: #eaf1fb; border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 700; color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Gönüburçly parallellepiped</h1>
+  <div class="sub">Üstüniň meýdany we göwrümi · Matematika · 5-nji synp</div>
+
+  <div class="tabs">
+    <button class="tab active" data-t="box">Jisim</button>
+    <button class="tab" data-t="net">Ýaýylmasy</button>
+  </div>
+
+  <div class="card">
+    <svg id="board" viewBox="0 0 420 280"></svg>
+    <div class="facts">
+      <span class="fact">6 gran</span><span class="fact">12 gapyrga</span><span class="fact">8 depe</span>
+      <span class="fact" id="cubeFact" style="display:none">Kub! Ähli granlary kwadrat</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="slider"><span class="lbl">a (uzynlyk)</span><input type="range" id="ra" min="1" max="8" value="5"><span class="out" id="oa">5</span></div>
+    <div class="slider"><span class="lbl">b (giňlik)</span><input type="range" id="rb" min="1" max="8" value="3"><span class="out" id="ob">3</span></div>
+    <div class="slider"><span class="lbl">c (beýiklik)</span><input type="range" id="rc" min="1" max="8" value="4"><span class="out" id="oc">4</span></div>
+    <div class="note">Ölçegler sm-de berilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Hasaplaýarys</h3>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, I kitap (2017)</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const SVG = document.getElementById("board");
+let a = 5, b = 3, c = 4, mode = "box";
+const U = 22;   // px per sm
+
+function el(t, at) { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); return e; }
+function txt(x, y, s, o = {}) {
+  const t = el("text", Object.assign({ x, y, "font-size": 13, "font-weight": 700, fill: "#1e2a3a", "text-anchor": "middle" }, o));
+  t.textContent = s; return t;
+}
+
+function drawBox() {
+  SVG.innerHTML = "";
+  const w = a * U, h = c * U, d = b * U * 0.55;
+  const x0 = 90, y0 = 190 - h;
+  const P = (x, y) => `${x},${y}`;
+  // back offset
+  const dx = d, dy = -d * 0.8;
+  // faces: top, front, right
+  SVG.appendChild(el("polygon", {                       // top
+    points: [P(x0, y0), P(x0 + dx, y0 + dy), P(x0 + w + dx, y0 + dy), P(x0 + w, y0)].join(" "),
+    fill: "#cfe6d3", stroke: "#1d7a3d", "stroke-width": 2
+  }));
+  SVG.appendChild(el("polygon", {                       // right
+    points: [P(x0 + w, y0), P(x0 + w + dx, y0 + dy), P(x0 + w + dx, y0 + h + dy), P(x0 + w, y0 + h)].join(" "),
+    fill: "#fbe2c9", stroke: "#b25b12", "stroke-width": 2
+  }));
+  SVG.appendChild(el("rect", {                          // front
+    x: x0, y: y0, width: w, height: h, fill: "#dfe9fb", stroke: "#2456b0", "stroke-width": 2
+  }));
+  SVG.appendChild(txt(x0 + w / 2, y0 + h + 20, `a = ${a} sm`, { fill: "#2456b0" }));
+  SVG.appendChild(txt(x0 - 26, y0 + h / 2, `c = ${c}`, { fill: "#2456b0" }));
+  SVG.appendChild(txt(x0 + w + dx / 2 + 26, y0 + h + dy / 2 + 16, `b = ${b}`, { fill: "#b25b12" }));
+}
+
+function drawNet() {
+  SVG.innerHTML = "";
+  // ýaýylma ekrana sygar ýaly ölçeg saýlanýar
+  const u = Math.min(U, 396 / (2 * (a + b)), 215 / (2 * b + c));
+  const w = a * u, h = c * u, dp = b * u;
+  const cx = 210 - w, cy = 130 - h / 2;
+  const F = (x, y, ww, hh, fill, stroke, label) => {
+    SVG.appendChild(el("rect", { x, y, width: ww, height: hh, fill, stroke, "stroke-width": 2, rx: 2 }));
+    if (Math.min(ww, hh) > 20)
+      SVG.appendChild(txt(x + ww / 2, y + hh / 2 + 4, label, { "font-size": 11, fill: "#1e2a3a" }));
+  };
+  // cross layout: front centre; top above; bottom below; left/right beside; back far right
+  F(cx, cy, w, h, "#dfe9fb", "#2456b0", `${a}·${c}`);
+  F(cx, cy - dp, w, dp, "#cfe6d3", "#1d7a3d", `${a}·${b}`);
+  F(cx, cy + h, w, dp, "#cfe6d3", "#1d7a3d", `${a}·${b}`);
+  F(cx - dp, cy, dp, h, "#fbe2c9", "#b25b12", `${b}·${c}`);
+  F(cx + w, cy, dp, h, "#fbe2c9", "#b25b12", `${b}·${c}`);
+  F(cx + w + dp, cy, w, h, "#dfe9fb", "#2456b0", `${a}·${c}`);
+  SVG.appendChild(txt(210, 262, "Alty granyň meýdanyny goşsak — üstüniň meýdany çykýar", { "font-size": 12, "font-weight": 600, fill: "#5b6b80" }));
+}
+
+function render() {
+  mode === "box" ? drawBox() : drawNet();
+  document.getElementById("cubeFact").style.display = (a === b && b === c) ? "" : "none";
+  const S = 2 * (a * b + b * c + a * c);
+  const V = a * b * c;
+  let html =
+    `Granlaryň meýdanlary: ${a}·${b} = ${a * b}, &nbsp; ${b}·${c} = ${b * c}, &nbsp; ${a}·${c} = ${a * c} (sm²)<br>` +
+    `Her görnüşden 2 sany bar:<br>` +
+    `S = 2·(${a * b} + ${b * c} + ${a * c}) = <b>${S} sm²</b><br>` +
+    `Göwrümi: V = a · b · c = ${a} · ${b} · ${c} = <b>${V} sm³</b>`;
+  if (a === b && b === c) html += `<br>Bu — kub: V = a³ = ${a}³ = <b>${V} sm³</b>`;
+  document.getElementById("calc").innerHTML = html;
+}
+
+for (const [id, out, set] of [["ra", "oa", v => a = v], ["rb", "ob", v => b = v], ["rc", "oc", v => c = v]]) {
+  document.getElementById(id).oninput = e => {
+    set(+e.target.value);
+    document.getElementById(out).textContent = e.target.value;
+    render();
+  };
+}
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(o => o.classList.remove("active"));
+  t.classList.add("active"); mode = t.dataset.t; render();
+});
+render();
+</script>
+</body>
+</html>

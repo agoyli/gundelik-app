@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beýik Ýüpek ýolunyň şäherleri — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .board { background: #f6efdd; border-radius: 13px; padding: 8px; }
+  .board svg { display: block; width: 100%; height: auto; max-height: 240px; }
+  .cities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .cities button { min-height: 46px; font-size: 14.5px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 14.5px; font-weight: 700; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Amul, Zemm, Gürgenç, Merw, Nusaý</h1>
+  <div class="sub">Türkmenistanyň taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Beýik Ýüpek ýolunyň ep-esli bölegi <b>Türkmenistanyň gadymy
+      topragynyň üstünden</b> geçipdir. Şäherler kerwen ýollarynyň çatryklarynda
+      ösüpdir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Şäheri saýla – ýoldaky ornuny gör</h3>
+    <div class="board"><svg id="bd" viewBox="0 0 320 240"></svg></div>
+    <div class="goal" id="goal"></div>
+    <div class="cities" id="cities"></div>
+    <div class="msg" id="msg"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy şähere degişli?</h3>
+    <div class="task" id="task"></div>
+    <div class="kinds" id="kinds">
+      <button class="btn" data-k="amul">Amul</button>
+      <button class="btn" data-k="urgenc">Ürgenç</button>
+      <button class="btn" data-k="merw">Merw</button>
+      <button class="btn" data-k="nusay">Nusaý</button>
+      <button class="btn" data-k="zemm">Zemm</button>
+      <button class="btn" data-k="sarahs">Sarahs</button>
+    </div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Türkmenistanyň taryhy 7 · 54–60-njy sahypalar</div>
+</div>
+
+<script>
+// [ady, x, y, düşündiriş]
+var C = [
+  ["Dehistan", 45, 90, "Günbatara gaýdan kerwenler Ferawanyň üsti bilen bu ýere gelipdir."],
+  ["Nusaý", 120, 150, "Iki şäherden ybarat: Täze Nusaý we Köne Nusaý."],
+  ["Merw", 190, 165, "Mata dokmaçylygynyň merkezi, «Merw şahyjany» matalary bilen meşhur."],
+  ["Sarahs", 165, 205, "Merwden günorta gaýdýan ýol Daňdanakandan geçip, Sarahsa gelipdir."],
+  ["Amul", 255, 140, "Kerwen ýollarynyň çatrygy; Buharadan Merwe iň gysga ýol şu ýerden."],
+  ["Zemm", 275, 190, "Amyderýanyň kenarynda; ilkinji ýatlamalar VIII asyra degişli."],
+  ["Ürgenç", 210, 55, "Milli binagärlik mekdebi döräp, Ýewropa bilen hem söwda edipdir."],
+  ["Daýahatyn", 245, 95, "Amuldan Horezme gidilýän ýoluň iň uly kerwensaraýy."]
+];
+var cur = -1, seen = {}, d = 0;
+function draw() {
+  var s = '<rect x="0" y="0" width="320" height="240" fill="#f6efdd"/>';
+  // Amyderýa
+  s += '<path d="M 300 230 C 270 190, 265 140, 240 100 C 225 75, 210 55, 195 35" ' +
+    'fill="none" stroke="#8fbcd8" stroke-width="7"/>';
+  s += '<text x="286" y="222" font-size="11" fill="#4d7d9b">Amyderýa</text>';
+  // kerwen ýoly
+  s += '<path d="M 45 90 L 120 150 L 190 165 L 255 140 L 210 55" fill="none" ' +
+    'stroke="#b08a3a" stroke-width="3" stroke-dasharray="8 5"/>';
+  s += '<path d="M 190 165 L 165 205" fill="none" stroke="#b08a3a" stroke-width="3" stroke-dasharray="8 5"/>';
+  s += '<path d="M 255 140 L 275 190" fill="none" stroke="#b08a3a" stroke-width="3" stroke-dasharray="8 5"/>';
+  s += '<path d="M 255 140 L 245 95" fill="none" stroke="#b08a3a" stroke-width="3" stroke-dasharray="8 5"/>';
+  for (var i = 0; i < C.length; i++) {
+    var on = i === cur;
+    s += '<circle cx="' + C[i][1] + '" cy="' + C[i][2] + '" r="' + (on ? 9 : 6) +
+      '" fill="' + (on ? "#b0407a" : "#7a5c1e") + '" stroke="#3b2c10" stroke-width="2"/>';
+    s += '<text x="' + (C[i][1] + 10) + '" y="' + (C[i][2] + 4) + '" font-size="' +
+      (on ? 14 : 12) + '" fill="#3b2c10">' + C[i][0] + "</text>";
+  }
+  document.getElementById("bd").innerHTML = s;
+  document.getElementById("goal").textContent = cur >= 0 ?
+    (C[cur][0] + ": " + C[cur][3]) :
+    "Şäheri saýla – kerwen ýolundaky ornuny we ähmiýetini gör.";
+}
+var h = "";
+for (var i = 0; i < C.length; i++) h += '<button class="btn" data-i="' + i + '">' + C[i][0] + "</button>";
+document.getElementById("cities").innerHTML = h;
+var cb = document.getElementById("cities").getElementsByTagName("button");
+for (var i = 0; i < cb.length; i++) {
+  cb[i].onclick = function () {
+    cur = parseInt(this.getAttribute("data-i"), 10);
+    draw();
+    var m = document.getElementById("msg");
+    m.className = "msg ok";
+    m.textContent = C[cur][3];
+    if (!seen[cur]) { seen[cur] = 1; d++; }
+    document.getElementById("sc").textContent = "Görlen şäherler: " + d + " / " + C.length;
+  };
+}
+draw();
+
+// [maglumat, dogry açar, düşündiriş]
+var P = [
+  ["Bu ýerde ýasalan gap-gaçlar Nowgoroddan tapyldy.", "urgenc",
+   "Ürgenç Ýewropanyň şäherleri bilen hem söwda edipdir."],
+  ["Matalary «Merw şahyjany» ady bilen meşhur bolupdyr.", "merw",
+   "Şäher dünýäde mata dokmaçylygynyň merkezleriniň biridir."],
+  ["Buharadan Merwe barýan iň gysga ýol şu şäheriň üstünden geçipdir.", "amul",
+   "Amul kerwen ýollarynyň çatrygydyr."],
+  ["Iki şäherden – Täze we Köne bölekden ybarat.", "nusay",
+   "Täze Nusaýda dolandyryş jaýlary we bazarlar bolupdyr."],
+  ["Baradaky ilkinji ýatlamalar VIII asyryň ýazuw çeşmelerinde duşýar.", "zemm",
+   "Zemm Amyderýanyň kenarynda ýerleşipdir."],
+  ["Merwden günorta gaýdýan ýol Daňdanakandan geçip, şu şähere gelipdir.", "sarahs",
+   "Sarahs barada al-Istahrynyň işlerinde maglumat bar."],
+  ["«Margiana polady» adyny alan sowutlar bu ýerde ýasalypdyr.", "merw",
+   "Demir işläp bejermek şäher hojalygynyň esasy ugurlarynyň biridir."],
+  ["Bu şähere iň ýakyn menzil Paryzdepe bolupdyr.", "nusay",
+   "Kerwenler Paryzdepede dynç alypdyrlar."]
+];
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("task").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), m = document.getElementById("pmsg");
+    if (k === P[pi][1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + P[pi][2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + P[pi][2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+var Q = [
+  ["Amuldan Horezme gidilýän ýoluň iň uly kerwensaraýy haýsy?",
+   ["Daýahatyn", "Paryzdepe", "Dargan"], 0],
+  ["Merwde haýsy önümçilik ösüpdir?",
+   ["Mata dokmaçylygy we demir işläp bejermek", "Diňe küýzegärçilik", "Diňe zergärçilik"], 0],
+  ["«Türkmenistan – Beýik Ýüpek ýolunyň ýüregi» kitaby haýsy ýylda ýaýradyldy?",
+   ["2017-nji ýylda", "2007-nji ýylda", "1996-njy ýylda"], 0]
+];
+var qd = 0, qok = 0, hq = "";
+for (var i = 0; i < Q.length; i++) {
+  hq += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hq += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hq += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hq;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

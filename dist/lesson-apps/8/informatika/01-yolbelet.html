@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>«Ýolbelet» — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .path { font-size: 14px; color: #2456b0; background: #eef4fe; border-radius: 10px;
+          padding: 9px 12px; font-weight: 700; word-break: break-all; }
+  .list { margin-top: 10px; border: 1px solid #e6edf6; border-radius: 12px; overflow: hidden; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 11px 12px;
+          border-bottom: 1px solid #eef2f8; cursor: pointer; min-height: 46px; }
+  .item:last-child { border-bottom: none; }
+  .item.sel { background: #e3edfd; }
+  .item .ic { font-size: 20px; width: 24px; text-align: center; }
+  .item .nm { flex: 1; font-size: 15px; }
+  .item .ext { font-size: 12px; color: #93a2b5; }
+  .empty { padding: 16px; color: #93a2b5; font-size: 14px; text-align: center; }
+  .task { background: #f2edfd; border-radius: 12px; padding: 11px 13px; font-size: 14.5px;
+          color: #4b3a86; line-height: 1.5; }
+  .task b { color: #6a4bb8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>«Ýolbelet» bilen işlemek</h1>
+  <div class="sub">Faýl guramaçylary (menejerleri). Проводник · Informatika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="task" id="task"></div>
+  </div>
+
+  <div class="card">
+    <div class="path" id="path"></div>
+    <div class="list" id="list"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" id="upBtn">⬆ Ýokary</button>
+      <button class="btn" id="newBtn">📁 Papka döret</button>
+      <button class="btn" id="copyBtn">Nusgala (Ctrl+C)</button>
+      <button class="btn" id="pasteBtn">Goý (Ctrl+V)</button>
+      <button class="btn warn" id="delBtn">Ýok et (Delete)</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>🗑 Sebet (Корзина)</h3>
+    <div class="list" id="bin"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="restoreBtn">Dikelt (Восстановить)</button>
+      <span class="score" id="score"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Faýl sistemasynyň obýektlerini dolandyrýan programmalara <b>faýl guramaçylary
+      (menejerleri)</b> diýilýär. Windows-da ol – <b>Проводник</b>, ýagny «Ýolbelet».
+      Ýok edilen obýektler <b>Sebede</b> düşýär, olary şol ýerden dikeldip bolýar.
+      Faýlyň <b>giňeltmesi</b> onuň görnüşini görkezýär.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 8 (2020)</div>
+</div>
+
+<script>
+const ICONS = { folder: "📁", txt: "📄", docx: "📘", bmp: "🖼", pas: "⚙️", exe: "🟦", ppt: "📊" };
+
+// tree: every node has name, kind ("folder" or an extension), children for folders
+const root = {
+  name: "D:", kind: "folder", children: [
+    { name: "Okuw kitaplar", kind: "folder", children: [
+      { name: "Informatika", kind: "docx" },
+      { name: "Matematika", kind: "docx" }
+    ]},
+    { name: "Suratlar", kind: "folder", children: [
+      { name: "Magtymgulynyň portreti", kind: "bmp" },
+      { name: "Ahalteke aty", kind: "bmp" }
+    ]},
+    { name: "Programmalar", kind: "folder", children: [
+      { name: "birinji", kind: "pas" }
+    ]},
+    { name: "Bellikler", kind: "txt" }
+  ]
+};
+
+let cwd = [root];            // path stack
+let sel = null;              // selected child index
+let clip = null;             // { node, cut:false }
+let bin = [];                // { node, fromName }
+let done = { folder: false, copy: false, del: false, restore: false };
+
+const $ = id => document.getElementById(id);
+const here = () => cwd[cwd.length - 1];
+const label = n => n.kind === "folder" ? n.name : n.name + "." + n.kind;
+
+function msg(t, cls) { $("msg").textContent = t; $("msg").className = "msg" + (cls ? " " + cls : ""); }
+
+function renderTask() {
+  const steps = [
+    ["folder", "«Suratlar» papkasynyň içinde <b>Tebigat</b> atly täze papka döret."],
+    ["copy", "«Ahalteke aty» faýlyny <b>nusgalap</b>, täze papkanyň içine <b>goý</b>."],
+    ["del", "«Bellikler.txt» faýlyny <b>ýok et</b> – ol Sebede düşer."],
+    ["restore", "Sebetden «Bellikler.txt» faýlyny <b>dikelt</b>."]
+  ];
+  $("task").innerHTML = "<b>Ýumuş.</b> " + steps.map(([k, t], i) =>
+    `<div style="margin-top:6px">${done[k] ? "✅" : (i + 1) + "."} ${t}</div>`).join("");
+  const n = Object.values(done).filter(Boolean).length;
+  $("score").textContent = `Ýerine ýetirildi: ${n} / 4`;
+  if (n === 4) $("task").innerHTML += '<div class="congrats">Berekella! Ähli amallary ýerine ýetirdiň. 🎉</div>';
+}
+
+function render() {
+  $("path").textContent = cwd.map(n => n.name).join(" \\ ");
+  const L = $("list"); L.innerHTML = "";
+  const kids = here().children || [];
+  if (!kids.length) L.innerHTML = '<div class="empty">Papka boş</div>';
+  kids.forEach((n, i) => {
+    const d = document.createElement("div");
+    d.className = "item" + (sel === i ? " sel" : "");
+    d.innerHTML = `<span class="ic">${ICONS[n.kind] || "📄"}</span>
+                   <span class="nm">${n.name}</span>
+                   <span class="ext">${n.kind === "folder" ? "papka" : "." + n.kind}</span>`;
+    d.onclick = () => { sel = sel === i ? null : i; render(); };
+    d.ondblclick = () => { if (n.kind === "folder") { cwd.push(n); sel = null; render(); } };
+    L.appendChild(d);
+  });
+
+  const B = $("bin"); B.innerHTML = "";
+  if (!bin.length) B.innerHTML = '<div class="empty">Sebet boş</div>';
+  bin.forEach((b, i) => {
+    const d = document.createElement("div");
+    d.className = "item" + (b.sel ? " sel" : "");
+    d.innerHTML = `<span class="ic">${ICONS[b.node.kind] || "📄"}</span>
+                   <span class="nm">${label(b.node)}</span>
+                   <span class="ext">${b.fromName}</span>`;
+    d.onclick = () => { bin.forEach((x, j) => x.sel = i === j && !x.sel); render(); };
+    B.appendChild(d);
+  });
+  renderTask();
+}
+
+$("upBtn").onclick = () => {
+  if (cwd.length === 1) { msg("Ýokarda başga papka ýok – bu diskiň köki.", "bad"); return; }
+  cwd.pop(); sel = null; msg(""); render();
+};
+
+$("newBtn").onclick = () => {
+  const name = prompt("Täze papkanyň ady:", "Tebigat");
+  if (!name) return;
+  here().children.push({ name: name.trim(), kind: "folder", children: [] });
+  if (name.trim() === "Tebigat" && here().name === "Suratlar") done.folder = true;
+  sel = null; msg(`«${name.trim()}» papkasy döredildi.`, "ok"); render();
+};
+
+$("copyBtn").onclick = () => {
+  if (sel === null) { msg("Ilki obýekti saýla.", "bad"); return; }
+  clip = JSON.parse(JSON.stringify(here().children[sel]));
+  msg(`«${label(clip)}» aralyk ýada nusgalandy. Indi başga papka geçip «Goý» düwmesine bas.`, "ok");
+};
+
+$("pasteBtn").onclick = () => {
+  if (!clip) { msg("Aralyk ýat boş. Ilki bir obýekti nusgala.", "bad"); return; }
+  const copy = JSON.parse(JSON.stringify(clip));
+  while (here().children.some(n => label(n) === label(copy))) copy.name += " - nusga";
+  here().children.push(copy);
+  if (clip.name === "Ahalteke aty" && here().name === "Tebigat") done.copy = true;
+  sel = null; msg(`«${label(copy)}» şu papka goýuldy.`, "ok"); render();
+};
+
+$("delBtn").onclick = () => {
+  if (sel === null) { msg("Ilki ýok ediljek obýekti saýla.", "bad"); return; }
+  const [n] = here().children.splice(sel, 1);
+  bin.push({ node: n, fromName: here().name });
+  if (label(n) === "Bellikler.txt") done.del = true;
+  sel = null; msg(`«${label(n)}» Sebede düşdi. Ony dikeldip bolýar.`, "ok"); render();
+};
+
+$("restoreBtn").onclick = () => {
+  const i = bin.findIndex(b => b.sel);
+  if (i < 0) { msg("Ilki Sebetden dikeldiljek obýekti saýla.", "bad"); return; }
+  const [b] = bin.splice(i, 1);
+  const back = cwd[0].children.find(n => n.name === b.fromName && n.kind === "folder");
+  (back ? back.children : cwd[0].children).push(b.node);
+  if (label(b.node) === "Bellikler.txt") done.restore = true;
+  msg(`«${label(b.node)}» «${b.fromName}» papkasyna dikeldildi.`, "ok"); render();
+};
+
+render();
+</script>
+</body>
+</html>

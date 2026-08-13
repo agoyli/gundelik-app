@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orta arifmetik baha — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .bars { display: flex; align-items: flex-end; gap: 10px; height: 190px; padding: 8px 6px 0;
+          background: #eef2f8; border-radius: 12px; position: relative; overflow: hidden; }
+  .bar { flex: 1 1 0; background: #7fa6e8; border-radius: 8px 8px 0 0; position: relative;
+         min-width: 26px; cursor: pointer; transition: height .15s; }
+  .bar b { position: absolute; top: -20px; left: 0; right: 0; text-align: center; font-size: 12px;
+           color: #2456b0; }
+  .bar span { position: absolute; bottom: -1px; left: 0; right: 0; text-align: center;
+              font-size: 11px; color: #fff; padding-bottom: 3px; }
+  .avg { position: absolute; left: 0; right: 0; border-top: 3px dashed #e5007d; }
+  .avg i { position: absolute; right: 6px; top: -19px; font-style: normal; font-size: 12px;
+           font-weight: 800; color: #e5007d; background: #eef2f8; padding: 0 4px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Orta arifmetik baha</h1>
+  <div class="sub">Onluk droblary köpeltmek we bölmek · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sütünlere basyp, sanlary üýtget. Gyzyl kese çyzyk – orta arifmetik baha.
+      Ol hemişe iň kiçi bilen iň uly sanyň arasynda ýerleşýär.</div>
+    <div class="bars" id="bars"></div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn" id="add">Sütün goş</button>
+      <button class="btn" id="del">Sütün aýyr</button>
+      <button class="btn ghost" id="rnd">Tötänleýin</button>
+    </div>
+    <div class="calc" id="calc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ortaça tizlik</h3>
+    <div class="goal">Ortaça tizlik ähli ýoluň ähli wagta bölünmegine deňdir – bu iki tizligiň
+      orta arifmetik bahasy däldir.</div>
+    <div class="slider"><span class="lbl">1-nji bölek: wagt</span>
+      <input type="range" id="t1" min="1" max="6" value="2"><span class="out" id="t1o"></span></div>
+    <div class="slider"><span class="lbl">1-nji bölek: tizlik</span>
+      <input type="range" id="v1" min="10" max="120" step="5" value="45">
+      <span class="out" id="v1o"></span></div>
+    <div class="slider"><span class="lbl">2-nji bölek: wagt</span>
+      <input type="range" id="t2" min="1" max="6" value="3"><span class="out" id="t2o"></span></div>
+    <div class="slider"><span class="lbl">2-nji bölek: tizlik</span>
+      <input type="range" id="v2" min="10" max="120" step="5" value="50">
+      <span class="out" id="v2o"></span></div>
+    <div class="calc" id="sp"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Barlag işinde synpyň umumy netijesini bir san bilen aňlatmak üçin bahalaryň
+      <b>orta arifmetik bahasy</b> hasaplanýar. Ol sanlaryň hataryndaky sanlaryň biri
+      bolmazlygy hem mümkin.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §11</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const T = x => (Math.round(x * 100) / 100).toString().replace(".", ",");
+
+/* ---------------- sütünler ---------------- */
+let vals = [3.8, 9.4, 11.1];
+const MAXV = 20;
+function draw() {
+  const mx = Math.max(...vals, 1);
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  $("bars").innerHTML = vals.map((v, i) =>
+    `<div class="bar" data-i="${i}" style="height:${(v / MAXV) * 100}%">
+       <b>${T(v)}</b><span>${i + 1}</span></div>`).join("") +
+    `<div class="avg" style="bottom:${(avg / MAXV) * 100}%"><i>ortaça ${T(avg)}</i></div>`;
+  $("bars").querySelectorAll(".bar").forEach(d => d.onclick = e => {
+    const i = +d.dataset.i;
+    const rect = d.getBoundingClientRect();
+    // basylan ýeriň beýikligine görä täze baha
+    const box = $("bars").getBoundingClientRect();
+    const rel = 1 - (e.clientY - box.top) / box.height;
+    vals[i] = Math.max(0.5, Math.min(MAXV, Math.round(rel * MAXV * 10) / 10));
+    draw();
+  });
+  const sum = vals.reduce((a, b) => a + b, 0);
+  $("calc").innerHTML =
+    `jem: ${vals.map(T).join(" + ")} = <b>${T(sum)}</b><br>` +
+    `sanlaryň sany: <b>${vals.length}</b><br>` +
+    `orta arifmetik baha: ${T(sum)} : ${vals.length} = <b>${T(avg)}</b><br>` +
+    `iň kiçi ${T(Math.min(...vals))} ≤ <b>${T(avg)}</b> ≤ ${T(Math.max(...vals))} iň uly`;
+}
+$("add").onclick = () => { if (vals.length < 8) { vals.push(5); draw(); } };
+$("del").onclick = () => { if (vals.length > 2) { vals.pop(); draw(); } };
+$("rnd").onclick = () => {
+  vals = vals.map(() => Math.round((Math.random() * 17 + 1) * 10) / 10);
+  draw();
+};
+
+/* ---------------- ortaça tizlik ---------------- */
+function speed() {
+  const t1 = +$("t1").value, v1 = +$("v1").value, t2 = +$("t2").value, v2 = +$("v2").value;
+  $("t1o").textContent = t1 + " sag"; $("v1o").textContent = v1 + " km/sag";
+  $("t2o").textContent = t2 + " sag"; $("v2o").textContent = v2 + " km/sag";
+  const s1 = t1 * v1, s2 = t2 * v2, s = s1 + s2, t = t1 + t2;
+  const vavg = s / t, naive = (v1 + v2) / 2;
+  $("sp").innerHTML =
+    `1-nji ýol: ${t1} · ${v1} = <b>${s1} km</b><br>` +
+    `2-nji ýol: ${t2} · ${v2} = <b>${s2} km</b><br>` +
+    `ähli ýol: ${s1} + ${s2} = <b>${s} km</b>, ähli wagt: <b>${t} sag</b><br>` +
+    `ortaça tizlik: ${s} : ${t} = <b>${T(vavg)} km/sag</b><br>` +
+    `tizlikleriň orta arifmetik bahasy bolsa (${v1} + ${v2}) : 2 = ${T(naive)} km/sag – ` +
+    (Math.abs(vavg - naive) < 1e-9
+      ? `wagtlar deň bolany üçin bu gezek gabat geldi.`
+      : `<b>bu nädogrudyr</b>, çünki wagtlar deň däl.`);
+}
+["t1", "v1", "t2", "v2"].forEach(i => $(i).addEventListener("input", speed));
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["0,5 we 1,5 sanlaryň orta arifmetik bahasy", ["0,5", "1", "2", "1,5"], 1],
+  ["2; 4 we 9 sanlaryň orta arifmetik bahasy", ["15", "4", "5", "6"], 2],
+  ["Dört sanyň orta arifmetik bahasy 10 bolsa, jemi näçe?", ["10", "14", "40", "2,5"], 2],
+  ["3,8; 9,4; 11,1 sanlaryň orta arifmetik bahasy", ["8,1", "24,3", "9,4", "7,6"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+draw(); speed();
+</script>
+</body>
+</html>

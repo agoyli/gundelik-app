@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giriş. Kitabyň alty baby — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 15px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Giriş: VII synpyň taryh kitabynyň alty baby</h1>
+  <div class="sub">Türkmenistanyň taryhy · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Kitap <b>alty bapdan</b> ybarat bolup, b.e. öňki IV asyrdan b.e. IX asyryna çenli döwri öz içine alýar.</div>
+    <div class="tbl" style="margin-top:8px">I – Horezm&nbsp;·&nbsp; II – Kuşan&nbsp;·&nbsp; III – Hun&nbsp;·&nbsp; IV – Sasany&nbsp;·&nbsp; V – Afrigi we Eftaly&nbsp;·&nbsp; VI – Beýik Ýüpek ýoly</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy bapda öwrenilýär?</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Wakany degişli babyna görä saýla.</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="b1">I bap</button><button class="btn" data-k="b2">II bap</button><button class="btn" data-k="b3">III bap</button><button class="btn" data-k="b4">IV bap</button><button class="btn" data-k="b5">V bap</button><button class="btn" data-k="b6">VI bap</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Türkmenistanyň taryhy 7 · 7–8-nji sahypalar</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Küýzeligyr, Galalygyr we Toprakgala ýadygärlikleri.", "b1", "Birinji bap Demirgazyk Türkmenistanyň gadymy döwrüne degişli."], ["Kanişkanyň dolandyran ýyllary we Amul şäheri.", "b2", "Ikinji bapda Kuşan döwletiniň düzümindäki ýerler beýan edilýär."], ["Mete han we onuň döwlet özgertmeleri.", "b3", "Üçünji bap Beýik Hun döwletine bagyşlanýar."], ["Merw, Dehistan we Sasanylaryň dolandyryş ulgamy.", "b4", "Dördünji bap – «Günorta Türkmenistan Sasanylar döwleti döwründe»."], ["Hionitler bilen abdallaryň birleşmegi.", "b5", "Bäşinji bapda Afrigiler we Eftalylar döwletleri öwrenilýär."], ["Kerwen ýollary we Daýahatyn kerwensaraýy.", "b6", "Altynjy bap Beýik Ýüpek ýoluna bagyşlanandyr."], ["Kaňly–Arabaly döwletiniň serhetýaka ýerleri.", "b1", "Bu hem birinji babyň mowzugydyr."]];
+var KN = {"b1": "I bap – Demirgazyk Türkmenistan", "b2": "II bap – Kuşan döwleti", "b3": "III bap – Beýik Hun döwleti", "b4": "IV bap – Sasanylar döwleti", "b5": "V bap – Afrigiler we Eftalylar", "b6": "VI bap – Beýik Ýüpek ýoly"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+var Q = [["Kitap näçe bapdan ybarat?", ["6", "3", "9"], 0], ["Üçünji bap haýsy döwlete bagyşlanýar?", ["Beýik Hun döwletine", "Kuşan döwletine", "Sasanylar döwletine"], 0], ["Altynjy bapda näme öwrenilýär?", ["Beýik Ýüpek ýoly", "Horezmiň galalary", "Hun kanunlary"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sütünleýin goşmak — 5-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .cols-grid { display: inline-grid; gap: 4px; font-size: 30px; font-weight: 800; }
+  .cell { width: 46px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+  .cell.carry { font-size: 17px; height: 26px; color: #b25b12; }
+  .cell.cur { background: #fff3d6; outline: 2px solid #ffb340; }
+  .cell.op { color: #2456b0; }
+  .rule { grid-column: 1 / -1; height: 3px; background: #1e2a3a; border-radius: 2px; }
+  .board { display: flex; justify-content: center; padding: 6px 0 12px; }
+  .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .key { padding: 14px 0; border-radius: 12px; font-size: 20px; font-weight: 800; background: #e3edfd; color: #2456b0; }
+  .key:active { background: #cfe0fb; }
+  .razr { font-size: 15px; line-height: 1.7; }
+  .razr b { color: #2456b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sütünleýin goşmak</h1>
+  <div class="sub">Natural sanlary razrýadlaýyn we sütünleýin goşmak · Matematika · 5-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Sütünleýin goşanda razrýadyň birlikleri bir sütünde ýerleşer ýaly ýazmaly. Sagdan çepe — birlikler, onluklar, ýüzlükler...</div>
+    <div class="board"><div class="cols-grid" id="grid"></div></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sifri saýla</h3>
+    <div class="keys" id="keys"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" id="newBtn">Täze mysal</button>
+      <button class="btn ghost" id="hintBtn">Kömek</button>
+    </div>
+    <div class="msg" id="hint"></div>
+  </div>
+
+  <div class="card">
+    <h3>Razrýadlaýyn goşmak</h3>
+    <div class="razr" id="razr"></div>
+    <div class="note">Bir sany razrýadlara dagydyp hem goşup bolýar. Netije birmeňzeş bolmaly!</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 5, I kitap (2017)</div>
+</div>
+
+<script>
+let a, b, digitsA, digitsA2, col, carry, entered, carries, finished;
+
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function newTask() {
+  a = rnd(1000, 8999);
+  b = rnd(1000, 8999);
+  const len = 4;
+  digitsA = String(a).padStart(len, "0").split("").map(Number);
+  digitsA2 = String(b).padStart(len, "0").split("").map(Number);
+  col = len - 1;
+  carry = 0;
+  carries = Array(len).fill(0);
+  entered = Array(len).fill(null);
+  finished = false;
+  msg("");
+  document.getElementById("hint").textContent = "";
+  render();
+  renderRazr();
+}
+
+function msg(t, cls) {
+  const m = document.getElementById("msg");
+  m.textContent = t; m.className = "msg" + (cls ? " " + cls : "");
+}
+
+function render() {
+  const g = document.getElementById("grid");
+  const len = digitsA.length;
+  g.style.gridTemplateColumns = `repeat(${len + 1}, 46px)`;
+  g.innerHTML = "";
+  const add = (txt, cls) => {
+    const d = document.createElement("div");
+    d.className = "cell" + (cls ? " " + cls : "");
+    d.textContent = txt;
+    g.appendChild(d);
+  };
+  // carry row
+  add("", "carry");
+  for (let i = 0; i < len; i++) add(carries[i] ? "1" : "", "carry");
+  // number a
+  add("");
+  digitsA.forEach((d, i) => add(d, i === col && !finished ? "cur" : ""));
+  // number b with +
+  add("+", "op");
+  digitsA2.forEach((d, i) => add(d, i === col && !finished ? "cur" : ""));
+  // line
+  const r = document.createElement("div"); r.className = "rule"; g.appendChild(r);
+  // result
+  add("");
+  const extra = finished && carry ? carry : "";
+  entered.forEach((d, i) => add(d === null ? "·" : d, i === col && !finished ? "cur" : ""));
+  if (extra) {
+    // overwrite first blank cell with leading carry
+    const first = g.children[g.children.length - len - 1];
+    first.textContent = extra;
+    first.className = "cell";
+  }
+}
+
+function renderRazr() {
+  const names = ["müňlük", "ýüzlük", "onluk", "birlik"];
+  const pa = digitsA.map((d, i) => d * Math.pow(10, digitsA.length - 1 - i));
+  const pb = digitsA2.map((d, i) => d * Math.pow(10, digitsA2.length - 1 - i));
+  let html = `<b>${a}</b> = ${pa.filter(x => x).join(" + ")}<br>`;
+  html += `<b>${b}</b> = ${pb.filter(x => x).join(" + ")}<br>`;
+  const parts = pa.map((x, i) => `(${x} + ${pb[i]})`).join(" + ");
+  html += `${a} + ${b} = ${parts}<br>= ${pa.map((x, i) => x + pb[i]).join(" + ")} = <b>${a + b}</b>`;
+  document.getElementById("razr").innerHTML = html;
+}
+
+function press(d) {
+  if (finished) return;
+  const carry0 = carry;
+  const sum = digitsA[col] + digitsA2[col] + carry;
+  const right = sum % 10;
+  if (d !== right) {
+    msg(`${digitsA[col]} + ${digitsA2[col]}${carry ? " + " + carry : ""} = ${sum}. Ýene bir gezek pikirlen!`, "bad");
+    return;
+  }
+  entered[col] = right;
+  const newCarry = Math.floor(sum / 10);
+  if (newCarry && col > 0) carries[col - 1] = 1;
+  carry = newCarry;
+  if (col === 0) {
+    finished = true;
+    render();
+    msg(`Berekella! 🎉 ${a} + ${b} = ${a + b}`, "ok");
+    return;
+  }
+  const shown = `${digitsA[col]} + ${digitsA2[col]}${carry0 ? " + " + carry0 : ""} = ${sum}`;
+  msg(newCarry
+    ? `${shown}. ${right}-ni ýazýarys, 1 onlugy indiki razrýada geçirýäris.`
+    : `${shown}. Dogry!`, "ok");
+  col--;
+  render();
+}
+
+document.getElementById("keys").innerHTML = "";
+for (let d = 0; d <= 9; d++) {
+  const b2 = document.createElement("button");
+  b2.className = "key"; b2.textContent = d;
+  b2.onclick = () => press(d);
+  document.getElementById("keys").appendChild(b2);
+}
+document.getElementById("newBtn").onclick = newTask;
+document.getElementById("hintBtn").onclick = () => {
+  if (finished) return;
+  const sum = digitsA[col] + digitsA2[col] + carry;
+  document.getElementById("hint").innerHTML =
+    `Şu sütünde: ${digitsA[col]} + ${digitsA2[col]}${carry ? " + " + carry + " (geçen razrýad)" : ""} = <b>${sum}</b>. Şonuň birlikleri — ${sum % 10}.`;
+};
+
+newTask();
+</script>
+</body>
+</html>

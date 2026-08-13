@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>“Meňzeşlik” düşünjesi — 1-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pairs button { min-height: 66px; font-size: 14px; }
+  .pairs .em { display: block; font-size: 26px; }
+  .odd { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .odd button { min-height: 70px; font-size: 12.5px; }
+  .odd .em { display: block; font-size: 26px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>“Meňzeşlik” düşünjesi</h1>
+  <div class="sub">Matematika · 1-nji synp</div>
+
+  <div class="card">
+    <div class="def">Meňzeş zatlaryň <b>umumy alamaty</b> bolýar. Şol alamat boýunça olary
+      bir topara ýygnaýarys.</div>
+  </div>
+
+  <div class="card">
+    <h3>Enesi bilen çagasyny tap</h3>
+    <div class="goal">Çep sütünden ene haýwana, soň sag sütünden onuň çagasyna bas.</div>
+    <div class="pairs" id="pairs"></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="score" id="psc"></div>
+    <button class="btn ghost" id="pr" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Artykmaç zady tap</h3>
+    <div class="goal">Bir hatarda üçüsi meňzeş, biri başga. Başgasyna bas.</div>
+    <div class="odd" id="odd"></div>
+    <div class="msg" id="omsg"></div>
+    <div class="row"><button class="btn primary" id="onext">Indiki hatar</button></div>
+    <div class="score" id="osc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 1, I kitap · 12–14-nji sahypalar</div>
+</div>
+
+<script>
+var P = [["Düýe", "🐫", "Köşek", "🐪"], ["Sygyr", "🐄", "Göle", "🐮"],
+         ["Goýun", "🐑", "Guzy", "🐏"], ["Towuk", "🐔", "Jüýje", "🐥"]];
+var psel = null, pdone = 0, pok = 0, taken = [0, 0, 0, 0];
+
+function shuffled() { return [3, 1, 0, 2]; }
+function drawPairs() {
+  var r = shuffled(), h = "";
+  for (var i = 0; i < P.length; i++) {
+    h += '<button class="btn" data-s="L" data-i="' + i + '"' + (taken[i] ? " disabled" : "") +
+      '><span class="em">' + P[i][1] + '</span>' + P[i][0] + '</button>';
+    var j = r[i];
+    h += '<button class="btn" data-s="R" data-i="' + j + '"' + (taken[j] ? " disabled" : "") +
+      '><span class="em">' + P[j][3] + '</span>' + P[j][2] + '</button>';
+  }
+  document.getElementById("pairs").innerHTML = h;
+  var bs = document.getElementById("pairs").getElementsByTagName("button");
+  for (var k = 0; k < bs.length; k++) bs[k].onclick = pclick;
+}
+function pclick() {
+  var s = this.getAttribute("data-s"), i = parseInt(this.getAttribute("data-i"), 10);
+  var m = document.getElementById("pmsg");
+  if (s === "L") {
+    psel = i; m.className = "msg"; m.textContent = P[i][0] + " saýlandy. Indi onuň çagasyna bas.";
+    return;
+  }
+  if (psel === null) { m.className = "msg"; m.textContent = "Ilki ene haýwana bas."; return; }
+  pdone++;
+  if (psel === i) {
+    pok++; taken[i] = 1;
+    m.className = "msg ok"; m.textContent = "Dogry! " + P[i][0] + " – " + P[i][2] + ".";
+  } else {
+    m.className = "msg bad"; m.textContent = P[psel][0] + " bilen " + P[i][2] + " jübüt däl.";
+  }
+  psel = null;
+  document.getElementById("psc").textContent = "Dogry: " + pok + " / " + pdone;
+  drawPairs();
+}
+document.getElementById("pr").onclick = function () {
+  taken = [0, 0, 0, 0]; pdone = 0; pok = 0; psel = null;
+  document.getElementById("psc").textContent = "";
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  drawPairs();
+};
+drawPairs();
+
+var O = [
+  [["Bägül", "🌹"], ["Çigildem", "🌷"], ["Gunçagül", "🌼"], ["Kelem", "🥬"], 3, "Kelem – gök önüm, galanlary gül."],
+  [["Alma", "🍎"], ["Armyt", "🍐"], ["Awtobus", "🚌"], ["Üzüm", "🍇"], 2, "Awtobus – ulag, galanlary miwe."],
+  [["Maşyn", "🚗"], ["Tigir", "🚲"], ["Uçar", "✈️"], ["Kitap", "📕"], 3, "Kitap – ulag däl."],
+  [["Tegelek", "⚪"], ["Kwadrat", "🟦"], ["Üçburçluk", "🔺"], ["Pişik", "🐈"], 3, "Pişik – şekil däl."]
+];
+var oi = 0, odone = 0, ook = 0, olock = 0;
+function drawOdd() {
+  var row = O[oi], h = "";
+  for (var i = 0; i < 4; i++) h += '<button class="btn" data-i="' + i + '"><span class="em">' + row[i][1] + '</span>' + row[i][0] + '</button>';
+  document.getElementById("odd").innerHTML = h;
+  var bs = document.getElementById("odd").getElementsByTagName("button");
+  for (var k = 0; k < bs.length; k++) bs[k].onclick = oclick;
+  olock = 0;
+  document.getElementById("omsg").className = "msg";
+  document.getElementById("omsg").textContent = "";
+}
+function oclick() {
+  if (olock) return;
+  olock = 1; odone++;
+  var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("omsg");
+  if (i === O[oi][4]) { ook++; m.className = "msg ok"; m.textContent = "Dogry! " + O[oi][5]; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. " + O[oi][5]; }
+  document.getElementById("osc").textContent = "Netije: " + ook + " / " + odone;
+}
+document.getElementById("onext").onclick = function () { oi = (oi + 1) % O.length; drawOdd(); };
+drawOdd();
+
+var Q = [
+  ["Köşek haýsy haýwanyň çagasy?", ["Düýäniň", "Goýnuň", "Sygryň"], 0],
+  ["Meňzeş zatlaryň nämesi bar?", ["Umumy alamaty", "Deň bahasy", "Bir ady"], 0],
+  ["Kelem, sogan we pomidor näme boýunça meňzeş?", ["Hemmesi gök önüm", "Hemmesi miwe", "Hemmesi gül"], 0]
+];
+var qd = 0, qok = 0, h = "";
+for (var i = 0; i < Q.length; i++) {
+  h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = h;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var qi = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + qi);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[qi][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[qi][1][Q[qi][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

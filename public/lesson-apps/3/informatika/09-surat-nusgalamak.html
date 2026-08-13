@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suraty nusgalamak we öwürmek — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 14px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 11px;
+               max-width: 100%; height: auto; }
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 7px; }
+  .tools button { min-height: 50px; font-size: 13px; }
+  .grp { margin-top: 10px; }
+  .grp .sub { margin-bottom: 5px; }
+  .clip { background: #f7fafd; border-radius: 11px; padding: 8px 10px; font-size: 13px;
+          margin-top: 8px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Suraty nusgalamak we öwürmek</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Kitap boýunça tertip: <b>1)</b> suraty tapawutlandyrmaly,
+      <b>2)</b> Nusgalamak (Копировать) buýrugyny saýlamaly, <b>3)</b> Goýmak
+      (Вставить) buýrugyny bermeli.</div>
+    <div class="stage" id="st"></div>
+    <div class="clip" id="clip"></div>
+
+    <div class="grp"><div class="sub">Nusgalamak we goýmak:</div>
+      <div class="tools">
+        <button class="btn" data-a="copy">📄 Nusgalamak</button>
+        <button class="btn" data-a="cut">✂️ Kesip almak</button>
+        <button class="btn" data-a="paste">📋 Goýmak</button>
+      </div>
+    </div>
+
+    <div class="grp"><div class="sub">Ölçegini üýtgetmek (Keseligine, %):</div>
+      <div class="tools">
+        <button class="btn" data-a="p50">50 – iki esse kiçelt</button>
+        <button class="btn" data-a="p100">100 – asyl ölçeg</button>
+        <button class="btn" data-a="p200">200 – iki esse ulalt</button>
+      </div>
+    </div>
+
+    <div class="grp"><div class="sub">Öwürmek (Повернуть):</div>
+      <div class="tools">
+        <button class="btn" data-a="r90">↻ 90° saga</button>
+        <button class="btn" data-a="l90">↺ 90° çepe</button>
+        <button class="btn" data-a="r180">⤾ 180°</button>
+      </div>
+    </div>
+
+    <div class="grp"><div class="sub">Serpikdirmek we ýapgytlandyrmak:</div>
+      <div class="tools">
+        <button class="btn" data-a="flipx">↔️ Keseligine serpikdir</button>
+        <button class="btn" data-a="flipy">↕️ Dikligine serpikdir</button>
+        <button class="btn" data-a="skew">📐 Ýapgytlandyr</button>
+        <button class="btn warn" data-a="del">🗑 Ýok et</button>
+        <button class="btn ghost" data-a="reset">🔄 Başdan</button>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const W = 320, H = 220;
+const START = [{x: 70, y: 110, p: 100, fx: 1, fy: 1, rot: 0, sk: 0}];
+let items = JSON.parse(JSON.stringify(START)), sel = 0, buf = null, cutFrom = false;
+
+function shape(it, i) {
+  const s = it.p / 100;
+  const t = `translate(${it.x} ${it.y}) rotate(${it.rot}) skewX(${it.sk}) ` +
+            `scale(${s * it.fx} ${s * it.fy})`;
+  return `<g class="hit" data-i="${i}" transform="${t}" style="cursor:pointer">
+    <polygon points="0,-34 30,26 -30,26" fill="${i === sel ? "#e5007d" : "#2456b0"}"/>
+    <rect x="-8" y="26" width="16" height="20" fill="#8a5a2b"/>
+    <circle cx="0" cy="-40" r="7" fill="#f0a500"/>
+    ${i === sel ? `<rect x="-38" y="-52" width="76" height="104" fill="none" stroke="#e5007d"
+      stroke-width="2" stroke-dasharray="6 4"/>` : ""}
+  </g>`;
+}
+function draw() {
+  $("st").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}"
+    xmlns="http://www.w3.org/2000/svg">${items.map(shape).join("")}</svg>`;
+  $("st").querySelectorAll(".hit").forEach(g => g.onclick = () => {
+    sel = +g.dataset.i; draw();
+    say("Surat tapawutlandyryldy – indi buýruk saýlap bolýar.");
+  });
+  $("clip").innerHTML = buf
+    ? `📋 Alyş-çalyş buferinde surat bar (${cutFrom ? "kesilip alnan" : "nusgalanan"}) – ` +
+      `«Goýmak» düwmesine bas.`
+    : "📋 Alyş-çalyş buferi boş.";
+}
+function say(t, bad) {
+  $("msg").innerHTML = t; $("msg").className = "msg " + (bad ? "bad" : "ok");
+}
+
+document.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+  const a = b.dataset.a;
+  if (a === "reset") {
+    items = JSON.parse(JSON.stringify(START)); sel = 0; buf = null; cutFrom = false;
+    draw(); return say("Başlangyç ýagdaý dikeldildi.");
+  }
+  if (a === "paste") {
+    if (!buf) return say("Buferde surat ýok – ilki nusgala ýa-da kesip al.", true);
+    if (items.length >= 5) return say("Sahypa doldy – ilki birini ýok et.", true);
+    const k = items.length;
+    items.push({...buf, x: 60 + (k % 4) * 62, y: 110});
+    sel = items.length - 1;
+    cutFrom = false;
+    draw();
+    return say("Goýmak (Вставить): surat syçanyň görkezijisiniň duran ýerinde peýda boldy.");
+  }
+  if (!items.length) return say("Surat ýok – «Başdan» diý.", true);
+  const it = items[sel];
+  if (!it) { sel = 0; draw(); return say("Ilki surata basyp, ony tapawutlandyr.", true); }
+
+  if (a === "copy") { buf = {...it}; cutFrom = false;
+    say("Nusgalamak (Копировать): surat alyş-çalyş buferine alyndy. Indi «Goýmak»."); }
+  else if (a === "cut") {
+    buf = {...it}; cutFrom = true; items.splice(sel, 1); sel = 0;
+    say("Kesip almak (Вырезать): surat aýryldy we bufere geçdi. Indi «Goýmak».");
+  }
+  else if (a === "p50") { it.p = 50; say("Keseligine 100-e derek <b>50</b> ýazyldy – " +
+                                        "surat iki esse kiçeldi."); }
+  else if (a === "p100") { it.p = 100; say("Keseligine <b>100</b> – asyl ölçeg."); }
+  else if (a === "p200") { it.p = 200; say("Keseligine 100-e derek <b>200</b> ýazyldy – " +
+                                          "surat iki esse ulaldy."); }
+  else if (a === "r90") { it.rot = (it.rot + 90) % 360; say("90 gradus saga öwrüldi."); }
+  else if (a === "l90") { it.rot = (it.rot + 270) % 360; say("90 gradus çepe öwrüldi."); }
+  else if (a === "r180") { it.rot = (it.rot + 180) % 360; say("180 gradus öwrüldi."); }
+  else if (a === "flipx") { it.fx *= -1; say("Keseligine serpikdirildi – aýnadaky ýaly boldy."); }
+  else if (a === "flipy") { it.fy *= -1; say("Dikligine serpikdirildi – ýokarsy aşak düşdi."); }
+  else if (a === "skew") { it.sk = it.sk ? 0 : 24;
+    say(it.sk ? "Ýapgydy 24 gradus edildi." : "Ýapgyt aýryldy."); }
+  else if (a === "del") { items.splice(sel, 1); sel = 0; say("Surat ýok edildi."); }
+  draw();
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Nusgalamazdan öň näme etmeli?",
+   ["Suraty tapawutlandyrmaly", "Faýly ýapmaly", "Reňki üýtgetmeli"], 0],
+  ["Keseligine setirinde 50 ýazylsa näme bolar?",
+   ["Surat üýtgemez", "Surat iki esse kiçeler", "Surat öwrüler"], 1],
+  ["Kesip almak üçin haýsy buýruk saýlanýar?",
+   ["Goýmak (Вставить)", "Nusgalamak (Копировать)", "Kesip almak (Вырезать)"], 2],
+  ["Suraty öwürmek üçin haýsy düwme gerek?",
+   ["Öwürmek (Повернуть)", "Saklamak", "Sanaw"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+draw();
+</script>
+</body>
+</html>

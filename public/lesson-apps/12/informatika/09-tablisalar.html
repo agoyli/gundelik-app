@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablisalar bilen işlemek — 12-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .brow { border: 2px solid #d6e0ee; border-radius: 12px; background: #fff; padding: 12px;
+          min-height: 140px; overflow-x: auto; }
+  .brow table { border-collapse: separate; }
+  .brow td { cursor: pointer; font-size: 14.5px; min-width: 54px; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: #2456b0;
+          background: #f7fafd; border-radius: 10px; padding: 10px 12px; line-height: 1.7;
+          overflow-x: auto; white-space: pre-wrap; }
+  .sw { width: 40px; height: 40px; border-radius: 9px; border: 2px solid #d6e0ee; padding: 0;
+        cursor: pointer; }
+  .sw.sel { border-color: #2456b0; border-width: 3px; }
+  .lab { font-weight: 800; font-size: 13.5px; color: #5b6b80; margin: 10px 0 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tablisalar bilen işlemek</h1>
+  <div class="sub">&lt;TABLE&gt; · &lt;TR&gt; · &lt;TD&gt; · BORDER · CELLSPACING · 12-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Tablisany gur. Öýjüge bassaň, ol saýlanan reňk bilen boýalýar; ikinji
+      gezek bassaň, öýjük boşadylýar we &amp;nbsp; goýulýar.</div>
+    <div class="slider"><span class="lbl">Setir (TR)</span>
+      <input type="range" id="r" min="1" max="5" value="3"><span class="out" id="ro">3</span></div>
+    <div class="slider"><span class="lbl">Sütün (TD)</span>
+      <input type="range" id="c" min="1" max="5" value="3"><span class="out" id="co">3</span></div>
+    <div class="slider"><span class="lbl">BORDER</span>
+      <input type="range" id="b" min="0" max="10" value="3"><span class="out" id="bo">3</span></div>
+    <div class="slider"><span class="lbl">CELLSPACING</span>
+      <input type="range" id="s" min="0" max="24" value="2"><span class="out" id="so">2</span></div>
+    <div class="slider"><span class="lbl">CELLPADDING</span>
+      <input type="range" id="p" min="0" max="24" value="6"><span class="out" id="po">6</span></div>
+    <div class="lab">Öýjügiň reňki — BGCOLOR</div>
+    <div class="row tight" id="cols"></div>
+    <div class="row tight">
+      <button class="btn ghost" id="fill">Harplar bilen doldur</button>
+      <button class="btn ghost" id="clr">Boşat</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Brauzeriň penjiresi</h3>
+    <div class="brow" id="prev"></div>
+    <div class="code" id="code"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ýumuş</h3>
+    <div class="goal" id="tg"></div>
+    <div class="row">
+      <button class="btn primary" id="chk">Barla</button>
+      <button class="btn" id="nx">Indiki ýumuş</button>
+    </div>
+    <div class="msg" id="tm"></div>
+    <div class="score" id="ts">0 ýumuş ýerine ýetdi</div>
+  </div>
+
+  <div class="card">
+    <div class="note">Boş öýjügiň çarçuwasy görünmeýär. Şonuň üçin oňa aralyk goýýan
+      <b>&amp;nbsp;</b> simwoly ýazylýar. Tablisany diňe sanlar üçin däl, sahypanyň
+      maketini gurmak üçin hem ulanýarlar.</div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika XI (2014), §9</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const LET = "ABCDEFGHIJKLMNOPQRSTUVWXY";
+let cell = {}, color = "#ffe9a8";
+
+["#ffe9a8", "#cfe6ff", "#d8f5dc", "#f7d4d4"].forEach((c, i) => {
+  const b = document.createElement("button");
+  b.className = "sw" + (i ? "" : " sel"); b.style.background = c;
+  b.onclick = () => {
+    color = c;
+    $("cols").querySelectorAll(".sw").forEach(x => x.classList.toggle("sel", x === b));
+  };
+  $("cols").appendChild(b);
+});
+
+function draw() {
+  const R = +$("r").value, C = +$("c").value, B = +$("b").value,
+        S = +$("s").value, P = +$("p").value;
+  ["r", "c", "b", "s", "p"].forEach(i => $(i + "o").textContent = $(i).value);
+
+  const box = $("prev"); box.innerHTML = "";
+  const t = document.createElement("table");
+  t.style.borderSpacing = S + "px";
+  for (let i = 0; i < R; i++) {
+    const tr = document.createElement("tr");
+    for (let j = 0; j < C; j++) {
+      const td = document.createElement("td");
+      const k = i + "," + j, d = cell[k];
+      td.style.border = B ? B + "px outset #9db6dc" : "1px dotted #cfd8e6";
+      td.style.padding = P + "px";
+      td.style.background = d && d.bg ? d.bg : "transparent";
+      td.textContent = d && d.txt ? d.txt : " ";
+      td.onclick = () => {
+        const cu = cell[k];
+        if (cu && cu.bg === color) delete cell[k];
+        else cell[k] = { bg: color, txt: cu ? cu.txt : "" };
+        draw();
+      };
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  box.appendChild(t);
+
+  let code = "<TABLE BORDER=" + B + " CELLSPACING=" + S + " CELLPADDING=" + P + ">\n";
+  for (let i = 0; i < R; i++) {
+    code += "  <TR>";
+    for (let j = 0; j < C; j++) {
+      const d = cell[i + "," + j];
+      code += "<TD" + (d && d.bg ? " BGCOLOR=" + name(d.bg) : "") + ">" +
+              (d && d.txt ? d.txt : "&nbsp;");
+    }
+    code += "\n";
+  }
+  $("code").textContent = code + "</TABLE>";
+}
+function name(c) {
+  return { "#ffe9a8": "yellow", "#cfe6ff": "aqua", "#d8f5dc": "lime", "#f7d4d4": "silver" }[c] || c;
+}
+
+$("fill").onclick = () => {
+  const R = +$("r").value, C = +$("c").value;
+  let n = 0;
+  for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
+    const k = i + "," + j;
+    cell[k] = { bg: cell[k] ? cell[k].bg : "", txt: LET[n++] };
+  }
+  draw();
+};
+$("clr").onclick = () => { cell = {}; draw(); };
+["r", "c", "b", "s", "p"].forEach(i => $(i).oninput = draw);
+
+/* ------------------------------------------------------------------- ýumuşlar */
+function size() { return [+$("r").value, +$("c").value]; }
+const T = [
+  { t: "2 setirli, 2 sütünli, çarçuwasy 1 piksel bolan tablisa gur.",
+    f: () => size()[0] === 2 && size()[1] === 2 && +$("b").value === 1 },
+  { t: "Öýjükleriň arasy 20, içki aralyk 15 piksel bolsun (4-nji çarçuwa bilen).",
+    f: () => +$("s").value === 20 && +$("p").value === 15 && +$("b").value === 4 },
+  { t: "3×3 tablisany harplar bilen doldur.",
+    f: () => size()[0] === 3 && size()[1] === 3 &&
+             Object.keys(cell).filter(k => cell[k].txt).length === 9 },
+  { t: "Iň bolmanda üç öýjügi reňk bilen boýa.",
+    f: () => Object.keys(cell).filter(k => cell[k].bg).length >= 3 },
+  { t: "Çarçuwasyz (BORDER=0) tablisa gur – makete meňzeýär.",
+    f: () => +$("b").value === 0 }
+];
+let ti = 0, td = 0;
+function drawT() { $("tg").textContent = (ti + 1) + ". " + T[ti].t; $("tm").textContent = ""; }
+$("chk").onclick = () => {
+  const ok = T[ti].f();
+  $("tm").className = "msg " + (ok ? "ok" : "bad");
+  if (ok && !T[ti].done) { T[ti].done = 1; td++; }
+  $("tm").textContent = ok ? "Dogry! ✅" : "Entek dogry däl – sazlamalary üýtget.";
+  $("ts").textContent = td + " ýumuş ýerine ýetdi";
+};
+$("nx").onclick = () => { ti = (ti + 1) % T.length; drawT(); };
+
+draw(); drawT();
+</script>
+</body>
+</html>

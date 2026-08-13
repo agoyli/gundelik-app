@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aýna kesgiçler — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .tbl { background: #f7fafd; border-radius: 12px; padding: 11px; font-size: 16px; line-height: 1.9; text-align: center; }
+  .task { background: #fff6e0; border-radius: 13px; padding: 13px; font-size: 16.5px; line-height: 1.6; }
+  .nums { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .nums button { min-height: 46px; font-size: 14px; font-weight: 700; }
+  .kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .kinds button { min-height: 48px; font-size: 15px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Aýna kesgiçler. Penjire aýnalaryny kesmekligiň tilsimleri</h1>
+  <div class="sub">Durmuş zähmeti · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Kesgiçler <b>tigirçekli</b> we <b>piramida şekilli almaz</b> kesgiçli bolýar. Aýna <b>diňe bir gezek</b> çyzylmalydyr.</div>
+    <div class="tbl" style="margin-top:8px">çyzgyç bellikden 3-4 mm daşda &nbsp;|&nbsp; aýna stoluň gyrasyndan 3-5 mm çykarylýar</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy kesgiç?</h3>
+    <div class="task" id="ptask" style="margin-top:8px"></div>
+    <div class="goal">Beýana laýyk kesgiji saýla.</div>
+    <div class="kinds" id="kinds"><button class="btn" data-k="tigirc">tigirçekli kesgiç</button><button class="btn" data-k="almaz">almaz kesgiç</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="row"><button class="btn primary" id="pnext">Indiki</button></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ölçegi we düzgüni saýla</h3>
+    <div class="task" id="task" style="margin-top:8px"></div>
+    <div class="goal">Dogry jogaby saýla.</div>
+    <div class="nums" id="nums"></div>
+    <div class="msg" id="msg"></div>
+    <div class="row"><button class="btn ghost" id="next">Indiki sorag</button></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Durmuş zähmeti 7 · 68–71-nji sahypalar</div>
+</div>
+<script>
+
+// [ýagdaý, dogry açar, düşündiriş]
+var P = [["Çyzýan çyzygy büdür-südür bolýar.", "tigirc", "Tigirçek aýlanyp çyzýar."], ["Kesilende büdür-südür yz galmaýar.", "almaz", "Yzy çala görünmeli."], ["Kesgije pes basyş edilmeli.", "almaz", "Artykmaç basyş aýnany döwýär."], ["Köplenç ulanylýan, öwrenmesi aňsat görnüş.", "tigirc", "Almaz kesgiç köp türgenlik talap edýär."], ["Dörtgyraň goragynyň ujunda almaz bölejigi bar.", "almaz", "Piramida şekilli."], ["Kütelende tigirçegi çalyşmaly.", "tigirc", "Gorag 90° aýlanýar."]];
+var KN = {"tigirc": "tigirçekli aýna kesgiç", "almaz": "piramida şekilli almaz kesgiç"};
+var pi = 0, pd = 0, pok = 0, plock = 0;
+function showP() {
+  document.getElementById("ptask").textContent = P[pi][0];
+  document.getElementById("pmsg").className = "msg";
+  document.getElementById("pmsg").textContent = "";
+  plock = 0;
+}
+var kb = document.getElementById("kinds").getElementsByTagName("button");
+for (var i = 0; i < kb.length; i++) {
+  kb[i].onclick = function () {
+    if (plock) return;
+    plock = 1; pd++;
+    var k = this.getAttribute("data-k"), p = P[pi], m = document.getElementById("pmsg");
+    if (k === p[1]) { pok++; m.className = "msg ok"; m.textContent = "Dogry! " + p[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Bu – " + KN[p[1]] + ". " + p[2]; }
+    document.getElementById("psc").textContent = "Netije: " + pok + " / " + pd;
+  };
+}
+document.getElementById("pnext").onclick = function () { pi = (pi + 1) % P.length; showP(); };
+showP();
+
+// [sorag, jogap, düşündiriş]
+var T = [["Çyzgyç bellikden näçe daşda saklanýar?", "3-4 mm", "Kesgijiň ölçegi hasaba alynýar."], ["Çyzylan aýna stoluň gyrasyndan näçe çykarylýar?", "3-5 mm", "Soň gaňrylýar."], ["Penjire aýnasy erňekden näçe kiçi kesilýär?", "2-3 mm", "Erňegiň içki ölçeginden."], ["Kesgiç näçe metr aýna kesende kütelýär?", "300 m", "Kitapdaky mysal."], ["Aýna näçe gezek çyzylmaly?", "Bir gezek", "Gaýtalanmaly däl."], ["Kütelen kesgijiň goragy näçe öwrülýär?", "90°", "Täze tigirçek işe girýär."]];
+var ti = 0, td = 0, tok = 0, tlock = 0;
+function show() {
+  document.getElementById("task").textContent = T[ti][0];
+  document.getElementById("msg").className = "msg";
+  document.getElementById("msg").textContent = "";
+  tlock = 0;
+}
+var VALS = ["3-4 mm", "3-5 mm", "2-3 mm", "300 m", "Bir gezek", "90°"];
+var h = "";
+for (var i = 0; i < VALS.length; i++) h += '<button class="btn" data-n="' + i + '">' + VALS[i] + "</button>";
+document.getElementById("nums").innerHTML = h;
+var nb = document.getElementById("nums").getElementsByTagName("button");
+for (var i = 0; i < nb.length; i++) {
+  nb[i].onclick = function () {
+    if (tlock) return;
+    tlock = 1; td++;
+    var v = VALS[parseInt(this.getAttribute("data-n"), 10)], t = T[ti], m = document.getElementById("msg");
+    if (v === t[1]) { tok++; m.className = "msg ok"; m.textContent = "Dogry! " + t[2]; }
+    else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogrusy: " + t[1] + ". " + t[2]; }
+    document.getElementById("sc").textContent = "Netije: " + tok + " / " + td;
+  };
+}
+document.getElementById("next").onclick = function () { ti = (ti + 1) % T.length; show(); };
+show();
+
+var Q = [["Aýna näçe gezek çyzylmaly?", ["Bir gezek", "Iki gezek", "Üç gezek"], 0], ["Almaz kesgiçde nähili basyş edilmeli?", ["Tigirçekli kesgijiňkiden pes", "Has güýçli", "Deň"], 0], ["Çyzgyç kesilmeli bellikden näçe daşlykda saklanýar?", ["3-4 mm", "10 mm", "0 mm"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

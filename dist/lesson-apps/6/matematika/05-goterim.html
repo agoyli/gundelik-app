@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Göterim — 6-njy synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .hundred { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; max-width: 300px;
+             margin: 0 auto; }
+  .hundred div { aspect-ratio: 1; background: #e2e9f2; border-radius: 3px; }
+  .hundred div.on { background: #2456b0; }
+  .stage { background: #eef2f8; border-radius: 12px; padding: 12px; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+          background: #f7fafd; border-radius: 11px; padding: 11px; line-height: 1.9; }
+  .calc b { color: #2456b0; }
+  .kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+  .kind { background: #f7fafd; border-radius: 11px; padding: 10px; font-size: 13px;
+          border: 2px solid transparent; cursor: pointer; line-height: 1.6; }
+  .kind.on { border-color: #2456b0; background: #eaf1ff; }
+  .kind b { display: block; color: #2456b0; font-size: 14px; margin-bottom: 4px; }
+  .qa { background: #f7fafd; border-radius: 11px; padding: 10px 12px; margin-bottom: 6px;
+        font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Göterim (prosent)</h1>
+  <div class="sub">Onluk droblary köpeltmek we bölmek · Matematika · 6-njy synp</div>
+
+  <div class="card">
+    <div class="goal">Sanyň ýüzden bir bölegine <b>göterim</b> diýilýär: 1% = 1/100 = 0,01.
+      Aşakdaky 100 öýjük bütini aňladýar.</div>
+    <div class="stage"><div class="hundred" id="h"></div></div>
+    <div class="slider"><span class="lbl">Göterim</span>
+      <input type="range" id="p" min="0" max="100" value="20"><span class="out" id="po"></span></div>
+    <div class="calc" id="pc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Göterime degişli üç esasy mesele</h3>
+    <div class="kinds" id="kinds"></div>
+    <div class="stage" style="margin-top:9px">
+      <div class="slider"><span class="lbl" id="l1"></span>
+        <input type="range" id="a" min="1" max="500" value="30"><span class="out" id="ao"></span></div>
+      <div class="slider"><span class="lbl" id="l2"></span>
+        <input type="range" id="b" min="1" max="100" value="60"><span class="out" id="bo"></span></div>
+    </div>
+    <div class="calc" id="kc" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kitapdaky meseleler</h3>
+    <div class="row tight" id="tasks"></div>
+    <div class="calc" id="task" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Özüňi barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      <b>Prosent</b> sözi latyn dilindäki <b>prosentum</b> – «ýüzlüge» sözünden gelip çykypdyr.
+      1 teňňe 1 manadyň bir göterimidir, 1 sm bolsa metriň bir göterimidir.
+      % belgi 1685-nji ýylda <b>cto</b> ýazgysyndan emele gelipdir.
+    </div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Matematika 6, I kitap (2018), §12</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const T = x => (Math.round(x * 1000) / 1000).toString().replace(".", ",");
+
+/* ---------------- 100 öýjük ---------------- */
+$("h").innerHTML = Array.from({length: 100}, (_, i) => `<div data-i="${i}"></div>`).join("");
+function hund() {
+  const p = +$("p").value;
+  $("po").textContent = p + "%";
+  $("h").querySelectorAll("div").forEach((d, i) => d.classList.toggle("on", i < p));
+  $("pc").innerHTML =
+    `${p}% = <b>${p}/100</b> = <b>${T(p / 100)}</b><br>` +
+    `100 öýjügiň <b>${p}</b> sanysy reňklendi<br>` +
+    `${p === 100 ? "100% bütini aňladýar." :
+      p === 0 ? "0% hiç zady aňlatmaýar." :
+      `bütin 200 bolsa, ${p}%-i ${T(200 * p / 100)} bolar`}`;
+}
+$("p").addEventListener("input", hund);
+
+/* ---------------- üç mesele ---------------- */
+const KINDS = [
+  ["1. Sanyň göterimini tapmak", "Berlen sanyň göterimi näçä deň?", "San", "Göterim"],
+  ["2. Göterimi boýunça sany tapmak", "Göterimi belli bolsa, sanyň özi näçe?", "Bölek", "Göterim"],
+  ["3. Göterim gatnaşygyny tapmak", "Bir san beýlekiniň näçe göterimi?", "Bölek", "Bütin"],
+];
+let k = 0;
+$("kinds").innerHTML = KINDS.map((x, i) =>
+  `<div class="kind ${i ? "" : "on"}" data-i="${i}"><b>${x[0]}</b>${x[1]}</div>`).join("");
+$("kinds").querySelectorAll(".kind").forEach(d => d.onclick = () => {
+  k = +d.dataset.i;
+  $("kinds").querySelectorAll(".kind").forEach(x => x.classList.remove("on"));
+  d.classList.add("on");
+  if (k === 0) { $("a").max = 500; $("a").value = 30; $("b").max = 100; $("b").value = 60; }
+  if (k === 1) { $("a").max = 500; $("a").value = 16; $("b").max = 100; $("b").value = 64; }
+  if (k === 2) { $("a").max = 500; $("a").value = 28; $("b").max = 500; $("b").value = 70; }
+  kind();
+});
+function kind() {
+  const a = +$("a").value, b = +$("b").value;
+  $("l1").textContent = KINDS[k][2]; $("l2").textContent = KINDS[k][3];
+  $("ao").textContent = a; $("bo").textContent = k === 2 ? b : b + "%";
+  if (k === 0) {
+    $("kc").innerHTML =
+      `${a} sanyň bir göterimi: ${a} : 100 = <b>${T(a / 100)}</b><br>` +
+      `${b} göterimi: ${T(a / 100)} · ${b} = <b>${T(a * b / 100)}</b><br>` +
+      `gysgaça: ${a} · ${T(b / 100)} = <b>${T(a * b / 100)}</b>`;
+  } else if (k === 1) {
+    $("kc").innerHTML =
+      `bütiniň bir göterimi: ${a} : ${b} = <b>${T(a / b)}</b><br>` +
+      `bütiniň özi: ${T(a / b)} · 100 = <b>${T(a / b * 100)}</b><br>` +
+      `gysgaça: ${a} : ${T(b / 100)} = <b>${T(a / (b / 100))}</b>`;
+  } else {
+    $("kc").innerHTML =
+      `gatnaşyk: ${a} : ${b} = <b>${T(a / b)}</b><br>` +
+      `göterime öwürmek üçin 100-e köpeltmeli: ${T(a / b)} · 100 = <b>${T(a / b * 100)}%</b>`;
+  }
+}
+["a", "b"].forEach(i => $(i).addEventListener("input", kind));
+
+/* ---------------- kitapdaky meseleler ---------------- */
+const TASKS = [
+  ["Oglanlar", "6-njy «A» synpdaky 30 okuwçynyň 60%-i oglanlar. Oglanlaryň sany näçe?",
+   "30 : 100 = 0,3;  0,3 · 60 = <b>18 oglan</b>"],
+  ["Synp", "16 okuwçy 5-lik baha alyp, olar synpyň 64%-ini düzýär. Synpda näçe okuwçy bar?",
+   "16 : 64 = 0,25;  0,25 · 100 = <b>25 okuwçy</b>"],
+  ["Awaza", "70 okuwçynyň 28-si Awazada dynç aldy. Näçe göterim?",
+   "28 : 70 = 0,4;  0,4 · 100% = <b>40%</b>"],
+  ["Nahal", "1800 nahalyň 85%-i şähere iberildi, olaryň 30%-i seýilgähde ekildi.",
+   "1800 · 0,85 = 1530;  1530 · 0,3 = <b>459 düýp</b>"],
+];
+$("tasks").innerHTML = TASKS.map((t, i) =>
+  `<button class="btn ${i ? "" : "sel"}" data-i="${i}">${t[0]}</button>`).join("");
+$("tasks").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("tasks").querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  const t = TASKS[+b.dataset.i];
+  $("task").innerHTML = `${t[1]}<br>Çözülişi: ${t[2]}`;
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["25% haýsy droba deň?", ["0,025", "2,5", "0,25", "25"], 2],
+  ["230-yň 25%-i", ["57,5", "5,75", "575", "92"], 0],
+  ["Sanyň 15%-i 75 bolsa, san näçe?", ["11,25", "500", "50", "1125"], 1],
+  ["0,806 droby göterim görnüşinde", ["8,06%", "0,806%", "806%", "80,6%"], 3],
+  ["1 teňňe 1 manadyň näçe göterimi?", ["10%", "1%", "100%", "0,1%"], 1],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "Dogry." : `Nädogry. Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam" : "");
+});
+
+hund(); kind();
+$("tasks").querySelector("button").click();
+</script>
+</body>
+</html>

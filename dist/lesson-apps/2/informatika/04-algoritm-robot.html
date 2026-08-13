@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritmleri ýerine ýetirijiler — 2-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .stage { background: #eef2f8; border-radius: 14px; padding: 10px; }
+  .stage svg { display: block; margin: 0 auto; background: #fff; border-radius: 11px;
+               max-width: 100%; height: auto; }
+  .prog { background: #f7fafd; border-radius: 13px; padding: 10px; min-height: 58px;
+          font-family: ui-monospace, Menlo, monospace; font-size: 13.5px; line-height: 1.85; }
+  .prog div { padding: 2px 7px; border-radius: 6px; }
+  .prog div.now { background: #dbe7ff; font-weight: 800; }
+  .prog div.done { color: #1d7a3d; }
+  .prog .cap { color: #2456b0; font-weight: 800; padding-left: 0; }
+  .cmds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .cmds button { min-height: 50px; font-size: 13.5px; }
+  .sys { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 7px; }
+  .sys div { background: #f7fafd; border-radius: 11px; padding: 8px 10px; font-size: 12.5px;
+             font-family: ui-monospace, Menlo, monospace; color: #2456b0; font-weight: 700;
+             text-align: center; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 16px; line-height: 1.6; }
+  .qa .btn { font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Algoritmleri ýerine ýetirijiler</h1>
+  <div class="sub">Informatika · 2-nji synp</div>
+
+  <div class="card">
+    <div class="goal"><b>Ýerine ýetiriji</b> – berilýän buýruklara düşünýän we olary dogry
+      ýerine ýetirmegi başarýan maşyn, adam ýa-da haýwan. Bu ýerde kompýuter ýerine ýetirijisi
+      <b>Transportýor (Daşaýjy konweýer)</b> işleýär.</div>
+    <div class="stage" id="st"></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="task"></span>
+      <span class="badge purple" id="cnt"></span>
+    </div>
+    <div class="prog" id="pg" style="margin-top:9px"></div>
+    <div class="cmds" style="margin-top:9px">
+      <button class="btn" data-c="one">Öňe</button>
+      <button class="btn" data-c="yza">Yza</button>
+      <button class="btn" data-c="cepe">Çepe</button>
+      <button class="btn" data-c="saga">Saga</button>
+      <button class="btn" data-c="yukle">Ýükle</button>
+      <button class="btn" data-c="dusur">Düşür</button>
+      <button class="btn warn" data-c="uc">Uç</button>
+      <button class="btn ghost" id="del">⌫ Aýyr</button>
+      <button class="btn ghost" id="clr">🧹 Arassala</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="run">▶️ Işlet</button>
+      <button class="btn" id="step">👣 Bir ädim</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Transportýoryň buýruklar ulgamy</h3>
+    <div class="sys">
+      <div>Öňe</div><div>Yza</div><div>Çepe</div>
+      <div>Saga</div><div>Ýükle</div><div>Düşür</div>
+    </div>
+    <div class="hint">Her ýerine ýetirijiniň <b>öz buýruklar ulgamy</b> bar. Bu ulgamda
+      <b>ýok</b> buýruk («Uç» ýaly) ýerine ýetirilmeýär – ýerine ýetiriji oňa düşünmeýär.
+      Deňeşdir: türgenleşdirilen it <b>Otur, Ýat, Ses, Golaýda</b> buýruklaryna boýun bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 2-nji synp · III bölüm, sah. 46–54</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const N = 5, CELL = 56;
+const SYS = ["one", "yza", "cepe", "saga", "yukle", "dusur"];
+const TXT = {one: "Öňe", yza: "Yza", cepe: "Çepe", saga: "Saga",
+             yukle: "Ýükle", dusur: "Düşür", uc: "Uç"};
+
+/* ýumuşlar: ýüki alyp, bellenen öýjüge düşürmeli */
+const TASKS = [
+  {start: [4, 0], box: [4, 2], goal: [2, 2], t: "Ýüki al we 🎯 öýjüge düşür"},
+  {start: [4, 4], box: [2, 4], goal: [0, 0], t: "Ýüki al we çep ýokarky öýjüge düşür"},
+  {start: [0, 0], box: [0, 3], goal: [4, 3], t: "Ýüki al we aşaky öýjüge düşür"},
+];
+let ti = 0, prog = [], pos = [4, 0], ptr = 0, carrying = false, box = null, placed = null;
+let solved = false;
+
+function reset() {
+  const T = TASKS[ti];
+  pos = T.start.slice(); box = T.box.slice(); carrying = false; placed = null; ptr = 0;
+  solved = false;
+  draw();
+}
+function draw(msg) {
+  const T = TASKS[ti];
+  let cells = "";
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      cells += `<rect x="${c * CELL}" y="${r * CELL}" width="${CELL}" height="${CELL}"
+        fill="#fff" stroke="#dbe7ff" stroke-width="2"/>`;
+  const g = T.goal;
+  const goalMark = `<rect x="${g[1] * CELL + 6}" y="${g[0] * CELL + 6}" width="${CELL - 12}"
+      height="${CELL - 12}" fill="none" stroke="#1d7a3d" stroke-width="3"
+      stroke-dasharray="6 4"/>
+    <text x="${g[1] * CELL + CELL / 2}" y="${g[0] * CELL + CELL / 2 + 9}" text-anchor="middle"
+      font-size="22">🎯</text>`;
+  const boxMark = (!carrying && box)
+    ? `<rect x="${box[1] * CELL + 12}" y="${box[0] * CELL + 12}" width="${CELL - 24}"
+        height="${CELL - 24}" rx="5" fill="#e0a500"/>` : "";
+  const placedMark = placed
+    ? `<rect x="${placed[1] * CELL + 12}" y="${placed[0] * CELL + 12}" width="${CELL - 24}"
+        height="${CELL - 24}" rx="5" fill="#1d7a3d"/>` : "";
+  const truck = `<g transform="translate(${pos[1] * CELL},${pos[0] * CELL})">
+      <rect x="9" y="26" width="38" height="16" rx="4" fill="#2456b0"/>
+      <rect x="30" y="15" width="17" height="12" rx="3" fill="#5b8ede"/>
+      <circle cx="18" cy="44" r="5" fill="#1e2a3a"/>
+      <circle cx="40" cy="44" r="5" fill="#1e2a3a"/>
+      ${carrying ? `<rect x="12" y="8" width="16" height="16" rx="3" fill="#e0a500"/>` : ""}
+    </g>`;
+  $("st").innerHTML = `<svg viewBox="0 0 ${N * CELL} ${N * CELL}" width="${N * CELL}"
+    xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">
+    ${cells}${goalMark}${boxMark}${placedMark}${truck}</svg>`;
+  $("task").textContent = T.t;
+  $("cnt").textContent = `${prog.length} buýruk` + (carrying ? " · ýük göterilýär" : "");
+  $("pg").innerHTML = `<div class="cap">Başlangyjy</div>` +
+    (prog.length
+      ? prog.map((c, i) =>
+          `<div class="${i < ptr ? "done" : i === ptr ? "now" : ""}">${i + 1}. ${TXT[c]}</div>`
+        ).join("")
+      : "<div style='color:#93a2b5'>programma heniz boş</div>") +
+    `<div class="cap">Soňy</div>`;
+  if (msg !== undefined) { $("msg").textContent = msg.t; $("msg").className = "msg " + msg.c; }
+}
+function exec(c) {
+  if (!SYS.includes(c))
+    return {ok: false, t: `❌ «${TXT[c]}» Transportýoryň buýruklar ulgamynda ýok – ` +
+                          `ýerine ýetiriji oňa düşünmeýär.`};
+  if (c === "yukle") {
+    if (carrying) return {ok: false, t: "❌ Ýük eýýäm göterilýär."};
+    if (!box || box[0] !== pos[0] || box[1] !== pos[1])
+      return {ok: false, t: "❌ Bu öýjükde ýük ýok."};
+    carrying = true; box = null;
+    return {ok: true, t: "Ýük ýüklendi."};
+  }
+  if (c === "dusur") {
+    if (!carrying) return {ok: false, t: "❌ Göterilýän ýük ýok."};
+    carrying = false; placed = pos.slice();
+    return {ok: true, t: "Ýük düşürildi."};
+  }
+  const D = {one: [-1, 0], yza: [1, 0], cepe: [0, -1], saga: [0, 1]}[c];
+  const nr = pos[0] + D[0], nc = pos[1] + D[1];
+  if (nr < 0 || nc < 0 || nr >= N || nc >= N)
+    return {ok: false, t: "❌ Meýdandan çykyp bolmaýar."};
+  pos = [nr, nc];
+  return {ok: true, t: `${TXT[c]} buýrugy ýerine ýetirildi.`};
+}
+function stepOnce() {
+  const T = TASKS[ti];
+  // ýumuş çözülen bolsa, üstünlik habaryny saklaýarys
+  if (solved) return false;
+  if (ptr >= prog.length) { draw({t: "Algoritm gutardy.", c: ""}); return false; }
+  const res = exec(prog[ptr]);
+  ptr++;
+  if (!res.ok) { draw({t: res.t, c: "bad"}); return false; }
+  if (placed && placed[0] === T.goal[0] && placed[1] === T.goal[1]) {
+    solved = true;
+    draw({t: "🎉 Berekella! Ýük maksat öýjügine düşürildi.", c: "ok"});
+    setTimeout(() => {
+      ti = (ti + 1) % TASKS.length;
+      prog = []; reset(); draw({t: "Täze ýumuş berildi.", c: ""});
+    }, 1600);
+    return false;
+  }
+  draw({t: res.t, c: ""});
+  return true;
+}
+document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => {
+  if (prog.length >= 18) return;
+  prog.push(b.dataset.c); ptr = 0; reset();
+  draw({t: "Buýruk goşuldy.", c: ""});
+});
+$("del").onclick = () => { prog.pop(); ptr = 0; reset(); };
+$("clr").onclick = () => { prog = []; ptr = 0; reset(); };
+$("step").onclick = () => stepOnce();
+$("run").onclick = () => {
+  ptr = 0; reset();
+  const t = setInterval(() => { if (!stepOnce()) clearInterval(t); }, 400);
+};
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Ýerine ýetiriji näme?",
+   ["Berilýän buýruklara düşünýän we olary ýerine ýetirýän", "Suratyň bölegi",
+    "Reňkleriň toplumy"], 0],
+  ["Buýruklar ulgamynda ýok buýruk berilse näme bolýar?",
+   ["Ýerine ýetirilýär", "Ýerine ýetirilmeýär", "Kompýuter öçýär"], 1],
+  ["Algoritm haýsy söz bilen tamamlanýar?", ["Başlangyjy", "Buýruk", "Soňy"], 2],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+reset();
+</script>
+</body>
+</html>

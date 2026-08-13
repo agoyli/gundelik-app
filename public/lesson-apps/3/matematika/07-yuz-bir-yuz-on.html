@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>101-den 110-a çenli sanlar — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .big2 { font-size: 34px; font-weight: 800; text-align: center; letter-spacing: 2px; }
+  .cells { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+  .cells div { background: #f7fafd; border-radius: 10px; padding: 9px; font-size: 15.5px; font-weight: 700; }
+  .cells .hd { background: #e3edfd; font-size: 13.5px; color: #33506f; }
+  .pads { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .pads button { min-height: 46px; font-size: 17px; font-weight: 700; }
+  .seq { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .seq button { min-height: 48px; font-size: 17px; font-weight: 700; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>101-den 110-a çenli sanlar</h1>
+  <div class="sub">Matematika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="def">Üçbelgili sanda <b>I öýjük</b> birlikleri, <b>II öýjük</b> onluklary, <b>III öýjük</b> ýüzlükleri görkezýär. 101 – bu 1 ýüzlük we 1 birlik.</div>
+  </div>
+
+  <div class="card">
+    <h3>Düzümini tap</h3>
+    <div class="big2" id="num"></div>
+    <div class="cells" id="cells"></div>
+    <div class="goal" id="ask" style="margin-top:8px"></div>
+    <div class="pads" id="pads"></div>
+    <div class="msg" id="dmsg"></div>
+    <div class="row"><button class="btn primary" id="dnext">Indiki san</button></div>
+    <div class="score" id="dsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Yzygiderligi dowam etdir</h3>
+    <div class="goal" id="sgoal"></div>
+    <div class="seq" id="seq"></div>
+    <div class="msg" id="smsg"></div>
+    <div class="row"><button class="btn ghost" id="snext">Indiki hatar</button></div>
+    <div class="score" id="ssc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Matematika 3, I kitap · 125–126-njy sahypalar</div>
+</div>
+
+<script>
+var NUM = [105, 103, 107, 110, 101, 109];
+var STEP = 1;
+var ni = 0, stage = 0, dd = 0, dok = 0;
+function hun() { return Math.floor(NUM[ni] / 100); }
+function ten() { return Math.floor(NUM[ni] / 10) % 10; }
+function one() { return NUM[ni] % 10; }
+function show() {
+  document.getElementById("num").textContent = NUM[ni];
+  var h = '<div class="hd">ýüzlük</div><div class="hd">onluk</div><div class="hd">birlik</div>';
+  h += "<div>" + (stage >= 1 ? hun() : "?") + "</div>";
+  h += "<div>" + (stage >= 2 ? ten() : "?") + "</div>";
+  h += "<div>" + (stage >= 3 ? one() : "?") + "</div>";
+  document.getElementById("cells").innerHTML = h;
+  var asks = ["Bu sanda näçe ýüzlük bar?", "Bu sanda näçe onluk bar?",
+              "Bu sanda näçe birlik bar?", "Düzümi doly tapyldy."];
+  document.getElementById("ask").textContent = asks[stage];
+  var m = document.getElementById("dmsg");
+  m.className = stage === 3 ? "msg ok" : "msg";
+  m.textContent = stage === 3 ?
+    (NUM[ni] + " = " + (hun() * 100) + " + " + (ten() * 10) + " + " + one() + ".") : "";
+}
+var h = "";
+for (var i = 0; i <= 9; i++) h += '<button class="btn" data-n="' + i + '">' + i + "</button>";
+document.getElementById("pads").innerHTML = h;
+var pb = document.getElementById("pads").getElementsByTagName("button");
+for (var i = 0; i < pb.length; i++) {
+  pb[i].onclick = function () {
+    if (stage >= 3) return;
+    var v = parseInt(this.getAttribute("data-n"), 10), m = document.getElementById("dmsg");
+    var w = stage === 0 ? hun() : (stage === 1 ? ten() : one());
+    dd++;
+    if (v === w) {
+      dok++; stage++; show();
+      if (stage < 3) { m.className = "msg ok"; m.textContent = "Dogry! Indiki öýjüge geç."; }
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Ýalňyş. Sanyň öýjüklerine ünsli seret.";
+    }
+    document.getElementById("dsc").textContent = "Netije: " + dok + " / " + dd;
+  };
+}
+document.getElementById("dnext").onclick = function () { ni = (ni + 1) % NUM.length; stage = 0; show(); };
+show();
+
+var START = [101, 104, 106];
+var si = 0, sd = 0, sok = 0, slock = 0;
+function showS() {
+  var a = START[si];
+  document.getElementById("sgoal").textContent =
+    a + ", " + (a + STEP) + ", " + (a + 2 * STEP) + ", … Indiki san haýsy?";
+  var right = a + 3 * STEP;
+  var arr = [right, right + STEP, right - STEP, right + 2 * STEP];
+  if (si % 2 === 1) arr.reverse();
+  var h2 = "";
+  for (var k = 0; k < arr.length; k++) h2 += '<button class="btn" data-n="' + arr[k] + '">' + arr[k] + "</button>";
+  document.getElementById("seq").innerHTML = h2;
+  var bs = document.getElementById("seq").getElementsByTagName("button");
+  for (var j = 0; j < bs.length; j++) bs[j].onclick = sclick;
+  document.getElementById("smsg").className = "msg";
+  document.getElementById("smsg").textContent = "";
+  slock = 0;
+}
+function sclick() {
+  if (slock) return;
+  slock = 1; sd++;
+  var v = parseInt(this.getAttribute("data-n"), 10), right = START[si] + 3 * STEP;
+  var m = document.getElementById("smsg");
+  if (v === right) { sok++; m.className = "msg ok"; m.textContent = "Dogry! Her gezek " + STEP + " artýar."; }
+  else { m.className = "msg bad"; m.textContent = "Ýalňyş. Dogry jogap: " + right + "."; }
+  document.getElementById("ssc").textContent = "Netije: " + sok + " / " + sd;
+}
+document.getElementById("snext").onclick = function () { si = (si + 1) % START.length; showS(); };
+showS();
+
+var Q = [["103 sany nämeden durýar?", ["1 ýüzlük we 3 birlik", "3 ýüzlük we 1 birlik", "1 onluk we 3 birlik"], 0],["109-dan soň haýsy san gelýär?", ["110", "108", "119"], 0],["Üçbelgili sanda çepdäki belgi nämäni görkezýär?", ["Ýüzlükleri", "Birlikleri", "Onluklary"], 0]];
+var qd = 0, qok = 0, hh = "";
+for (var i = 0; i < Q.length; i++) {
+  hh += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+  for (var j = 0; j < Q[i][1].length; j++) hh += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+  hh += '</div><div class="msg" id="qm' + i + '"></div></div>';
+}
+document.getElementById("quiz").innerHTML = hh;
+var qb = document.getElementById("quiz").getElementsByTagName("button");
+for (var i = 0; i < qb.length; i++) {
+  qb[i].onclick = function () {
+    var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+    var m = document.getElementById("qm" + k);
+    if (m.getAttribute("data-done")) return;
+    m.setAttribute("data-done", "1"); qd++;
+    if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+    else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+    document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+  };
+}
+</script>
+</body>
+</html>

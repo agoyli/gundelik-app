@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maglumat prosesleri — 4-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .four { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .four div { background: #f7fafd; border-radius: 13px; padding: 10px; font-size: 13px;
+              line-height: 1.5; }
+  .four b { color: #2456b0; display: block; font-size: 14.5px; margin-bottom: 3px; }
+  .four .em { font-size: 22px; }
+  .pool { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pool button { min-height: 58px; font-size: 13.5px; line-height: 1.35; text-align: left;
+                 padding: 10px; }
+  .bins { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .bin { background: #f7fafd; border-radius: 12px; padding: 9px; min-height: 74px; }
+  .bin h4 { margin: 0 0 5px; font-size: 13px; }
+  .bin span { display: block; background: #fff; border-radius: 8px; padding: 5px 8px;
+              font-size: 12.5px; margin-bottom: 4px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maglumat prosesleri</h1>
+  <div class="sub">Informatika · 4-nji synp</div>
+
+  <div class="card">
+    <h3>Dört esasy iş</h3>
+    <div class="four">
+      <div><span class="em">📤</span><b>Geçirmek</b>Maglumaty bir ýerden başga ýere ibermek.</div>
+      <div><span class="em">⚙️</span><b>Işläp taýýarlamak</b>Maglumaty üýtgedip, täze netije almak.</div>
+      <div><span class="em">💾</span><b>Saklamak</b>Maglumaty soň ulanmak üçin ýazyp goýmak.</div>
+      <div><span class="em">🔍</span><b>Gözlemek</b>Gerekli maglumaty tapmak.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Çeşme we kabul ediji</h3>
+    <div class="goal">Kitap: «Maglumaty geçirmekde hemişe <b>maglumat çeşmesi</b> hem-de
+      <b>kabul ediji</b> bolýar.» Her ýagdaýda çeşmäni saýla.</div>
+    <div id="src"></div>
+    <div class="score" id="ssc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Maglumat nähili saklanýar?</h3>
+    <div class="goal">Kitap: «Maglumat <b>ýazgy, grafika, ses we wideo</b> görnüşinde
+      saklanýar.»</div>
+    <div class="four">
+      <div><span class="em">📝</span><b>Ýazgy</b>Kitaplarda, žurnallarda, golýazmalarda.</div>
+      <div><span class="em">🖼</span><b>Grafika</b>Gaýalardaky şekiller, suratlar, çyzgylar.</div>
+      <div><span class="em">🔊</span><b>Ses</b>Kino lentalarynda, kassetalarda, lazer disklerinde.</div>
+      <div><span class="em">🎬</span><b>Wideo</b>Multfilmler, çeper filmler, gepleşikler.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Mysaly dogry prosese goý</h3>
+    <div class="pool" id="pool"></div>
+    <div class="bins">
+      <div class="bin"><h4 style="color:#2456b0">📤 Geçirmek</h4><div id="b1"></div></div>
+      <div class="bin"><h4 style="color:#1d7a3d">⚙️ Işläp taýýarlamak</h4><div id="b2"></div></div>
+      <div class="bin"><h4 style="color:#b25b12">💾 Saklamak</h4><div id="b3"></div></div>
+      <div class="bin"><h4 style="color:#6a4bb8">🔍 Gözlemek</h4><div id="b4"></div></div>
+    </div>
+    <div class="msg" id="bmsg"></div>
+    <div class="score" id="bsc"></div>
+    <button class="btn ghost" id="br" style="margin-top:8px">Täzeden</button>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 4-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const ITEMS = [
+  ["Hat ibermek", 1], ["Telefonda gürleşmek", 1], ["Radio diňlemek", 1],
+  ["Sanlary goşup jem tapmak", 2], ["Suraty reňklemek", 2], ["Ýazgyny bezemek", 2],
+  ["Faýly diske ýazmak", 3], ["Depdere bellemek", 3], ["Fleş göterijä geçirip goýmak", 3],
+  ["Kitaphanadan kitap tapmak", 4], ["Internetde jogap gözlemek", 4],
+];
+const BIN = {1: "b1", 2: "b2", 3: "b3", 4: "b4"};
+const NAME = {1: "geçirmek", 2: "işläp taýýarlamak", 3: "saklamak", 4: "gözlemek"};
+let left = [], done = 0, right = 0, pick = null;
+
+function bins() {
+  left = ITEMS.map((_, i) => i);
+  ["b1", "b2", "b3", "b4"].forEach(k => $(k).innerHTML = "");
+  done = 0; right = 0; pick = null;
+  $("bmsg").textContent = ""; $("bmsg").className = "msg";
+  $("bsc").textContent = "";
+  pool();
+}
+function pool() {
+  $("pool").innerHTML = left.map(i =>
+    `<button class="btn ${pick === i ? "sel" : ""}" data-i="${i}">${ITEMS[i][0]}</button>`
+  ).join("") || "<span class='hint' style='margin:0'>Ählisi ýerleşdirildi 🎉</span>";
+  $("pool").querySelectorAll("button").forEach(b => b.onclick = () => {
+    pick = +b.dataset.i;
+    $("bmsg").textContent = "Indi aşakdaky sütünleriň birine bas.";
+    $("bmsg").className = "msg";
+    pool();
+  });
+}
+document.querySelectorAll(".bin").forEach((el, k) => el.onclick = () => {
+  if (pick === null) {
+    $("bmsg").textContent = "Ilki ýokardaky mysala bas.";
+    $("bmsg").className = "msg bad";
+    return;
+  }
+  const [txt, kind] = ITEMS[pick];
+  const chosen = k + 1;
+  const good = chosen === kind;
+  done++; if (good) right++;
+  $(BIN[kind]).innerHTML += `<span>${txt}</span>`;
+  left = left.filter(x => x !== pick);
+  pick = null;
+  $("bmsg").textContent = good
+    ? `✅ Dogry! «${txt}» – bu ${NAME[kind]}.`
+    : `❌ Beýle däl. «${txt}» – bu ${NAME[kind]}, ol öz sütünine goýuldy.`;
+  $("bmsg").className = "msg " + (good ? "ok" : "bad");
+  $("bsc").textContent = `${right} / ${done}`;
+  pool();
+});
+$("br").onclick = bins;
+
+/* ---------------- çeşme we kabul ediji (sah. 19–21) ---------------- */
+const SRC = [
+  ["Agşam teleýaýlymda gyzykly filmiň görkeziljekdigini oglanlar aýtdylar.",
+   ["Oglanlar", "Telewizor", "Kitap"], 0,
+   "Kitapdaky mysal: maglumat çeşmesi – oglanlar we gepleşikleriň tertibi."],
+  ["Dükanda kassada size çek berdiler, siz kalkulýatorda hasapladyňyz.",
+   ["Kalkulýator", "Dükanyň çegi", "Syçan"], 1,
+   "Çek – maglumat çeşmesi, kalkulýator bolsa maglumaty işläp taýýarlaýar."],
+  ["Ene agtygyndan gelen haty okaýar.",
+   ["Ene", "Hat", "Poçta"], 1,
+   "Hat – çeşme, ony okaýan ene bolsa kabul edijidir."],
+  ["Ýol gözegçisi pyýadalaryň hereketini sazlaýar.",
+   ["Ýol gözegçisi", "Ulag", "Pyýada"], 0,
+   "Gözegçiniň el hereketleri – maglumat çeşmesi."],
+];
+let sd = 0, sr = 0;
+$("src").innerHTML = SRC.map((c, i) =>
+  `<div class="qa"><b>${i + 1}. ${c[0]}</b><div class="row tight" style="margin-top:6px">` +
+  c[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="se${i}"></div></div>`).join("");
+$("src").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("se" + i).textContent) return;
+  const good = +b.dataset.j === SRC[i][2];
+  b.classList.add("sel");
+  $("se" + i).textContent = (good ? "✅ Dogry. " : `❌ Çeşme: ${SRC[i][1][SRC[i][2]]}. `) +
+    SRC[i][3];
+  sd++; if (good) sr++;
+  $("ssc").textContent = `${sr} / ${sd}` + (sd === SRC.length ? " – tamam 🎉" : "");
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Hat ibermek haýsy proses?", ["Geçirmek", "Saklamak", "Gözlemek"], 0],
+  ["Maglumat näçe görnüşde saklanýar?", ["Iki", "Dört", "Alty"], 1],
+  ["Faýly çalt tapmak üçin nirä ýazmaly?",
+   ["Sebede", "Ýarlyga", "Baş menýudaky gözleg setirine"], 2],
+  ["Maglumaty geçirmekde näme hökman bolýar?",
+   ["Çeşme we kabul ediji", "Diňe kompýuter", "Diňe printer"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+bins();
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formatlaşdyrmak — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+         background: #eef2f8; border-radius: 11px; padding: 8px; }
+  .bar select { border: 1px solid #d6e0ee; border-radius: 8px; padding: 8px 9px; font-size: 14px;
+                background: #fff; min-height: 40px; }
+  .bar .sw { width: 34px; height: 34px; border-radius: 8px; border: 2px solid #fff;
+             box-shadow: 0 0 0 1px #d6e0ee; cursor: pointer; padding: 0; }
+  .bar .sw.on { box-shadow: 0 0 0 3px #2456b0; }
+  .page { background: #fff; border: 2px solid #d6e0ee; border-radius: 11px; padding: 16px 18px;
+          min-height: 118px; }
+  .page p { margin: 0 0 9px; }
+  .ruler { position: relative; height: 22px; background: #f7fafd; border: 1px solid #d6e0ee;
+           border-radius: 7px; margin-bottom: 6px; }
+  .ruler i { position: absolute; top: 2px; width: 0; height: 0; border-left: 7px solid transparent;
+             border-right: 7px solid transparent; border-top: 10px solid #2456b0; }
+  .ruler u { position: absolute; top: 0; bottom: 0; width: 1px; background: #d6e0ee; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .al { background: #f7fafd; border-radius: 11px; padding: 9px; font-size: 12px; cursor: pointer;
+        border: 2px solid transparent; }
+  .al.on { border-color: #2456b0; background: #eaf1ff; }
+  .al b { display: block; font-size: 13.5px; color: #2456b0; margin-bottom: 5px; }
+  .al span { display: block; height: 4px; background: #b9c8dc; border-radius: 3px; margin: 3px 0; }
+  .inv { background: #fff; border: 2px solid #d6e0ee; border-radius: 11px; padding: 18px;
+         text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Simwollary we abzaslary formatlaşdyrmak</h1>
+  <div class="sub">Tekst informasiýalary bilen işlemek · Informatika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Tekstiň <b>görnüşiniň</b> üýtgemegine formatlaşdyrmak diýilýär.
+      Ilki formatlaşdyryljak bölegi tapawutlandyrmaly, soňra gurallar panelinden sazlamaly.</div>
+    <div class="bar">
+      <select id="font">
+        <option value="Times New Roman, serif">Times New Roman</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="Courier New, monospace">Courier New</option>
+      </select>
+      <select id="size">
+        <option>10</option><option>12</option><option selected>14</option>
+        <option>18</option><option>24</option><option>36</option>
+      </select>
+      <button class="btn" id="b" style="font-weight:800">Ж</button>
+      <button class="btn" id="i" style="font-style:italic">К</button>
+      <button class="btn" id="u" style="text-decoration:underline">Ч</button>
+      <span style="font-size:12.5px;color:#5b6b80">reňk:</span>
+      <button class="sw" data-c="#1e2a3a" style="background:#1e2a3a"></button>
+      <button class="sw" data-c="#c62828" style="background:#c62828"></button>
+      <button class="sw" data-c="#2456b0" style="background:#2456b0"></button>
+      <button class="sw" data-c="#2e7d32" style="background:#2e7d32"></button>
+      <button class="sw" data-c="#6a4bb8" style="background:#6a4bb8"></button>
+    </div>
+    <div class="row tight" style="margin-top:8px">
+      <span style="font-size:12.5px;color:#5b6b80">deňlemek:</span>
+      <button class="btn" data-a="left">Çepden</button>
+      <button class="btn" data-a="center">Merkez</button>
+      <button class="btn" data-a="right">Sagdan</button>
+      <button class="btn" data-a="justify">Iki gyra</button>
+    </div>
+    <div class="slider"><span class="lbl">Birinji setiriň boş ýeri</span>
+      <input type="range" id="ind" min="0" max="3" step="0.25" value="1.25">
+      <span class="out" id="indo"></span></div>
+    <div class="ruler" id="ruler"></div>
+    <div class="page"><p id="p1">Türkmenistan – Beýik Ýüpek ýolunyň ýüregi. Biziň ata Watanymyz
+      gadymy ýurtdur. Onuň topragyndan geçen kerwen ýollary Gündogar bilen Günbatary
+      birleşdiripdir.</p></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge info" id="st"></span>
+      <button class="btn ghost" id="rst">Adaty görnüşe getir</button>
+    </div>
+    <div class="hint">Ж – ýarym goýy (полужирный), К – kursiw, Ч – aşagy çyzylan.
+      Adaty ýazylyşda üç düwmäniň hem hiç biri basylan däldir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Deňlemegiň dört görnüşi</h3>
+    <div class="cards" id="al"></div>
+    <div class="msg" id="amsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Çakylyk hatyny beze</h3>
+    <div class="goal">Sözbaşy merkez boýunça, uly we ýarym goýy; esasy tekst çepden deňlenen
+      bolmaly. Düwmelere basyp, dogry bezegi tap.</div>
+    <div class="inv">
+      <div id="ih" style="margin-bottom:9px">Çakylyk haty</div>
+      <div id="ib">Seni 15-nji sentýabrda sagat 10:00-da mekdebimizde geçiriljek
+        «Bilimler güni» dabarasyna çagyrýarys.</div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="v1">Sözbaşy: 24 pt, ýarym goýy, merkez</button>
+      <button class="btn" id="v2">Sözbaşy: 12 pt, adaty, sagdan</button>
+      <button class="btn ghost" id="v0">Arassala</button>
+    </div>
+    <div class="msg" id="imsg"></div>
+  </div>
+
+  <div class="footer">Okuw kitaby: Informatika 7 (2019)</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const dec = x => x.toFixed(2).replace(".", ",");
+
+/* ---------------- format paneli ---------------- */
+const S = {b: false, i: false, u: false, c: "#1e2a3a", a: "left"};
+function apply() {
+  const p = $("p1");
+  p.style.fontFamily = $("font").value;
+  p.style.fontSize = $("size").value + "px";
+  p.style.fontWeight = S.b ? "800" : "400";
+  p.style.fontStyle = S.i ? "italic" : "normal";
+  p.style.textDecoration = S.u ? "underline" : "none";
+  p.style.color = S.c;
+  p.style.textAlign = S.a;
+  const ind = +$("ind").value;
+  p.style.textIndent = ind + "cm";
+  $("indo").textContent = dec(ind) + " sm";
+  ["b", "i", "u"].forEach(k => $(k).classList.toggle("sel", S[k]));
+  document.querySelectorAll(".sw").forEach(s => s.classList.toggle("on", s.dataset.c === S.c));
+  document.querySelectorAll("[data-a]").forEach(s => s.classList.toggle("sel", s.dataset.a === S.a));
+  const names = {left: "çepden", center: "merkez boýunça", right: "sagdan", justify: "iki gyra boýunça"};
+  const st = [S.b && "ýarym goýy", S.i && "kursiw", S.u && "aşagy çyzylan"].filter(Boolean);
+  $("st").textContent =
+    `${$("font").selectedOptions[0].text}, ${$("size").value} pt, ` +
+    `${st.length ? st.join(" + ") : "adaty"}, ${names[S.a]}, boş ýer ${dec(ind)} sm`;
+  ruler(ind);
+}
+function ruler(ind) {
+  const cm = 37.8;
+  let h = "";
+  for (let x = 0; x < 12; x++) h += `<u style="left:${x * cm}px"></u>`;
+  h += `<i style="left:${ind * cm - 7}px"></i>`;
+  $("ruler").innerHTML = h;
+}
+["font", "size"].forEach(k => $(k).addEventListener("change", apply));
+["b", "i", "u"].forEach(k => $(k).onclick = () => { S[k] = !S[k]; apply(); });
+document.querySelectorAll(".sw").forEach(s => s.onclick = () => { S.c = s.dataset.c; apply(); });
+document.querySelectorAll("[data-a]").forEach(s => s.onclick = () => { S.a = s.dataset.a; apply(); });
+$("ind").addEventListener("input", apply);
+$("rst").onclick = () => {
+  S.b = S.i = S.u = false; S.c = "#1e2a3a"; S.a = "left";
+  $("font").value = "Times New Roman, serif"; $("size").value = "14"; $("ind").value = "1.25";
+  apply();
+};
+
+/* ---------------- deňlemek ---------------- */
+const AL = [
+  ["Çepden", "left", "Setirleriň çep gyrasy deň, sag gyrasy dürli-dürli."],
+  ["Merkez boýunça", "center", "Setirler ortada durýar. Sözbaşylar üçin amatly."],
+  ["Sagdan", "right", "Setirleriň sag gyrasy deň. Sene, gol üçin ulanylýar."],
+  ["Iki gyra boýunça", "justify", "Iki gyra hem deň – sözleriň arasy giňelýär."]
+];
+$("al").innerHTML = AL.map((a, i) => {
+  const bars = {left: [100, 78, 92, 46], center: [100, 78, 92, 46],
+                right: [100, 78, 92, 46], justify: [100, 100, 100, 46]};
+  const mg = {left: "0 auto 0 0", center: "0 auto", right: "0 0 0 auto", justify: "0 auto 0 0"};
+  return `<div class="al" data-i="${i}"><b>${a[0]}</b>` +
+    bars[a[1]].map(w => `<span style="width:${w}%;margin:${mg[a[1]]}"></span>`).join("") +
+    `<div style="margin-top:6px;color:#5b6b80">${a[2]}</div></div>`;
+}).join("");
+$("al").querySelectorAll(".al").forEach(d => d.onclick = () => {
+  const a = AL[+d.dataset.i];
+  $("al").querySelectorAll(".al").forEach(x => x.classList.remove("on"));
+  d.classList.add("on");
+  S.a = a[1]; apply();
+  $("amsg").textContent = `Ýokardaky abzas «${a[0]}» görnüşinde deňlenildi.`;
+  $("amsg").className = "msg ok";
+});
+
+/* ---------------- çakylyk ---------------- */
+function inv(good) {
+  if (good) {
+    $("ih").style.cssText = "font-size:24px;font-weight:800;text-align:center;margin-bottom:9px";
+    $("ib").style.cssText = "font-size:14px;text-align:left";
+    $("imsg").textContent = "Dogry: sözbaşy merkezde we ýarym goýy, esasy tekst çepden deňlenen.";
+    $("imsg").className = "msg ok";
+  } else {
+    $("ih").style.cssText = "font-size:12px;font-weight:400;text-align:right;margin-bottom:9px";
+    $("ib").style.cssText = "font-size:14px;text-align:left";
+    $("imsg").textContent = "Sözbaşy esasy tekstden kiçi galdy we sag gyra süýşdi – çakylyk üçin amatsyz.";
+    $("imsg").className = "msg bad";
+  }
+}
+$("v1").onclick = () => inv(true);
+$("v2").onclick = () => inv(false);
+$("v0").onclick = () => {
+  $("ih").style.cssText = "margin-bottom:9px"; $("ib").style.cssText = "";
+  $("imsg").textContent = ""; $("imsg").className = "msg";
+};
+
+apply();
+</script>
+</body>
+</html>

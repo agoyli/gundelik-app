@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atmosfera basyşy — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Atmosfera basyşy</h1>
+  <div class="sub">Fizika · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ýeri gurşap alan howa gatlagynyň Ýeriň üstüne edýän basyşyna atmosfera basyşy diýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Magdeburg ýarym şarlary</h3>
+    <div class="goal">Howany sorup gör-de, atlary goş: şarlary aýryp bolýarmy?</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Otto Gerikäniň tejribesinde her tarapa 8 at goşup hem aýryp bolmandyr.</div>
+  </div>
+
+  <div class="card">
+    <h3>Atmosferanyň düzümi</h3>
+    <div class="goal">Bölege degip, howanyň düzümini gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 180"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 7 · 11-nji tema</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["Howany sor", "sor", false], ["Sekiz at goş", "atlar", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { 
+        var stuck = st.sor;
+        var gap = (st.atlar && !st.sor) ? 46 : 2;
+        var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+        s += '<path d="M' + (160 - gap / 2) + ' 60 A 36 36 0 0 0 ' + (160 - gap / 2) +
+             ' 132 Z" fill="#cdebd6" stroke="#4a6b39" stroke-width="2"/>';
+        s += '<path d="M' + (160 + gap / 2) + ' 60 A 36 36 0 0 1 ' + (160 + gap / 2) +
+             ' 132 Z" fill="#cdebd6" stroke="#4a6b39" stroke-width="2"/>';
+        if (st.sor) for (var k = 0; k < 10; k++) {
+          var a = k * Math.PI / 5;
+          s += '<line x1="' + (160 + 44 * Math.cos(a)).toFixed(1) + '" y1="' + (96 + 40 * Math.sin(a)).toFixed(1) +
+               '" x2="' + (160 + 34 * Math.cos(a)).toFixed(1) + '" y2="' + (96 + 30 * Math.sin(a)).toFixed(1) +
+               '" stroke="#c0392b" stroke-width="2.5"/>';
+        }
+        if (st.atlar) {
+          s += '<line x1="' + (160 - gap / 2 - 26) + '" y1="96" x2="30" y2="96" stroke="#7a5a2a" stroke-width="4"/>';
+          s += '<line x1="' + (160 + gap / 2 + 26) + '" y1="96" x2="290" y2="96" stroke="#7a5a2a" stroke-width="4"/>';
+          s += '<text x="30" y="86" font-size="10" fill="#5a4420">8 at</text>';
+          s += '<text x="266" y="86" font-size="10" fill="#5a4420">8 at</text>';
+        }
+        s += '<text x="160" y="168" font-size="11" fill="#23381a" text-anchor="middle">' +
+             (st.sor ? 'içi howasyz – daşdan atmosfera basýar' : 'içi howaly') + '</text>';
+        return s;
+       }
+  function readout(st) { 
+        if (st.sor && st.atlar) return '<b>Aýryp bolmady.</b> Içi howasyz şarlary atmosfera basyşy gysyp saklaýar.';
+        if (st.sor) return 'Howa sorulyp aýryldy. Indi atlary goşup gör.';
+        if (st.atlar) return '<b>Aňsat aýryldy.</b> Içerki howanyň basyşy daşarkyny deňleşdirýär.';
+        return 'Ilki howany sor, soňra atlary goş.';
+       }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var SP = [["azot 78%", "M30 24 H290 V126 H30 Z", 160, 78, "Howanyň iň köp bölegi – azot, 78 göterim."], ["kislorod 21%", "M30 126 H290 V154 H30 Z", 160, 143, "Dem alşymyz üçin gerek gaz – 21 göterim."], ["beýleki gazlar 1%", "M30 154 H290 V168 H30 Z", 160, 164, "Kömürturşy gaz, argon we beýlekiler – 1 göterim."]], SW = 320, SH = 180;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["Howanyň näçe göterimi azot?", ["78%", "21%", "50%"], 0], ["Magdeburg şarlaryny näçe at aýryp bilmändir?", ["Her tarapa 8", "Her tarapa 2", "Her tarapa 20"], 0], ["Ýokary galdygyňça atmosfera basyşy?", ["Azalýar", "Artýar", "Üýtgemeýär"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

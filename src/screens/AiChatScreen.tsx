@@ -44,13 +44,13 @@ function Bubble({ m }: { m: AiMsg }) {
   const mine = m.role === 'user';
   return (
     <Box sx={{
-      maxWidth: '86%', p: '10px 13px', fontSize: 14.5, lineHeight: 1.5,
+      maxWidth: '86%', p: '10px 13px', fontSize: 15, lineHeight: 1.5,
       alignSelf: mine ? 'flex-end' : 'flex-start',
-      bgcolor: mine ? tokens.blue : tokens.surface,
+      bgcolor: mine ? tokens.blueSolid : tokens.surface,
       color: mine ? '#fff' : tokens.ink,
       borderRadius: mine
-        ? `${tokens.rRow}px ${tokens.rRow}px 4px ${tokens.rRow}px`
-        : `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px 4px`,
+        ? `${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px ${tokens.rRow}px`
+        : `${tokens.rRow}px ${tokens.rRow}px ${tokens.rRow}px ${tokens.rChip}px`,
     }}>{m.text}</Box>
   );
 }
@@ -123,7 +123,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
               width: 56, height: 56, borderRadius: '50%', mx: 'auto', bgcolor: '#fff',
               display: 'grid', placeItems: 'center', color: tokens.blue,
             }}><SparkleIcon size={28} /></Box>
-            <Typography sx={{ fontSize: 19, fontWeight: 700, mt: '14px', color: tokens.ink }}>
+            <Typography sx={{ fontSize: 20, fontWeight: 700, mt: '14px', color: tokens.ink }}>
               Akylly mugallym 24/7
             </Typography>
             <Typography sx={{ fontSize: 14, color: tokens.ink2, mt: '6px', lineHeight: 1.5 }}>
@@ -133,9 +133,9 @@ export function AiChatScreen({ onBack, onUpgrade }: {
           </Box>
           <Box sx={{ pt: '14px' }}>
             <TeaserCard
-              title={`${plan?.name} nyrhnamada açylýar`}
-              note="Çäksiz soraglar, sapak boýunça düşündirişler we söhbet taryhy."
-              cta="Nyrhnamalara geç"
+              title="Akylly mugallym ýapyk"
+              note={`Çäksiz soraglar, sapak boýunça düşündirişler we söhbet taryhy — ${plan?.name} bilen açylýar.`}
+              feature="ai"
               onUpgrade={onUpgrade}
             />
           </Box>
@@ -216,7 +216,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
-            sx={{ flex: 1, fontSize: 14.5 }}
+            sx={{ flex: 1, fontSize: 15 }}
             inputProps={{ 'aria-label': 'Akylly mugallyma sorag' }}
           />
           <ButtonBase
@@ -281,7 +281,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
                   >
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography noWrap sx={{
-                        fontSize: 14.5, fontWeight: 600,
+                        fontSize: 15, fontWeight: 600,
                         color: c.title ? tokens.ink : tokens.ink3,
                       }}>
                         {c.title ?? 'Täze söhbet'}

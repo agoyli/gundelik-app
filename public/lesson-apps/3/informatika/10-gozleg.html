@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internetde maglumat gözlegi — 3-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .br { background: #eef2f8; border-radius: 14px; padding: 9px; }
+  .sbar { display: flex; gap: 6px; }
+  .sbar input { flex: 1; border: 2px solid #d6e0ee; border-radius: 10px; padding: 10px 12px;
+                font-size: 15px; outline: none; }
+  .sbar input:focus { border-color: #2456b0; }
+  .res { background: #fff; border-radius: 11px; padding: 10px; margin-top: 9px;
+         min-height: 120px; }
+  .res .hit { border-bottom: 1px solid #eef2f8; padding: 9px 0; }
+  .res .hit:last-child { border-bottom: none; }
+  .res .t { color: #2456b0; font-weight: 700; font-size: 14.5px; }
+  .res .u { color: #1d7a3d; font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .res .d { color: #5b6b80; font-size: 13px; line-height: 1.5; margin-top: 2px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px;
+        font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Internetde maglumat gözlegi</h1>
+  <div class="sub">Informatika · 3-nji synp</div>
+
+  <div class="card">
+    <div class="goal">Kitap: «Internetiň sahypasyny açmak we gözleg sahypasynda eseriň
+      adyny ýazmak ýeterlik.» Söz näçe anyk bolsa, netije şonça az we dogry bolýar.</div>
+    <div class="br">
+      <div class="sbar">
+        <input id="q1" placeholder="näme gözleýärsiň?" value="haýwan">
+        <button class="btn primary" id="go">🔍 Gözle</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="res" id="res"></div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Öňki döwür we häzir</h3>
+    <div class="qa"><b>📚 Öňler</b><br>Maglumatlar <b>kitaphanalardan we arhiwlerden</b>
+      gözlenýärdi. Oňa birnäçe sagat, kä halatlarda birnäçe günler gerek bolýardy.</div>
+    <div class="qa"><b>🌐 Häzir</b><br>Internetiň kömegi bilen gözleg aňsatlaşdy.
+      <b>Birnäçe sekundyň</b> dowamynda eseriň awtory barada, eser barada maglumat we
+      eseriň özüni alyp bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Haýsy açar söz has gowy?</h3>
+    <div id="pick"></div>
+    <div class="score" id="psc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="q"></div>
+    <div class="score" id="sc"></div>
+  </div>
+
+  <div class="card">
+    <div class="note">
+      Internetde tapylan her maglumat dogry bolmaýar. Şonuň üçin ony <b>başga bir ynamly
+      çeşmeden</b> hem barlamaly.
+    </div>
+  </div>
+
+  <div class="footer">Informatikanyň esaslary · 3-nji synp</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const DB = [
+  {t: "Türkmen alabaýy – wepaly it", u: "haywanlar.tm/alabay",
+   k: ["haýwan", "it", "alabaý", "türkmen alabaýy"],
+   d: "Alabaý – Türkmenistanyň milli tohum iti. Ol güýçli we wepalydyr."},
+  {t: "Ahalteke aty", u: "haywanlar.tm/at",
+   k: ["haýwan", "at", "ahalteke"],
+   d: "Ahalteke aty owadanlygy we ýyndamlygy bilen tanalýar."},
+  {t: "Düýe – çölüň gämisi", u: "haywanlar.tm/duye",
+   k: ["haýwan", "düýe"],
+   d: "Düýe suwsuz uzak ýol geçip bilýär."},
+  {t: "Haýwanlar dünýäsi", u: "ensiklopediya.tm/haywanlar",
+   k: ["haýwan"],
+   d: "Dünýädäki haýwanlaryň toparlary barada umumy maglumat."},
+  {t: "Öý haýwanlary", u: "ensiklopediya.tm/oy-haywanlary",
+   k: ["haýwan", "it", "pişik"],
+   d: "Adamyň ýanynda ýaşaýan haýwanlar barada."},
+  {t: "Alabaýyň taryhy", u: "taryh.tm/alabay",
+   k: ["alabaý", "türkmen alabaýy", "taryh"],
+   d: "Alabaý tohumynyň müňýyllyklara uzaýan taryhy."},
+  {t: "«Nurynyň galamy» – goşgy", u: "kitaphana.tm/nurynyn-galamy",
+   k: ["nurynyň galamy", "goşgy", "agageldi allanazarow"],
+   d: "Awtory: Agageldi Allanazarow. Goşgynyň doly tekstini şu ýerden okap bolýar."},
+  {t: "Agageldi Allanazarow barada", u: "kitaphana.tm/awtorlar/allanazarow",
+   k: ["agageldi allanazarow", "awtor", "ýazyjy"],
+   d: "Ýazyjynyň ömri we eserleri barada maglumat."},
+];
+const CHIPS = ["haýwan", "it", "türkmen alabaýy", "düýe", "Nurynyň galamy"];
+
+function search(qq) {
+  const s = qq.trim().toLowerCase();
+  if (!s) { $("res").innerHTML = "<span style='color:#93a2b5'>Açar söz ýaz.</span>";
+    $("msg").textContent = ""; return; }
+  const hits = DB.filter(x => x.k.some(k => k.includes(s) || s.includes(k)));
+  $("res").innerHTML = hits.length
+    ? hits.map(h => `<div class="hit"><div class="t">${h.t}</div>
+        <div class="u">${h.u}</div><div class="d">${h.d}</div></div>`).join("")
+    : "<span style='color:#b4232a'>Hiç zat tapylmady – başga söz synanyş.</span>";
+  $("msg").innerHTML = hits.length
+    ? `«${qq}» sözi boýunça <b>${hits.length}</b> netije tapyldy. ` +
+      (hits.length > 3 ? "Netije köp – açar sözi anyklaşdyr." : "Netije az we anyk – gowy açar söz!")
+    : "";
+  $("msg").className = "msg " + (hits.length > 3 ? "" : hits.length ? "ok" : "bad");
+}
+$("go").onclick = () => search($("q1").value);
+$("q1").addEventListener("keydown", e => { if (e.key === "Enter") search($("q1").value); });
+$("chips").innerHTML = CHIPS.map(c => `<button class="btn" data-c="${c}">${c}</button>`).join("");
+$("chips").querySelectorAll("button").forEach(b => b.onclick = () => {
+  $("q1").value = b.dataset.c; search(b.dataset.c);
+});
+
+/* ---------------- haýsy söz gowy ---------------- */
+const P = [
+  ["Alabaý iti barada maglumat gerek.", ["haýwan", "türkmen alabaýy"], 1],
+  ["Ahalteke aty barada maglumat gerek.", ["ahalteke", "zat"], 0],
+  ["Düýe barada maglumat gerek.", ["jandar", "düýe"], 1],
+];
+let pd = 0, pr = 0;
+$("pick").innerHTML = P.map((p, i) =>
+  `<div class="qa"><b>${i + 1}. ${p[0]}</b><div class="row tight" style="margin-top:6px">` +
+  p[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="pe${i}"></div></div>`).join("");
+$("pick").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("pe" + i).textContent) return;
+  const good = +b.dataset.j === P[i][2];
+  b.classList.add("sel");
+  $("pe" + i).textContent = good
+    ? "✅ Dogry – anyk söz gerekli netijäni çalt tapýar."
+    : `❌ Has anygy: «${P[i][1][P[i][2]]}».`;
+  pd++; if (good) pr++;
+  $("psc").textContent = `${pr} / ${pd}` + (pd === P.length ? " – tamam 🎉" : "");
+});
+
+/* ---------------- test ---------------- */
+const Q = [
+  ["Öňki döwürde maglumat nireden gözlenýärdi?",
+   ["Kitaphanalardan we arhiwlerden", "Telewizordan", "Sebetden"], 0],
+  ["Internetde gözleg näçe wagt alýar?", ["Birnäçe gün", "Birnäçe sekunt", "Bir hepde"], 1],
+  ["Gözleg sahypasynda näme ýazmaly?",
+   ["Faýlyň ölçegini", "Kompýuteriň adyny", "Eseriň adyny"], 2],
+  ["Internetden eser barada näme alyp bolýar?",
+   ["Awtory, maglumaty we eseriň özüni", "Diňe bahasyny", "Diňe suratyny"], 0],
+];
+let d = 0, r = 0;
+$("q").innerHTML = Q.map((q, i) =>
+  `<div class="qa"><b>${i + 1}. ${q[0]}</b><div class="row tight" style="margin-top:6px">` +
+  q[1].map((o, j) => `<button class="btn" data-i="${i}" data-j="${j}">${o}</button>`).join("") +
+  `</div><div class="expl" id="e${i}"></div></div>`).join("");
+$("q").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const i = +b.dataset.i;
+  if ($("e" + i).textContent) return;
+  const good = +b.dataset.j === Q[i][2];
+  b.classList.add("sel");
+  $("e" + i).textContent = good ? "✅ Dogry!" : `❌ Dogry jogap: ${Q[i][1][Q[i][2]]}.`;
+  d++; if (good) r++;
+  $("sc").textContent = `${r} / ${d}` + (d === Q.length ? " – tamam 🎉" : "");
+});
+
+search("haýwan");
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Derýaýaka toparlanmalary — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Derýaýaka toparlanmalary</h1>
+  <div class="sub">Biologiýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Derýaýaka ösümlik toparlanmalary çöl toparlanmalaryndan ösümlikleriň gür we ösgün ýerleşmegi bilen tapawutlanýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Kenardan çöle çenli</h3>
+    <div class="goal">Zolaga degip, ondaky ösümlikleri gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 190"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Kenary suw aldy</h3>
+    <div class="goal">Suw almany we goraghana düzgünini işlet – toparlanma nähili üýtgeýär?</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Derýaýaka toparlanmalary Amyderýa döwlet tebigy goraghanasynda goralýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Biologiýa 7 · 7-nji tema</div>
+</div>
+<script>
+
+var SP = [["derýa", "M12 96 H72 V172 H12 Z", 42, 136, "Suw – bütin toparlanmanyň esasy şerti."], ["ýekenli-gamyşlyk", "M72 84 H140 V172 H72 Z", 106, 130, "Gargy gamyş, sübse we ýeken – kenar suw alanda söwütlik şoňa öwrülýär."], ["söwütlik", "M140 60 H208 V172 H140 Z", 174, 118, "Söwüt tokaýlygynda gargy gamyş, sübse we ýeken hem ösýär."], ["igdelik", "M208 48 H272 V172 H208 Z", 240, 112, "Arassa igde toparlanmasynyň düzümine ösümlikleriň 15–25 görnüşi girýär."], ["çöl", "M272 120 H308 V172 H272 Z", 290, 148, "Çöl toparlanmasynda ösümlikler seýrek we pes ýerleşýär."]], SW = 320, SH = 190;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+(function () {
+  var SW = [["Kenary suw aldy", "suw", false], ["Goraghana düzgüni", "gorag", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { 
+        var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+        s += '<rect x="0" y="' + (st.suw ? 108 : 138) + '" width="320" height="' + (st.suw ? 82 : 52) +
+             '" fill="#bcd7ee"/>';
+        var n = st.gorag ? 9 : 5;
+        for (var i = 0; i < n; i++) {
+          var x = 26 + i * (268 / n);
+          if (st.suw) {
+            s += '<line x1="' + x.toFixed(1) + '" y1="108" x2="' + (x - 4).toFixed(1) +
+                 '" y2="64" stroke="#6f9a4a" stroke-width="3"/>';
+            s += '<ellipse cx="' + (x - 4).toFixed(1) + '" cy="60" rx="4" ry="9" fill="#9c8a3a"/>';
+          } else {
+            s += '<rect x="' + (x - 3).toFixed(1) + '" y="96" width="6" height="42" fill="#8a6a34"/>';
+            s += '<ellipse cx="' + x.toFixed(1) + '" cy="88" rx="17" ry="13" fill="#4f8f3a" stroke="#2f5a22" stroke-width="1.5"/>';
+          }
+        }
+        s += '<text x="160" y="24" font-size="11" fill="#23381a" text-anchor="middle">' +
+             (st.suw ? 'ýekenli-gamyşlyk' : 'söwütlik') + (st.gorag ? ' · goralýar' : '') + '</text>';
+        return s;
+       }
+  function readout(st) { 
+        var r = st.suw ? '<b>Kenar yzygiderli suw alanda söwütlik ýekenli-gamyşlyga öwrülýär.</b>' :
+                         '<b>Kenarda söwüt tokaýlygy ösýär.</b>';
+        r += '<br>' + (st.gorag ? 'Goraghana düzgüninde ösümlikler gürelýär; «Ösümlik dünýäsi hakynda» Kanun olary goraýar.' :
+                                  'Gorag ýok – toparlanma seýrekleýär.');
+        return r;
+       }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var Q = [["Igde toparlanmasynda näçe görnüş bar?", ["15–25", "150", "2"], 0], ["Kenar suw alanda söwütlik nämä öwrülýär?", ["Ýekenli-gamyşlyga", "Çöle", "Igdelige"], 0], ["Türkmenistan biologik dürlülik konwensiýasyna haçan goşuldy?", ["1996-njy ýylda", "1886-njy ýylda", "2016-njy ýylda"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>
