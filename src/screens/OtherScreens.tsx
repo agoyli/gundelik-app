@@ -2,8 +2,8 @@ import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/materi
 import { useMemo, useState } from 'react';
 import {
   BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon,
-  GearIcon, HistoryIcon, LayersIcon, LockIcon, QuestionIcon, QuestionOutlineIcon, QuizIcon,
-  StarIcon, TargetIcon, TrophyIcon, WalletIcon,
+  GameIcon, GearIcon, HistoryIcon, LayersIcon, LockIcon, QuestionIcon, QuestionOutlineIcon,
+  QuizIcon, SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
   DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav, PillHeader,
@@ -11,18 +11,21 @@ import {
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
 import { AdSlot, LockedPreview, TeaserCard } from '../components/Paywall';
-import { BANK_TOTAL, RATING, SAPAK_SUBJECTS, TEST_SUBJECTS } from '../data/guides';
-import { USER_GRADE, subjectBySlug } from '../data/curriculum';
+import { RATING } from '../data/guides';
+import { bankTotal, playCount, testSubjects } from '../data/library';
+import { USER_GRADE, pathTotal, subjectBySlug } from '../data/curriculum';
 import type { CurriculumSubject } from '../data/curriculum';
 import { fmtRange } from '../lib/date';
 import { capitalise, ordinal } from '../lib/tm';
-import type { TestItem, TestSubject } from '../data/guides';
+import type { TestItem, TestSubject } from '../data/library';
 import { PLAN, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
+import { AiChatScreen } from './AiChatScreen';
 import { TestDetailScreen, TestSubjectScreen } from './DetailScreens';
 import { ReferralScreen } from './ReferralScreen';
 import { CareerTestScreen, careerDreamLabel, careerRowValue } from './CareerTestScreen';
 import { SPECIALITIES } from '../data/career';
 import { useCareerResult } from '../state/career';
+import { PlayScreen } from './PlayScreens';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
 import {
@@ -501,9 +504,19 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
 /* Six sections, paired the way the user reads them:
    Sapaklar + Kartlar (learn) / Testler + Bäsleşikler (prove) / Oýunlar + Kitaphana (explore) */
 const GUIDE_TILES: { id: SectionId; label: string; sub: string; icon: React.ReactNode }[] = [
-  { id: 'sapaklar', label: 'Sapaklar', sub: `${SAPAK_SUBJECTS.length} ders`, icon: <LayersIcon size={26} /> },
-  { id: 'kartlar', label: 'Öwrediji kartlar', sub: `${BANK_TOTAL.cards} kart`, icon: <CardsIcon size={26} /> },
-  { id: 'testler', label: 'Testler', sub: `${BANK_TOTAL.tests} test`, icon: <BigCheckIcon size={26} /> },
+  { id: 'sapaklar', label: 'Sapaklar', sub: `${pathTotal()} sapak`, icon: <LayersIcon size={26} /> },
+  /* Interaktiw sapaklar is the interactives on their own — the same stops the
+     paths hold, indexed by activity. It earns a tile the way Testler and Kartlar
+     do: it is a body of real material (766 mini-apps), not the four invented
+     arcade games that used to sit here and were rightly pushed under the topics.
+     It stays next to Sapaklar, because it is the same material read another way. */
+  { id: 'gonukmeler', label: 'Interaktiw sapaklar', sub: `${playCount()} sapak`, icon: <GameIcon size={26} /> },
+  /* The helper belongs with the other ways of studying, not only inside a
+     lesson: a question comes up over homework, away from the page that raised
+     it, and this is where a student comes looking. */
+  { id: 'ai', label: 'Akylly mugallym', sub: 'Islendik sorag — 24/7', icon: <SparkleIcon size={26} /> },
+  { id: 'kartlar', label: 'Öwrediji kartlar', sub: `${bankTotal().cards} kart`, icon: <CardsIcon size={26} /> },
+  { id: 'testler', label: 'Testler', sub: `${bankTotal().tests} test`, icon: <BigCheckIcon size={26} /> },
   { id: 'basleshikler', label: 'Bäsleşikler', sub: '1 dowam edýär', icon: <TrophyIcon size={26} /> },
   { id: 'kitaphana', label: 'Kitaphana', sub: '4 kitap', icon: <BooksIcon size={26} /> },
 ];
@@ -561,7 +574,7 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
           <Box sx={{ pt: '16px' }}>
             <TeaserCard
               title="Testler ýapyk"
-              note={`${BANK_TOTAL.tests} test, ${BANK_TOTAL.questions} sowal taýýar — ${plan?.name} bilen açylýar.`}
+              note={`${bankTotal().tests} test, ${bankTotal().questions} sowal taýýar — ${plan?.name} bilen açylýar.`}
               feature="tests"
               onUpgrade={onUpgrade}
             />
@@ -573,7 +586,7 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
             and it clipped its last subject off the right edge besides. */}
         <SectionHeading title="Dersler" action={<TagPill label="Ähli" onClick={() => toast('Ähli dersler tiz wagtda')} />} />
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {TEST_SUBJECTS.map((s) => {
+          {testSubjects().map((s) => {
             /* what the bank holds for this subject, counted from the tests */
             const questions = s.tests.reduce((n, t) => n + t.questions, 0);
             return (
@@ -623,11 +636,12 @@ function TestlerFlow({ onBack, toast, onUpgrade }: {
   return <TestlerSubScreen onBack={onBack} toast={toast} onOpenSubject={setSubject} onUpgrade={onUpgrade} />;
 }
 
-/* Oýunlar is not one of these any more. A game is a way of practising a
-   topic, not a sixth kind of resource, and as its own tile it sat as far from
-   the topic it drills as it is possible to get. It is reached from Sapaklar,
-   where the topic is. */
-type SectionId = 'sapaklar' | 'kartlar' | 'testler' | 'basleshikler' | 'kitaphana';
+/* The invented "Oýunlar" — four arcade drills with invented leaderboards — is
+   gone. What took its place, Interaktiw sapaklar, is the curriculum's own
+   interactives,
+   and it is reachable from both ends: its own tile here, and the strip under
+   the subjects in Sapaklar, where the topic it drills is. */
+type SectionId = 'sapaklar' | 'gonukmeler' | 'ai' | 'kartlar' | 'testler' | 'basleshikler' | 'kitaphana';
 type GuideView = 'grid' | SectionId | 'roadmap' | 'upgrade' | 'bellikler';
 
 export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
@@ -635,6 +649,12 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   /* which subject's path is open — every subject has one now, so the roadmap is
      no longer the Algebra page with a general name */
   const [subject, setSubject] = useState<CurriculumSubject | null>(null);
+  /* the grade the subject list was filtered to when the path was opened */
+  const [openGrade, setOpenGrade] = useState<number | undefined>(undefined);
+  /* where Interaktiw sapaklar should open: the grade the reader was filtered to (null is
+     "Ählisi", undefined is "they came in by the tile"), and the subject they
+     tapped, if any */
+  const [play, setPlay] = useState<{ grade: number | null; groupId?: string } | null>(null);
   const back = () => setView('grid');
   /* where the paywall sends people from anywhere inside this tab */
   const upgrade = () => setView('upgrade');
@@ -643,7 +663,22 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   if (view === 'roadmap' && subject) {
     return (
       <RoadmapScreen
-        subject={subject} onBack={() => setView('sapaklar')} toast={toast} onUpgrade={upgrade}
+        subject={subject}
+        /* opened from a grade filter — the path starts where the reader was
+           looking, not at the subject's first year */
+        openAt={openGrade}
+        onBack={() => setView('sapaklar')} toast={toast} onUpgrade={upgrade}
+      />
+    );
+  }
+  if (view === 'gonukmeler') {
+    return (
+      <PlayScreen
+        startGrade={play?.grade}
+        startGroupId={play?.groupId}
+        /* back goes where you came from: the tile, or the subject list */
+        onBack={() => setView(play ? 'sapaklar' : 'grid')}
+        onUpgrade={upgrade}
       />
     );
   }
@@ -653,15 +688,21 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
         onBack={back}
         toast={toast}
         onUpgrade={upgrade}
-        onOpenSubject={(id: string) => {
+        onOpenPlay={(grade?: number, groupId?: string) => {
+          setPlay({ grade: grade ?? null, groupId });
+          setView('gonukmeler');
+        }}
+        onOpenSubject={(id: string, grade?: number) => {
           const s = subjectBySlug(id);
           if (!s) { toast('Bu ders tiz wagtda elýeterli bolar'); return; }
           setSubject(s);
+          setOpenGrade(grade);
           setView('roadmap');
         }}
       />
     );
   }
+  if (view === 'ai') return <AiChatScreen onBack={back} onUpgrade={upgrade} />;
   if (view === 'kartlar') return <KartlarScreen onBack={back} toast={toast} onUpgrade={upgrade} />;
   if (view === 'basleshikler') return <BaslesiklerScreen onBack={back} toast={toast} />;
   if (view === 'kitaphana') return <KitaphanaScreen onBack={back} toast={toast} />;
@@ -681,8 +722,25 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
         )}
       />
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', px: tokens.gutter, pt: '6px' }}>
-        {GUIDE_TILES.map((t) => (
-          <GridTile key={t.id} icon={t.icon} label={t.label} sub={t.sub} onClick={() => setView(t.id)} />
+        {GUIDE_TILES.map((t, i) => (
+          <Box
+            key={t.id}
+            sx={{
+              display: 'grid',
+              /* an odd number of tiles would leave the last one half-width beside
+                 a hole; it takes the whole row instead */
+              gridColumn: i === GUIDE_TILES.length - 1 && GUIDE_TILES.length % 2 ? 'span 2' : undefined,
+            }}
+          >
+            <GridTile
+              icon={t.icon} label={t.label} sub={t.sub}
+              onClick={() => {
+                /* arriving by the tile is arriving with no filter in hand */
+                if (t.id === 'gonukmeler') setPlay(null);
+                setView(t.id);
+              }}
+            />
+          </Box>
         ))}
       </Box>
       <Box sx={{ px: tokens.gutter, pt: '14px' }}>

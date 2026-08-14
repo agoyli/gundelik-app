@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Логическое ударение — 8 класс</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ударение и смысл предложения</h1>
+  <div class="sub">Русский язык · 8 класс</div>
+
+  <div class="card">
+    <div class="def">Передвинь ударение — изменится смысл.</div>
+  </div>
+
+  <div class="card">
+    <h3>Куда падает ударение</h3>
+    <div class="goal">Передвинь ползунок.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 180"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="1" max="4" step="1" value="1">
+    <div class="info" id="siro1"></div>
+    <div class="note">Такое выделение члена предложения называется логическим ударением.</div>
+  </div>
+
+  <div class="card">
+    <h3>Найди ударное слово</h3>
+    <div class="goal">Нажми на слово, которое отвечает на вопрос «что сделал?».</div>
+    <div class="chips" id="mwords"></div>
+    <div class="info" id="mline"></div>
+    <div class="row"><button class="btn primary" id="mcheck">Проверь</button>
+      <button class="btn ghost" id="mclear">Очистить</button></div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Проверь себя</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Русский язык 8 (Л. Сатулина, М. Халназаров), Ашхабад 2020 — по учебнику.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var k = v;
+var w = ['Худайназаров', 'написал', 'стихотворение', 'о Родине'];
+var s = '<rect x="0" y="0" width="320" height="180" fill="#f7fafd"/>';
+for (var i = 0; i < 4; i++) {
+  var on = (i === k - 1), y = 26 + i * 38;
+  s += '<rect x="26" y="' + y + '" width="268" height="30" rx="5" fill="' +
+       (on ? '#2456b0' : '#e8eef7') + '"/>';
+  s += '<text x="160" y="' + (y + 21) + '" font-size="14" text-anchor="middle" fill="' +
+       (on ? '#ffffff' : '#22303f') + '">' + w[i] + '</text>';
+}
+return s; }
+  function readout(v) { var a = ['а не кто-то другой', 'а не прочитал', 'а не поэму',
+         'а не о чём-то другом'];
+var w = ['Худайназаров', 'написал', 'стихотворение', 'о Родине'];
+return 'Ударение на слове «' + w[v - 1] + '»: ' + a[v - 1] + '.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Ударное слово (1–4)" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var MW = ["Б.", "Худайназаров", "написал", "стихотворение", "о", "Родине"], MT = [2], MN = "При ударении на слове «написал» смысл: а не прочитал.", MK = "✓";
+(function () {
+  var st = [];
+  for (var i = 0; i < MW.length; i++) st.push(0);
+  function render() {
+    var h = "";
+    for (var i = 0; i < MW.length; i++) {
+      var c = st[i] === 1 ? " sel" : "";
+      h += '<button class="btn' + c + '" data-i="' + i + '">' + MW[i] +
+           (st[i] === 1 ? " " + MK : "") + "</button>";
+    }
+    document.getElementById("mwords").innerHTML = h;
+    var bs = document.getElementById("mwords").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        st[i] = st[i] ? 0 : 1;
+        render();
+      };
+    }
+    var t = "";
+    for (var i = 0; i < MW.length; i++) t += MW[i] + (st[i] === 1 ? " " + MK + " " : " ");
+    document.getElementById("mline").textContent = t;
+  }
+  document.getElementById("mcheck").onclick = function () {
+    var ok = 1;
+    for (var i = 0; i < MW.length; i++) if (st[i] !== (MT.indexOf(i) >= 0 ? 1 : 0)) ok = 0;
+    var m = document.getElementById("mmsg");
+    if (ok) { m.className = "msg ok"; m.textContent = "Правильно! " + MN; }
+    else { m.className = "msg bad"; m.textContent = "Пока неверно. " + MN; }
+  };
+  document.getElementById("mclear").onclick = function () {
+    for (var i = 0; i < MW.length; i++) st[i] = 0;
+    render();
+    document.getElementById("mmsg").className = "msg";
+    document.getElementById("mmsg").textContent = "";
+  };
+  render();
+})();
+
+var Q = [["Что такое логическое ударение?", ["Интонационное выделение члена предложения", "Ударение в слове", "Пауза"], 0], ["Кто автор стихотворения «О Родине»?", ["Б. Худайназаров", "А. С. Пушкин", "К. Чолиев"], 0], ["Что меняется при перемене логического ударения?", ["Смысл предложения", "Падеж слов", "Порядок букв"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Правильно!"; }
+      else { m.className = "msg bad"; m.textContent = "Правильный ответ: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Результат: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma maison est mon domicile — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ma maison 🏠</h1>
+  <div class="sub">Fransuz dili · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Jaýyň daşky we içki bölekleri. Şekile degip, her bölegiň fransuzça adyny öwren.</div>
+  </div>
+
+  <div class="card">
+    <h3>Jaýyň bölekleri</h3>
+    <div class="goal">Bölege degseň, ady we manysy çykar.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 200"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Extérieur / Intérieur</h3>
+    <div class="goal">Sözleri iki topara böl.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fransuz dili 7 (G. Toýlyýewa we başg.), Aşgabat 2019 — kitap boýunça.</div>
+</div>
+<script>
+
+var SP = [["le toit", "M40 78 L160 26 L280 78 Z", 160, 58, "Üçek. Kitapda: le toit est vert."], ["la façade", "M70 78 H250 V160 H70 Z", 160, 100, "Fasad. La façade de notre maison est blanche."], ["la porte", "M146 118 H174 V160 H146 Z", 160, 142, "Gapy — jaýa girilýän ýer."], ["le garage", "M252 108 H304 V160 H252 Z", 278, 136, "Garaž. Kakanyň maşyny üçin."], ["la cour", "M16 160 H304 V190 H16 Z", 108, 179, "Howly — jaýyň öňünde (devant la maison)."], ["le jardin", "M16 108 H66 V160 H16 Z", 41, 136, "Bag — jaýyň yzynda (derrière la maison)."]], SW = 320, SH = 200;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var TH = ["Extérieur", "Intérieur"], TR = [["le toit", "le salon"], ["la façade", "la cuisine"], ["la cour", "la chambre"], ["la clôture", "le plafond"], ["le garage", "la salle de bains"]], TI = [["Üçek — daşdan görünýär.", "Myhman otagy — içerde."], ["Fasad — jaýyň öň ýüzi.", "Aşhana — içki otag."], ["Howly — jaýyň öňündäki meýdan.", "Ýatylýan otag — içerde."], ["Haýat — jaýy gurşap alýar.", "Potolok — otagyň üsti."], ["Garaž — daşky bina.", "Hammam — içki otag."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["«Bag» fransuzça?", ["une cour", "un jardin", "un garage"], 1], ["Haýsysy daşky bölek?", ["le plafond", "le salon", "la façade"], 2], ["«Bar» diýmek üçin gurluş?", ["il y a", "il est", "il fait"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -10,7 +10,32 @@
     <title>Gündelik</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      The app fetches the programme before it mounts, so between the first paint
+      and the first screen there is a moment with nothing in it. This is that
+      moment: the mark, on the app's own ground. React replaces it wholesale
+      when it renders into #root, so nothing here has to be torn down.
+    -->
+    <style>
+      #boot {
+        position: fixed; inset: 0; display: grid; place-items: center;
+        background: #EDEEF1;
+      }
+      #boot svg { animation: bootPulse 1.6s ease-in-out infinite; }
+      @keyframes bootPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: .55; transform: scale(.94); }
+      }
+    </style>
+    <div id="root">
+      <div id="boot">
+        <svg width="72" height="72" viewBox="0 0 44 44" fill="none" aria-label="Gündelik">
+          <rect width="44" height="44" rx="13" fill="#3F7CF2" />
+          <path d="M13 14.5h7.2c1 0 1.8.8 1.8 1.8V30c0-1-.8-1.8-1.8-1.8H13V14.5Z" fill="#fff" />
+          <path d="M31 14.5h-7.2c-1 0-1.8.8-1.8 1.8V30c0-1 .8-1.8 1.8-1.8H31V14.5Z" fill="#fff" fill-opacity=".72" />
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

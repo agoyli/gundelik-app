@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garaşsyzlyk urşy — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Demirgazyk Amerikanyň koloniýalarynyň Garaşsyzlyk ugrundaky urşy</h1>
+  <div class="sub">Dünýä taryhy · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">13 koloniýadan bir döwlet dörän ýoly.</div>
+  </div>
+
+  <div class="card">
+    <h3>Garaşsyzlyga barýan ýol</h3>
+    <div class="goal">Bellige degip gör.</div>
+    <div class="stage"><svg id="tlsvg" viewBox="0 0 320 118"></svg></div>
+    <div class="info" id="tlinfo">Çyzykdaky bellige degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Wakalary tertibe sal</h3>
+    <div class="goal" id="ogoal"></div>
+    <div class="pool" id="opool"></div>
+    <div class="msg" id="omsg"></div>
+    <div class="done" id="odone" style="display:none"></div>
+    <div class="row"><button class="btn ghost" id="oreset">Täzeden başla</button></div>
+    <div class="score" id="osc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Dünýä taryhy 8 (J. Annaorazow, B. Gylyçnyýazow), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+var TL = [["1607", "Jeýmstaun", "Ilkinji iňlis koloniýasy — Jeýmstaun forty guruldy."], ["1773", "Boston", "«Boston çaý içişligi» iňlisler bilen gatnaşygy ýitileşdirdi."], ["1776", "Jarnama", "4-nji iýulda Garaşsyzlyk jarnamasy kabul edildi."], ["1783", "Ýaraşyk", "3-nji sentýabrda Angliýa garaşsyzlygy ykrar etdi."], ["1787", "Konstitusiýa", "ABŞ konfederasiýadan federasiýa geçdi."]];
+(function () {
+  var W = 320, H = 118, n = TL.length, y = 62;
+  var x0 = 26, x1 = W - 26, gap = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#f6faf4"/>';
+    s += '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="#6f8a5e" stroke-width="3"/>';
+    for (var i = 0; i < n; i++) {
+      var cx = x0 + i * gap, on = (i === sel);
+      var an = i === 0 ? "start" : (i === n - 1 ? "end" : "middle");
+      var tx = i === 0 ? cx - 12 : (i === n - 1 ? cx + 12 : cx);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<rect x="' + (cx - 22) + '" y="' + (y - 34) + '" width="44" height="68" fill="transparent"/>';
+      s += '<circle cx="' + cx + '" cy="' + y + '" r="' + (on ? 9 : 6) + '" fill="' + (on ? "#1d6f3c" : "#c0392b") + '"/>';
+      s += '<text x="' + tx + '" y="' + (y - 16) + '" font-size="11.5" fill="#2f4a22" text-anchor="' + an + '">' + TL[i][0] + '</text>';
+      s += '<text x="' + tx + '" y="' + (y + 24) + '" font-size="10" fill="#3b4a2e" text-anchor="' + an + '">' + TL[i][1] + '</text>';
+      s += '</g>';
+    }
+    document.getElementById("tlsvg").innerHTML = s;
+    var gs = document.getElementById("tlsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("tlinfo").innerHTML =
+          "<b>" + TL[i][0] + " – " + TL[i][1] + "</b><br>" + TL[i][2];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var OS = ["Jeýmstaun fortunyň gurulmagy", "Afrikadan gullaryň getirilip başlanmagy", "Täze salgytlaryň girizilmegi", "«Boston çaý içişligi»", "Garaşsyzlyk jarnamasy", "Parahatçylyk şertnamasy"], OO = [3, 0, 5, 2, 4, 1];
+(function () {
+  var next = 0, tries = 0, N = OS.length;
+  function draw() {
+    var h = "";
+    for (var k = 0; k < OO.length; k++) {
+      var i = OO[k];
+      if (i < next) continue;
+      h += '<button class="btn" data-i="' + i + '">' + OS[i] + "</button>";
+    }
+    document.getElementById("opool").innerHTML = h;
+    var bs = document.getElementById("opool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) bs[k].onclick = pick;
+    document.getElementById("ogoal").textContent = next < N ?
+      ((next + 1) + "-nji ädimi saýla.") : ("Ähli " + N + " ädim dogry tertipde ýygnaldy!");
+    var dv = document.getElementById("odone");
+    if (next > 0) {
+      var dh = "";
+      for (var i = 0; i < next; i++) dh += (i + 1) + ". " + OS[i] + "<br>";
+      dv.innerHTML = dh; dv.style.display = "block";
+    } else { dv.style.display = "none"; dv.innerHTML = ""; }
+    document.getElementById("osc").textContent = "Ädim: " + next + " / " + N + " · synanyşyk: " + tries;
+  }
+  function pick() {
+    var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("omsg");
+    tries++;
+    if (i === next) {
+      next++;
+      m.className = "msg ok";
+      m.textContent = next === N ? "Tertip dogry!" : "Dogry!";
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Ilki " + (next + 1) + "-nji ädim gelmeli.";
+    }
+    draw();
+  }
+  document.getElementById("oreset").onclick = function () {
+    next = 0; tries = 0;
+    document.getElementById("omsg").className = "msg";
+    document.getElementById("omsg").textContent = "";
+    draw();
+  };
+  draw();
+})();
+
+var Q = [["Garaşsyzlyk jarnamasy haýsy ýylda kabul edilýär?", ["1776", "1773", "1783"], 0], ["ABŞ-nyň ilkinji prezidenti kim?", ["Jorj Waşington", "Tomas Jefferson", "Benjamin Franklin"], 0], ["Jarnamanyň esasy awtory kim?", ["Tomas Jefferson", "Jorj Waşington", "Jon Adams"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

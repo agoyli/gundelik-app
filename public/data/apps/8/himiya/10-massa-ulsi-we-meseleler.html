@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meseleleri çözmek — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Massa ülşi we meseleler</h1>
+  <div class="sub">Himiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">w(x) = n · Ar / Mr · 100 %.</div>
+  </div>
+
+  <div class="card">
+    <h3>Massa ülşi</h3>
+    <div class="goal">Maddany süýşürgiç bilen çalyş.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 170"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="1" max="4" step="1" value="1">
+    <div class="info" id="siro1"></div>
+    <div class="note">Massa ülşleriniň jemi 100 % bolmalydyr.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ülüşden massa</h3>
+    <div class="goal">Maddanyň massasyny üýtget.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="10" max="200" step="10" value="160">
+    <div class="info" id="cout"></div>
+    <div class="note">Massa ülşi bilen islendik massany paýlap bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Himiýa 8 (M. Amangulyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var D = [['Fe₂O₃', 70, 30, 'Fe', 'O'], ['H₂O', 11, 89, 'H', 'O'],
+ ['CaO', 71, 29, 'Ca', 'O'], ['CO₂', 27, 73, 'C', 'O']];
+var d = D[v - 1];
+var w1 = Math.round(d[1] / 100 * 250);
+var s = '<rect x="0" y="0" width="320" height="170" fill="#f7fafd"/>';
+s += '<text x="12" y="34" font-size="16" fill="#22262b">' + d[0] + '</text>';
+s += '<rect x="34" y="60" width="' + w1 + '" height="34" fill="#2456b0"/>';
+s += '<rect x="' + (34 + w1) + '" y="60" width="' + (250 - w1) + '" height="34" ' +
+     'fill="#e8a33d"/>';
+s += '<text x="40" y="120" font-size="12" fill="#2456b0">' + d[3] + ' — ' + d[1] +
+     ' %</text>';
+s += '<text x="40" y="142" font-size="12" fill="#b25b12">' + d[4] + ' — ' + d[2] +
+     ' %</text>';
+return s; }
+  function readout(v) { var E = ['Fe₂O₃: Mr = 160, w(Fe) = 2 · 56 / 160 · 100 % = 70 %.',
+'H₂O: Mr = 18, w(H) = 2 · 1 / 18 · 100 % = 11 %.',
+'CaO: Mr = 56, w(Ca) = 40 / 56 · 100 % = 71 %.',
+'CO₂: Mr = 44, w(C) = 12 / 44 · 100 % = 27 %.'];
+return E[v - 1]; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Madda" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var CO = [["Demriň massasy (70 %)", "v * 0.7", "g"], ["Kislorodyň massasy (30 %)", "v * 0.3", "g"], ["Maddanyň mukdary (M = 160)", "v / 160", "mol"]], CU = "g", CL = "Fe₂O₃-niň massasy";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["Periodik sistemada näçe period bar?", ["7", "8", "10"], 0], ["Fe₂O₃-de demriň massa ülşi näçe?", ["30 %", "70 %", "50 %"], 1], ["Massa ülşleriniň jemi näçe bolmaly?", ["50 %", "100 %", "10 %"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

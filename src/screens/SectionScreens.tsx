@@ -1,23 +1,33 @@
 import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BookmarkIcon, BooksIcon, CardsIcon, CheckIcon, ChevronIcon, GameIcon, LockIcon, UsersIcon,
 } from '../components/Icons';
 import { TeaserCard } from '../components/Paywall';
 import {
-  EmptyState, IconBadge, PointsPill, RowChevron, SectionHeading, SubPage, SubjectRow, SurfaceRow,
-  TagPill,
+  ChipRow, EmptyState, IconBadge, PointsPill, RowChevron, SectionHeading, SubPage, SubjectRow,
+  SurfaceRow, TagPill,
 } from '../components/Ui';
 import { KIND_LABEL, KIND_ORDER, useBookmarks } from '../state/bookmarks';
 import type { Bookmark } from '../state/bookmarks';
 import { tierFor, useCan } from '../state/prefs';
 import {
-  BANK_TOTAL, BOOKS, BOOK_CATS, CONTESTS, CONTEST_STATE, DECKS, GAMES, SAPAK_SUBJECTS, subjectBank,
+  BOOKS, BOOK_CATS, CONTESTS, CONTEST_STATE,
 } from '../data/guides';
-import type { Book, Contest, Deck, Game } from '../data/guides';
+import type { Book, Contest, Deck } from '../data/guides';
 import {
-  BookDetailScreen, ContestDetailScreen, DeckDetailScreen, GameDetailScreen,
+  bankTotal, deckById, deckList, loadDeckCards, playById, playGroups, subjectBank,
+} from '../data/library';
+import {
+  USER_GRADE, curriculum, pathLength, subjectLook, subjectsForGrade,
+} from '../data/curriculum';
+import { chipGrade, chipValue, gradeChips } from '../lib/gradeFilter';
+import { ordinal } from '../lib/tm';
+import type { DeckMeta } from '../data/library';
+import {
+  BookDetailScreen, ContestDetailScreen, DeckDetailScreen,
 } from './DetailScreens';
+import { PlayerScreen } from './PlayScreens';
 import { tokens } from '../theme';
 
 /*
@@ -58,42 +68,87 @@ const ProgressLine = ({ value, left, right }: { value: number; left: string; rig
 
 /* ---------------- Sapaklar ---------------- */
 
-/* What the bank holds for a subject, beside the lesson count the progress bar
-   already states. One shape for every row: a subject whose tests and cards are
-   not written yet says so, rather than printing "0 test · 0 kart". */
-const bankLine = (label: string) => {
-  const b = subjectBank(label);
+/* How many subject rows the Interaktiw strip shows before "Ählisi" takes over —
+   this is a pointer into the section, not the section. */
+const PLAY_PREVIEW = 4;
+
+/* What a subject holds in the chosen grade — or in all of them — beside the
+   lesson count the progress bar already states. One shape for every row: a
+   subject with nothing written says so, rather than printing "0 test · 0 kart". */
+const bankLine = (slug: string, grade?: number) => {
+  const b = subjectBank(slug, grade);
   const parts = [];
+  if (b.lessons) parts.push(`${b.lessons} sapak taýýar`);
   if (b.tests) parts.push(`${b.tests} test`);
   if (b.cards) parts.push(`${b.cards} kart`);
-  return parts.length ? parts.join(' · ') : 'Test we kartlar taýýarlanýar';
+  return parts.length ? parts.join(' · ') : 'Material taýýarlanýar';
 };
 
-export function SapaklarScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
-  onBack: () => void; toast: Toast; onOpenSubject: (id: string) => void; onUpgrade: () => void;
+export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpgrade }: {
+  onBack: () => void; toast: Toast;
+  onOpenSubject: (id: string, grade?: number) => void;
+  /** the Interaktiw sapaklar section, at the grade looked at and optionally a subject */
+  onOpenPlay: (grade?: number, groupId?: string) => void;
+  onUpgrade: () => void;
 }) {
-  const [game, setGame] = useState<Game | null>(null);
+  /*
+   * Which grade's subjects are listed.
+   *
+   * A student's own grade is where they start, but the programme is twelve of
+   * them and the reasons to look at another are ordinary: revising last year
+   * before an exam, reading ahead, an older sibling's homework. It is also the
+   * honest way to find the lessons that are written — the material lands grade
+   * by grade, so the filter says which of them has something in it.
+   *
+   * `undefined` is "Ählisi": every subject the programme has, counted over all
+   * of its grades.
+   */
+  const [grade, setGrade] = useState<number | undefined>(USER_GRADE);
+  const subjects = useMemo(() => (grade === undefined ? curriculum() : subjectsForGrade(grade))
+    .map((s) => ({
+      id: s.slug,
+      label: s.name,
+      ...subjectLook(s.slug),
+      done: 0,
+      total: pathLength(s, grade),
+    })), [grade]);
+  /* the interactives of the same grade — the strip below the subjects */
+  const play = useMemo(() => playGroups(grade).slice(0, PLAY_PREVIEW), [grade]);
   const can = useCan('roadmap');
   const canGames = useCan('games');
   const plan = tierFor('roadmap');
-  const onOpenGame = (g: Game) => setGame(g);
-  if (game) return <GameDetailScreen game={game} onBack={() => setGame(null)} toast={toast} />;
 
   return (
     <SubPage title="Sapaklar" onBack={onBack} help="Her dersiň temalary yzygiderli sapaklar görnüşinde — 1-nji synpdan 12-nji synpa çenli. Sapaklary geçip, indiki synpa açylýarsyň. Her dersiň aşagynda oýun görnüşinde gaýtalama bar.">
 
-      <SectionHeading title="Dersler" action={<TagPill label="Ähli" onClick={() => toast('Ähli dersler tiz wagtda')} />} />
+      {/* Grade filter — the same chip row the lesson path filters with */}
+      <Box sx={{ pt: '4px', pb: '2px' }}>
+        <ChipRow
+          label="Synp"
+          value={chipValue(grade)}
+          onChange={(id) => setGrade(chipGrade(id))}
+          chips={gradeChips}
+        />
+      </Box>
+
+      <SectionHeading
+        title={grade === undefined ? 'Ähli dersler' : 'Dersler'}
+        action={grade === USER_GRADE
+          ? <TagPill label="Meniň synpym" onClick={() => toast('Öz synpyňyzyň dersleri')} />
+          : <TagPill label={`${ordinal(USER_GRADE)} synpa dolan`} onClick={() => setGrade(USER_GRADE)} />}
+      />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {SAPAK_SUBJECTS.map((s, i) => (
+        {subjects.map((s, i) => (
           <SubjectRow
             key={s.id}
             icon={s.icon}
             tint={s.tint}
             accent={s.accent}
             label={s.label}
-            sub={bankLine(s.label)}
-            /* `total` is the subject's own theme count, straight from the
-               curriculum — see SAPAK_SUBJECTS */
+            sub={bankLine(s.id, grade)}
+            /* `total` is every stop on this subject's path in this grade —
+               reading, interactive and checkpoint alike — so the row and the
+               page behind it count the same thing */
             progress={{ done: s.done, total: s.total }}
             /* the free tier keeps the first subject whole — one subject you can
                actually finish is an argument; a list you can only look at is a wall */
@@ -101,7 +156,7 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
             lockNote={`${plan?.name} bilen açylýar`}
             /* every subject has a path now — the "only Matematika opens, the
                rest are coming soon" guard was scaffolding from the mock data */
-            onClick={() => (!can && i > 0 ? onUpgrade() : onOpenSubject(s.id))}
+            onClick={() => (!can && i > 0 ? onUpgrade() : onOpenSubject(s.id, grade))}
           />
         ))}
       </Box>
@@ -109,8 +164,8 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
       {!can && (
         <Box sx={{ pt: '14px' }}>
           <TeaserCard
-            title={`${SAPAK_SUBJECTS.length - 1} ders ýapyk`}
-            note={`Ähli dersleriň 1–12-nji synp sapaklary, ${BANK_TOTAL.tests} test we ${BANK_TOTAL.cards} kart — ${plan?.name} bilen açylýar.`}
+            title={`${subjects.length - 1} ders ýapyk`}
+            note={`Ähli dersleriň 1–12-nji synp sapaklary, ${bankTotal().tests} test we ${bankTotal().cards} kart — ${plan?.name} bilen açylýar.`}
             feature="roadmap"
             onUpgrade={onUpgrade}
           />
@@ -122,22 +177,36 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
           a "most played" banner of their own, which made a two-minute drill
           look like a section of the product. A game practises a topic, so it
           belongs under the topics: same rows as the subjects above, labelled
-          by the subject each one drills. */}
-      <SectionHeading title="Interaktiw" />
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {GAMES.map((g) => (
-          <SurfaceRow
-            key={g.id}
-            icon={canGames
-              ? <IconBadge bg={g.tint} color={g.accent} size={44}><GameIcon size={22} /></IconBadge>
-              : <IconBadge bg={tokens.lockTile} color={tokens.lockInk} size={44}><LockIcon size={20} /></IconBadge>}
-            label={g.label}
-            sub={canGames ? `${g.sub}${g.best ? ` · iň gowy ${g.best} bal` : ''}` : `${g.sub} · ${tierFor('games')?.name} bilen açylýar`}
-            end={<RowChevron />}
-            onClick={() => (canGames ? onOpenGame(g) : onUpgrade())}
+          by the subject each one drills.
+
+          They are also no longer four invented arcade games with invented
+          leaderboards. Every row is the real interactives the source published
+          for this grade, the same ones the subject's path stops at, and the
+          last row opens the lot. */}
+      {play.length > 0 && (
+        <>
+          <SectionHeading
+            title="Interaktiw sapaklar"
+            action={<TagPill label="Ählisi" onClick={() => onOpenPlay(grade)} />}
           />
-        ))}
-      </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {play.map((g, i) => (
+              <SurfaceRow
+                key={g.id}
+                icon={canGames || i === 0
+                  ? <IconBadge bg={g.tint} color={g.accent} size={44}><GameIcon size={22} /></IconBadge>
+                  : <IconBadge bg={tokens.lockTile} color={tokens.lockInk} size={44}><LockIcon size={20} /></IconBadge>}
+                label={g.subject}
+                sub={canGames || i === 0
+                  ? `${g.items.length} gönükme${grade === undefined ? ` · ${ordinal(g.grade)} synp` : ''}`
+                  : `${g.items.length} gönükme · ${tierFor('games')?.name} bilen açylýar`}
+                end={<RowChevron />}
+                onClick={() => (canGames || i === 0 ? onOpenPlay(grade, g.id) : onUpgrade())}
+              />
+            ))}
+          </Box>
+        </>
+      )}
     </SubPage>
   );
 }
@@ -221,9 +290,29 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
 }) {
   /* deck → its overview page → the study session */
   const [open, setOpen] = useState<Deck | null>(null);
+  const [loading, setLoading] = useState<string | null>(null);
   const [studying, setStudying] = useState(false);
   const can = useCan('cards');
   const plan = tierFor('cards');
+  const decks = deckList();
+
+  /* The list knows how many cards a deck holds — the catalogue says so — but
+     the cards themselves are a lesson file, fetched when one is opened. */
+  const openDeck = async (d: DeckMeta) => {
+    setLoading(d.id);
+    try {
+      const cards = await loadDeckCards(d.grade, d.slug);
+      setOpen({
+        id: d.id, label: d.label, subject: d.subject, accent: d.accent, tint: d.tint,
+        cards, known: 0, due: cards.length,
+      });
+      setStudying(false);
+    } catch {
+      toast('Kartlar alynmady — birikmäňizi barlaň');
+    } finally {
+      setLoading(null);
+    }
+  };
 
   if (open && studying) {
     return <DeckStudy deck={open} onBack={() => setStudying(false)} toast={toast} />;
@@ -249,7 +338,7 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
         <Box sx={{ pt: '14px' }}>
           <TeaserCard
             title="Öwrediji kartlar ýapyk"
-            note={`${BANK_TOTAL.decks} toplum, ${BANK_TOTAL.cards} kart taýýar — ${plan?.name} bilen açylýar.`}
+            note={`${bankTotal().decks} toplum, ${bankTotal().cards} kart taýýar — ${plan?.name} bilen açylýar.`}
             feature="cards"
             onUpgrade={onUpgrade}
           />
@@ -258,18 +347,16 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
 
       <SectionHeading title="Toplumlar" />
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {DECKS.map((d) => (
+        {decks.map((d) => (
           <SurfaceRow
             key={d.id}
             icon={can
               ? <IconBadge bg={d.tint} color={d.accent} size={44}><CardsIcon size={22} /></IconBadge>
               : <IconBadge bg={tokens.lockTile} color={tokens.lockInk} size={44}><LockIcon size={20} /></IconBadge>}
-            label={d.label}
-            sub={can
-              ? `${d.subject} · ${d.cards.length} kart · ${d.due} gaýtalamaly`
-              : `${d.subject} · ${d.cards.length} kart`}
+            label={`${d.subject} · ${d.label}`}
+            sub={loading === d.id ? 'Açylýar…' : `${d.total} kart`}
             end={<RowChevron />}
-            onClick={() => { if (!can) { onUpgrade(); return; } setOpen(d); setStudying(false); }}
+            onClick={() => { if (!can) { onUpgrade(); return; } void openDeck(d); }}
           />
         ))}
       </Box>
@@ -426,6 +513,41 @@ export function KitaphanaScreen({ onBack, toast }: { onBack: () => void; toast: 
  * Rows are grouped by section so the page still says where each thing lives,
  * and a tap opens the same detail screen the section would have opened.
  */
+/* A bookmarked deck is saved as an id, and its cards live in a lesson file, so
+   opening one from here is the same fetch the Kartlar list makes. */
+function SavedDeck({ meta, onBack, toast }: { meta: DeckMeta; onBack: () => void; toast: Toast }) {
+  const [deck, setDeck] = useState<Deck | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    loadDeckCards(meta.grade, meta.slug)
+      .then((cards) => {
+        if (!live) return;
+        setDeck({
+          id: meta.id, label: meta.label, subject: meta.subject,
+          accent: meta.accent, tint: meta.tint, cards, known: 0, due: cards.length,
+        });
+      })
+      .catch(() => toast('Kartlar alynmady — birikmäňizi barlaň'));
+    return () => { live = false; };
+  }, [meta, toast]);
+
+  if (!deck) {
+    return (
+      <SubPage title="Toplum" onBack={onBack}>
+        <EmptyState icon={<CardsIcon size={26} />} title="Açylýar…" note={`${meta.subject} · ${meta.total} kart`} />
+      </SubPage>
+    );
+  }
+  return (
+    <DeckDetailScreen
+      deck={deck}
+      onBack={onBack}
+      onStudy={() => toast('Gaýtalama Kartlar bölüminde başlaýar')}
+    />
+  );
+}
+
 export function BookmarksScreen({ onBack, toast, onUpgrade }: {
   onBack: () => void; toast: Toast; onUpgrade: () => void;
 }) {
@@ -437,16 +559,17 @@ export function BookmarksScreen({ onBack, toast, onUpgrade }: {
     const back = () => setOpen(null);
     if (open.kind === 'deck') {
       /* a bookmark is not a side door: the same lock the section draws */
-      const deck = canCards ? DECKS.find((d) => d.id === open.id) : undefined;
-      if (deck) return <DeckDetailScreen deck={deck} onBack={back} onStudy={() => toast('Gaýtalama Kartlar bölüminde başlaýar')} />;
+      const meta = canCards ? deckById(open.id) : undefined;
+      if (meta) return <SavedDeck meta={meta} onBack={back} toast={toast} />;
     }
     if (open.kind === 'contest') {
       const c = CONTESTS.find((x) => x.id === open.id);
       if (c) return <ContestDetailScreen contest={c} onBack={back} toast={toast} />;
     }
     if (open.kind === 'game') {
-      const g = GAMES.find((x) => x.id === open.id);
-      if (g) return <GameDetailScreen game={g} onBack={back} toast={toast} />;
+      /* a saved interactive re-opens in the player, not in a page about it */
+      const g = playById(open.id);
+      if (g) return <PlayerScreen item={g} onBack={back} onUpgrade={onUpgrade} />;
     }
     if (open.kind === 'book') {
       const b = BOOKS.find((x) => x.id === open.id);

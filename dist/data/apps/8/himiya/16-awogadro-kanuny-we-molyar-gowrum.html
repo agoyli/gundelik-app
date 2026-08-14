@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mukdar gatnaşyklary — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Awogadro kanuny we molýar göwrüm</h1>
+  <div class="sub">Himiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Kadaly şertlerde 1 mol gaz — 22,4 litr.</div>
+  </div>
+
+  <div class="card">
+    <h3>Deň göwrüm, deň molekula</h3>
+    <div class="goal">Gazy süýşürgiç bilen çalyş.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 170"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="1" max="4" step="1" value="1">
+    <div class="info" id="siro1"></div>
+    <div class="note">Molýar göwrüm gazyň görnüşine bagly däldir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Göwrüm we massa</h3>
+    <div class="goal">Mol mukdaryny üýtget.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="1" max="10" step="1" value="2">
+    <div class="info" id="cout"></div>
+    <div class="note">V = ν · 22,4 l/mol.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Himiýa 8 (M. Amangulyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var G = ['H₂', 'O₂', 'CO₂', 'N₂'];
+var C = ['#e8a33d', '#2456b0', '#5b6b80', '#1d7a3d'];
+var s = '<rect x="0" y="0" width="320" height="170" fill="#f7fafd"/>';
+s += '<rect x="40" y="26" width="110" height="120" fill="#eaf4fb" stroke="#5b6b80" ' +
+     'stroke-width="3"/>';
+for (var i = 0; i < 9; i++) {
+  s += '<circle cx="' + (58 + (i % 3) * 36) + '" cy="' + (46 + Math.floor(i / 3) * 36) +
+       '" r="8" fill="' + C[v - 1] + '"/>';
+}
+s += '<text x="72" y="164" font-size="14" fill="#22262b">' + G[v - 1] + '</text>';
+s += '<text x="176" y="66" font-size="13" fill="#1d7a3d">1 mol</text>';
+s += '<text x="176" y="94" font-size="13" fill="#1d7a3d">22,4 l</text>';
+s += '<text x="176" y="122" font-size="13" fill="#1d7a3d">6,02 · 10²³</text>';
+return s; }
+  function readout(v) { var M = [2, 32, 44, 28];
+var G = ['H₂', 'O₂', 'CO₂', 'N₂'];
+var r = Math.round(M[v - 1] / 22.4 * 1000) / 1000;
+return G[v - 1] + ': M = ' + M[v - 1] + ' g/mol, dykyzlygy ρ = M / 22,4 = ' +
+       ('' + r).replace('.', ',') + ' g/l.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Gaz" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var CO = [["Kadaly şertlerdäki göwrüm", "v * 22.4", "l"], ["Kislorodyň massasy", "v * 32", "g"], ["Bölejikleriň sany (· 10²³)", "v * 6.02", "sany"]], CU = "mol", CL = "Gazyň mukdary";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["Kadaly şertlerde 1 mol gazyň göwrümi näçe?", ["22,4 l", "24 l", "11,2 l"], 0], ["Awogadro kanuny haýsy ýylda öňe sürüldi?", ["1811", "1869", "1913"], 0], ["Dykyzlyk nähili tapylýar?", ["ρ = 22,4 / M", "ρ = M / 22,4", "ρ = M · 22,4"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

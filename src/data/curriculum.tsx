@@ -4,15 +4,18 @@ import {
 } from '../components/Icons';
 import type { ReactNode } from 'react';
 import { ordinal } from '../lib/tm';
+import { getJson } from './source';
 import { tokens } from '../theme';
-import raw from './curriculum.json';
 
 /*
  * The real Turkmen school programme, grades 1–12.
  *
- * `curriculum.json` is imported from the meyilnamalar repo by
- * `scripts/import-curriculum.mjs` — 39 subjects, 4051 themes, straight from the
- * ministry curriculum. Do not hand-edit it; re-run the script.
+ * The programme is *fetched* — `curriculum.json` from whichever content source
+ * the app is pointed at (see `source.ts`), once, before the first screen is
+ * mounted. 39 subjects and 4051 themes, straight from the ministry curriculum
+ * by way of `scripts/import-curriculum.mjs`. Nothing here is written by hand,
+ * and nothing here is compiled in: publishing a corrected theme list is a file
+ * on a server, not a new build of the app.
  *
  * The app used to carry eight invented lesson titles cycled with a modulo, which
  * looked like a curriculum from a distance and fell apart the moment anyone read
@@ -61,11 +64,62 @@ const theme = ([name, hours, minutes = 0, questions = 0, hasApp = 0]: RawTheme):
   ready: minutes > 0 || questions > 0 || hasApp > 0,
 });
 
-export const CURRICULUM: CurriculumSubject[] = (raw as RawSubject[]).map((s) => ({
+/*
+ * The programme, once it has arrived.
+ *
+ * `main.tsx` awaits `loadCurriculum()` and only then imports the app, so every
+ * screen and every module below can read this as the plain list it is — no
+ * screen has to hold a "still loading" branch for data that is in memory before
+ * it is ever rendered.
+ */
+let CURRICULUM: CurriculumSubject[] = [];
+
+const parse = (raw: RawSubject[]): CurriculumSubject[] => raw.map((s) => ({
   slug: s.slug,
   name: s.name,
   grades: s.grades.map((g) => ({ grade: g.grade, themes: g.themes.map(theme) })),
 }));
+
+/*
+ * The last programme that arrived, kept for the next launch.
+ *
+ * The whole app waits on this one document, so a cold network would be a cold
+ * app: the launch after the first serves the copy in hand at once and asks the
+ * source for a fresh one in the background, for the launch after that. It is
+ * the same file every time — a school programme changes once a year, not once
+ * a session — so this is a start-up that works on a bad connection and on none.
+ */
+const CACHE_KEY = 'gundelik.curriculum.v1';
+
+const cached = (): RawSubject[] | null => {
+  try {
+    const stored = localStorage.getItem(CACHE_KEY);
+    return stored ? (JSON.parse(stored) as RawSubject[]) : null;
+  } catch { return null; }
+};
+
+const keep = (raw: RawSubject[]) => {
+  /* private mode and full quotas both throw — a cache that cannot be written is
+     not a failure to boot */
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(raw)); } catch { /* ignore */ }
+};
+
+export const loadCurriculum = async () => {
+  const stored = cached();
+  if (stored?.length) {
+    CURRICULUM = parse(stored);
+    /* revalidate for next time; this launch is already running */
+    getJson<RawSubject[]>('curriculum.json').then(keep).catch(() => { /* offline is fine */ });
+    return CURRICULUM;
+  }
+  const raw = await getJson<RawSubject[]>('curriculum.json');
+  CURRICULUM = parse(raw);
+  keep(raw);
+  return CURRICULUM;
+};
+
+/** Every subject in the programme, in name order. */
+export const curriculum = () => CURRICULUM;
 
 /** The grade this account is in. The diary, the profile and the path read it. */
 export const USER_GRADE = 8;
@@ -96,6 +150,8 @@ export type PathNode = {
   extent: string;
   /** the themes whose material this stop uses — one, or the three of a checkpoint */
   nos: number[];
+  /** there is material to fetch — the lesson page asks for nothing when there is not */
+  ready: boolean;
 };
 export type PathGrade = { grade: number; lessons: PathNode[] };
 
@@ -115,6 +171,7 @@ export const pathFor = (subject: CurriculumSubject): PathGrade[] =>
           id: `g${g.grade}-b${to}`,
           grade: g.grade,
           kind: 'test',
+          ready: true,
           title: from === to
             ? `${ordinal(to)} tema boýunça barlag`
             : `${from}–${ordinal(to)} temalar boýunça barlag`,
@@ -131,6 +188,7 @@ export const pathFor = (subject: CurriculumSubject): PathGrade[] =>
         id: `g${g.grade}-${no}`,
         grade: g.grade,
         kind: 'text',
+        ready: t.ready,
         title: t.name,
         /* minutes once a lesson is written, otherwise the hours the programme
            gives the theme */
@@ -142,6 +200,7 @@ export const pathFor = (subject: CurriculumSubject): PathGrade[] =>
           id: `g${g.grade}-${no}i`,
           grade: g.grade,
           kind: 'interactive',
+          ready: true,
           title: t.name,
           extent: 'Gönükme',
           nos: [no],
@@ -155,9 +214,28 @@ export const pathFor = (subject: CurriculumSubject): PathGrade[] =>
     return { grade: g.grade, lessons: out };
   });
 
-/** How many stops the whole path has — what a subject row counts down from. */
-export const pathLength = (s: CurriculumSubject) =>
-  pathFor(s).reduce((n, g) => n + g.lessons.length, 0);
+/*
+ * How many stops the path has — what a subject row counts down from.
+ *
+ * With a grade, only that grade's stops: the subject list is filtered by grade,
+ * and a row that says "0/56" while the page behind it is one grade of ten
+ * lessons is counting something the reader is not looking at.
+ */
+export const pathLength = (s: CurriculumSubject, grade?: number) =>
+  pathFor(s)
+    .filter((g) => grade === undefined || g.grade === grade)
+    .reduce((n, g) => n + g.lessons.length, 0);
+
+/*
+ * Every stop in the programme — what the Sapaklar section actually holds.
+ *
+ * The tile used to count subjects ("17 ders"), which is the shape of the list
+ * and not its size: a section that opens onto 5090 lessons was announcing the
+ * seventeen rows you see first. This counts what the rows count, by the same
+ * function they count it with — a reading, an interactive and a checkpoint are
+ * each one stop — so the tile and the row totals can never disagree.
+ */
+export const pathTotal = () => CURRICULUM.reduce((n, s) => n + pathLength(s), 0);
 
 /** The subjects a given grade is actually taught. */
 export const subjectsForGrade = (grade: number) =>
@@ -214,8 +292,8 @@ const SUBJECT_FAMILY: Record<string, keyof typeof FAMILY> = {
 export const subjectLook = (slug: string): Look => FAMILY[SUBJECT_FAMILY[slug] ?? 'language'];
 
 /** The same, by the name a deck or a test prints — those store the label, not the slug. */
-const BY_NAME = new Map(CURRICULUM.map((s) => [s.name, s.slug]));
+const byName = () => new Map(CURRICULUM.map((s) => [s.name, s.slug]));
 export const look = (subjectName: string) => {
-  const l = subjectLook(BY_NAME.get(subjectName) ?? '');
+  const l = subjectLook(byName().get(subjectName) ?? '');
   return { accent: l.accent, tint: l.tint };
 };

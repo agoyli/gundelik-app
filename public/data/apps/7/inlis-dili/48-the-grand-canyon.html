@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Grand Canyon — Grade 7</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The Grand Canyon 🏜️</h1>
+  <div class="sub">English · Grade 7</div>
+
+  <div class="card">
+    <div class="def">The Colorado River cut this canyon through layers of rock. Tap the layers.</div>
+  </div>
+
+  <div class="card">
+    <h3>Layers of rock</h3>
+    <div class="goal" id="lgoal"></div>
+    <div class="stage"><svg id="lsvg" viewBox="0 0 320 190"></svg></div>
+    <div class="pool" id="lpool"></div>
+    <div class="msg" id="lmsg"></div>
+    <div class="row"><button class="btn ghost" id="lreset">Start again</button></div>
+    <div class="score" id="lsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>The size of it</h3>
+    <div class="goal">Move the slider along the canyon.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="0" max="446" step="10" value="200">
+    <div class="info" id="cout"></div>
+    <div class="note">The canyon is over 446 km long, up to 1.8 km deep and 6-29 km wide.</div>
+  </div>
+
+  <div class="card">
+    <h3>Check yourself</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">English 7 (R. Nazarow and others), Ashgabat 2019 — after the textbook.</div>
+</div>
+<script>
+
+var LB = "<rect x=\"0\" y=\"0\" width=\"320\" height=\"190\" fill=\"#f2e6d4\"/>", LS = [["rim", "<rect x=\"0\" y=\"20\" width=\"320\" height=\"26\" fill=\"#c9a978\"/>", "The top rim is the youngest rock of the canyon."], ["limestone", "<rect x=\"0\" y=\"46\" width=\"320\" height=\"30\" fill=\"#d8c39a\"/>", "Limestone is made of calcium carbonate."], ["sandstone", "<rect x=\"0\" y=\"76\" width=\"320\" height=\"34\" fill=\"#c98a5c\"/>", "Sandstone layers give the canyon its red colour."], ["lava", "<rect x=\"0\" y=\"110\" width=\"320\" height=\"30\" fill=\"#6c5b52\"/>", "Old lava flows lie between the strata."], ["river", "<rect x=\"0\" y=\"140\" width=\"320\" height=\"50\" fill=\"#8a7a6a\"/><path d=\"M0 176 q80 -14 160 0 q80 14 160 0\" stroke=\"#4fa3c7\" stroke-width=\"7\" fill=\"none\"/>", "The Colorado River runs at the bottom; that rock is about 2 billion years old."]], LW = 320, LH = 190;
+(function () {
+  var next = 0, tries = 0, N = LS.length;
+  function draw() {
+    var s = '<rect x="0" y="0" width="' + LW + '" height="' + LH + '" fill="#f6faf4"/>' + LB;
+    for (var i = 0; i < next; i++) s += LS[i][1];
+    document.getElementById("lsvg").innerHTML = s;
+    var h = "";
+    for (var k = 0; k < N; k++) {
+      if (k < next) continue;
+      h += '<button class="btn" data-i="' + k + '">' + LS[k][0] + "</button>";
+    }
+    document.getElementById("lpool").innerHTML = h;
+    var bs = document.getElementById("lpool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) bs[k].onclick = pick;
+    document.getElementById("lgoal").textContent = next < N ?
+      ((next + 1) + " – choose this layer.") : "The picture is complete!";
+    document.getElementById("lsc").textContent = "Layer: " + next + " / " + N + " · tries: " + tries;
+  }
+  function pick() {
+    var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("lmsg");
+    tries++;
+    if (i === next) {
+      next++;
+      m.className = "msg ok";
+      m.textContent = next === N ? "The order is right!" : ("Correct! " + LS[next - 1][2]);
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Too early: first comes " + LS[next][0] + " gelmeli.";
+    }
+    draw();
+  }
+  document.getElementById("lreset").onclick = function () {
+    next = 0; tries = 0;
+    document.getElementById("lmsg").className = "msg";
+    document.getElementById("lmsg").textContent = "";
+    draw();
+  };
+  draw();
+})();
+
+var CO = [["Left to the end", "446-v", "km"], ["Part of the length", "v/446*100", "%"], ["Hours on foot (5 km/h)", "v/5", "h"]], CU = "km", CL = "How far along the canyon?";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["Which river carved the canyon?", ["the Colorado", "the Mississippi", "the Yellowstone"], 0], ["How deep is it?", ["up to 1.8 km", "up to 180 m", "up to 18 km"], 0], ["What are «strata»?", ["layers of rock", "kinds of river", "desert plants"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Correct!"; }
+      else { m.className = "msg bad"; m.textContent = "Correct answer: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Score: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

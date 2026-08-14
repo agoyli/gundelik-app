@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to get there? — Grade 7</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>How to get there? 🧭</h1>
+  <div class="sub">English · Grade 7</div>
+
+  <div class="card">
+    <div class="def">Asking and giving directions needs a few fixed phrases. Follow the route.</div>
+  </div>
+
+  <div class="card">
+    <h3>Follow the route</h3>
+    <div class="goal">Tap a place on the map.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 200"></svg></div>
+    <div class="info" id="shinfo">Tap a part of the picture.</div>
+  </div>
+
+  <div class="card">
+    <h3>Give directions</h3>
+    <div class="goal" id="ogoal"></div>
+    <div class="pool" id="opool"></div>
+    <div class="msg" id="omsg"></div>
+    <div class="done" id="odone" style="display:none"></div>
+    <div class="row"><button class="btn ghost" id="oreset">Start again</button></div>
+    <div class="score" id="osc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Check yourself</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">English 7 (R. Nazarow and others), Ashgabat 2019 — after the textbook.</div>
+</div>
+<script>
+
+var SP = [["start", "M20 150 H74 V184 H20 Z", 47, 194, "You are here. Excuse me, how can I get to the museum?"], ["street", "M20 120 H300 V142 H20 Z", 160, 112, "Go straight along this street for two blocks."], ["corner", "M150 150 H194 V184 H150 Z", 172, 194, "Turn left at the corner near the big shop."], ["bridge", "M212 150 H256 V184 H212 Z", 234, 194, "Cross the bridge and go on for fifty metres."], ["museum", "M246 24 H300 V68 H246 Z", 273, 16, "The museum is on your right, opposite the park."]], SW = 320, SH = 200;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var OS = ["Excuse me, how can I get to the museum?", "Go straight along this street.", "Walk two blocks.", "Turn left at the corner.", "Cross the bridge.", "The museum is on your right.", "Thank you very much!"], OO = [6, 0, 4, 2, 5, 1, 3];
+(function () {
+  var next = 0, tries = 0, N = OS.length;
+  function draw() {
+    var h = "";
+    for (var k = 0; k < OO.length; k++) {
+      var i = OO[k];
+      if (i < next) continue;
+      h += '<button class="btn" data-i="' + i + '">' + OS[i] + "</button>";
+    }
+    document.getElementById("opool").innerHTML = h;
+    var bs = document.getElementById("opool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) bs[k].onclick = pick;
+    document.getElementById("ogoal").textContent = next < N ?
+      ((next + 1) + " – choose this step.") : ("All " + N + " steps are in the right order!");
+    var dv = document.getElementById("odone");
+    if (next > 0) {
+      var dh = "";
+      for (var i = 0; i < next; i++) dh += (i + 1) + ". " + OS[i] + "<br>";
+      dv.innerHTML = dh; dv.style.display = "block";
+    } else { dv.style.display = "none"; dv.innerHTML = ""; }
+    document.getElementById("osc").textContent = "Step: " + next + " / " + N + " · tries: " + tries;
+  }
+  function pick() {
+    var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("omsg");
+    tries++;
+    if (i === next) {
+      next++;
+      m.className = "msg ok";
+      m.textContent = next === N ? "The order is right!" : "Correct!";
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Step " + (next + 1) + " comes first.";
+    }
+    draw();
+  }
+  document.getElementById("oreset").onclick = function () {
+    next = 0; tries = 0;
+    document.getElementById("omsg").className = "msg";
+    document.getElementById("omsg").textContent = "";
+    draw();
+  };
+  draw();
+})();
+
+var Q = [["How do you start a polite question?", ["Excuse me, ...", "Hey!", "Listen!"], 0], ["«Go straight» means ...", ["do not turn", "turn left", "turn back"], 0], ["«Opposite the park» means ...", ["on the other side of it", "inside it", "behind it"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Correct!"; }
+      else { m.className = "msg bad"; m.textContent = "Correct answer: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Score: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

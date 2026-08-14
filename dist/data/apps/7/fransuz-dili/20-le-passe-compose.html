@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passé composé — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Le passé composé ⏪</h1>
+  <div class="sub">Fransuz dili · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Passé composé avoir ýa-da être bilen düzülýär. Işlikleri saýla we haýsy kömekçiniň gerekdigini gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Avoir ýa-da être?</h3>
+    <div class="goal">Être bilen gelýän işlikleri saýla.</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 200"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Hereket işlikleri (aller, partir, arriver) être bilen; galanlary avoir bilen.</div>
+  </div>
+
+  <div class="card">
+    <h3>Le participe passé</h3>
+    <div class="goal">III toparyň esasy görnüşleri.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fransuz dili 7 (G. Toýlyýewa we başg.), Aşgabat 2019 — kitap boýunça.</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["aller", "a", false], ["manger", "m", false], ["partir", "p", false], ["regarder", "r", false], ["arriver", "ar", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { 
+var V = [["aller","a",1],["manger","m",0],["partir","p",1],["regarder","r",0],["arriver","ar",1]];
+var s = '<rect x="0" y="0" width="320" height="200" fill="#f6faf4"/>';
+s += '<rect x="10" y="10" width="145" height="180" rx="10" fill="#eaf3e4" stroke="#4a6b39" stroke-width="2"/>';
+s += '<rect x="165" y="10" width="145" height="180" rx="10" fill="#eaf3e4" stroke="#4a6b39" stroke-width="2"/>';
+s += '<text x="82" y="32" font-size="13" fill="#23381a" text-anchor="middle">AVOIR</text>';
+s += '<text x="237" y="32" font-size="13" fill="#23381a" text-anchor="middle">ÊTRE</text>';
+var la = 52, lb = 52;
+for (var i = 0; i < V.length; i++) {
+  var nm = V[i][0], k = V[i][1], right = V[i][2];
+  var inEtre = !!st[k];
+  var ok = (inEtre ? 1 : 0) === right;
+  var x = inEtre ? 237 : 82, y = inEtre ? lb : la;
+  if (inEtre) lb += 28; else la += 28;
+  s += '<rect x="' + (x - 62) + '" y="' + (y - 16) + '" width="124" height="24" rx="7" fill="' +
+       (ok ? "#cdebd6" : "#fde2e2") + '" stroke="' + (ok ? "#1d6f3c" : "#c0392b") + '" stroke-width="2"/>';
+  s += '<text x="' + x + '" y="' + y + '" font-size="11.5" fill="#23381a" text-anchor="middle">' + nm + '</text>';
+}
+return s;
+ }
+  function readout(st) { 
+var right = { a: 1, m: 0, p: 1, r: 0, ar: 1 };
+var n = 0, keys = ["a", "m", "p", "r", "ar"];
+for (var i = 0; i < keys.length; i++) if ((st[keys[i]] ? 1 : 0) === right[keys[i]]) n++;
+var h = "<b>Dogry ýerleşdirilen:</b> " + n + " / 5";
+if (n === 5) h += " — Je suis allé, je suis parti, je suis arrivé; j’ai mangé, j’ai regardé.";
+return h;
+ }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var TH = ["Infinitiw", "Participe", "Mysal"], TR = [["faire", "fait", "j’ai fait"], ["dire", "dit", "j’ai dit"], ["prendre", "pris", "j’ai pris"], ["lire", "lu", "j’ai lu"], ["écrire", "écrit", "j’ai écrit"], ["mettre", "mis", "j’ai mis"], ["voir", "vu", "j’ai vu"]], TI = [["etmek", "faire → fait, düýbi üýtgeýär.", "Men etdim."], ["aýtmak", "dire → dit, gysga görnüş.", "Men aýtdym."], ["almak", "prendre → pris, -s bilen gutarýar.", "Men aldym."], ["okamak", "lire → lu, iki harpa gysgalýar.", "Men okadym."], ["ýazmak", "écrire → écrit, -t goşulýar.", "Men ýazdym."], ["geýmek", "mettre → mis, -s bilen gutarýar.", "Men geýdim."], ["görmek", "voir → vu, iki harpa gysgalýar.", "Men gördüm."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["«Biz gitdik» (aller)?", ["nous avons allé", "nous sommes allés", "nous sommes aller"], 1], ["Écrire işliginiň participe görnüşi?", ["écrit", "écrivé", "écris"], 0], ["Haýsy işlik être bilen?", ["manger", "regarder", "arriver"], 2]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

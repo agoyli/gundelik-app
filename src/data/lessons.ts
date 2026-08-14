@@ -1,17 +1,20 @@
 /*
  * The lesson pages, fetched one subject-grade at a time.
  *
- * `scripts/import-curriculum.mjs` writes `lessons/<grade>-<slug>.json` — the
- * written lesson for every theme that has one: the hook, the summary, the
- * steps, the formulas, the self-check, the test bank. Together they are 1.2 MB,
- * so they are deliberately *not* imported into the bundle: `import.meta.glob`
- * without `eager` leaves each file its own chunk, and a lesson page fetches the
- * one file it needs the first time a reader opens a theme in that subject and
- * grade. Everything after that is served from the promise cache below.
+ * `lessons/<grade>-<slug>.json` holds the written lesson for every theme in one
+ * subject and grade that has one: the hook, the summary, the steps, the
+ * formulas, the self-check, the test bank. Together they are 1.2 MB — far too
+ * much to hand every reader up front — so a lesson page asks the content source
+ * for the one file it needs, the first time a theme in that subject-grade is
+ * opened. `source.ts` remembers the answer for the session.
  *
- * A theme with no file here is not broken — 3597 of the 4051 themes in the
- * programme have no material written yet, and the lesson screen says so.
+ * Nothing here knows a filename ahead of time: which files exist is whatever
+ * the source is serving. A theme with no file is not broken — 3597 of the 4051
+ * themes in the programme have no material written yet, the request answers
+ * 404, and the lesson screen says so.
  */
+
+import { getJsonOptional, sourceUrl } from './source';
 
 export type LessonContent = {
   /** 1-based position of the theme in its grade — how the path addresses it */
@@ -34,29 +37,16 @@ export type LessonContent = {
   aiStarter: string;
 };
 
-const FILES = import.meta.glob('./lessons/*.json') as Record<
-  string,
-  () => Promise<{ default: LessonContent[] }>
->;
-
-const path = (grade: number, slug: string) => `./lessons/${grade}-${slug}.json`;
-
-/** Is anything written for this subject-grade? Answers without fetching. */
-export const hasLessons = (grade: number, slug: string) => path(grade, slug) in FILES;
-
-const cache = new Map<string, Promise<LessonContent[]>>();
+export const loadLessons = (grade: number, slug: string) =>
+  getJsonOptional<LessonContent[]>(`lessons/${grade}-${slug}.json`);
 
 export const loadLesson = async (
   grade: number,
   slug: string,
   no: number,
 ): Promise<LessonContent | null> => {
-  const key = path(grade, slug);
-  const file = FILES[key];
-  if (!file) return null;
-  if (!cache.has(key)) cache.set(key, file().then((m) => m.default));
-  const themes = await cache.get(key)!;
-  return themes.find((t) => t.no === no) ?? null;
+  const themes = await loadLessons(grade, slug);
+  return themes?.find((t) => t.no === no) ?? null;
 };
 
 /*
@@ -75,6 +65,6 @@ export const loadExam = async (
   return themes.flatMap((t) => (t ? t.test.map((q) => ({ ...q, theme: t.title })) : []));
 };
 
-/** Where the mini-app is served from — `public/`, copied across as it is. */
+/** Where the theme's mini-app is served from — the same source, `apps/…`. */
 export const appUrl = (grade: number, slug: string, file: string) =>
-  `${import.meta.env.BASE_URL}lesson-apps/${grade}/${slug}/${file}`;
+  sourceUrl(`apps/${grade}/${slug}/${file}`);

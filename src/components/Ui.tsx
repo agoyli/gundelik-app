@@ -644,6 +644,80 @@ export function TagPill({ label, icon, onClick }: {
 }
 
 /* Section heading row — h2 + trailing pill */
+/*
+ * A row of filter chips.
+ *
+ * The lesson path filters by activity, the subject list filters by grade, and
+ * both are the same control: one row, scrolled sideways, one chip lit. A chip
+ * may carry its own colour — the path's do, because an activity's colour means
+ * something everywhere else on that page — and otherwise wears the brand's.
+ */
+export type Chip = { id: string; label: string; icon?: ReactNode; accent?: string; tint?: string };
+
+export function ChipRow({ chips, value, onChange, label }: {
+  chips: Chip[]; value: string; onChange: (id: string) => void; label: string;
+}) {
+  const active = useRef<HTMLButtonElement | null>(null);
+  const row = useRef<HTMLDivElement | null>(null);
+  const settled = useRef(false);
+
+  /*
+   * Twelve grades do not fit on a phone, and the one you are in is the eighth:
+   * the lit chip is brought into view rather than left off the right edge for
+   * the reader to discover by scrolling.
+   *
+   * This row scrolls itself, by hand. `scrollIntoView` was the obvious way to
+   * write it and the wrong one: it scrolls *every* scroller between the chip
+   * and the document, and one of those is the four-panel swipe strip the whole
+   * app lives in — so tapping "12-nji synp" slid the app sideways and parked it
+   * between two tabs. Setting this row's own `scrollLeft` touches nothing else.
+   */
+  useEffect(() => {
+    const el = active.current;
+    const box = row.current;
+    if (!el || !box) return;
+    const chip = el.getBoundingClientRect();
+    const frame = box.getBoundingClientRect();
+    const left = box.scrollLeft + (chip.left - frame.left) - (frame.width - chip.width) / 2;
+    /* the first pass is the row arriving already scrolled; a later one is the
+       reader's own tap, which is worth animating */
+    box.scrollTo({ left, behavior: settled.current ? 'smooth' : 'auto' });
+    settled.current = true;
+  }, [value]);
+
+  return (
+    <Box ref={row} role="group" aria-label={label} sx={{
+      display: 'flex', gap: '8px', overflowX: 'auto', mx: `-${tokens.gutter}`, px: tokens.gutter,
+      scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
+      /* the last chip fades rather than being cut, so the row reads as scrollable */
+      maskImage: 'linear-gradient(90deg, #000 calc(100% - 26px), transparent)',
+      WebkitMaskImage: 'linear-gradient(90deg, #000 calc(100% - 26px), transparent)',
+    }}>
+      {chips.map((c) => {
+        const on = c.id === value;
+        const ink = c.accent ?? tokens.ink2;
+        return (
+          <ButtonBase
+            key={c.id}
+            ref={on ? active : undefined}
+            onClick={() => onChange(c.id)}
+            aria-pressed={on}
+            sx={{
+              height: 32, px: c.icon ? '12px' : '14px', borderRadius: `${tokens.rPill}px`, flex: 'none',
+              display: 'inline-flex', gap: '6px', fontSize: 13.5, fontWeight: 600,
+              transition: 'background .15s ease,color .15s ease',
+              bgcolor: on ? (c.accent ?? tokens.blueSolid) : (c.tint ?? tokens.surface),
+              color: on ? '#fff' : ink,
+            }}
+          >
+            {c.icon}{c.label}
+          </ButtonBase>
+        );
+      })}
+    </Box>
+  );
+}
+
 export function SectionHeading({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <Box sx={{

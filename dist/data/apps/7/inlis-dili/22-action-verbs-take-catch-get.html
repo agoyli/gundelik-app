@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Action verbs — Grade 7</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Action verbs: take, catch, get 🏃</h1>
+  <div class="sub">English · Grade 7</div>
+
+  <div class="card">
+    <div class="def">One verb can have many meanings. Turn the switches to see them change.</div>
+  </div>
+
+  <div class="card">
+    <h3>One verb, many meanings</h3>
+    <div class="goal">Turn the switches to build a phrase.</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 130"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Take a taxi, catch a bus, get to a place.</div>
+  </div>
+
+  <div class="card">
+    <h3>Three verbs</h3>
+    <div class="goal">The main uses of each verb.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tap a cell of the table.</div>
+  </div>
+
+  <div class="card">
+    <h3>Check yourself</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">English 7 (R. Nazarow and others), Ashgabat 2019 — after the textbook.</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["catch instead of take", "c", false], ["add a place", "p", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { var v = st.c ? 'catch' : 'take';
+var o = st.c ? 'the bus' : 'a taxi';
+var pl = st.p ? ' to the station' : '';
+return '<text x="160" y="56" text-anchor="middle" font-size="15">' + v + ' ' + o + pl +
+       '</text><text x="160" y="88" text-anchor="middle" font-size="12">' +
+       (st.c ? 'catch = be in time for it' : 'take = use it') + '</text>'; }
+  function readout(st) { return st.c ? 'Catch shows you were in time.' : 'Take shows the way you travel.'; }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var TH = ["Verb", "Phrase", "Meaning"], TR = [["take", "take a taxi", "use that transport"], ["catch", "catch the train", "be in time for it"], ["get", "get to school", "reach a place"], ["get", "get up", "rise from bed"]], TI = [["Very common verb.", "Also: take a photo, take a seat.", "The way you travel."], ["Means to seize or reach.", "Also: catch a ball, catch a cold.", "You did not miss it."], ["Means to obtain or reach.", "Also: get a letter, get tired.", "Arrive at a place."], ["Used with many particles.", "Also: get on, get off, get in.", "Leave your bed."]], THINT = "Tap a cell of the table.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Complete: I always ... the 7 o'clock bus.", ["catch", "take off", "get up"], 0], ["«Get to school» means ...", ["reach school", "leave school", "like school"], 0], ["Complete: Let's ... a taxi.", ["take", "catch", "get"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Correct!"; }
+      else { m.className = "msg bad"; m.textContent = "Correct answer: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Score: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

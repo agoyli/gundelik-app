@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Famous cartoons — Grade 7</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Famous cartoons 🎬</h1>
+  <div class="sub">English · Grade 7</div>
+
+  <div class="card">
+    <div class="def">A cartoon is drawn frame by frame. Move the slider to see the frames run.</div>
+  </div>
+
+  <div class="card">
+    <h3>Frame by frame</h3>
+    <div class="goal">Move the slider to move the character.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 140"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="1" max="12" step="1" value="1">
+    <div class="info" id="siro1"></div>
+    <div class="note">A cartoon needs many drawings for every second of the film.</div>
+  </div>
+
+  <div class="card">
+    <h3>Parts of a cartoon</h3>
+    <div class="goal">The words you need to talk about one.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tap a cell of the table.</div>
+  </div>
+
+  <div class="card">
+    <h3>Check yourself</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">English 7 (R. Nazarow and others), Ashgabat 2019 — after the textbook.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var x = 20 + v * 22;
+var y = 96 - Math.abs(6 - v) * 4;
+return '<rect x="0" y="112" width="320" height="28" fill="#d9e2ea"/>' +
+       '<circle cx="' + x + '" cy="' + y + '" r="14" fill="#e08a3c"/>' +
+       '<circle cx="' + (x - 5) + '" cy="' + (y - 3) + '" r="2" fill="#2b2b2b"/>' +
+       '<circle cx="' + (x + 5) + '" cy="' + (y - 3) + '" r="2" fill="#2b2b2b"/>' +
+       '<path d="M' + (x - 6) + ' ' + (y + 5) + ' q6 6 12 0" stroke="#2b2b2b" stroke-width="2" fill="none"/>'; }
+  function readout(v) { return 'Frame ' + v + ' of 12. Twelve drawings make one second of film.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Frame" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var TH = ["Word", "Meaning", "Question"], TR = [["plot", "what happens", "What is it about?"], ["character", "who is in it", "Who is the hero?"], ["episode", "one part of a series", "How many parts?"], ["moral", "the lesson", "What does it teach?"]], TI = [["The chain of events.", "Told in the Present Simple.", "Answer in three sentences."], ["A person or an animal.", "The main one is the hero.", "Describe the character."], ["A single film of a series.", "Often about ten minutes.", "Count the episodes."], ["The idea behind the story.", "Usually at the end.", "Say it in one sentence."]], THINT = "Tap a cell of the table.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["What is a cartoon?", ["a film made of drawings", "a film with actors", "a picture book"], 0], ["What is the «plot»?", ["what happens", "who acts", "where it is shown"], 0], ["What is an «episode»?", ["one part of a series", "a whole film", "a drawing"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Correct!"; }
+      else { m.className = "msg bad"; m.textContent = "Correct answer: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Score: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

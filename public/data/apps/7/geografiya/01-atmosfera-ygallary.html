@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atmosfera ygallary — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Atmosfera ygallary 🌧️</h1>
+  <div class="sub">Geografiýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ygalyň iki topary bar: bulutdan ýagýanlar we ýer üstünde emele gelýänler. Süýşürgiji bilen ygal mukdaryny deňeşdir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bulutdan ýagýanlar</h3>
+    <div class="goal">Bulutdan ýagýan ygallara degip gör.</div>
+    <div class="chips" id="mwords"></div>
+    <div class="info" id="mline"></div>
+    <div class="row"><button class="btn primary" id="mcheck">Barla</button>
+      <button class="btn ghost" id="mclear">Arassala</button></div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ygal ölçeýji gural</h3>
+    <div class="goal">Bölege degseň, düşündiriş çykar.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 200"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ygal ölçegi</h3>
+    <div class="goal">Süýşürgijini süýşürip, ygaly hasapla.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="50" max="1000" step="50" value="350">
+    <div class="info" id="cout"></div>
+    <div class="note">Garagumda 80–100 mm, Günbatar Köpetdagda 350–400 mm ygal ýagýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geografiýa 7, II bölüm (G. Gurbandurdyýew we başg.), Aşgabat 2020 — kitap boýunça.</div>
+</div>
+<script>
+
+var MW = ["ýagyş", "çyg", "gar", "gyraw", "doly", "jyza", "jöwenek"], MT = [0, 2, 4, 6], MN = "Çyg, gyraw we jyza bulutdan ýagman, ýer üstünde emele gelýär.", MK = "✓";
+(function () {
+  var st = [];
+  for (var i = 0; i < MW.length; i++) st.push(0);
+  function render() {
+    var h = "";
+    for (var i = 0; i < MW.length; i++) {
+      var c = st[i] === 1 ? " sel" : "";
+      h += '<button class="btn' + c + '" data-i="' + i + '">' + MW[i] +
+           (st[i] === 1 ? " " + MK : "") + "</button>";
+    }
+    document.getElementById("mwords").innerHTML = h;
+    var bs = document.getElementById("mwords").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        st[i] = st[i] ? 0 : 1;
+        render();
+      };
+    }
+    var t = "";
+    for (var i = 0; i < MW.length; i++) t += MW[i] + (st[i] === 1 ? " " + MK + " " : " ");
+    document.getElementById("mline").textContent = t;
+  }
+  document.getElementById("mcheck").onclick = function () {
+    var ok = 1;
+    for (var i = 0; i < MW.length; i++) if (st[i] !== (MT.indexOf(i) >= 0 ? 1 : 0)) ok = 0;
+    var m = document.getElementById("mmsg");
+    if (ok) { m.className = "msg ok"; m.textContent = "Dogry! " + MN; }
+    else { m.className = "msg bad"; m.textContent = "Entek dogry däl. " + MN; }
+  };
+  document.getElementById("mclear").onclick = function () {
+    for (var i = 0; i < MW.length; i++) st[i] = 0;
+    render();
+    document.getElementById("mmsg").className = "msg";
+    document.getElementById("mmsg").textContent = "";
+  };
+  render();
+})();
+
+var SP = [["bedre", "M120 40 H200 V110 H120 Z", 160, 32, "Ygal kabul edýän silindr bedre, kese kesigi 200 sm²."], ["gapyrga", "M120 40 L104 24 M200 40 L216 24 M160 40 L160 20", 62, 34, "16 sany gapyrga ygalyň endigan düşmegini üpjün edýär."], ["naw", "M96 110 H224 V124 H96 Z", 268, 108, "Gural nawyň üstünde, ýer üstünden 2 m beýiklikde oturdylýar."], ["sütün", "M152 124 H168 V180 H152 Z", 268, 154, "Sütün guraly berk saklaýar; gözegçilik sagat 8-de we 20-de."], ["ýer", "M40 180 H280 V194 H40 Z", 62, 196, "Ýer üsti: gar bolsa bedre ýyly jaýa getirilip, eredilip ölçenilýär."]], SW = 320, SH = 200;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var CO = [["1 ga meýdana suw", "v*10", "m³"], ["Garagum bilen deňeşdirme", "v/90", "esse"], ["Çerapunjiniň paýy", "v/12000*100", "%"]], CU = "mm", CL = "Ýyllyk ygal";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["Haýsy ygal ýer üstünde emele gelýär?", ["çyg", "gar", "doly"], 0], ["Ygal ölçeýji bedräniň kesigi näçe?", ["200 sm²", "100 sm²", "400 sm²"], 0], ["Türkmenistanda iň köp ygal nirede ýagýar?", ["Günbatar Köpetdagda", "Garagumda", "Hazaryň kenarynda"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ýylylyk hereketi — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ýylylyk hereketi we içki energiýa</h1>
+  <div class="sub">Fizika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Temperatura artsa — bölejikleriň tizligi artýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bölejikleriň hereketi</h3>
+    <div class="goal">Temperaturany süýşürgiç bilen üýtget.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 170"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="-50" max="250" step="25" value="25">
+    <div class="info" id="siro1"></div>
+    <div class="note">Içki energiýa bölejikleriň kinetik we potensial energiýalarynyň jemidir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Çekiç çüýe urlanda</h3>
+    <div class="goal" id="ogoal"></div>
+    <div class="pool" id="opool"></div>
+    <div class="msg" id="omsg"></div>
+    <div class="done" id="odone" style="display:none"></div>
+    <div class="row"><button class="btn ghost" id="oreset">Täzeden başla</button></div>
+    <div class="score" id="osc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 8 (G. Toýlyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var t = v, sp = (t + 60) / 320;
+var s = '<rect x="0" y="0" width="320" height="170" fill="#f7fafd"/>';
+s += '<rect x="20" y="20" width="200" height="130" fill="#eaf4fb" stroke="#5b6b80" ' +
+     'stroke-width="3"/>';
+var seed = 7;
+function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+for (var i = 0; i < 18; i++) {
+  var x = 30 + rnd() * 180, y = 30 + rnd() * 110;
+  x = Math.round(x * 10) / 10; y = Math.round(y * 10) / 10;
+  var L = 4 + sp * 26;
+  var a = rnd() * 6.28;
+  s += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="#2456b0"/>';
+  s += '<line x1="' + x + '" y1="' + y + '" x2="' + (Math.round((x + L * Math.cos(a)) * 10) / 10) +
+       '" y2="' + (Math.round((y + L * Math.sin(a)) * 10) / 10) +
+       '" stroke="#93a2b5" stroke-width="2"/>';
+}
+var hh = Math.round((t + 60) / 310 * 110);
+s += '<rect x="252" y="30" width="22" height="110" fill="#e8eef7" stroke="#5b6b80" ' +
+     'stroke-width="2"/>';
+s += '<rect x="254" y="' + (140 - hh) + '" width="18" height="' + hh + '" fill="#b02424"/>';
+return s; }
+  function readout(v) { if (v < 0) return 'Temperatura ' + v + ' °C: bölejikler haýal hereket edýär, ' +
+'içki energiýa kiçi.';
+if (v < 100) return 'Temperatura ' + v + ' °C: adaty ýylylyk hereketi.';
+return 'Temperatura ' + v + ' °C: bölejikleriň orta tizligi we içki energiýa uly.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Temperatura" + ": " + String(v).replace(".", ",") + " " + "°C";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var OS = ["Çekiç belli beýiklikden inýär", "Onuň mehaniki energiýasy çüýe berilýär", "Çüý agaja aralaşýar we mehaniki iş edilýär", "Çüýüň bölejikleriniň hereketi artýar", "Çüýüň içki energiýasy artýar we ol gyzýar"], OO = [3, 0, 4, 1, 2];
+(function () {
+  var next = 0, tries = 0, N = OS.length;
+  function draw() {
+    var h = "";
+    for (var k = 0; k < OO.length; k++) {
+      var i = OO[k];
+      if (i < next) continue;
+      h += '<button class="btn" data-i="' + i + '">' + OS[i] + "</button>";
+    }
+    document.getElementById("opool").innerHTML = h;
+    var bs = document.getElementById("opool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) bs[k].onclick = pick;
+    document.getElementById("ogoal").textContent = next < N ?
+      ((next + 1) + "-nji ädimi saýla.") : ("Ähli " + N + " ädim dogry tertipde ýygnaldy!");
+    var dv = document.getElementById("odone");
+    if (next > 0) {
+      var dh = "";
+      for (var i = 0; i < next; i++) dh += (i + 1) + ". " + OS[i] + "<br>";
+      dv.innerHTML = dh; dv.style.display = "block";
+    } else { dv.style.display = "none"; dv.innerHTML = ""; }
+    document.getElementById("osc").textContent = "Ädim: " + next + " / " + N + " · synanyşyk: " + tries;
+  }
+  function pick() {
+    var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("omsg");
+    tries++;
+    if (i === next) {
+      next++;
+      m.className = "msg ok";
+      m.textContent = next === N ? "Tertip dogry!" : "Dogry!";
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Ilki " + (next + 1) + "-nji ädim gelmeli.";
+    }
+    draw();
+  }
+  document.getElementById("oreset").onclick = function () {
+    next = 0; tries = 0;
+    document.getElementById("omsg").className = "msg";
+    document.getElementById("omsg").textContent = "";
+    draw();
+  };
+  draw();
+})();
+
+var Q = [["Ýylylyk hereketi diýlip nämä aýdylýar?", ["Jisimiň süýşmegine", "Bölejikleriň bitertip hereketine", "Ýeriň aýlanmagyna"], 1], ["Içki energiýa nämä bagly däl?", ["Jisimiň beýikligine", "Temperatura", "Massa"], 0], ["Içki energiýany üýtgetmegiň näçe usuly bar?", ["1", "2", "3"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

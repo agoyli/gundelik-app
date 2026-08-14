@@ -2,16 +2,19 @@ import { Box, Button, LinearProgress, Typography } from '@mui/material';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  BooksIcon, CalendarDotIcon, CardsIcon, ClockIcon, GameIcon, HistoryIcon, ListIcon,
+  BooksIcon, CalendarDotIcon, CardsIcon, ClockIcon, HistoryIcon, ListIcon,
   PlayCircleIcon, QuizIcon, TrophyIcon, UsersIcon,
 } from '../components/Icons';
 import {
   BookmarkButton, DoneBadge, EmptyState, IconBadge, PointsPill, RankRow, RowChevron,
   SectionLabel, StatTile, StickyFooter, SubPage, SurfaceRow,
 } from '../components/Ui';
-import { fmtDate } from '../lib/date';
 import { CONTEST_STATE } from '../data/guides';
-import type { Book, Contest, Deck, Game, TestItem, TestSubject } from '../data/guides';
+import type { Book, Contest, Deck } from '../data/guides';
+import type { TestItem, TestSubject } from '../data/library';
+import { loadLesson } from '../data/lessons';
+import { QuizQuestions, QuizResult, useQuiz } from '../components/Quiz';
+import type { QuizQuestion } from '../components/Quiz';
 import { tokens } from '../theme';
 
 /*
@@ -165,51 +168,11 @@ export function ContestDetailScreen({ contest, onBack, toast }: {
   );
 }
 
-/* ---------------- Oýun ---------------- */
-
-export function GameDetailScreen({ game, onBack, toast }: {
-  game: Game; onBack: () => void; toast: Toast;
-}) {
-  const fresh = game.played === 0;
-  return (
-    <SubPage
-      title="Oýun"
-      onBack={onBack}
-      action={<BookmarkButton item={{ kind: 'game', id: game.id, title: game.label, sub: `${game.subject} · ${game.minutes} minut` }} />}
-    >
-      <Hero
-        tint={game.tint} accent={game.accent}
-        icon={<GameIcon size={28} />}
-        title={game.label}
-        meta={`${game.subject} · ${game.minutes} minut`}
-      />
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', mt: '12px' }}>
-        <StatTile value={fresh ? '—' : `${game.best}`} label="Iň gowy netije" color={game.accent} />
-        <StatTile value={`${game.played}`} label="Oýnalan" color={tokens.ink} />
-        <StatTile value={fresh ? '—' : `${game.avg}`} label="Ortaça" color={tokens.ink} />
-      </Box>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mt: '14px' }}>
-        <Card title="Oýun barada"><Prose>{game.about}</Prose></Card>
-        <Card title="Nähili oýnalýar"><Steps items={game.how} accent={game.accent} /></Card>
-      </Box>
-
-      <SectionLabel>Iň gowy netijeler</SectionLabel>
-      <RankList rows={game.leaders} />
-
-      <Box sx={{ height: '8px' }} />
-      <StickyFooter>
-        <Button
-          fullWidth variant="contained" disableElevation
-          onClick={() => toast('Oýun tiz wagtda elýeterli bolar')}
-        >
-          {fresh ? 'Ilkinji gezek oýna' : 'Oýna'}
-        </Button>
-      </StickyFooter>
-    </SubPage>
-  );
-}
+/* The mock Oýun page is gone with the mock games (`data/guides.tsx`). An
+   interactive is opened by the lesson page now — `PlayerScreen` in
+   `PlayScreens.tsx` — because the mini-app *is* the page; a detail screen in
+   front of it only described a game nobody could play.
+*/
 
 /* ---------------- Kitap ---------------- */
 
@@ -356,7 +319,7 @@ export function DeckDetailScreen({ deck, onBack, onStudy }: {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px', color: tokens.ink3, mt: '2px' }}>
             <ClockIcon />
             <Typography sx={{ fontSize: 12.5 }}>
-              {deck.studiedAt ? `Soňky gaýtalama: ${fmtDate(deck.studiedAt)}` : 'Entek öwrenilmedik'}
+              {deck.known > 0 ? `${deck.known} kart bilinýär` : 'Entek öwrenilmedik'}
             </Typography>
           </Box>
         </Card>
@@ -457,6 +420,45 @@ export function TestSubjectScreen({ subject, onBack, onOpenTest }: {
 export function TestDetailScreen({ test, accent, tint, onBack, toast }: {
   test: TestItem; accent: string; tint: string; onBack: () => void; toast: Toast;
 }) {
+  /* The questions are the theme's own bank, fetched when the test is started —
+     the page above them is a description, and nobody needs the bank to read a
+     description. */
+  const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const quiz = useQuiz(questions ?? []);
+
+  const start = async () => {
+    setLoading(true);
+    try {
+      const theme = await loadLesson(test.grade, test.slug, test.no);
+      if (!theme || theme.test.length === 0) { toast('Bu test entek taýýar däl'); return; }
+      setQuestions(theme.test.map((q) => ({ ...q, theme: theme.title })));
+      quiz.start();
+    } catch {
+      toast('Test alynmady — birikmäňizi barlaň');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (questions && quiz.stage !== 'start') {
+    return (
+      <SubPage title={test.title} onBack={() => { quiz.reset(); setQuestions(null); }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', pt: '4px' }}>
+          {quiz.inQuestions && (
+            <QuizQuestions
+              questions={questions}
+              quiz={quiz}
+              accent={accent}
+              onQuit={() => { quiz.reset(); setQuestions(null); }}
+            />
+          )}
+          {quiz.stage === 'result' && <QuizResult questions={questions} quiz={quiz} />}
+        </Box>
+      </SubPage>
+    );
+  }
+
   return (
     <SubPage title="Test" onBack={onBack}>
       <Hero
@@ -533,9 +535,10 @@ export function TestDetailScreen({ test, accent, tint, onBack, toast }: {
       <StickyFooter>
         <Button
           fullWidth variant="contained" disableElevation
-          onClick={() => toast('Test tiz wagtda açylar')}
+          disabled={loading}
+          onClick={() => void start()}
         >
-          {test.best === null ? 'Testi başla' : 'Gaýtadan tabşyr'}
+          {loading ? 'Açylýar…' : test.best === null ? 'Testi başla' : 'Gaýtadan tabşyr'}
         </Button>
       </StickyFooter>
     </SubPage>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Topraklar — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>5-nji amaly sapak</h1>
+  <div class="sub">Geografiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Toprak ýüz ýylda bir santimetr galýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Toprak zolaklary</h3>
+    <div class="goal">Bölege degip gör.</div>
+    <div class="stage"><svg id="whsvg" viewBox="0 0 320 230"></svg></div>
+    <div class="pool" id="whpool"></div>
+    <div class="info" id="whinfo">Bölege degseň, onuň manysy görkeziler.</div>
+  </div>
+
+  <div class="card">
+    <h3>Toprak görkezijileri</h3>
+    <div class="goal">Öýjüge degip maglumaty gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geografiýa 8 (A. Babaýew we ç.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+var WR = [["Oazis topraklary", 1, 0, 30, "Çemen topraklary; çüýrüntgi 1,2–2,0%."], ["Takyrlar", 2, 30, 50, "Galyňlygy 15–25 sm, çüýrüntgi 0,3–0,6%."], ["Çägeli çöl", 3, 50, 70, "Galyňlygy 30–50 sm, çüýrüntgi 0,5% töweregi."], ["Dag topraklary", 4, 70, 84, "Mele-goňur topraklarda çüýrüntgi 2–5%."], ["Şorluklar", 5, 84, 92, "Üstki duzlaryň mukdary 3%-e ýetýär."]];
+(function () {
+  var CX = 160, CY = 112;
+  function pt(r, a) {
+    return [CX + r * Math.cos(a - Math.PI / 2), CY + r * Math.sin(a - Math.PI / 2)];
+  }
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="320" height="230" fill="#f6faf4"/>';
+    var ord = [];
+    for (var z = 0; z < WR.length; z++) ord.push(z);
+    ord.sort(function (a, b) { return WR[b][3] - WR[a][3]; });
+    for (var oi = 0; oi < ord.length; oi++) {
+      var i = ord[oi];
+      var lab = WR[i][0], n = WR[i][1], ri = WR[i][2], ro = WR[i][3];
+      var on = (i === sel);
+      s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ro + '" fill="' +
+           (on ? "#cdebd6" : "#eaf3e4") + '" stroke="#4a6b39" stroke-width="2"/>';
+      if (ri > 0) s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ri +
+                       '" fill="#f6faf4" stroke="#4a6b39" stroke-width="2"/>';
+      for (var k = 0; k < n; k++) {
+        var a = 2 * Math.PI * k / n;
+        var p1 = pt(ri, a), p2 = pt(ro, a);
+        s += '<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
+             '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) +
+             '" stroke="' + (on ? "#1d6f3c" : "#9bb08c") + '" stroke-width="' + (on ? 2.5 : 1.5) + '"/>';
+      }
+    }
+    s += '<text x="160" y="216" font-size="11" fill="#2f4a22" text-anchor="middle">' +
+         (sel >= 0 ? WR[sel][0] + " – " + WR[sel][1] + " bölek" : "bölegi saýla") + '</text>';
+    document.getElementById("whsvg").innerHTML = s;
+    var h = "";
+    for (var i = 0; i < WR.length; i++)
+      h += '<button class="btn' + (i === sel ? " sel" : "") + '" data-i="' + i + '">' +
+           WR[i][0] + " (" + WR[i][1] + ")</button>";
+    document.getElementById("whpool").innerHTML = h;
+    var bs = document.getElementById("whpool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("whinfo").innerHTML = "<b>" + WR[i][0] + "</b> — " + WR[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var TH = ["Toprak", "Galyňlygy"], TR = [["Takyr", "15–25 sm"], ["Çägeli çöl", "30–50 sm"], ["Adaty mele", "1 m"], ["Mele-goňur", "80–120 sm"]], TI = [["Takyrlaryň mehaniki düzümi agyr, suw häsiýetleri ýaramazdyr.", "Çarwalar olary kak hökmünde peýdalanypdyrlar."], ["Çägeli çöl topraklar öri meýdan hökmünde ulanylýar.", "Olar köp mukdarda dökün talap edýär."], ["Adaty mele topraklar 500–1000 m beýiklikde ýaýrandyr.", "Suw berlende olar oňat hasyl berýär."], ["Mele-goňur topraklar 1000–2800 m beýiklikde duşýar.", "Olar düme ekerançylyk üçin iň ýaramlydyr."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Topragyň hasyllylygyny kesgitleýän düzüm bölegi haýsy?", ["Gumus", "Çäge", "Duz"], 0], ["Takyr topragyň galyňlygy näçe?", ["15–25 sm", "30–50 sm", "80–120 sm"], 0], ["Ekerançylyk üçin iň ýaramly toprak haýsy?", ["Açyk mele", "Takyr", "Şorluk"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

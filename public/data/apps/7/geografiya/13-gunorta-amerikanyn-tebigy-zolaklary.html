@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selwa we sawanna — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Günorta Amerikanyň tebigy zolaklary 🌴</h1>
+  <div class="sub">Geografiýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Selwa — dünýäniň iň baý tokaýy. Düwünlere degip, onuň ýaşaýjylary bilen tanyş bol.</div>
+  </div>
+
+  <div class="card">
+    <h3>Selwanyň ýaşaýjylary</h3>
+    <div class="goal">Düwüne degseň, düşündiriş çykar.</div>
+    <div class="stage"><svg id="gsvg" viewBox="0 0 320 222"></svg></div>
+    <div class="info" id="ginfo">Düwüne degseň, onuň baglanyşyklary görkeziler.</div>
+  </div>
+
+  <div class="card">
+    <h3>Watanyň ekinleri</h3>
+    <div class="goal">Günorta Amerikadan gelen ekinlere degip gör.</div>
+    <div class="chips" id="mwords"></div>
+    <div class="info" id="mline"></div>
+    <div class="row"><button class="btn primary" id="mcheck">Barla</button>
+      <button class="btn ghost" id="mclear">Arassala</button></div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geografiýa 7, II bölüm (G. Gurbandurdyýew we başg.), Aşgabat 2020 — kitap boýunça.</div>
+</div>
+<script>
+
+var GN = [["selwa", 160, 111, "Selwa — portugalça «tokaý», çygly ekwatorial tokaý."], ["geweýa", 56, 44, "Kauçuk berýän agaç, selwanyň gymmatly ösümligi."], ["seýba", 264, 44, "Seýba daragtynyň boýy 80 m-e ýetýär."], ["anakonda", 52, 180, "Suw anakondasynyň uzynlygy 9–11 m-e ýetýär."], ["kapibara", 268, 180, "Ýerdäki iň uly gemriji, massasy 50 kg-e ýetýär."]], GE = [[0, 1, "kauçuk"], [0, 2, "beýik"], [0, 3, "ýylan"], [0, 4, "gemriji"]];
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="320" height="222" fill="#f6faf4"/>';
+    for (var e = 0; e < GE.length; e++) {
+      var a = GN[GE[e][0]], b = GN[GE[e][1]];
+      var on = (sel === GE[e][0] || sel === GE[e][1]);
+      s += '<line x1="' + a[1] + '" y1="' + a[2] + '" x2="' + b[1] + '" y2="' + b[2] +
+           '" stroke="' + (on ? "#1d6f3c" : "#c3d1b6") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      if (on) {
+        var mx = (a[1] + b[1]) / 2, my = (a[2] + b[2]) / 2 - 4;
+        s += '<text x="' + mx + '" y="' + my + '" font-size="9.5" fill="#14522b" ' +
+             'text-anchor="middle">' + GE[e][2] + '</text>';
+      }
+    }
+    for (var i = 0; i < GN.length; i++) {
+      var on2 = (i === sel), lab = GN[i][0];
+      var fs = lab.length > 13 ? 8 : (lab.length > 9 ? 9 : 10);
+      var rr = Math.max(21, lab.length * fs * 0.29 + 7) + (on2 ? 3 : 0);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<circle cx="' + GN[i][1] + '" cy="' + GN[i][2] + '" r="' + rr +
+           '" fill="' + (on2 ? "#cdebd6" : "#eaf3e4") + '" stroke="#4a6b39" stroke-width="2"/>';
+      s += '<text x="' + GN[i][1] + '" y="' + (GN[i][2] + 3.5) + '" font-size="' + fs + '" ' +
+           'fill="#23381a" text-anchor="middle">' + lab + '</text></g>';
+    }
+    document.getElementById("gsvg").innerHTML = s;
+    var gs = document.getElementById("gsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("ginfo").innerHTML = "<b>" + GN[i][0] + "</b> — " + GN[i][3];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var MW = ["ýeralma", "bugdaý", "pomidor", "şaly", "kakao", "gowaça"], MT = [0, 2, 4], MN = "Bugdaý, şaly we gowaça başga materiklerden gelip çykypdyr.", MK = "✓";
+(function () {
+  var st = [];
+  for (var i = 0; i < MW.length; i++) st.push(0);
+  function render() {
+    var h = "";
+    for (var i = 0; i < MW.length; i++) {
+      var c = st[i] === 1 ? " sel" : "";
+      h += '<button class="btn' + c + '" data-i="' + i + '">' + MW[i] +
+           (st[i] === 1 ? " " + MK : "") + "</button>";
+    }
+    document.getElementById("mwords").innerHTML = h;
+    var bs = document.getElementById("mwords").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        st[i] = st[i] ? 0 : 1;
+        render();
+      };
+    }
+    var t = "";
+    for (var i = 0; i < MW.length; i++) t += MW[i] + (st[i] === 1 ? " " + MK + " " : " ");
+    document.getElementById("mline").textContent = t;
+  }
+  document.getElementById("mcheck").onclick = function () {
+    var ok = 1;
+    for (var i = 0; i < MW.length; i++) if (st[i] !== (MT.indexOf(i) >= 0 ? 1 : 0)) ok = 0;
+    var m = document.getElementById("mmsg");
+    if (ok) { m.className = "msg ok"; m.textContent = "Dogry! " + MN; }
+    else { m.className = "msg bad"; m.textContent = "Entek dogry däl. " + MN; }
+  };
+  document.getElementById("mclear").onclick = function () {
+    for (var i = 0; i < MW.length; i++) st[i] = 0;
+    render();
+    document.getElementById("mmsg").className = "msg";
+    document.getElementById("mmsg").textContent = "";
+  };
+  render();
+})();
+
+var Q = [["«Selwa» näme aňladýar?", ["tokaý", "sähra", "çöl"], 0], ["Braziliýa Amazoniýasynda näçe agaç görnüşi bar?", ["4000-e golaý", "200-e golaý", "400-e golaý"], 0], ["Kapibaranyň massasy näçe?", ["50 kg-e çenli", "5 kg-e çenli", "500 kg-e çenli"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

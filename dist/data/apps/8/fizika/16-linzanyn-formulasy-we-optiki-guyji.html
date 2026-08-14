@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linzanyň formulasy — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Linzanyň formulasy we optiki güýji</h1>
+  <div class="sub">Fizika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">1/a + 1/b = 1/f. Optiki güýç D = 1/f.</div>
+  </div>
+
+  <div class="card">
+    <h3>Şekil nirede döreýär?</h3>
+    <div class="goal">Jisimiň daşlygyny üýtget.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 180"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="6" max="40" step="2" value="20">
+    <div class="info" id="siro1"></div>
+    <div class="note">Ýygnaýjy linza üçin f položitel.</div>
+  </div>
+
+  <div class="card">
+    <h3>Optiki güýç</h3>
+    <div class="goal">Fokus daşlygyny süýşürgiç bilen üýtget.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="5" max="100" step="5" value="25">
+    <div class="info" id="cout"></div>
+    <div class="note">Optiki güýjüň birligi — dioptriýa (dptr).</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 8 (G. Toýlyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var f = 10, a = v;
+var b = (a === f) ? 999 : a * f / (a - f);
+var k = 3.2, cx = 160, cy = 95;
+var ax = cx - Math.min(a * k, 150);
+var bx = cx + Math.min(b * k, 150);
+var s = '<rect x="0" y="0" width="320" height="180" fill="#f7fafd"/>';
+s += '<line x1="6" y1="' + cy + '" x2="314" y2="' + cy + '" stroke="#c8d4e4" ' +
+     'stroke-width="2"/>';
+s += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="10" ry="52" fill="#dceaf6" ' +
+     'stroke="#2456b0" stroke-width="3"/>';
+s += '<circle cx="' + (cx - f * k) + '" cy="' + cy + '" r="4" fill="#5b6b80"/>';
+s += '<circle cx="' + (cx + f * k) + '" cy="' + cy + '" r="4" fill="#5b6b80"/>';
+s += '<line x1="' + ax + '" y1="' + cy + '" x2="' + ax + '" y2="' + (cy - 40) +
+     '" stroke="#2456b0" stroke-width="4"/>';
+if (b > 0 && b < 900) {
+  var hh = Math.round(40 * b / a);
+  if (hh > 70) hh = 70;
+  s += '<line x1="' + (Math.round(bx * 10) / 10) + '" y1="' + cy + '" x2="' +
+       (Math.round(bx * 10) / 10) + '" y2="' + (cy + hh) +
+       '" stroke="#b02424" stroke-width="4"/>';
+}
+s += '<line x1="' + ax + '" y1="' + (cy - 40) + '" x2="' + cx + '" y2="' + (cy - 40) +
+     '" stroke="#e8a33d" stroke-width="2"/>';
+return s; }
+  function readout(v) { var f = 10, a = v;
+if (a === f) return 'a = f = 10 sm: şöhleler parallel gidýär, şekil emele gelmeýär.';
+var b = Math.round(a * f / (a - f) * 10) / 10;
+var G = Math.round(Math.abs(b / a) * 100) / 100;
+if (b < 0) return 'a = ' + a + ' sm < f: şekil hyýaly we ulaldylan, b = ' + b + ' sm.';
+return 'a = ' + a + ' sm, f = 10 sm, b = ' + b + ' sm. Ulaltma G = b/a = ' + G + '.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Jisimiň daşlygy a" + ": " + String(v).replace(".", ",") + " " + "sm";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var CO = [["Fokus daşlygy metrde", "v / 100", "m"], ["Optiki güýç D = 1/f", "100 / v", "dptr"]], CU = "sm", CL = "Fokus daşlygy f";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["Linzanyň formulasy nähili?", ["1/a + 1/b = 1/f", "a + b = f", "a · b = f"], 0], ["Optiki güýjüň birligi näme?", ["metr", "dioptriýa", "nýuton"], 1], ["f = 0,5 m bolsa D näçe?", ["0,5 dptr", "2 dptr", "5 dptr"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

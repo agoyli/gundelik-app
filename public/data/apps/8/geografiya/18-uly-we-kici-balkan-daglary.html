@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balkan daglary — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Uly we Kiçi Balkan daglary</h1>
+  <div class="sub">Geografiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Arlan gerşi 1881 metre ýetýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Gerişleriň beýikligi</h3>
+    <div class="goal">Sütünçä degip gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 200"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Iki dagyň deňeşdirmesi</h3>
+    <div class="goal">Öýjüge degip maglumaty gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geografiýa 8 (A. Babaýew we ç.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+var SP = [["Arlan 1881 m", "M20 16 H300 V50 H20 Z", 160, 39, "Uly Balkanyň iň belent gerşi — Arlan, 1881 m."], ["Sekidagy 1376 m", "M20 60 H225 V94 H20 Z", 122, 83, "Uly Balkanyň gündogar gerşi — Sekidagy, 1376 m."], ["Kiçi Balkan 779 m", "M20 104 H136 V138 H20 Z", 78, 127, "Kiçi Balkanyň iň belent nokady 779 metre ýetýär."], ["Goşasüýri 682 m", "M20 148 H122 V182 H20 Z", 72, 171, "Uly Balkanyň günbatar gerşi — Goşasüýri, 682 m."]], SW = 320, SH = 200;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var TH = ["Görkeziji", "Bahasy"], TR = [["Uly Balkan uzynlygy", "70 km"], ["Uly Balkan ini", "50 km"], ["Kiçi Balkan uzynlygy", "30 km"], ["Ygal", "120 mm-den az"]], TI = [["Uly Balkanyň uzynlygy 70 kilometrdir.", "Onda üç sany dag gerşi bar."], ["Uly Balkanyň ini 50 kilometre barabardyr.", "Dag eteklerinde 300–400 m baýyrlyklar bar."], ["Kiçi Balkanyň uzynlygy 30 km, ini 12 km-e golaý.", "Onda tozamak we karst hadysalary dowam edýär."], ["Ýylda ýagýan ygal 120 mm-den geçmeýär.", "Klimaty gurak çöl we ýarym çöl häsiýetlidir."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Uly Balkanyň iň beýik gerşi näçe metr?", ["1881 m", "1376 m", "779 m"], 0], ["Kiçi Balkanyň iň belent nokady näçe metr?", ["779 m", "1881 m", "980 m"], 0], ["Bu daglarda ýyllyk ygal näçe mm-den geçmeýär?", ["120 mm", "230 mm", "400 mm"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

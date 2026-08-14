@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bugarma we kondensasiýa — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bugarma we kondensasiýa</h1>
+  <div class="sub">Fizika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Yssy, giň we şemally bolsa — bugarma çalt.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bugarma tizligi</h3>
+    <div class="goal">Şertleri açarlar bilen üýtget.</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 170"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Bugarma islendik temperaturada bolup durýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bugarma we kondensasiýa</h3>
+    <div class="goal">Setire degip gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 8 (G. Toýlyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["Gyzgyn suwuklyk", "yssy", false], ["Giň gap", "gin", false], ["Şemal bar", "sem", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { var w = st.gin ? 190 : 90;
+var s = '<rect x="0" y="0" width="320" height="170" fill="#f7fafd"/>';
+s += '<rect x="30" y="100" width="' + w + '" height="46" fill="#cfe0fb" stroke="#2456b0" ' +
+     'stroke-width="3"/>';
+var n = 2 + (st.yssy ? 3 : 0) + (st.gin ? 2 : 0) + (st.sem ? 2 : 0);
+for (var i = 0; i < n; i++) {
+  var x = 42 + (i * 21) % (w - 20);
+  var y = 90 - (i % 3) * 22;
+  s += '<circle cx="' + x + '" cy="' + y + '" r="5" fill="#9fc4d8"/>';
+}
+if (st.sem) {
+  for (var j = 0; j < 3; j++) {
+    var yy = 40 + j * 18;
+    s += '<path d="M240 ' + yy + ' L296 ' + yy + '" stroke="#93a2b5" stroke-width="3"/>';
+    s += '<path d="M288 ' + (yy - 5) + ' L298 ' + yy + ' L288 ' + (yy + 5) +
+         ' Z" fill="#93a2b5"/>';
+  }
+}
+if (st.yssy) s += '<rect x="30" y="148" width="' + w + '" height="10" fill="#b02424"/>';
+return s; }
+  function readout(st) { var n = 0;
+if (st.yssy) n++;
+if (st.gin) n++;
+if (st.sem) n++;
+var t = ['haýal', 'orta', 'çalt', 'iň çalt'][n];
+return 'Işjeň şertleriň sany: ' + n + '. Bugarma ' + t +
+       ' bolýar. Temperatura, üstüň meýdany we şemal bugarmany çaltlandyrýar.'; }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var TH = ["Hadysa", "Näme bolýar"], TR = [["Bugarma", "molekula suwuklykdan uçup çykýar"], ["Kondensasiýa", "bug ýene-de suwuklyga öwrülýär"], ["Doýgun bug", "bugaryş bilen kondensasiýa deňleşýär"], ["Doýgun däl bug", "bugaryş kondensasiýadan köp"]], TI = [["Üstki gatlakda bolýar.", "Suwuklyk sowaýar."], ["Bugarma ters hadysa.", "Ertirki çyg şeýle emele gelýär."], ["Ýapyk gapda emele gelýär.", "Suwuklygyň mukdary üýtgemeýär."], ["Agzy açyk gapda bolýar.", "Suwuklyk kem-kemden azalýar."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Bugarma nirede bolup geçýär?", ["Ähli göwrüminde", "Suwuklygyň üstki gatlagynda", "Diňe düýbünde"], 1], ["Buguň suwuklyga öwrülmegine näme diýilýär?", ["Kondensasiýa", "Ereme", "Gatama"], 0], ["Doýgun bug haçan emele gelýär?", ["Agzy açyk gapda", "Dinamiki deňagramlylykda", "Diňe gaýnanda"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

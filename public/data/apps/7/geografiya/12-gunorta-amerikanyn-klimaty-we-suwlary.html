@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klimat we suwlar — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Günorta Amerikanyň klimaty we suwlary 🌧️</h1>
+  <div class="sub">Geografiýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Bäş klimat guşaklygy we iň köp suwly derýa. Açarlary basyp, passatlaryň täsirini gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Passat we And daglary</h3>
+    <div class="goal">Açarlary basyp, ýagdaýy üýtget.</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 150"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Beýik And daglary çygly passat ýellerini kenarýaka geçirmeýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Suwlaryň sanlary</h3>
+    <div class="goal">Derýalar we köller sanlarda.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geografiýa 7, II bölüm (G. Gurbandurdyýew we başg.), Aşgabat 2020 — kitap boýunça.</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["passat öwüsýär", "p", false], ["And daglary", "a", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { var s = '<rect x="0" y="110" width="320" height="40" fill="#7fbf5a"/>';
+if (st.a) s += '<path d="M60 110 L96 30 L132 110 Z" fill="#8895a3"/>';
+if (st.p) {
+  s += '<path d="M300 60 L200 60" stroke="#4fa3c7" stroke-width="4"/>' +
+       '<path d="M206 54 L200 60 L206 66" stroke="#4fa3c7" stroke-width="4" fill="none"/>';
+  var rx = st.a ? 150 : 40;
+  for (var i = 0; i < 6; i++) s += '<line x1="' + (rx + i * 22) + '" y1="70" x2="' +
+    (rx + i * 22 - 6) + '" y2="96" stroke="#4fa3c7" stroke-width="3"/>';
+}
+return s; }
+  function readout(st) { if (!st.p) return 'Passat ýok: howa asuda, ygal az.';
+return st.a ? 'Passat gündogar eňňitlere ygal berýär, daglaryň aňyrsy gurak — Atakama.'
+            : 'Passat Atlantikadan çyglylyk getirýär, Amazonka pesligine ygal ýagýar.'; }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var TH = ["Obýekt", "San", "Bellik"], TR = [["Amazonka", "6400 km", "Ukaýali goşandy bilen"], ["ýyllyk akymy", "7000 km³", "iň köp suwly derýa"], ["Anhel", "1054 m", "iň beýik şaglawuk"], ["Iguasu", "80 m", "300 çüwdürime bölünýär"], ["Titikaka", "3812 m", "iň beýik dag köli"]], TI = [["Materigiň esasy derýasy.", "Alty müň dört ýüz kilometr.", "Çägi 7 mln km²."], ["Bir ýylda akýan suw.", "Ýedi müň kub kilometr.", "Ýer ýüzünde birinji."], ["Orinokonyň goşandynda.", "Müň elli dört metr.", "Dünýäde iň beýik."], ["Parananyň goşandynda.", "Segsen metr.", "Güwwüldisi 20–25 km eşidilýär."], ["Merkezi Andlarda.", "Üç müň sekiz ýüz on iki metr.", "Çuňlugy 304 m."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Amazonkanyň uzynlygy näçe?", ["6400 km", "4400 km", "2500 km"], 0], ["Anhel şaglawugynyň beýikligi näçe?", ["1054 m", "80 m", "747 m"], 0], ["Näme üçin Atakamada ygal ýagmaýar?", ["And daglary passaty geçirmeýär", "ekwatordan uzak", "deňizden uzak"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

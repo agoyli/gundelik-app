@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erginler — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Erginler we massa paýy</h1>
+  <div class="sub">Himiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">C % = erän madda / ergin · 100.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ergin taýýarla</h3>
+    <div class="goal">Duzuň massasyny üýtget.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 180"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="0" max="50" step="5" value="10">
+    <div class="info" id="siro1"></div>
+    <div class="note">Erginiň massasy eredijiniň we erän maddanyň jemidir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ereýjilik şertleri</h3>
+    <div class="goal">Setire degip gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Himiýa 8 (M. Amangulyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var m = v, w = 90;
+var s = '<rect x="0" y="0" width="320" height="180" fill="#f7fafd"/>';
+s += '<path d="M60 40 L150 40 L142 152 L68 152 Z" fill="#eaf4fb" stroke="#5b6b80" ' +
+     'stroke-width="3"/>';
+s += '<path d="M64 70 L146 70 L142 152 L68 152 Z" fill="#cfe0fb"/>';
+var n = Math.round(m / 5);
+for (var i = 0; i < n; i++) {
+  s += '<circle cx="' + (78 + (i % 5) * 14) + '" cy="' + (92 + Math.floor(i / 5) * 22) +
+       '" r="4" fill="#1d7a3d"/>';
+}
+var c = Math.round(m / (m + 90) * 100);
+var bh = Math.round(c / 40 * 110);
+s += '<rect x="210" y="' + (152 - bh) + '" width="50" height="' + bh + '" fill="#1d7a3d"/>';
+s += '<text x="206" y="' + (146 - bh) + '" font-size="12" fill="#1d7a3d">' + c +
+     ' %</text>';
+return s; }
+  function readout(v) { var m = v, w = 90;
+if (m === 0) return '90 g arassa suw. Erän madda ýok, konsentrasiýa 0 %.';
+var c = Math.round(m / (m + w) * 1000) / 10;
+return m + ' g duz + 90 g suw = ' + (m + w) + ' g ergin. C = ' + m + ' / ' + (m + w) +
+       ' · 100 = ' + ('' + c).replace('.', ',') + ' %.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Duzuň massasy" + ": " + String(v).replace(".", ",") + " " + "g";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var TH = ["Madda", "Şert", "Netije"], TR = [["Gaty madda", "owradylsa", "çalt ereýär"], ["Gaty madda", "gyzdyrylsa", "köp ereýär"], ["Gaz", "gyzdyrylsa", "az ereýär"], ["Gaz", "basyş artsa", "köp ereýär"]], TI = [["Galtaşma meýdany artýar.", "Diffuziýa çaltlanýar.", "Garyşdyrmak hem kömek edýär."], ["Bölejikleriň hereketi artýar.", "Ereýjilik artýar.", "Köp duz eremek bolýar."], ["Gaz bölejikleri uçup gidýär.", "Gaýnadylsa ähli gaz çykýar.", "Gazly suw gyzsa gaz çykýar."], ["Gap ýapyk bolanda.", "Açylanda gaz bölünip çykýar.", "Gazly suwuň gapagy şoňa mysal."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Erginiň massasy nämä deň?", ["Diňe suwuň massasyna", "Eredijiniň we erän maddanyň jemine", "Olaryň tapawudyna"], 1], ["40 g suwda 10 g duz erände massa paýy näçe?", ["20 %", "25 %", "10 %"], 0], ["Gazlaryň ereýjiligi haçan artýar?", ["Temperatura pes, basyş ýokary bolanda", "Gyzdyrylanda", "Basyş peselende"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -2,28 +2,16 @@ import { Box, Button, ButtonBase, InputBase, Typography } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  BooksIcon, CheckIcon, GameIcon, LockIcon, QuizIcon, SearchIcon,
-  SparkleIcon, TrendUpIcon,
+  CheckIcon, LockIcon, SearchIcon, SparkleIcon, TrendUpIcon,
 } from '../components/Icons';
-import { BookmarkButton, DoneBadge, PillHeader, SheetDrawer, SheetSection } from '../components/Ui';
+import { BookmarkButton, ChipRow, DoneBadge, PillHeader, SheetDrawer, SheetSection } from '../components/Ui';
 import { tierFor, useCan } from '../state/prefs';
-import type { CurriculumSubject, LessonKind, PathNode } from '../data/curriculum';
+import type { CurriculumSubject, PathNode } from '../data/curriculum';
 import { pathFor } from '../data/curriculum';
+import type { Kind } from '../data/kinds';
+import { KINDS, KIND_META } from '../data/kinds';
 import { LessonScreen } from './LessonScreen';
 import { tokens } from '../theme';
-
-/* ---------------- Activity kinds ---------------- */
-type Kind = LessonKind;
-
-/* `color` fills tiles and icons; `ink` is the same accent at text contrast */
-const KIND_META: Record<Kind, {
-  label: string; color: string; ink: string; tint: string; icon: (size: number) => React.ReactNode;
-}> = {
-  text: { label: 'Tekst', color: tokens.blue, ink: tokens.blueText, tint: tokens.blueTint, icon: (s) => <BooksIcon size={s} /> },
-  interactive: { label: 'Interaktiw', color: tokens.teal, ink: tokens.tealText, tint: tokens.tealTint, icon: (s) => <GameIcon size={s} /> },
-  test: { label: 'Test', color: tokens.orange, ink: tokens.orangeText, tint: tokens.orangeTint, icon: (s) => <QuizIcon size={s} /> },
-};
-const KINDS = Object.keys(KIND_META) as Kind[];
 
 /* ---------------- The path (grades 1–12) ---------------- */
 /* The path itself is the curriculum's — which grades, which themes, in which
@@ -206,8 +194,10 @@ function PathSection({ lessons, currentId, onPick }: {
 }
 
 /* ---------------- Screen ---------------- */
-export function RoadmapScreen({ subject, onBack, toast, onUpgrade }: {
+export function RoadmapScreen({ subject, openAt, onBack, toast, onUpgrade }: {
   subject: CurriculumSubject;
+  /** the grade to open on, when the reader came from a grade-filtered list */
+  openAt?: number;
   onBack: () => void; toast: (m: string) => void; onUpgrade: () => void;
 }) {
   const canRoadmap = useCan('roadmap');
@@ -218,7 +208,7 @@ export function RoadmapScreen({ subject, onBack, toast, onUpgrade }: {
   const freeGrade = GRADES[0].grade;
   const [query, setQuery] = useState('');
   const [kindFilter, setKindFilter] = useState<Kind | null>(null);
-  const [activeGrade, setActiveGrade] = useState(freeGrade);
+  const [activeGrade, setActiveGrade] = useState(openAt ?? freeGrade);
   const [sheet, setSheet] = useState<RoadLesson | null>(null);
   const [lessonOpen, setLessonOpen] = useState<RoadLesson | null>(null);
   /* lessons completed in this session — the path advances live */
@@ -295,14 +285,17 @@ export function RoadmapScreen({ subject, onBack, toast, onUpgrade }: {
     if (filterActive) scrollRef.current?.scrollTo({ top: 0 });
   }, [query, kindFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Land on the lesson to take next, not on grade 1 — one frame late, because
-     the grade holding it mounts when the observer above first reports it. */
+  /* Land where the reader was looking: the grade they filtered the subject list
+     to, or else the lesson they have to take next. One frame late, because the
+     grade holding either mounts when the observer above first reports it. */
   useEffect(() => {
     const t = setTimeout(() => {
+      const band = openAt !== undefined ? sectionRefs.current[openAt] : null;
+      if (band) { band.scrollIntoView({ block: 'start' }); return; }
       scrollRef.current?.querySelector('[data-current="true"]')?.scrollIntoView({ block: 'center' });
     }, 60);
     return () => clearTimeout(t);
-  }, []);
+  }, [openAt]);
 
   /* One button at a time */
   const navGrades = sections.map((s) => s.grade);
@@ -372,37 +365,24 @@ export function RoadmapScreen({ subject, onBack, toast, onUpgrade }: {
             />
           </Box>
 
-          {/* Activity-type filter chips */}
-          <Box sx={{
-            display: 'flex', gap: '8px', overflowX: 'auto', mx: `-${tokens.gutter}`, px: tokens.gutter,
-            scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
-            maskImage: 'linear-gradient(90deg, #000 calc(100% - 26px), transparent)',
-            WebkitMaskImage: 'linear-gradient(90deg, #000 calc(100% - 26px), transparent)',
-          }}>
-            <ButtonBase onClick={() => setKindFilter(null)} aria-pressed={kindFilter === null}
-              sx={{
-                height: 32, px: '14px', borderRadius: `${tokens.rPill}px`, flex: 'none',
-                fontSize: 13.5, fontWeight: 600,
-                transition: 'background .15s ease,color .15s ease',
-                bgcolor: kindFilter === null ? tokens.blueSolid : tokens.surface,
-                color: kindFilter === null ? '#fff' : tokens.ink2,
-              }}>Ähli</ButtonBase>
-            {kindsPresent.map((k) => {
-              const m = KIND_META[k];
-              const on = kindFilter === k;
-              return (
-                <ButtonBase key={k} onClick={() => setKindFilter(on ? null : k)} aria-pressed={on}
-                  sx={{
-                    height: 32, px: '12px', borderRadius: `${tokens.rPill}px`, flex: 'none',
-                    display: 'inline-flex', gap: '6px', fontSize: 13.5, fontWeight: 600,
-                    bgcolor: on ? m.ink : m.tint, color: on ? '#fff' : m.ink,
-                    transition: 'background .15s ease,color .15s ease',
-                  }}>
-                  {m.icon(15)}{m.label}
-                </ButtonBase>
-              );
-            })}
-          </Box>
+          {/* Activity-type filter — the same chip row the subject list uses */}
+          <ChipRow
+            label="Sapak görnüşi"
+            value={kindFilter ?? ''}
+            onChange={(id) => setKindFilter((id || null) as Kind | null)}
+            chips={[
+              /* stands on its own beside the kind names, so the pronoun, not the
+                 bare adjective — the same chip the subject list opens with */
+              { id: '', label: 'Ählisi' },
+              ...kindsPresent.map((k) => ({
+                id: k,
+                label: KIND_META[k].label,
+                icon: KIND_META[k].icon(15),
+                accent: KIND_META[k].ink,
+                tint: KIND_META[k].tint,
+              })),
+            ]}
+          />
 
           {/* Continue card — next lesson front and centre, level folded in below */}
           <ButtonBase

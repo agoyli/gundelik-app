@@ -5,6 +5,7 @@ import { AiChatSheet, AiFab } from '../components/AiHelper';
 import type { AiSuggestion } from '../components/AiHelper';
 import { CheckIcon, ChevronIcon, QuizIcon } from '../components/Icons';
 import { PaidFeatureSheet } from '../components/Paywall';
+import { QuizQuestions, QuizResult, useQuiz } from '../components/Quiz';
 import { PillHeader } from '../components/Ui';
 import { tierFor, useCan } from '../state/prefs';
 import type { LessonKind } from '../data/curriculum';
@@ -15,7 +16,7 @@ import { tokens } from '../theme';
 type Meta = { label: string; color: string; ink: string; tint: string; icon: (size: number) => ReactNode };
 type LessonLite = {
   id: string; title: string; kind: LessonKind; extent: string; done: boolean;
-  grade: number; nos: number[];
+  grade: number; nos: number[]; ready: boolean;
 };
 
 /*
@@ -24,7 +25,8 @@ type LessonLite = {
  * It used to hold one hand-written lesson about natural numbers, one parabola
  * playground and one three-question test about discriminants, and showed that
  * same set whichever of the 4051 themes you opened. Everything here now comes
- * from `src/data/lessons/<grade>-<slug>.json`, fetched for the stop you opened.
+ * from the content source (`data/source.ts`), fetched for the stop you opened
+ * and for no other.
  *
  * Three kinds of stop, three pages:
  *   text         the written lesson — hook, summary, steps, formulas, examples
@@ -73,32 +75,6 @@ const aiForResult = (score: number, total: number, weak: string[]): AiSuggestion
   },
 ];
 
-/* ---------------- Answer row ---------------- */
-function AnswerRow({ label, state, onClick }: {
-  label: string; state: 'idle' | 'selected' | 'correct' | 'wrong'; onClick?: () => void;
-}) {
-  const palette = {
-    idle: { bg: '#fff', border: 'transparent', color: tokens.ink },
-    selected: { bg: tokens.blueTint, border: tokens.blue, color: tokens.blueText },
-    correct: { bg: tokens.greenTint, border: tokens.greenDeep, color: tokens.greenText },
-    wrong: { bg: tokens.redTint, border: tokens.red, color: tokens.redText },
-  }[state];
-  return (
-    <ButtonBase
-      onClick={onClick}
-      disabled={!onClick}
-      aria-pressed={state !== 'idle'}
-      sx={{
-        width: '100%', minHeight: 48, borderRadius: `${tokens.rRow}px`, px: '15px', py: '10px',
-        justifyContent: 'flex-start', textAlign: 'left', fontSize: 15, fontWeight: 600, lineHeight: 1.4,
-        bgcolor: palette.bg, color: palette.color,
-        border: `1.5px solid ${palette.border}`,
-        transition: 'background .15s ease,border-color .15s ease',
-      }}
-    >{label}</ButtonBase>
-  );
-}
-
 /* ---------------- Screen ---------------- */
 export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, onUpgrade }: {
   lesson: LessonLite; subjectSlug: string; meta: Meta;
@@ -109,12 +85,14 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
      has no material at all */
   const [content, setContent] = useState<LessonContent | null | undefined>(undefined);
   const [exam, setExam] = useState<ExamQuestion[] | undefined>(undefined);
+  /* the source could not be reached — told apart from "nothing written yet",
+     because one is worth retrying and the other is not */
+  const [failed, setFailed] = useState<string | null>(null);
+  /* bumped by the retry button, which is all "try that request again" means */
+  const [attempt, setAttempt] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   /* self-check accordions */
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
-  /* checkpoint: intro → one question per step → result */
-  const [stage, setStage] = useState<'start' | number | 'result'>('start');
-  const [answers, setAnswers] = useState<Record<number, number>>({});
 
   const isExam = lesson.kind === 'test';
 
@@ -122,21 +100,30 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
     let live = true;
     setContent(undefined);
     setExam(undefined);
-    setStage('start');
-    setAnswers({});
+    setFailed(null);
+    quizReset();
     setRevealed({});
+    /* The programme already says which themes have material, so a theme that
+       has none is answered without a request at all. */
+    if (!lesson.ready) { setContent(null); return; }
+    const fail = (e: unknown) => {
+      if (live) setFailed(e instanceof Error ? e.message : String(e));
+    };
     if (isExam) {
-      loadExam(lesson.grade, subjectSlug, lesson.nos).then((qs) => { if (live) setExam(qs); });
+      loadExam(lesson.grade, subjectSlug, lesson.nos)
+        .then((qs) => { if (live) setExam(qs); }).catch(fail);
     } else {
-      loadLesson(lesson.grade, subjectSlug, lesson.nos[0]).then((c) => { if (live) setContent(c); });
+      loadLesson(lesson.grade, subjectSlug, lesson.nos[0])
+        .then((c) => { if (live) setContent(c); }).catch(fail);
     }
     return () => { live = false; };
-  }, [isExam, lesson.grade, lesson.nos, subjectSlug]);
+  }, [attempt, isExam, lesson.grade, lesson.nos, lesson.ready, subjectSlug]);
 
   const test = exam ?? [];
-  const score = test.filter((t, i) => answers[i] === t.correct).length;
-  const weak = [...new Set(test.filter((t, i) => answers[i] !== t.correct).map((t) => t.theme))];
-  const inQuestions = isExam && typeof stage === 'number';
+  /* the checkpoint's own quiz — the same one the Testler section runs */
+  const quiz = useQuiz(test);
+  const { score, weak, stage, reset: quizReset } = quiz;
+  const inQuestions = isExam && quiz.inQuestions;
 
   const aiSuggestions = isExam
     ? (stage === 'result' ? aiForResult(score, test.length, weak) : [{
@@ -192,7 +179,7 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
             </Box>
 
             {/* ---- still loading ---- */}
-            {((isExam && exam === undefined) || (!isExam && content === undefined)) && (
+            {!failed && ((isExam && exam === undefined) || (!isExam && content === undefined)) && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {[64, 120, 90].map((h) => (
                   <Box key={h} aria-hidden sx={{
@@ -205,8 +192,26 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
               </Box>
             )}
 
+            {/* ---- the source could not be reached ---- */}
+            {failed && (
+              <Box sx={{
+                bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '24px 18px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', textAlign: 'center',
+              }}>
+                <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Sapak açylmady</Typography>
+                <Typography variant="body2" sx={{ color: tokens.ink2 }}>
+                  Material serwerden alynmady. Birikmäňizi barlap, gaýtadan synanyşyň.
+                </Typography>
+                <Typography variant="caption">{failed}</Typography>
+                <Button variant="contained" disableElevation sx={{ mt: '4px', px: '26px' }}
+                  onClick={() => setAttempt((n) => n + 1)}>
+                  Gaýtadan synanyş
+                </Button>
+              </Box>
+            )}
+
             {/* ---- nothing written for this theme yet ---- */}
-            {!isExam && content === null && (
+            {!failed && !isExam && content === null && (
               <Box sx={{
                 bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '24px 18px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', textAlign: 'center',
@@ -227,7 +232,7 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
             )}
 
             {/* ---- the written lesson ---- */}
-            {!isExam && content && (
+            {!failed && !isExam && content && (
               <>
                 {content.hook && (
                   <Typography variant="body2" sx={{ fontSize: 15, lineHeight: 1.65, color: tokens.ink2, px: '2px' }}>
@@ -336,7 +341,7 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
             )}
 
             {/* ---- checkpoint: the three themes' banks, asked together ---- */}
-            {isExam && exam && stage === 'start' && (
+            {!failed && isExam && exam && stage === 'start' && (
               <Box sx={{
                 bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '24px 18px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center',
@@ -368,85 +373,28 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
               </Box>
             )}
 
-            {inQuestions && typeof stage === 'number' && (
-              <>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Box sx={{ flex: 1, height: 6, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft, overflow: 'hidden' }}>
-                    <Box sx={{
-                      width: `${((stage + 1) / test.length) * 100}%`, height: '100%',
-                      borderRadius: `${tokens.rPill}px`, bgcolor: meta.color, transition: 'width .25s ease',
-                    }} />
-                  </Box>
-                  <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: tokens.inkMuted, fontVariantNumeric: 'tabular-nums' }}>
-                    {stage + 1}/{test.length}
-                  </Typography>
-                </Box>
-                <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '18px 17px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: tokens.inkMuted }}>
-                    {test[stage].theme}
-                  </Typography>
-                  <Typography sx={{ fontSize: 16, fontWeight: 700, lineHeight: 1.45 }}>{test[stage].q}</Typography>
-                  {test[stage].options.map((o, i) => (
-                    <AnswerRow
-                      key={o}
-                      label={o}
-                      state={answers[stage] === i ? 'selected' : 'idle'}
-                      onClick={() => setAnswers((a) => ({ ...a, [stage]: i }))}
-                    />
-                  ))}
-                </Box>
-                <Box sx={{ display: 'flex', gap: '10px' }}>
-                  <Button fullWidth sx={{ bgcolor: tokens.surface, color: tokens.ink }}
-                    onClick={() => setStage(stage === 0 ? 'start' : stage - 1)}>
-                    Yza
-                  </Button>
-                  <Button fullWidth variant="contained" disableElevation
-                    disabled={answers[stage] === undefined}
-                    onClick={() => setStage(stage === test.length - 1 ? 'result' : stage + 1)}>
-                    {stage === test.length - 1 ? 'Netije' : 'Indiki'}
-                  </Button>
-                </Box>
-              </>
+            {inQuestions && (
+              <QuizQuestions
+                questions={test}
+                quiz={quiz}
+                accent={meta.color}
+                onQuit={() => quiz.goto('start')}
+              />
             )}
 
             {isExam && stage === 'result' && (
-              <>
-                <Box sx={{
-                  bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '22px 18px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                }}>
-                  <Box sx={{
-                    width: 86, height: 86, borderRadius: '50%', display: 'grid', placeItems: 'center',
-                    border: `6px solid ${score === test.length ? tokens.greenDeep : score * 2 >= test.length ? tokens.orange : tokens.red}`,
-                    fontSize: 22, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
-                  }}>{score}/{test.length}</Box>
-                  <Typography sx={{ fontSize: 17, fontWeight: 700 }}>
-                    {score === test.length ? 'Ajaýyp! 🎉' : score * 2 >= test.length ? 'Gowy netije!' : 'Ýene synanyş!'}
-                  </Typography>
-                  {weak.length > 0 && (
-                    <Typography variant="body2" sx={{ color: tokens.ink2, textAlign: 'center' }}>
-                      Gaýtalamaly: {weak.join(', ')}
-                    </Typography>
-                  )}
+              <QuizResult
+                questions={test}
+                quiz={quiz}
+                extra={(
                   <ButtonBase
-                    onClick={() => { setAnswers({}); setStage(0); }}
+                    onClick={() => quiz.goto('start')}
                     sx={{
-                      height: 32, px: '14px', borderRadius: `${tokens.rPill}px`, mt: '2px',
-                      bgcolor: tokens.blueTint, color: tokens.blueText, fontSize: 13.5, fontWeight: 600,
-                    }}>Täzeden çöz</ButtonBase>
-                </Box>
-                {test.map((t, qi) => (
-                  <Box key={t.q} sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '16px 15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.4 }}>
-                      {qi + 1}. {t.q}
-                    </Typography>
-                    <AnswerRow label={t.options[t.correct]} state="correct" />
-                    {answers[qi] !== t.correct && answers[qi] !== undefined && (
-                      <AnswerRow label={`Siziň jogabyňyz: ${t.options[answers[qi]]}`} state="wrong" />
-                    )}
-                  </Box>
-                ))}
-              </>
+                      height: 32, px: '14px', borderRadius: `${tokens.rPill}px`,
+                      bgcolor: tokens.surface, color: tokens.ink2, fontSize: 13.5, fontWeight: 600,
+                    }}>Şertlere dolan</ButtonBase>
+                )}
+              />
             )}
 
             {lesson.done && !inQuestions && (
@@ -471,7 +419,7 @@ export function LessonScreen({ lesson, subjectSlug, meta, onClose, onComplete, o
             <Button fullWidth variant="contained" disableElevation
               disabled={test.length === 0}
               startIcon={<QuizIcon size={18} />}
-              onClick={() => { setAnswers({}); setStage(0); }}>
+              onClick={quiz.start}>
               Başla ({test.length} sorag)
             </Button>
           ) : (

@@ -1,5 +1,4 @@
 import { GameIcon } from '../components/Icons';
-import { USER_GRADE, look, pathLength, subjectLook, subjectsForGrade } from './curriculum';
 import { tokens } from '../theme';
 
 /*
@@ -9,69 +8,25 @@ import { tokens } from '../theme';
  */
 
 /* ---------------- Sapaklar ----------------
- * The subject list is the real curriculum now: the subjects this grade is
- * actually taught, each carrying its own themes. `SUBJECT_LOOK` moved to
- * `curriculum.tsx` with the subjects themselves — see `look()` there, which the
- * decks, games and tests below still read so one subject keeps one colour.
+ * Nothing left. The subject list is the real curriculum, built by the screen
+ * itself for whichever grade the filter is on and counted with `pathLength`;
+ * `SUBJECT_LOOK` moved to `curriculum.tsx` with the subjects themselves — see
+ * `look()` there, which the decks and tests below still read so one subject
+ * keeps one colour. A copy fixed to USER_GRADE could only be a staler second
+ * answer to the same question.
  */
 
-export type Subject = {
-  id: string; label: string; icon: React.ReactNode;
-  accent: string; tint: string; done: number; total: number;
-};
-
-/* A subject starts at zero: the path inside it begins at its first theme, and
-   the row says so rather than opening halfway through someone else's account.
-   The total is the path's own length — every stop on it, reading, interactive
-   and checkpoint alike — so the row and the page inside it count the same. */
-export const SAPAK_SUBJECTS: Subject[] = subjectsForGrade(USER_GRADE).map((s) => ({
-  id: s.slug,
-  label: s.name,
-  ...subjectLook(s.slug),
-  done: 0,
-  total: pathLength(s),
-}));
-
-/* ---------------- Öwrediji kartlar ---------------- */
+/* ---------------- Öwrediji kartlar ----------------
+ * The decks are the real material now — see `library.ts`, which cuts them from
+ * the lessons the content source serves. What stays here is the shape a study
+ * session needs once its cards have been fetched.
+ */
 
 export type Deck = {
   id: string; label: string; subject: string; accent: string; tint: string;
   cards: { front: string; back: string }[];
   known: number; due: number;
-  /* ISO date of the last review; absent means the deck was never opened */
-  studiedAt?: string;
 };
-
-export const DECKS: Deck[] = [
-  {
-    id: 'formulalar', label: 'Algebra formulalary', subject: 'Algebra',
-    ...look('Algebra'), known: 2, due: 2, studiedAt: '2026-02-11',
-    cards: [
-      { front: 'Diskriminant', back: 'D = b² − 4ac' },
-      { front: 'Wiýeta teoremasy', back: 'x₁ + x₂ = −b/a,  x₁·x₂ = c/a' },
-      { front: 'Kwadratlaryň tapawudy', back: 'a² − b² = (a − b)(a + b)' },
-      { front: 'Jemiň kwadraty', back: '(a + b)² = a² + 2ab + b²' },
-    ],
-  },
-  {
-    id: 'himiya', label: 'Himiki elementler', subject: 'Himiýa',
-    ...look('Himiýa'), known: 1, due: 2, studiedAt: '2026-02-09',
-    cards: [
-      { front: 'Fe', back: 'Demir — 26-njy element' },
-      { front: 'Au', back: 'Altyn — 79-njy element' },
-      { front: 'H₂O', back: 'Suw — wodorodyň oksidi' },
-    ],
-  },
-  {
-    id: 'inlis', label: 'Iňlis dili — 100 söz', subject: 'Iňlis dili',
-    ...look('Iňlis dili'), known: 0, due: 3,
-    cards: [
-      { front: 'achievement', back: 'üstünlik, gazanylan netije' },
-      { front: 'knowledge', back: 'bilim' },
-      { front: 'curious', back: 'bilesigeliji' },
-    ],
-  },
-];
 
 /* ---------------- Bäsleşikler ---------------- */
 
@@ -176,77 +131,14 @@ export const CONTESTS: Contest[] = [
   },
 ];
 
-/* ---------------- Oýunlar ---------------- */
+/* Oýunlar — deleted, not moved.
 
-export type Game = {
-  id: string; label: string; sub: string; subject: string; minutes: number;
-  best: number; played: number; avg: number; accent: string; tint: string;
-  about: string; how: string[];
-  leaders: { rank: number; name: string; sub: string; points: number; self?: boolean }[];
-};
+   Four arcade drills with invented scores and invented leaderboards ("Çalt
+   hasap", 320 bal, A. Kerim in 8A) stood in for practice material the app did
+   not have. It has 766 interactives now, one per theme with material, written
+   against the programme — they are indexed in `library.ts` (`playGroups`) and
+   played on the lesson page. Nothing here needed keeping. */
 
-export const GAMES: Game[] = [
-  {
-    id: 'hasap', label: 'Çalt hasap', sub: 'Matematika · 2 min', subject: 'Matematika', minutes: 2,
-    best: 320, played: 14, avg: 245, ...look('Matematika'),
-    about: 'Iki minutda näçe mysal çözüp bilersiň? Her dogry jogap bal, her ýalňyş bolsa wagt aýyrýar.',
-    how: [
-      'Ekranda goşmak, aýyrmak we köpeltmek mysallary çykýar.',
-      'Dogry jogaby üç warianty arasyndan saýla.',
-      'Yzygider dogry jogaplar bal köpeldijisini ösdürýär.',
-    ],
-    leaders: [
-      { rank: 1, name: 'A. Kerim', sub: '7-nji mekdep, 8A', points: 410 },
-      { rank: 2, name: 'M. Muhammet', sub: '16-njy mekdep, 8B', points: 320, self: true },
-      { rank: 3, name: 'G. Aýna', sub: '3-nji mekdep, 8B', points: 295 },
-    ],
-  },
-  {
-    id: 'sozluk', label: 'Söz tapmaça', sub: 'Iňlis dili · 3 min', subject: 'Iňlis dili', minutes: 3,
-    best: 210, played: 6, avg: 160, ...look('Iňlis dili'),
-    about: 'Garyşyk harplardan iňlis sözüni ýygna. Sözler «100 söz» kart toplumyndan alynýar.',
-    how: [
-      'Harplar garyşyk görnüşde berilýär.',
-      'Dogry sözi ýygnasaň, indiki sözüge geçýärsiň.',
-      'Kynçylyk çekseň, bir harp maslahat alyp bolýar — bal azalýar.',
-    ],
-    leaders: [
-      { rank: 1, name: 'O. Jemal', sub: '12-nji mekdep, 8W', points: 340 },
-      { rank: 2, name: 'B. Şirin', sub: '16-njy mekdep, 8B', points: 260 },
-      { rank: 3, name: 'M. Muhammet', sub: '16-njy mekdep, 8B', points: 210, self: true },
-    ],
-  },
-  {
-    id: 'element', label: 'Element ýygna', sub: 'Himiýa · 4 min', subject: 'Himiýa', minutes: 4,
-    best: 0, played: 0, avg: 0, ...look('Himiýa'),
-    about: 'Elementiň belgisini onuň ady bilen jübütle. Tablisany ýatda saklamagyň iň çalt ýoly.',
-    how: [
-      'Ekranyň bir tarapynda belgiler, beýlekisinde atlar.',
-      'Dogry jübütleri birleşdir.',
-      'Wagt gutarýança näçe köp jübüt tapsaň, şonça köp bal.',
-    ],
-    leaders: [
-      { rank: 1, name: 'H. Arslan', sub: '5-nji mekdep, 8A', points: 380 },
-      { rank: 2, name: 'N. Maýa', sub: '7-nji mekdep, 8B', points: 355 },
-      { rank: 3, name: 'D. Nurjan', sub: '16-njy mekdep, 8A', points: 300 },
-    ],
-  },
-  {
-    id: 'karta', label: 'Karta boýunça', sub: 'Geografiýa · 5 min', subject: 'Geografiýa', minutes: 5,
-    best: 145, played: 3, avg: 120, ...look('Geografiýa'),
-    about: 'Welaýatlary, şäherleri we derýalary kartada tap. Her dogry görkezme bal getirýär.',
-    how: [
-      'Sorag berilýär: «Lebap welaýaty nirede?»',
-      'Kartadan dogry ýeri saýla.',
-      'Ilkinji synanyşykda tapsaň, iki esse bal.',
-    ],
-    leaders: [
-      { rank: 1, name: 'Ç. Bahar', sub: '9-njy mekdep, 8B', points: 290 },
-      { rank: 2, name: 'S. Merdan', sub: '16-njy mekdep, 8A', points: 220 },
-      { rank: 3, name: 'M. Muhammet', sub: '16-njy mekdep, 8B', points: 145, self: true },
-    ],
-  },
-];
 
 /* ---------------- Kitaphana ---------------- */
 
@@ -306,69 +198,9 @@ export const BOOKS: Book[] = [
   },
 ];
 
-/* ---------------- Testler ---------------- */
-
-export type TestItem = {
-  id: string; title: string; tema: string; questions: number; minutes: number;
-  best: number | null; attempts: { date: string; score: number }[];
-};
-
-export type TestSubject = {
-  id: string; label: string; icon: React.ReactNode; tint: string; accent: string;
-  tests: TestItem[];
-};
-
-export const TEST_SUBJECTS: TestSubject[] = [
-  {
-    /* the tests are algebra topics and this student's grade is taught Algebra,
-       not the 1–6 Matematika course — so the bank hangs off the real subject */
-    id: 'algebra', label: 'Algebra', ...subjectLook('algebra'),
-    tests: [
-      {
-        id: 'm1', title: 'Kwadrat deňlemeler', tema: 'Algebra · 8-nji synp', questions: 12, minutes: 15,
-        best: 92, attempts: [{ date: '2026-02-02', score: 92 }, { date: '2026-01-28', score: 75 }],
-      },
-      {
-        id: 'm2', title: 'Diskriminant', tema: 'Algebra · 8-nji synp', questions: 8, minutes: 10,
-        best: 88, attempts: [{ date: '2026-01-30', score: 88 }],
-      },
-      {
-        id: 'm3', title: 'Funksiýanyň grafigi', tema: 'Algebra · 8-nji synp', questions: 10, minutes: 12,
-        best: null, attempts: [],
-      },
-      {
-        id: 'm4', title: 'Üçburçlugyň meýdany', tema: 'Geometriýa · 8-nji synp', questions: 10, minutes: 12,
-        best: 70, attempts: [{ date: '2026-01-18', score: 70 }],
-      },
-    ],
-  },
-  {
-    id: 'informatika', label: 'Informatika', ...subjectLook('informatika'),
-    tests: [
-      {
-        id: 'i1', title: 'Algoritmler', tema: 'Informatika · 8-nji synp', questions: 10, minutes: 12,
-        best: 100, attempts: [{ date: '2026-02-03', score: 100 }],
-      },
-      {
-        id: 'i2', title: 'Sanlaryň ulgamlary', tema: 'Informatika · 8-nji synp', questions: 12, minutes: 15,
-        best: null, attempts: [],
-      },
-    ],
-  },
-  {
-    id: 'jemgyyet', label: 'Jemgyýet', ...subjectLook('jemgyyet'),
-    tests: [
-      {
-        id: 'j1', title: 'Raýatyň hukuklary', tema: 'Jemgyýeti öwreniş', questions: 15, minutes: 18,
-        best: 80, attempts: [{ date: '2026-01-25', score: 80 }],
-      },
-      {
-        id: 'j2', title: 'Döwlet gurluşy', tema: 'Jemgyýeti öwreniş', questions: 12, minutes: 15,
-        best: null, attempts: [],
-      },
-    ],
-  },
-];
+/* ---------------- Testler ----------------
+ * The tests are the themes' own banks — `testSubjects()` in `library.ts`.
+ */
 
 /* the leaderboard shown on the Testler landing page */
 export const RATING = [
@@ -379,24 +211,5 @@ export const RATING = [
 
 export const GAME_ICON = <GameIcon size={24} />;
 
-/* ---------------- what the bank holds ----------------
- * Counted from the tests and the decks themselves, never written down twice.
- * A subject row that says "4 test · 40 sowal" and the test list behind it are
- * then the same fact printed at two sizes — add a test, and the row moves.
- */
-export const subjectBank = (label: string) => {
-  const s = TEST_SUBJECTS.find((t) => t.label === label);
-  return {
-    tests: s?.tests.length ?? 0,
-    questions: s?.tests.reduce((n, t) => n + t.questions, 0) ?? 0,
-    cards: DECKS.filter((d) => d.subject === label).reduce((n, d) => n + d.cards.length, 0),
-  };
-};
-
-/** The whole bank, for the lines that state what a plan opens. */
-export const BANK_TOTAL = {
-  tests: TEST_SUBJECTS.reduce((n, s) => n + s.tests.length, 0),
-  questions: TEST_SUBJECTS.reduce((n, s) => n + s.tests.reduce((m, t) => m + t.questions, 0), 0),
-  decks: DECKS.length,
-  cards: DECKS.reduce((n, d) => n + d.cards.length, 0),
-};
+/* What the bank holds is counted from the catalogue — see `bankTotal()` and
+   `subjectBank()` in `library.ts`. Nothing about it is written down twice. */
