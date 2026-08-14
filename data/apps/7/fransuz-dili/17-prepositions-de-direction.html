@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prépositions de l’espace et de direction — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Prépositions de direction 🧭</h1>
+  <div class="sub">Fransuz dili · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ugur we giňişlik öňlükleri. Kartada bölege degip gör, soň dogry sözleri saýla.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ugur kartasy</h3>
+    <div class="goal">Bölege degseň, öňlügiň manysy çykar.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 210"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>chez bilen ulanylýanlary saýla</h3>
+    <div class="goal">Diňe chez öňlügi bilen gelýän sözlere degip, ✓ goý.</div>
+    <div class="chips" id="mwords"></div>
+    <div class="info" id="mline"></div>
+    <div class="row"><button class="btn primary" id="mcheck">Barla</button>
+      <button class="btn ghost" id="mclear">Arassala</button></div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fransuz dili 7 (G. Toýlyýewa we başg.), Aşgabat 2019 — kitap boýunça.</div>
+</div>
+<script>
+
+var SP = [["tout droit", "M136 12 H184 V84 H136 Z", 160, 52, "Göni: Je vais tout droit."], ["à gauche", "M20 92 H116 V132 H20 Z", 68, 116, "Çepe: Tu vas à gauche."], ["à droite", "M204 92 H300 V132 H204 Z", 252, 116, "Saga: Il va à droite."], ["au coin de", "M20 12 H116 V80 H20 Z", 68, 48, "Burçunda: au coin de la rue."], ["en face de", "M204 12 H300 V80 H204 Z", 252, 48, "Garşysynda: en face de notre maison."], ["au bout de", "M136 140 H184 V198 H136 Z", 160, 172, "Ahyrynda: au bout du chemin."], ["moi", "M136 92 H184 V132 H136 Z", 160, 116, "Sen şu ýerde durýarsyň — hereketiň başlangyjy."]], SW = 320, SH = 210;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var MW = ["mon copain", "le boulanger", "la gare", "le directeur", "l’école", "le médecin"], MT = [0, 1, 3, 5], MN = "Chez diňe adam bilen: chez mon copain, chez le boulanger, chez le directeur, chez le médecin.", MK = "✓";
+(function () {
+  var st = [];
+  for (var i = 0; i < MW.length; i++) st.push(0);
+  function render() {
+    var h = "";
+    for (var i = 0; i < MW.length; i++) {
+      var c = st[i] === 1 ? " sel" : "";
+      h += '<button class="btn' + c + '" data-i="' + i + '">' + MW[i] +
+           (st[i] === 1 ? " " + MK : "") + "</button>";
+    }
+    document.getElementById("mwords").innerHTML = h;
+    var bs = document.getElementById("mwords").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        st[i] = st[i] ? 0 : 1;
+        render();
+      };
+    }
+    var t = "";
+    for (var i = 0; i < MW.length; i++) t += MW[i] + (st[i] === 1 ? " " + MK + " " : " ");
+    document.getElementById("mline").textContent = t;
+  }
+  document.getElementById("mcheck").onclick = function () {
+    var ok = 1;
+    for (var i = 0; i < MW.length; i++) if (st[i] !== (MT.indexOf(i) >= 0 ? 1 : 0)) ok = 0;
+    var m = document.getElementById("mmsg");
+    if (ok) { m.className = "msg ok"; m.textContent = "Dogry! " + MN; }
+    else { m.className = "msg bad"; m.textContent = "Entek dogry däl. " + MN; }
+  };
+  document.getElementById("mclear").onclick = function () {
+    for (var i = 0; i < MW.length; i++) st[i] = 0;
+    render();
+    document.getElementById("mmsg").className = "msg";
+    document.getElementById("mmsg").textContent = "";
+  };
+  render();
+})();
+
+var Q = [["«Çepe» fransuzça?", ["à droite", "à gauche", "tout droit"], 1], ["à + le birleşende?", ["au", "du", "des"], 0], ["Çörekçä barmak:", ["à le boulanger", "dans le boulanger", "chez le boulanger"], 2]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

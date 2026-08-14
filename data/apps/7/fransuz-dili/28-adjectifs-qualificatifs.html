@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adjectifs qualificatifs — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Adjectifs qualificatifs 🔤</h1>
+  <div class="sub">Fransuz dili · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Sypatlar jyns we san boýunça üýtgeýär. Açary basyp, sypatyň dört görnüşini gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Sypatyň dört görnüşi</h3>
+    <div class="goal">Aýal jynsy we köplügi açyp, görnüşiň nähili üýtgeýändigini gör.</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Il est grand et fort → Elles sont grandes et fortes.</div>
+  </div>
+
+  <div class="card">
+    <h3>Soňlama toparlary</h3>
+    <div class="goal">Aýal görnüşiniň ýasalyşy.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fransuz dili 7 (G. Toýlyýewa we başg.), Aşgabat 2019 — kitap boýunça.</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["Aýal jynsy", "f", false], ["Köplük", "p", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { 
+var s = '<rect x="0" y="0" width="320" height="190" fill="#f6faf4"/>';
+var sub = st.f ? (st.p ? "Elles sont" : "Elle est") : (st.p ? "Ils sont" : "Il est");
+var a1 = "grand" + (st.f ? "e" : "") + (st.p ? "s" : "");
+var a2 = "heureux" ; if (st.f) a2 = "heureuse" + (st.p ? "s" : "");
+var a3 = "actif"; if (st.f) a3 = "active" + (st.p ? "s" : ""); else if (st.p) a3 = "actifs";
+s += '<rect x="16" y="18" width="288" height="34" rx="9" fill="#eaf3e4" stroke="#4a6b39" stroke-width="2"/>';
+s += '<text x="160" y="40" font-size="14" fill="#23381a" text-anchor="middle">' + sub + '</text>';
+var A = [a1, a2, a3];
+for (var i = 0; i < 3; i++) {
+  var y = 66 + i * 40;
+  s += '<rect x="16" y="' + y + '" width="288" height="32" rx="9" fill="#cdebd6" stroke="#1d6f3c" stroke-width="2"/>';
+  s += '<text x="160" y="' + (y + 21) + '" font-size="14" fill="#14522b" text-anchor="middle">' + A[i] + '</text>';
+}
+return s;
+ }
+  function readout(st) { 
+var h = "<b>Düzgün:</b> aýal jynsy üçin -e, köplük üçin -s goşulýar.";
+if (st.f) h += " · <b>heureux → heureuse</b> (-eux → -euse), <b>actif → active</b> (-f → -ve).";
+else if (st.p) h += " · heureux köplükde üýtgemeýär, actif → actifs.";
+return h;
+ }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var TH = ["Soňlama", "Masculin", "Féminin"], TR = [["-f", "actif", "active"], ["-on", "bon", "bonne"], ["-eux", "heureux", "heureuse"], ["-er", "cher", "chère"], ["-eau", "beau", "belle"], ["-anc", "blanc", "blanche"], ["-il", "gentil", "gentille"]], TI = [["-f → -ve", "actif — işjeň", "une élève active"], ["-on → -onne", "bon — gowy", "une bonne note"], ["-eux → -euse", "heureux — bagtly", "une fille heureuse"], ["-er → -ère", "cher — gymmat", "une cravate chère"], ["-eau → -elle", "beau — owadan", "une belle maison"], ["-anc → -anche", "blanc — ak reňk", "une chemise blanche"], ["-il → -ille", "gentil — mähirli", "une sœur gentille"]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Neuf sypatynyň aýal görnüşi?", ["neufe", "neuve", "neuse"], 1], ["Gentil sypatynyň aýal görnüşi?", ["gentile", "gentille", "gentielle"], 1], ["Haýsy sypat üýtgemeýär?", ["large", "actif", "cher"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

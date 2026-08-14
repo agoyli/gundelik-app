@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tut ýüpek gurçugy — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tut ýüpek gurçugy we ýüpekçilik</h1>
+  <div class="sub">Biologiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Bir kilogram pile — togsan gram ýüpek.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ýüpekçiligiň tapgyrlary</h3>
+    <div class="goal">Tapgyry süýşürgiç bilen geçir.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 180"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="1" max="5" step="1" value="1">
+    <div class="info" id="siro1"></div>
+    <div class="note">Tut ýüpek kebelegi ýeke-täk eldekileşdirilen mör-möjekdir.</div>
+  </div>
+
+  <div class="card">
+    <h3>Pileden ýüpek</h3>
+    <div class="goal">Piläniň massasyny üýtget.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="1" max="50" step="1" value="10">
+    <div class="info" id="cout"></div>
+    <div class="note">1 kg pileden 90 g ýüpek alynýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Biologiýa 8 (Zoologiýa), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var s = '<rect x="0" y="0" width="320" height="180" fill="#f6faf4"/>';
+if (v === 1) {
+  for (var i = 0; i < 12; i++) {
+    s += '<ellipse cx="' + (100 + (i % 6) * 24) + '" cy="' + (80 + Math.floor(i / 6) * 26) +
+         '" rx="7" ry="10" fill="#e8dfc4" stroke="#8a7a4a" stroke-width="2"/>';
+  }
+  s += '<text x="118" y="150" font-size="13" fill="#2f4a22">tohum</text>';
+} else if (v === 2 || v === 3) {
+  var L = v === 2 ? 90 : 150;
+  s += '<path d="M60 90 q20 -18 40 0 q20 18 40 0 q20 -18 40 0" stroke="#6f8a5e" ' +
+       'stroke-width="' + (v === 2 ? 14 : 22) + '" fill="none" stroke-linecap="round"/>';
+  s += '<path d="M200 60 q30 20 0 40 q-24 -20 0 -40 Z" fill="#8fae72"/>';
+  s += '<text x="90" y="150" font-size="13" fill="#2f4a22">gurçuk ' + (v === 2 ? 'ýaş' : 'uly') +
+       '</text>';
+} else if (v === 4) {
+  s += '<ellipse cx="160" cy="90" rx="52" ry="34" fill="#f0e8d0" stroke="#b8a878" ' +
+       'stroke-width="3"/>';
+  for (var j = 0; j < 5; j++) {
+    s += '<path d="M112 ' + (74 + j * 8) + ' q48 ' + (j % 2 ? 10 : -10) + ' 96 0" ' +
+         'stroke="#d8ccaa" stroke-width="2" fill="none"/>';
+  }
+  s += '<text x="132" y="150" font-size="13" fill="#2f4a22">pile</text>';
+} else {
+  s += '<ellipse cx="160" cy="94" rx="16" ry="30" fill="#e8e0cc"/>';
+  s += '<path d="M156 74 q-70 -34 -84 20 q40 26 84 4 Z" fill="#f4efe0" stroke="#c4b58c" ' +
+       'stroke-width="2"/>';
+  s += '<path d="M164 74 q70 -34 84 20 q-40 26 -84 4 Z" fill="#f4efe0" stroke="#c4b58c" ' +
+       'stroke-width="2"/>';
+  s += '<text x="120" y="152" font-size="13" fill="#2f4a22">kebelek</text>';
+}
+return s; }
+  function readout(v) { var T = ['Ýüpekçilik hojalygynda tohum diýilýän ýumurtgalar alynýar.',
+'Ýumurtgadan çykan gurçuk tut ýapragy bilen iýmitlenýär.',
+'Gurçuk dört gezek gow çalyşýar, ösüş döwri 26 – 32 gün dowam edýär.',
+'Gurçuk aşaky dodagyndaky mäzler bilen pile saraýar: 300 – 1500 m sapak.',
+'Pileden 15 – 18 günden kebelek çykýar, ýöne senagat üçin pile bugda saklanýar.'];
+return T[v - 1]; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Tapgyr" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var CO = [["Alynýan tebigy ýüpek", "v * 0.09", "kg"], ["Ýüpek gramda", "v * 90", "g"], ["Takmynan sapagyň uzynlygy", "v * 900", "m"]], CU = "kg", CL = "Piläniň massasy";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["Tut ýüpek gurçugy näme iýýär?", ["Tut ýapragyny", "Gowaça ýapragyny", "Gül şiresini"], 0], ["1 kg pileden näçe ýüpek alynýar?", ["9 g", "90 g", "900 g"], 1], ["Gurçuk näçe gezek gow çalyşýar?", ["2", "4", "6"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

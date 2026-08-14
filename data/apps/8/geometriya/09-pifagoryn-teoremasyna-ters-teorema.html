@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pifagoryň ters teoremasy — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pifagoryň teoremasyna ters teorema</h1>
+  <div class="sub">Geometriýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">c² = a² + b² bolsa — üçburçluk gönüburçly.</div>
+  </div>
+
+  <div class="card">
+    <h3>Üçünji tarapy üýtget</h3>
+    <div class="goal">c tarapyny süýşürgiç bilen üýtget.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="4" max="13" step="1" value="10">
+    <div class="info" id="siro1"></div>
+    <div class="note">a = 6, b = 8 bolanda c = 10 bolsa, üçburçluk gönüburçly bolýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Pifagor üçlükleri</h3>
+    <div class="goal">Gönüburçly üçburçluk berýän üçlüklere degip gör.</div>
+    <div class="chips" id="mwords"></div>
+    <div class="info" id="mline"></div>
+    <div class="row"><button class="btn primary" id="mcheck">Barla</button>
+      <button class="btn ghost" id="mclear">Arassala</button></div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barlagyň netijesi</h3>
+    <div class="goal">Setire degip gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geometriýa 8, Aşgabat — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var a = 6, b = 8, c = v, k = 16;
+var cosA = (a * a + b * b - c * c) / (2 * a * b);
+if (cosA > 1) cosA = 1; if (cosA < -1) cosA = -1;
+var ang = Math.acos(cosA);
+var px = 40, py = 165;
+var q1x = px + b * k, q1y = py;
+var q2x = Math.round((px + a * k * Math.cos(ang)) * 10) / 10;
+var q2y = Math.round((py - a * k * Math.sin(ang)) * 10) / 10;
+var s = '<rect x="0" y="0" width="320" height="190" fill="#f7fafd"/>';
+s += '<path d="M' + px + ' ' + py + ' L' + q1x + ' ' + q1y + ' L' + q2x + ' ' + q2y +
+     ' Z" fill="#cfe0fb" stroke="#2456b0" stroke-width="3"/>';
+s += '<text x="' + (px + b * k / 2 - 6) + '" y="184" font-size="12" fill="#5b6b80">b = 8</text>';
+s += '<text x="' + (px - 4) + '" y="' + (py - a * k / 2) +
+     '" font-size="12" fill="#5b6b80">a = 6</text>';
+s += '<text x="' + ((q1x + q2x) / 2) + '" y="' + ((q1y + q2y) / 2 - 8) +
+     '" font-size="12" fill="#5b6b80">c = ' + c + '</text>';
+return s; }
+  function readout(v) { var a = 6, b = 8, c = v;
+var L = c * c, Rr = a * a + b * b;
+if (L === Rr) return 'c² = ' + L + ' = 36 + 64. Üçburçluk gönüburçly!';
+if (L < Rr) return 'c² = ' + L + ' < ' + Rr + '. Garşydaky burç ýitidir.';
+return 'c² = ' + L + ' > ' + Rr + '. Garşydaky burç kütekdir.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "c tarapy" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var MW = ["3, 4, 5", "2, 3, 4", "5, 12, 13", "6, 7, 8", "8, 15, 17"], MT = [0, 2, 4], MN = "25 = 9 + 16; 169 = 25 + 144; 289 = 64 + 225. Galan ikisinde deňlik ýok.", MK = "✓";
+(function () {
+  var st = [];
+  for (var i = 0; i < MW.length; i++) st.push(0);
+  function render() {
+    var h = "";
+    for (var i = 0; i < MW.length; i++) {
+      var c = st[i] === 1 ? " sel" : "";
+      h += '<button class="btn' + c + '" data-i="' + i + '">' + MW[i] +
+           (st[i] === 1 ? " " + MK : "") + "</button>";
+    }
+    document.getElementById("mwords").innerHTML = h;
+    var bs = document.getElementById("mwords").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        st[i] = st[i] ? 0 : 1;
+        render();
+      };
+    }
+    var t = "";
+    for (var i = 0; i < MW.length; i++) t += MW[i] + (st[i] === 1 ? " " + MK + " " : " ");
+    document.getElementById("mline").textContent = t;
+  }
+  document.getElementById("mcheck").onclick = function () {
+    var ok = 1;
+    for (var i = 0; i < MW.length; i++) if (st[i] !== (MT.indexOf(i) >= 0 ? 1 : 0)) ok = 0;
+    var m = document.getElementById("mmsg");
+    if (ok) { m.className = "msg ok"; m.textContent = "Dogry! " + MN; }
+    else { m.className = "msg bad"; m.textContent = "Entek dogry däl. " + MN; }
+  };
+  document.getElementById("mclear").onclick = function () {
+    for (var i = 0; i < MW.length; i++) st[i] = 0;
+    render();
+    document.getElementById("mmsg").className = "msg";
+    document.getElementById("mmsg").textContent = "";
+  };
+  render();
+})();
+
+var TH = ["Taraplar", "c² we a² + b²", "Netije"], TR = [["6, 8, 10", "100 = 100", "gönüburçly"], ["6, 8, 9", "81 < 100", "ýitiburçly"], ["6, 8, 12", "144 > 100", "kütekburçly"], ["7, 24, 25", "625 = 625", "gönüburçly"]], TI = [["Iň belli mysal.", "36 + 64 = 100.", "Müsür üçburçlugynyň iki essesi."], ["c biraz kiçi.", "36 + 64 = 100 uly.", "Garşydaky burç 90°-dan kiçi."], ["c uly.", "36 + 64 = 100 kiçi.", "Garşydaky burç 90°-dan uly."], ["Ýene bir Pifagor üçlügi.", "49 + 576 = 625.", "Taraplary bitin sanly üçburçluk."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Ters teorema näme subut edýär?", ["Taraplaryň deňdigini", "Üçburçlugyň gönüburçludygyny", "Burçlaryň jemini"], 1], ["Haýsy üçlük Pifagor üçburçlugyny berýär?", ["2, 3, 4", "3, 4, 5", "4, 5, 6"], 1], ["Taraplary 3, 4 we 5 bolan üçburçluga ýene näme diýilýär?", ["Deňýanly", "Müsür üçburçlugy", "Kütekburçly"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

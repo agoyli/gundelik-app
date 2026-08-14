@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klimat kartalary — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>3-nji amaly sapak</h1>
+  <div class="sub">Geografiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Beýiklige görä howa sowaýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Beýiklik we klimat</h3>
+    <div class="goal">Süýşürgiji süýşür.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 190"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="0" max="2000" step="100" value="0">
+    <div class="info" id="siro1"></div>
+    <div class="note">Kitapda: Aşgabatda +47°C, Haýrabatda (2028 m) +31°C; ygal 80–380 mm.</div>
+  </div>
+
+  <div class="card">
+    <h3>Kartadan okalýan sanlar</h3>
+    <div class="goal">Öýjüge degip maglumaty gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geografiýa 8 (A. Babaýew we ç.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var h = v;
+var s = '<rect x="0" y="0" width="320" height="190" fill="#f7fafd"/>';
+s += '<path d="M 20 170 L 160 30 L 300 170 Z" fill="#e2ebd8" stroke="#8fa0b4"/>';
+var y = 170 - (h / 2000) * 140;
+s += '<line x1="20" y1="' + y + '" x2="300" y2="' + y +
+     '" stroke="#b02424" stroke-width="3" stroke-dasharray="6 4"/>';
+s += '<circle cx="160" cy="' + y + '" r="6" fill="#b02424"/>';
+s += '<text x="160" y="' + (y - 10) + '" font-size="13" text-anchor="middle" fill="#b02424">' +
+     h + ' m</text>';
+s += '<text x="160" y="186" font-size="13" text-anchor="middle" fill="#5b6a7c">dag keşbi</text>';
+return s; }
+  function readout(v) { var t = Math.round((47 - v * 0.008) * 10) / 10;
+var yg = Math.round(100 + v * 0.14);
+return 'Iň ýokary temperatura ~' + t + '°C · ygal ~' + yg + ' mm'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Beýiklik" + ": " + String(v).replace(".", ",") + " " + "m";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var TH = ["Ýer", "Görkeziji"], TR = [["Köneürgenç", "-36°C"], ["Repetek", "+50°C"], ["Daglyk", "250–380 mm"], ["Garagum", "80–100 mm"]], TI = [["Köneürgençde iň pes temperatura -36°C-a düşýär.", "Bu ýanwar we fewral aýlaryna degişlidir."], ["Repetek ýurdumyzyň iň yssy ýeri hasaplanýar.", "1916-njy we 1944-nji ýyllarda +50°C bellenildi."], ["Daglyk ýerlerde ygal 250–380 mm-e ýetýär.", "1500 m-den beýikde 400 mm-e çenli ýagýar."], ["Garagumuň çöllük sebitlerinde ygal 80–100 mm.", "Iň az ygal Garabogazgolda bellenilýär."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Birmeňzeş temperaturaly ýerleri birleşdirýän çyzyk näme?", ["Izoterma", "Izogips", "Meridian"], 0], ["Ygalyň ýyllyk mukdary daglyk ýerlerde näçe?", ["250–380 mm", "80–100 mm", "100–150 mm"], 0], ["Türkmenistanyň iň yssy ýeri haýsy?", ["Repetek", "Derweze", "Baýramaly"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

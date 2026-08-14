@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control work — Grade 7</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Control work ✔️</h1>
+  <div class="sub">English · Grade 7</div>
+
+  <div class="card">
+    <div class="def">The grammar of the whole year in one place. Plan your revision.</div>
+  </div>
+
+  <div class="card">
+    <h3>How to work</h3>
+    <div class="goal" id="agoal"></div>
+    <div class="stage"><svg id="asvg" viewBox="0 0 320 170"></svg></div>
+    <div class="pool" id="apool"></div>
+    <div class="msg" id="amsg"></div>
+    <div class="row"><button class="btn ghost" id="areset">Start again</button></div>
+    <div class="score" id="asc"></div>
+  </div>
+
+  <div class="card">
+    <h3>What is tested</h3>
+    <div class="goal">Five rules to revise.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tap a cell of the table.</div>
+  </div>
+
+  <div class="card">
+    <h3>Revision planner</h3>
+    <div class="goal">Move the slider to plan the days.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="1" max="14" step="1" value="5">
+    <div class="info" id="cout"></div>
+    <div class="note">Leave the last five minutes of the test for checking your answers.</div>
+  </div>
+
+  <div class="card">
+    <h3>Check yourself</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">English 7 (R. Nazarow and others), Ashgabat 2019 — after the textbook.</div>
+</div>
+<script>
+
+var AS = [["Read", "Read every task before you start writing."], ["Easy first", "Answer the items you are sure about."], ["Hard next", "Come back to the difficult ones."], ["Check", "Keep the last five minutes for checking."]];
+(function () {
+  var PT = [[34, 128], [110, 96], [196, 44], [286, 118]];
+  var next = 0, tries = 0;
+  function draw() {
+    var s = '<rect x="0" y="0" width="320" height="170" fill="#f6faf4"/>';
+    s += '<path d="M 34 128 C 90 118, 120 106, 196 44 C 240 60, 262 96, 286 118" ' +
+         'stroke="#9bb08c" stroke-width="3" fill="none"/>';
+    for (var i = 0; i < 4; i++) {
+      var on = i < next;
+      s += '<circle cx="' + PT[i][0] + '" cy="' + PT[i][1] + '" r="' + (on ? 9 : 6) +
+           '" fill="' + (on ? "#1d6f3c" : "#c9d6bd") + '" stroke="#4a6b39" stroke-width="2"/>';
+      s += '<text x="' + PT[i][0] + '" y="' + (PT[i][1] - 15) + '" font-size="10.5" ' +
+           'fill="#2f4a22" text-anchor="middle">' + AS[i][0] + '</text>';
+      if (on) s += '<text x="' + PT[i][0] + '" y="' + (PT[i][1] + 22) + '" font-size="9" ' +
+                   'fill="#14522b" text-anchor="middle">✓</text>';
+    }
+    document.getElementById("asvg").innerHTML = s;
+    var h = "";
+    for (var k = 0; k < 4; k++) {
+      if (k < next) continue;
+      h += '<button class="btn" data-i="' + k + '">' + AS[k][1] + "</button>";
+    }
+    document.getElementById("apool").innerHTML = h;
+    var bs = document.getElementById("apool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) bs[k].onclick = pick;
+    document.getElementById("agoal").textContent = next < 4 ?
+      ("Which event belongs to «" + AS[next][0] + "»?") :
+      "The story arc is complete!";
+    document.getElementById("asc").textContent = "Stage: " + next + " / 4 · tries: " + tries;
+  }
+  function pick() {
+    var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("amsg");
+    tries++;
+    if (i === next) {
+      next++;
+      m.className = "msg ok";
+      m.textContent = next === 4 ? "The arc is complete!" : "Correct!";
+    } else {
+      m.className = "msg bad";
+      m.textContent = "That event belongs to «" + AS[i][0] + "».";
+    }
+    draw();
+  }
+  document.getElementById("areset").onclick = function () {
+    next = 0; tries = 0;
+    document.getElementById("amsg").className = "msg";
+    document.getElementById("amsg").textContent = "";
+    draw();
+  };
+  draw();
+})();
+
+var TH = ["Topic", "Formula", "Example"], TR = [["Past Perfect", "had + V3", "She had left before I came."], ["Future Perfect", "will have + V3", "I will have finished by five."], ["Passive Voice", "be + V3", "The room is cleaned."], ["Complex Object", "verb + object + (to) verb", "Let me go. I want him to go."], ["Indefinite pronouns", "some / any / no / every", "Is there anything here?"]], TI = [["The past of the past.", "Had is the same for all persons.", "The earlier action."], ["Finished before a future point.", "Marked with by.", "By tomorrow, by next week."], ["The object comes first.", "Only be changes tense.", "V3 stays the same."], ["Two doers, one sentence.", "Let and make drop to.", "Want and expect keep to."], ["Twelve words in all.", "Any- in questions.", "No- is already negative."]], THINT = "Tap a cell of the table.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var CO = [["Topics a day (5 in all)", "5/v", ""], ["Minutes a day", "45", "min"], ["Total minutes", "v*45", "min"]], CU = "", CL = "Days before the test";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var Q = [["What is the Past Perfect formula?", ["had + V3", "have + V3", "will have + V3"], 0], ["What is the Passive formula?", ["be + V3", "have + V3", "do + V3"], 0], ["What follows a preposition?", ["the -ing form", "the infinitive", "the past form"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Correct!"; }
+      else { m.className = "msg bad"; m.textContent = "Correct answer: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Score: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

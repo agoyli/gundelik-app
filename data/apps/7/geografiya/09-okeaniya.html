@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Okeaniýa — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Okeaniýa 🏝️</h1>
+  <div class="sub">Geografiýa · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ýuwaş okeanyň adalar dünýäsi. Halkalara degip, üç topary we ada görnüşlerini öwren.</div>
+  </div>
+
+  <div class="card">
+    <h3>Okeaniýanyň toparlary</h3>
+    <div class="goal">Halka degseň, düşündiriş çykar.</div>
+    <div class="stage"><svg id="whsvg" viewBox="0 0 320 230"></svg></div>
+    <div class="pool" id="whpool"></div>
+    <div class="info" id="whinfo">Bölege degseň, onuň manysy görkeziler.</div>
+  </div>
+
+  <div class="card">
+    <h3>Atollyň gurluşy</h3>
+    <div class="goal">Bölege degseň, düşündiriş çykar.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 200"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Geografiýa 7, II bölüm (G. Gurbandurdyýew we başg.), Aşgabat 2020 — kitap boýunça.</div>
+</div>
+<script>
+
+var WR = [["Melaneziýa", 4, 20, 42, "«Gara adalar» — Täze Gwineýa we goňşulary."], ["Mikroneziýa", 4, 44, 64, "«Kiçi adalar» — köpüsi merjen atollary."], ["Polineziýa", 4, 66, 86, "«Köp adalar» — okeanyň merkezinde giň ýaýran."], ["atoll", 4, 88, 108, "Nal ýa halka şekilli merjen adasy, ortasynda laguna."]];
+(function () {
+  var CX = 160, CY = 112;
+  function pt(r, a) {
+    return [CX + r * Math.cos(a - Math.PI / 2), CY + r * Math.sin(a - Math.PI / 2)];
+  }
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="320" height="230" fill="#f6faf4"/>';
+    var ord = [];
+    for (var z = 0; z < WR.length; z++) ord.push(z);
+    ord.sort(function (a, b) { return WR[b][3] - WR[a][3]; });
+    for (var oi = 0; oi < ord.length; oi++) {
+      var i = ord[oi];
+      var lab = WR[i][0], n = WR[i][1], ri = WR[i][2], ro = WR[i][3];
+      var on = (i === sel);
+      s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ro + '" fill="' +
+           (on ? "#cdebd6" : "#eaf3e4") + '" stroke="#4a6b39" stroke-width="2"/>';
+      if (ri > 0) s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ri +
+                       '" fill="#f6faf4" stroke="#4a6b39" stroke-width="2"/>';
+      for (var k = 0; k < n; k++) {
+        var a = 2 * Math.PI * k / n;
+        var p1 = pt(ri, a), p2 = pt(ro, a);
+        s += '<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
+             '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) +
+             '" stroke="' + (on ? "#1d6f3c" : "#9bb08c") + '" stroke-width="' + (on ? 2.5 : 1.5) + '"/>';
+      }
+    }
+    s += '<text x="160" y="216" font-size="11" fill="#2f4a22" text-anchor="middle">' +
+         (sel >= 0 ? WR[sel][0] + " – " + WR[sel][1] + " bölek" : "bölegi saýla") + '</text>';
+    document.getElementById("whsvg").innerHTML = s;
+    var h = "";
+    for (var i = 0; i < WR.length; i++)
+      h += '<button class="btn' + (i === sel ? " sel" : "") + '" data-i="' + i + '">' +
+           WR[i][0] + " (" + WR[i][1] + ")</button>";
+    document.getElementById("whpool").innerHTML = h;
+    var bs = document.getElementById("whpool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("whinfo").innerHTML = "<b>" + WR[i][0] + "</b> — " + WR[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var SP = [["okean", "M0 0 H320 V200 H0 Z", 30, 16, "Töwereginde açyk okean: merjen diňe ýyly, ýalpak suwda ösýär."], ["merjen halkasy", "M160 100 m-84 0 a84 60 0 1 0 168 0 a84 60 0 1 0 -168 0", 160, 190, "Merjen halkasy hek jynslaryndan emele gelýär."], ["laguna", "M160 100 m-52 0 a52 34 0 1 0 104 0 a52 34 0 1 0 -104 0", 160, 104, "Halkanyň içindäki asuda ýalpak suw — laguna."], ["ada", "M226 78 H260 V98 H226 Z", 292, 74, "Halkanyň üstünde çäge toplanyp, kiçijik adalar döreýär."], ["wulkan", "M40 150 L60 118 L80 150 Z", 60, 172, "Wulkanik adalar wulkanyň atylmagyndan emele gelýär."]], SW = 320, SH = 200;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["Okeaniýa näçe topara bölünýär?", ["3", "2", "4"], 0], ["Atoll nähili şekilli?", ["halka şekilli", "üçburçluk", "göni çyzyk"], 0], ["Merjen nirede ösýär?", ["ýyly ýalpak suwda", "sowuk çuň suwda", "süýji suwda"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

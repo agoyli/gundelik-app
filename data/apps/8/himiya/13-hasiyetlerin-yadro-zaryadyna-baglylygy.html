@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Häsiýetleriň üýtgeýşi — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Häsiýetleriň ýadro zarýadyna baglylygy</h1>
+  <div class="sub">Himiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Periodda çepden saga metal häsiýet gowşaýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Üçünji period</h3>
+    <div class="goal">Elementi süýşürgiç bilen çalyş.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 180"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="11" max="18" step="1" value="11">
+    <div class="info" id="siro1"></div>
+    <div class="note">Bu üýtgeýşi Mozliniň kanuny düşündirýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Periodyň gurluşy</h3>
+    <div class="goal">Setire degip gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Himiýa 8 (M. Amangulyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var E = {11:'Na',12:'Mg',13:'Al',14:'Si',15:'P',16:'S',17:'Cl',18:'Ar'};
+var i = v - 11;
+var s = '<rect x="0" y="0" width="320" height="180" fill="#f7fafd"/>';
+for (var k = 0; k < 8; k++) {
+  var x = 12 + k * 38;
+  var on = (k === i);
+  s += '<rect x="' + x + '" y="30" width="34" height="34" fill="' +
+       (on ? '#2456b0' : '#dceaf6') + '" stroke="#5b6b80" stroke-width="2"/>';
+  s += '<text x="' + (x + 6) + '" y="53" font-size="13" fill="' +
+       (on ? '#ffffff' : '#22262b') + '">' + E[11 + k] + '</text>';
+}
+var mw = Math.round((8 - i) / 8 * 250);
+s += '<rect x="34" y="96" width="' + mw + '" height="20" fill="#1d7a3d"/>';
+s += '<rect x="34" y="126" width="' + (250 - mw) + '" height="20" fill="#b25b12"/>';
+s += '<text x="34" y="92" font-size="11" fill="#1d7a3d">metal häsiýet</text>';
+s += '<text x="34" y="160" font-size="11" fill="#b25b12">metal däl häsiýet</text>';
+return s; }
+  function readout(v) { var E = ['Na','Mg','Al','Si','P','S','Cl','Ar'];
+var i = v - 11;
+var d = [1,2,3,4,5,6,7,8][i];
+return E[i] + ': ýadronyň zarýady +' + v + ', daşky gatlakda ' + d +
+       ' elektron. ' + (i < 3 ? 'Metal.' : (i === 3 ? 'Aralyk häsiýetli.' :
+       (i < 7 ? 'Metal däl.' : 'Inert element.'))); }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Tertip belgisi" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var TH = ["Ýagdaý", "Üýtgeýşi"], TR = [["Periodda çepden saga", "metal häsiýet gowşaýar"], ["Periodda çepden saga", "ýadronyň zarýady artýar"], ["Toparda ýokardan aşak", "metal häsiýet güýçlenýär"], ["Periodyň soňunda", "inert element durýar"]], TI = [["Metal däl häsiýet güýçlenýär.", "Na-dan Cl-a çenli."], ["Her ädimde bir birlik.", "Tertip belgisi hem artýar."], ["Gatlaklaryň sany artýar.", "Daşky elektron ýadrodan uzaklaşýar."], ["Daşky gatlak tamamlanýar.", "Argon, neon, geliý."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Ýadronyň zarýadynyň tertip sana deňdigini kim açdy?", ["G. Mozli", "E. Rezerford", "A. Awogadro"], 0], ["Häzirki periodik kanun nämä esaslanýar?", ["Atom massasyna", "Ýadronyň zarýadyna", "Dykyzlyga"], 1], ["Period haýsy element bilen tamamlanýar?", ["Aşgar metal", "Inert element", "Galogen"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Himiki formulalar — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Himiki formulalar we Mr</h1>
+  <div class="sub">Himiýa · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Mr = atomlaryň otnositel massalarynyň jemi.</div>
+  </div>
+
+  <div class="card">
+    <h3>Molekulany ýygna</h3>
+    <div class="goal">Maddany süýşürgiç bilen çalyş.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 170"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="1" max="5" step="1" value="1">
+    <div class="info" id="siro1"></div>
+    <div class="note">Indeks atomyň sanyny görkezýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>Otnositel molekulýar massa</h3>
+    <div class="goal">Setire degip gör.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Himiýa 8 (M. Amangulyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var D = [
+ ['H2O', [['H','#e8a33d',80,100],['O','#2456b0',140,80],['H','#e8a33d',200,100]],
+  [[80,100,140,80],[200,100,140,80]]],
+ ['CO2', [['O','#2456b0',70,90],['C','#5b6b80',150,90],['O','#2456b0',230,90]],
+  [[70,90,150,90],[230,90,150,90]]],
+ ['NH3', [['N','#1d7a3d',150,70],['H','#e8a33d',85,115],['H','#e8a33d',150,130],
+   ['H','#e8a33d',215,115]], [[85,115,150,70],[150,130,150,70],[215,115,150,70]]],
+ ['CH4', [['C','#5b6b80',150,90],['H','#e8a33d',85,55],['H','#e8a33d',215,55],
+   ['H','#e8a33d',85,125],['H','#e8a33d',215,125]],
+  [[85,55,150,90],[215,55,150,90],[85,125,150,90],[215,125,150,90]]],
+ ['H2S', [['H','#e8a33d',80,110],['S','#b25b12',150,80],['H','#e8a33d',220,110]],
+  [[80,110,150,80],[220,110,150,80]]]];
+var d = D[v - 1];
+var s = '<rect x="0" y="0" width="320" height="170" fill="#f7fafd"/>';
+d[2].forEach(function(e){
+  s += '<line x1="' + e[0] + '" y1="' + e[1] + '" x2="' + e[2] + '" y2="' + e[3] +
+       '" stroke="#93a2b5" stroke-width="4"/>';
+});
+d[1].forEach(function(a){
+  s += '<circle cx="' + a[2] + '" cy="' + a[3] + '" r="20" fill="' + a[1] + '"/>';
+  s += '<text x="' + (a[2] - 6) + '" y="' + (a[3] + 6) +
+       '" font-size="16" fill="#ffffff">' + a[0] + '</text>';
+});
+return s; }
+  function readout(v) { var N = ['H2O','CO2','NH3','CH4','H2S'];
+var M = [[ 'Mr = 2 · 1 + 16 = 18'],['Mr = 12 + 2 · 16 = 44'],
+ ['Mr = 14 + 3 · 1 = 17'],['Mr = 12 + 4 · 1 = 16'],['Mr = 2 · 1 + 32 = 34']];
+var A = ['suw','kömürturşy gazy','ammiak','metan','kükürtwodorod'];
+return N[v-1] + ' — ' + A[v-1] + '. ' + M[v-1][0] + '.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Madda" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var TH = ["Madda", "Formula", "Mr"], TR = [["Suw", "H₂O", "18"], ["Ammiak", "NH₃", "17"], ["Kükürt kislotasy", "H₂SO₄", "98"], ["Mis sulfaty", "CuSO₄", "160"], ["Alýuminiý oksidi", "Al₂O₃", "102"]], TI = [["Iň giň ýaýran madda.", "Wodorodyň iki atomy bar.", "2 · 1 + 16 = 18."], ["Azot dökünleriniň çig maly.", "Azot III walentli.", "14 + 3 · 1 = 17."], ["Senagatyň esasy kislotasy.", "Iki wodorod atomy bar.", "2 · 1 + 32 + 4 · 16 = 98."], ["Mawy kristal madda.", "Mis II walentli.", "64 + 32 + 64 = 160."], ["Amfoter oksid.", "Alýuminiý III walentli.", "2 · 27 + 3 · 16 = 102."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Indeks nämäni görkezýär?", ["Molekulalaryň sanyny", "Atomlaryň sanyny", "Walentliligi"], 1], ["Mr(CO₂) näçe?", ["28", "44", "32"], 1], ["Kislorodyň walentliligi näçe?", ["I", "II", "III"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

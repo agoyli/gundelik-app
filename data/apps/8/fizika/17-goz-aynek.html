@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Göz we äýnek — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Göz. Äýnek</h1>
+  <div class="sub">Fizika · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">Ýygnaýjy ýa-da dargadyjy linza — göze kömek.</div>
+  </div>
+
+  <div class="card">
+    <h3>Görüş kemçiligini düzet</h3>
+    <div class="goal">Açarlary basyp gör.</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 180"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">Uzagy görmeýän göze dargadyjy, ýakyny görmeýän göze ýygnaýjy linza dakylýar.</div>
+  </div>
+
+  <div class="card">
+    <h3>Gözüň gurluşy</h3>
+    <div class="goal">Bölege degip gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 180"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fizika 8 (G. Toýlyýew we başg.), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["Uzagy görmeýän göz", "myop", false], ["Äýnek dak", "aynek", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { var s = '<rect x="0" y="0" width="320" height="180" fill="#f7fafd"/>';
+s += '<path d="M120 30 a70 60 0 1 0 0 120 a70 60 0 1 0 0 -120 Z" fill="#fdfdff" ' +
+     'stroke="#5b6b80" stroke-width="3"/>';
+s += '<ellipse cx="128" cy="90" rx="10" ry="30" fill="#dceaf6" stroke="#2456b0" ' +
+     'stroke-width="3"/>';
+s += '<path d="M232 46 a58 50 0 0 1 0 88" stroke="#b02424" stroke-width="4" fill="none"/>';
+var fx = st.myop ? 200 : 232;
+if (st.myop && st.aynek) fx = 232;
+if (!st.myop && st.aynek) fx = 262;
+if (st.aynek) {
+  var d = st.myop ? 1 : -1;
+  s += '<path d="M74 56 q' + (d * 12) + ' 34 0 68" stroke="#1d7a3d" stroke-width="4" ' +
+       'fill="none"/>';
+  s += '<path d="M74 56 q' + (-d * 12) + ' 34 0 68" stroke="#1d7a3d" stroke-width="4" ' +
+       'fill="none"/>';
+}
+for (var i = -1; i < 2; i += 2) {
+  s += '<line x1="4" y1="' + (90 + i * 22) + '" x2="120" y2="' + (90 + i * 22) +
+       '" stroke="#e8a33d" stroke-width="3"/>';
+  s += '<line x1="120" y1="' + (90 + i * 22) + '" x2="' + fx + '" y2="90" ' +
+       'stroke="#e8a33d" stroke-width="3"/>';
+}
+s += '<circle cx="' + fx + '" cy="90" r="6" fill="#b02424"/>';
+return s; }
+  function readout(st) { if (st.myop && st.aynek)
+  return 'Uzagy görmeýän göz + dargadyjy linza: şekil ýene tor gatlagyna düşýär.';
+if (st.myop)
+  return 'Uzagy görmeýän göz: şekil tor gatlagyndan öňde emele gelýär.';
+if (st.aynek)
+  return 'Sagdyn göze ýygnaýjy linza dakylsa, şekil tor gatlagyndan aňryk süýşýär.';
+return 'Sagdyn göz: şekil edil tor gatlagynda emele gelýär.'; }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var SP = [["Buinyz gatlagy", "M60 90 a56 56 0 0 1 34 -52 l0 104 a56 56 0 0 1 -34 -52 Z", 56, 30, "Gözüň öň tarapyndaky dury gatlak. Şöhle ilki şu ýerde döwülýär."], ["Göreç", "M104 62 l0 56 l-14 -6 l0 -44 Z", 96, 146, "Ýagtylygyň geçýän deşigi. Ýagty ýerde kiçelýär, garaňkyda ulalýar."], ["Hrustalik", "M130 90 m-14 0 a14 30 0 1 0 28 0 a14 30 0 1 0 -28 0 Z", 126, 36, "Janly linza. Myşsalar ony gysyp, fokus daşlygyny üýtgedýär."], ["Tor gatlagy", "M232 46 a58 50 0 0 1 0 88 l-6 -6 a52 44 0 0 0 0 -76 Z", 244, 100, "Şekil şu ýerde emele gelýär. Ol hakyky, kiçeldilen we tersine."]], SW = 320, SH = 180;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["Gözde şekil nirede emele gelýär?", ["Göreçde", "Tor gatlagynda", "Hrustalikde"], 1], ["Uzagy görmeýän göze haýsy linza gerek?", ["Dargadyjy", "Ýygnaýjy", "Linza gerek däl"], 0], ["Gözdäki şekil nähili?", ["Hyýaly we göni", "Hakyky we tersine", "Hakyky we göni"], 1]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

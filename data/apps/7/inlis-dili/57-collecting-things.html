@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collecting things — Grade 7</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Collecting things 📮</h1>
+  <div class="sub">English · Grade 7</div>
+
+  <div class="card">
+    <div class="def">A collection grows item by item. Move the slider to fill the album.</div>
+  </div>
+
+  <div class="card">
+    <h3>My album</h3>
+    <div class="goal">Move the slider to count the stamps.</div>
+    <div class="row"><span class="mono" id="clab"></span></div>
+    <input class="slider" id="cinp" type="range" min="0" max="200" step="10" value="120">
+    <div class="info" id="cout"></div>
+    <div class="note">A full album in the lesson holds 200 stamps.</div>
+  </div>
+
+  <div class="card">
+    <h3>What people collect</h3>
+    <div class="goal">Tap a ring to read about it.</div>
+    <div class="stage"><svg id="whsvg" viewBox="0 0 320 230"></svg></div>
+    <div class="pool" id="whpool"></div>
+    <div class="info" id="whinfo">Tap a part to see what it means.</div>
+  </div>
+
+  <div class="card">
+    <h3>Check yourself</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">English 7 (R. Nazarow and others), Ashgabat 2019 — after the textbook.</div>
+</div>
+<script>
+
+var CO = [["Pages used (12 a page)", "v/12", ""], ["Countries (about 8 a country)", "v/8", ""], ["Part of a full album", "v/200*100", "%"]], CU = "", CL = "Stamps in the album";
+(function () {
+  var inp = document.getElementById("cinp");
+  function upd() {
+    var v = parseFloat(inp.value);
+    document.getElementById("clab").textContent = CL + ": " + String(v).replace(".", ",") + " " + CU;
+    var h = "";
+    for (var i = 0; i < CO.length; i++) {
+      var r = eval(CO[i][1]);
+      r = Math.round(r * 100) / 100;
+      h += "<b>" + CO[i][0] + ":</b> " + r + " " + CO[i][2] + "<br>";
+    }
+    document.getElementById("cout").innerHTML = h.replace(/(\d)\.(\d)/g, "$1,$2");
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var WR = [["stamps", 4, 20, 42, "The most popular collectible in the world."], ["coins", 4, 44, 64, "Round pieces of metal money, often very old."], ["postcards", 4, 66, 86, "Cards with pictures of places and events."], ["badges", 4, 88, 108, "Small signs worn on a coat or a bag."]];
+(function () {
+  var CX = 160, CY = 112;
+  function pt(r, a) {
+    return [CX + r * Math.cos(a - Math.PI / 2), CY + r * Math.sin(a - Math.PI / 2)];
+  }
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="320" height="230" fill="#f6faf4"/>';
+    var ord = [];
+    for (var z = 0; z < WR.length; z++) ord.push(z);
+    ord.sort(function (a, b) { return WR[b][3] - WR[a][3]; });
+    for (var oi = 0; oi < ord.length; oi++) {
+      var i = ord[oi];
+      var lab = WR[i][0], n = WR[i][1], ri = WR[i][2], ro = WR[i][3];
+      var on = (i === sel);
+      s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ro + '" fill="' +
+           (on ? "#cdebd6" : "#eaf3e4") + '" stroke="#4a6b39" stroke-width="2"/>';
+      if (ri > 0) s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ri +
+                       '" fill="#f6faf4" stroke="#4a6b39" stroke-width="2"/>';
+      for (var k = 0; k < n; k++) {
+        var a = 2 * Math.PI * k / n;
+        var p1 = pt(ri, a), p2 = pt(ro, a);
+        s += '<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
+             '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) +
+             '" stroke="' + (on ? "#1d6f3c" : "#9bb08c") + '" stroke-width="' + (on ? 2.5 : 1.5) + '"/>';
+      }
+    }
+    s += '<text x="160" y="216" font-size="11" fill="#2f4a22" text-anchor="middle">' +
+         (sel >= 0 ? WR[sel][0] + " – " + WR[sel][1] + " parts" : "tap a ring") + '</text>';
+    document.getElementById("whsvg").innerHTML = s;
+    var h = "";
+    for (var i = 0; i < WR.length; i++)
+      h += '<button class="btn' + (i === sel ? " sel" : "") + '" data-i="' + i + '">' +
+           WR[i][0] + " (" + WR[i][1] + ")</button>";
+    document.getElementById("whpool").innerHTML = h;
+    var bs = document.getElementById("whpool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("whinfo").innerHTML = "<b>" + WR[i][0] + "</b> — " + WR[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["What are «collectibles»?", ["items worth collecting", "empty albums", "old letters"], 0], ["Where are stamps kept?", ["in an album", "in a pocket", "in a bag"], 0], ["What does «rare» mean?", ["not often found", "very cheap", "very new"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Correct!"; }
+      else { m.className = "msg bad"; m.textContent = "Correct answer: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Score: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

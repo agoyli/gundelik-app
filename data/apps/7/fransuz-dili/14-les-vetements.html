@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Les vêtements — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Les vêtements 🧥</h1>
+  <div class="sub">Fransuz dili · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Gyşky we tomusky eşikler. Açary basyp, pasla görä geýindir, soň matalary barla.</div>
+  </div>
+
+  <div class="card">
+    <h3>Gyşky eşik</h3>
+    <div class="goal">Gyşky eşikleri saýla we netijäni gör.</div>
+    <div class="stage"><svg id="tgsvg1" viewBox="0 0 320 200"></svg></div>
+    <div class="pool" id="tgpool1"></div>
+    <div class="info" id="tgro1"></div>
+    <div class="note">En hiver nous mettons les vêtements chauds — gyşda ýyly eşik geýilýär.</div>
+  </div>
+
+  <div class="card">
+    <h3>La matière</h3>
+    <div class="goal">Mata atlary we mysallary.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Tablisanyň öýjügine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Fransuz dili 7 (G. Toýlyýewa we başg.), Aşgabat 2019 — kitap boýunça.</div>
+</div>
+<script>
+
+(function () {
+  var SW = [["un bonnet", "b", false], ["un manteau", "m", false], ["une écharpe", "e", false], ["des bottes", "bo", false], ["des nu-pieds", "n", false]], ST = {};
+  for (var i = 0; i < SW.length; i++) ST[SW[i][1]] = !!SW[i][2];
+  var sv = document.getElementById("tgsvg1");
+  var ro = document.getElementById("tgro1");
+  var po = document.getElementById("tgpool1");
+  function render(st) { 
+var s = '<rect x="0" y="0" width="320" height="200" fill="#f6faf4"/>';
+s += '<circle cx="160" cy="36" r="18" fill="#f2e2c8" stroke="#7a9468" stroke-width="2"/>';
+if (st.b) s += '<path d="M140 30 Q160 4 180 30 Z" fill="#c0392b" stroke="#8e2a1e" stroke-width="2"/>';
+if (st.e) s += '<rect x="140" y="52" width="40" height="12" rx="5" fill="#e67e22" stroke="#a85b12" stroke-width="2"/>';
+s += '<rect x="126" y="64" width="68" height="70" rx="7" fill="' + (st.m ? "#34495e" : "#e6e6e6") +
+     '" stroke="#4a6b39" stroke-width="2"/>';
+s += '<rect x="132" y="134" width="24" height="34" fill="#8d99ae" stroke="#4a6b39" stroke-width="2"/>';
+s += '<rect x="164" y="134" width="24" height="34" fill="#8d99ae" stroke="#4a6b39" stroke-width="2"/>';
+if (st.bo) { s += '<rect x="128" y="162" width="30" height="24" rx="4" fill="#5d4037" stroke="#3e2723" stroke-width="2"/>';
+             s += '<rect x="162" y="162" width="30" height="24" rx="4" fill="#5d4037" stroke="#3e2723" stroke-width="2"/>'; }
+if (st.n) { s += '<rect x="128" y="170" width="30" height="10" rx="4" fill="#f1c40f" stroke="#b7950b" stroke-width="2"/>';
+            s += '<rect x="162" y="170" width="30" height="10" rx="4" fill="#f1c40f" stroke="#b7950b" stroke-width="2"/>'; }
+return s;
+ }
+  function readout(st) { 
+var g = 0;
+if (st.b) g++; if (st.m) g++; if (st.e) g++; if (st.bo) g++;
+var h = "<b>Gyşky eşik:</b> " + g + " / 4";
+if (st.n) h += " · <b>Ýalňyş:</b> des nu-pieds — bu tomusky aýakgap.";
+else if (g === 4) h += " — Pour ne pas tomber malade, il faut s’habiller chaudement.";
+return h;
+ }
+  function draw() {
+    sv.innerHTML = render(ST);
+    ro.innerHTML = String(readout(ST)).replace(/(\d)\.(\d)/g, "$1,$2");
+    var h = "";
+    for (var i = 0; i < SW.length; i++)
+      h += '<button class="btn' + (ST[SW[i][1]] ? " sel" : "") + '" data-k="' + SW[i][1] + '">' +
+           SW[i][0] + (ST[SW[i][1]] ? " ✓" : "") + "</button>";
+    po.innerHTML = h;
+    var bs = po.getElementsByTagName("button");
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = function () {
+        var k = this.getAttribute("data-k");
+        ST[k] = !ST[k];
+        draw();
+      };
+    }
+  }
+  draw();
+})();
+
+var TH = ["Matière", "Türkmençe", "Mysal"], TR = [["en laine", "ýüň", "un pull en laine"], ["en soie", "ýüpek", "une robe en soie"], ["en coton", "pagta", "une chemise en coton"], ["en lin", "zygyr", "un pantalon en lin"], ["en cuir", "deri", "des chaussures en cuir"]], TI = [["Ýyly mata.", "Gyş üçin.", "Ýüň sweter."], ["Ýeňil mata.", "Tomus üçin.", "Ýüpek köýnek."], ["Deri dem alýar.", "Tomus üçin.", "Pagta köýnek."], ["Iň ýeňil mata.", "Yssy howa üçin.", "Zygyr balak."], ["Berk material.", "Aýakgap üçin.", "Deri aýakgap."]], THINT = "Tablisanyň öýjügine degip gör.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["«Ellik» fransuzça?", ["des bottes", "des gants", "une écharpe"], 1], ["Il şahsynda mettre?", ["il mets", "il met", "il mette"], 1], ["Ýüpek mata fransuzça?", ["en laine", "en lin", "en soie"], 2]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

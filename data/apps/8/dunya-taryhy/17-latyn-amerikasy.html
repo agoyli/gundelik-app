@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Latyn Amerikasy — 8-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Latyn Amerikasy</h1>
+  <div class="sub">Dünýä taryhy · 8-nji synp</div>
+
+  <div class="card">
+    <div class="def">On million inedördül kilometrlik koloniýa.</div>
+  </div>
+
+  <div class="card">
+    <h3>Kolonial mülkler</h3>
+    <div class="goal">Bölege degip gör.</div>
+    <div class="stage"><svg id="shsvg" viewBox="0 0 320 200"></svg></div>
+    <div class="info" id="shinfo">Şekiliň bir bölegine degip gör.</div>
+  </div>
+
+  <div class="card">
+    <h3>Ilatyň gatlaklary</h3>
+    <div class="goal">Bölege degip gör.</div>
+    <div class="stage"><svg id="whsvg" viewBox="0 0 320 230"></svg></div>
+    <div class="pool" id="whpool"></div>
+    <div class="info" id="whinfo">Bölege degseň, onuň manysy görkeziler.</div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Dünýä taryhy 8 (J. Annaorazow, B. Gylyçnyýazow), Aşgabat 2020 — kitaba görä.</div>
+</div>
+<script>
+
+var SP = [["Täze Ispaniýa", "M20 20 H150 V80 H20 Z", 85, 54, "Merkezi Amerikany öz içine alan iň iri korollyk."], ["Täze Granada", "M170 20 H300 V80 H170 Z", 235, 54, "Demirgazyk-günorta Amerikada döredilen korollyk."], ["Peru", "M20 96 H150 V156 H20 Z", 85, 130, "Kümüş känleri bilen meşhur bolan korollyk."], ["La-Plata", "M170 96 H300 V156 H170 Z", 235, 130, "Günorta Amerikanyň günorta-gündogarynda döredilen korollyk."]], SW = 320, SH = 200;
+(function () {
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="' + SW + '" height="' + SH + '" fill="#f6faf4"/>';
+    for (var i = 0; i < SP.length; i++) {
+      var on = (i === sel);
+      s += '<g data-i="' + i + '" style="cursor:pointer">';
+      s += '<path d="' + SP[i][1] + '" fill="' + (on ? "#cdebd6" : "#eaf3e4") +
+           '" stroke="' + (on ? "#1d6f3c" : "#7a9468") + '" stroke-width="' + (on ? 3 : 2) + '"/>';
+      s += '<text x="' + SP[i][2] + '" y="' + SP[i][3] + '" font-size="10.5" fill="#23381a" ' +
+           'text-anchor="middle">' + SP[i][0] + '</text></g>';
+    }
+    document.getElementById("shsvg").innerHTML = s;
+    var gs = document.getElementById("shsvg").getElementsByTagName("g");
+    for (var k = 0; k < gs.length; k++) {
+      gs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("shinfo").innerHTML = "<b>" + SP[i][0] + "</b> — " + SP[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var WR = [["Ispanlar", 1, 0, 28, "Metropoliýadan iberilen dikmeler we emeldarlar."], ["Kreollar", 2, 28, 50, "Kolonizatorlaryň Amerikada doglan nesilleri."], ["Metisler", 3, 50, 68, "Ýewropalylar bilen indeýleriň garyşmagyndan dörän nesil."], ["Mulatlar", 4, 68, 82, "Ýewropalylar bilen negrleriň garyşmagyndan dörän nesil."], ["Sambolar", 5, 82, 92, "Indeýler bilen negrleriň garyşmagyndan dörän nesil."]];
+(function () {
+  var CX = 160, CY = 112;
+  function pt(r, a) {
+    return [CX + r * Math.cos(a - Math.PI / 2), CY + r * Math.sin(a - Math.PI / 2)];
+  }
+  function draw(sel) {
+    var s = '<rect x="0" y="0" width="320" height="230" fill="#f6faf4"/>';
+    var ord = [];
+    for (var z = 0; z < WR.length; z++) ord.push(z);
+    ord.sort(function (a, b) { return WR[b][3] - WR[a][3]; });
+    for (var oi = 0; oi < ord.length; oi++) {
+      var i = ord[oi];
+      var lab = WR[i][0], n = WR[i][1], ri = WR[i][2], ro = WR[i][3];
+      var on = (i === sel);
+      s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ro + '" fill="' +
+           (on ? "#cdebd6" : "#eaf3e4") + '" stroke="#4a6b39" stroke-width="2"/>';
+      if (ri > 0) s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + ri +
+                       '" fill="#f6faf4" stroke="#4a6b39" stroke-width="2"/>';
+      for (var k = 0; k < n; k++) {
+        var a = 2 * Math.PI * k / n;
+        var p1 = pt(ri, a), p2 = pt(ro, a);
+        s += '<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
+             '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) +
+             '" stroke="' + (on ? "#1d6f3c" : "#9bb08c") + '" stroke-width="' + (on ? 2.5 : 1.5) + '"/>';
+      }
+    }
+    s += '<text x="160" y="216" font-size="11" fill="#2f4a22" text-anchor="middle">' +
+         (sel >= 0 ? WR[sel][0] + " – " + WR[sel][1] + " bölek" : "bölegi saýla") + '</text>';
+    document.getElementById("whsvg").innerHTML = s;
+    var h = "";
+    for (var i = 0; i < WR.length; i++)
+      h += '<button class="btn' + (i === sel ? " sel" : "") + '" data-i="' + i + '">' +
+           WR[i][0] + " (" + WR[i][1] + ")</button>";
+    document.getElementById("whpool").innerHTML = h;
+    var bs = document.getElementById("whpool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        draw(i);
+        document.getElementById("whinfo").innerHTML = "<b>" + WR[i][0] + "</b> — " + WR[i][4];
+      };
+    }
+  }
+  draw(-1);
+})();
+
+var Q = [["Ispan kolonial imperiýasy näçe inedördül km çägi eýeläpdir?", ["10 million", "1 million", "50 million"], 0], ["Kreollar kim?", ["Kolonizatorlaryň Amerikada doglan nesilleri", "Ýerli indeýler", "Afrikadan getirilen gullar"], 0], ["Metisler kimleriň garyşmagyndan döräpdir?", ["Ýewropalylar bilen indeýleriň", "Ýewropalylar bilen negrleriň", "Indeýler bilen negrleriň"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

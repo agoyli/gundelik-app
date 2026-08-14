@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akrobatika — 7-nji synp</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Akrobatika: aşyrylma we dyrmyşma 🤸</h1>
+  <div class="sub">Bedenterbiýe · 7-nji synp</div>
+
+  <div class="card">
+    <div class="def">Aşyrylma dört hereketden ybarat. Gatlaklara degip, ony ädimme-ädim gur.</div>
+  </div>
+
+  <div class="card">
+    <h3>Öňe aşyrylmanyň ädimleri</h3>
+    <div class="goal" id="lgoal"></div>
+    <div class="stage"><svg id="lsvg" viewBox="0 0 320 190"></svg></div>
+    <div class="pool" id="lpool"></div>
+    <div class="msg" id="lmsg"></div>
+    <div class="row"><button class="btn ghost" id="lreset">Täzeden başla</button></div>
+    <div class="score" id="lsc"></div>
+  </div>
+
+  <div class="card">
+    <h3>Howpsuzlyk düzgünleri</h3>
+    <div class="goal">Dogry düzgünlere degip gör.</div>
+    <div class="chips" id="mwords"></div>
+    <div class="info" id="mline"></div>
+    <div class="row"><button class="btn primary" id="mcheck">Barla</button>
+      <button class="btn ghost" id="mclear">Arassala</button></div>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>Barla</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Bedenterbiýe 7 — meýilnama we sportuň umumy düzgünleri boýunça.</div>
+</div>
+<script>
+
+var LB = "<rect x=\"0\" y=\"150\" width=\"320\" height=\"40\" fill=\"#c8d3dc\"/>", LS = [["çommalyş", "<circle cx=\"60\" cy=\"126\" r=\"20\" fill=\"#e08a3c\"/><rect x=\"52\" y=\"140\" width=\"30\" height=\"10\" fill=\"#8d6e4b\"/>", "Çommalyp otur, elleriňi öňde ýere goý."], ["eňegi gysmak", "<path d=\"M92 118 q14 10 0 20\" stroke=\"#3a3f47\" stroke-width=\"4\" fill=\"none\"/>", "Eňegi döşe gys — bu boýny şikesden goraýar."], ["togalanma", "<circle cx=\"160\" cy=\"122\" r=\"24\" fill=\"none\" stroke=\"#4fa3c7\" stroke-width=\"4\" stroke-dasharray=\"6 5\"/>", "Arkaň tegelek şekilinde ýuwaşlyk bilen öňe togalan."], ["aýaga galmak", "<rect x=\"240\" y=\"96\" width=\"14\" height=\"54\" fill=\"#e08a3c\"/><circle cx=\"247\" cy=\"86\" r=\"12\" fill=\"#e08a3c\"/>", "Deňagramlylygy saklap, aýaga gal."]], LW = 320, LH = 190;
+(function () {
+  var next = 0, tries = 0, N = LS.length;
+  function draw() {
+    var s = '<rect x="0" y="0" width="' + LW + '" height="' + LH + '" fill="#f6faf4"/>' + LB;
+    for (var i = 0; i < next; i++) s += LS[i][1];
+    document.getElementById("lsvg").innerHTML = s;
+    var h = "";
+    for (var k = 0; k < N; k++) {
+      if (k < next) continue;
+      h += '<button class="btn" data-i="' + k + '">' + LS[k][0] + "</button>";
+    }
+    document.getElementById("lpool").innerHTML = h;
+    var bs = document.getElementById("lpool").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) bs[k].onclick = pick;
+    document.getElementById("lgoal").textContent = next < N ?
+      ((next + 1) + "-nji gatlagy saýla.") : "Nagyş doly boldy!";
+    document.getElementById("lsc").textContent = "Gatlak: " + next + " / " + N + " · synanyşyk: " + tries;
+  }
+  function pick() {
+    var i = parseInt(this.getAttribute("data-i"), 10), m = document.getElementById("lmsg");
+    tries++;
+    if (i === next) {
+      next++;
+      m.className = "msg ok";
+      m.textContent = next === N ? "Tertip dogry!" : ("Dogry! " + LS[next - 1][2]);
+    } else {
+      m.className = "msg bad";
+      m.textContent = "Entek irki: ilki " + LS[next][0] + " gelmeli.";
+    }
+    draw();
+  }
+  document.getElementById("lreset").onclick = function () {
+    next = 0; tries = 0;
+    document.getElementById("lmsg").className = "msg";
+    document.getElementById("lmsg").textContent = "";
+    draw();
+  };
+  draw();
+})();
+
+var MW = ["düşek ýazmak", "boş meýdanda", "eňegi gysmak", "aýakgapsyz", "ätiýaçlandyrma", "gyzgynlyksyz"], MT = [0, 2, 4], MN = "Boş meýdanda, aýakgapsyz we gyzgynlyksyz maşk etmek howply.", MK = "✓";
+(function () {
+  var st = [];
+  for (var i = 0; i < MW.length; i++) st.push(0);
+  function render() {
+    var h = "";
+    for (var i = 0; i < MW.length; i++) {
+      var c = st[i] === 1 ? " sel" : "";
+      h += '<button class="btn' + c + '" data-i="' + i + '">' + MW[i] +
+           (st[i] === 1 ? " " + MK : "") + "</button>";
+    }
+    document.getElementById("mwords").innerHTML = h;
+    var bs = document.getElementById("mwords").getElementsByTagName("button");
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].onclick = function () {
+        var i = parseInt(this.getAttribute("data-i"), 10);
+        st[i] = st[i] ? 0 : 1;
+        render();
+      };
+    }
+    var t = "";
+    for (var i = 0; i < MW.length; i++) t += MW[i] + (st[i] === 1 ? " " + MK + " " : " ");
+    document.getElementById("mline").textContent = t;
+  }
+  document.getElementById("mcheck").onclick = function () {
+    var ok = 1;
+    for (var i = 0; i < MW.length; i++) if (st[i] !== (MT.indexOf(i) >= 0 ? 1 : 0)) ok = 0;
+    var m = document.getElementById("mmsg");
+    if (ok) { m.className = "msg ok"; m.textContent = "Dogry! " + MN; }
+    else { m.className = "msg bad"; m.textContent = "Entek dogry däl. " + MN; }
+  };
+  document.getElementById("mclear").onclick = function () {
+    for (var i = 0; i < MW.length; i++) st[i] = 0;
+    render();
+    document.getElementById("mmsg").className = "msg";
+    document.getElementById("mmsg").textContent = "";
+  };
+  render();
+})();
+
+var Q = [["Aşyrylmada eňek nirede bolmaly?", ["döşe gysylan", "ýokary galdyrylan", "gapdala"], 0], ["Maşk nirede ýerine ýetirilýär?", ["düşegiň üstünde", "beton meýdançada", "otda"], 0], ["Dyrmyşma näçe ädimden ybarat?", ["3", "2", "5"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Dogry!"; }
+      else { m.className = "msg bad"; m.textContent = "Dogry jogap: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Netije: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>

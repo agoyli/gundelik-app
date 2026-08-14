@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Интонация — 8 класс</title>
+<link rel="stylesheet" href="../../lesson.css">
+<style>
+  .def { background: #e3edfd; border-radius: 14px; padding: 12px 14px; font-size: 16.5px; line-height: 1.6; }
+  .stage { background: #f6faf4; border-radius: 13px; padding: 6px; }
+  .stage svg { display: block; width: 100%; height: auto; }
+  .info { background: #fdfaf2; border-radius: 12px; padding: 11px 13px; font-size: 16px; line-height: 1.7; min-height: 62px; }
+  .pool { display: grid; gap: 7px; }
+  .pool button { min-height: 48px; font-size: 15px; font-weight: 700; text-align: left; padding: 8px 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 44px; font-size: 15px; font-weight: 700; padding: 6px 12px; }
+  .lines { display: grid; gap: 6px; }
+  .lines button { min-height: 46px; font-size: 15.5px; font-weight: 600; text-align: left; padding: 8px 12px; }
+  .r0 { background: #dbeafe !important; }
+  .r1 { background: #dcfce7 !important; }
+  .r2 { background: #fee2e2 !important; }
+  .done { background: #dff2e3; border-radius: 12px; padding: 10px 12px; font-size: 15.5px; line-height: 1.7; }
+  .qa { background: #f7fafd; border-radius: 13px; padding: 11px; margin-bottom: 6px; font-size: 16px; line-height: 1.6; }
+  .flow { stroke-dasharray: 7 6; }
+  .flow-up { animation: mv 1.5s linear infinite; }
+  .flow-dn { animation: mv 1.5s linear infinite reverse; }
+  @keyframes mv { to { stroke-dashoffset: -26; } }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tbl th, .tbl td { border: 1px solid #cfe0bd; padding: 9px 7px; text-align: left; line-height: 1.45; }
+  .tbl th { background: #eaf3e4; font-weight: 700; }
+  .tbl td { cursor: pointer; }
+  .tbl td.sel { background: #cdebd6; }
+  .tbl-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Интонация предложения</h1>
+  <div class="sub">Русский язык · 8 класс</div>
+
+  <div class="card">
+    <div class="def">Один и тот же набор слов — разные смыслы.</div>
+  </div>
+
+  <div class="card">
+    <h3>Интонационный контур</h3>
+    <div class="goal">Передвинь ползунок.</div>
+    <div class="stage"><svg id="sisvg1" viewBox="0 0 320 180"></svg></div>
+    <div class="row"><span class="mono" id="silab1"></span></div>
+    <input class="slider" id="siinp1" type="range" min="1" max="3" step="1" value="1">
+    <div class="info" id="siro1"></div>
+    <div class="note">Интонация выражает смысловые и эмоциональные различия высказываний.</div>
+  </div>
+
+  <div class="card">
+    <h3>Цель и знак</h3>
+    <div class="goal">Нажми на строку.</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"><thead id="tbhead"></thead><tbody id="tbbody"></tbody></table></div>
+    <div class="info" id="tbinfo">Нажми на строку таблицы.</div>
+  </div>
+
+  <div class="card">
+    <h3>Проверь себя</h3>
+    <div id="quiz"></div>
+    <div class="score" id="qsc"></div>
+  </div>
+  <div class="footer">Русский язык 8 (Л. Сатулина, М. Халназаров), Ашхабад 2020 — по учебнику.</div>
+</div>
+<script>
+
+(function () {
+  var inp = document.getElementById("siinp1");
+  var sv = document.getElementById("sisvg1");
+  var ro = document.getElementById("siro1");
+  var lb = document.getElementById("silab1");
+  function render(v) { var t = v;
+var s = '<rect x="0" y="0" width="320" height="180" fill="#f7fafd"/>';
+var d, nm, sign, col;
+if (t === 1) {
+  d = 'M 30 70 C 110 74, 200 100, 290 128';
+  nm = 'Повествовательное'; sign = '.'; col = '#2456b0';
+} else if (t === 2) {
+  d = 'M 30 118 C 110 116, 190 96, 290 50';
+  nm = 'Вопросительное'; sign = '?'; col = '#3f8f5a';
+} else {
+  d = 'M 30 110 C 90 40, 160 36, 290 120';
+  nm = 'Восклицательное'; sign = '!'; col = '#b02424';
+}
+s += '<line x1="20" y1="150" x2="300" y2="150" stroke="#8fa0b4" stroke-width="2"/>';
+s += '<path d="' + d + '" stroke="' + col + '" stroke-width="4" fill="none"/>';
+s += '<text x="160" y="26" font-size="14" text-anchor="middle" fill="#22303f">' + nm + '</text>';
+s += '<text x="160" y="172" font-size="14" text-anchor="middle" fill="' + col +
+     '">Грачи прилетели' + sign + '</text>';
+return s; }
+  function readout(v) { if (v === 1) {
+  return 'Повествовательное предложение: тон к концу понижается, в конце ставится точка.';
+}
+if (v === 2) {
+  return 'Вопросительное предложение: тон повышается на вопросительном слове, в конце знак вопроса.';
+}
+return 'Восклицательное предложение: тон резко повышается, в конце восклицательный знак.'; }
+  function upd() {
+    var v = parseFloat(inp.value);
+    sv.innerHTML = render(v);
+    ro.innerHTML = String(readout(v)).replace(/(\d)\.(\d)/g, "$1,$2");
+    lb.textContent = "Тип предложения (1–3)" + ": " + String(v).replace(".", ",") + " " + "";
+  }
+  inp.oninput = upd;
+  upd();
+})();
+
+var TH = ["Цель высказывания", "Знак в конце"], TR = [["Повествовательное", ". или !"], ["Вопросительное", "? или ?!"], ["Побудительное", ". или !"]], TI = [["Сообщает о чём-либо.", "«Грачи прилетели.» / «Грачи прилетели!»"], ["Содержит вопрос.", "«Грачи прилетели?» / «Грачи прилетели?!»"], ["Побуждает к действию.", "«Прилетайте скорее.» / «Прилетайте скорее!»"]], THINT = "Нажми на строку таблицы.";
+(function () {
+  var hh = "<tr>";
+  for (var c = 0; c < TH.length; c++) hh += "<th>" + TH[c] + "</th>";
+  document.getElementById("tbhead").innerHTML = hh + "</tr>";
+  function draw(sr, sc) {
+    var b = "";
+    for (var r = 0; r < TR.length; r++) {
+      b += "<tr>";
+      for (var c = 0; c < TR[r].length; c++) {
+        var on = (r === sr && c === sc);
+        b += '<td class="' + (on ? "sel" : "") + '" data-r="' + r + '" data-c="' + c + '">' +
+             TR[r][c] + "</td>";
+      }
+      b += "</tr>";
+    }
+    document.getElementById("tbbody").innerHTML = b;
+    var ts = document.getElementById("tbbody").getElementsByTagName("td");
+    for (var k = 0; k < ts.length; k++) {
+      ts[k].onclick = function () {
+        var r = parseInt(this.getAttribute("data-r"), 10);
+        var c = parseInt(this.getAttribute("data-c"), 10);
+        draw(r, c);
+        var txt = (TI[r] && TI[r][c]) ? TI[r][c] : THINT;
+        document.getElementById("tbinfo").innerHTML = txt;
+      };
+    }
+  }
+  draw(-1, -1);
+})();
+
+var Q = [["Что выражает интонация?", ["Смысловые и эмоциональные различия", "Только громкость", "Только паузы"], 0], ["Как произносится повествовательное предложение?", ["С понижением к концу", "С повышением к концу", "Ровно"], 0], ["С чем тесно связана интонация?", ["С логическим ударением", "С падежом", "С родом"], 0]];
+(function () {
+  var qd = 0, qok = 0, h = "";
+  for (var i = 0; i < Q.length; i++) {
+    h += '<div class="qa"><b>' + (i + 1) + '.</b> ' + Q[i][0] + '<div class="row">';
+    for (var j = 0; j < Q[i][1].length; j++)
+      h += '<button class="btn" data-q="' + i + '" data-a="' + j + '">' + Q[i][1][j] + '</button>';
+    h += '</div><div class="msg" id="qm' + i + '"></div></div>';
+  }
+  document.getElementById("quiz").innerHTML = h;
+  var bs = document.getElementById("quiz").getElementsByTagName("button");
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].onclick = function () {
+      var k = parseInt(this.getAttribute("data-q"), 10), a = parseInt(this.getAttribute("data-a"), 10);
+      var m = document.getElementById("qm" + k);
+      if (m.getAttribute("data-done")) return;
+      m.setAttribute("data-done", "1"); qd++;
+      if (a === Q[k][2]) { qok++; m.className = "msg ok"; m.textContent = "Правильно!"; }
+      else { m.className = "msg bad"; m.textContent = "Правильный ответ: " + Q[k][1][Q[k][2]]; }
+      document.getElementById("qsc").textContent = "Результат: " + qok + " / " + qd;
+    };
+  }
+})();
+</script>
+</body>
+</html>
