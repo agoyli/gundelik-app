@@ -1,4 +1,7 @@
-import { curriculum, look, subjectLook } from './curriculum';
+import {
+  GROUP_LABEL, GROUP_ORDER, curriculum, look, subjectGroup, subjectLook,
+} from './curriculum';
+import type { SubjectGroup } from './curriculum';
 import { loadLessons } from './lessons';
 import { ordinal } from '../lib/tm';
 import { getJson } from './source';
@@ -101,6 +104,63 @@ export const testSubjects = (): TestSubject[] => curriculum()
     }] : []))),
   }))
   .filter((s) => s.tests.length > 0);
+
+/*
+ * The ten packs a prize contest is played with.
+ *
+ * A contest does not get a question bank of its own: the app already has 766
+ * of them, one per theme with material, and inventing a parallel set would be
+ * a second body of questions to keep true to the programme. So a pack *is* a
+ * theme's test bank.
+ *
+ * They are taken one subject at a time rather than by striding the catalogue.
+ * Striding looks spread and is not: the catalogue is ordered by subject, and a
+ * subject with 150 banks in it swallows most of a ten-wide stride — the first
+ * build of this handed out eight Informatika packs out of ten. Round-robin over
+ * the subjects gives ten packs from ten subjects while the subjects last. The
+ * offsets come from the contest's id, so the pack a reader half-finished is the
+ * same pack when they come back.
+ */
+export type ContestPack = {
+  id: string;
+  subject: string;
+  grade: number;
+  /** the theme banks the pack asks, in order */
+  tests: TestItem[];
+  questions: number;
+};
+
+export const contestPacks = (contestId: string, count = 10, per = 3): ContestPack[] => {
+  /* A single theme's bank is four questions — that is what the programme
+     publishes — which is a quiz, not a pack. Three consecutive banks of one
+     subject make a pack of about a dozen, and consecutive banks share a grade,
+     so the pack can say which year it is asking about. */
+  const bySubject = testSubjects().filter((s) => s.tests.length >= per);
+  if (bySubject.length === 0) return [];
+  const seed = [...contestId].reduce((n, c) => n + c.charCodeAt(0), 0);
+
+  const packs: ContestPack[] = [];
+  const taken = new Set<string>();
+  for (let pass = 0; packs.length < count && pass < count; pass++) {
+    for (let i = 0; i < bySubject.length && packs.length < count; i++) {
+      const s = bySubject[(seed + i) % bySubject.length];
+      const start = (seed + pass * per + i * 5) % Math.max(1, s.tests.length - per + 1);
+      const tests = s.tests.slice(start, start + per);
+      if (tests.length < per) continue;
+      const id = `p${tests[0].id}`;
+      if (taken.has(id)) continue;
+      taken.add(id);
+      packs.push({
+        id,
+        subject: s.label,
+        grade: tests[0].grade,
+        tests,
+        questions: tests.reduce((n, t) => n + t.questions, 0),
+      });
+    }
+  }
+  return packs;
+};
 
 /* ---------------- Interaktiw sapaklar (the interactives, on their own) ---------------- */
 
@@ -212,6 +272,51 @@ export const deckList = (): DeckMeta[] => INDEX
   .sort((a, b) => a.subject.localeCompare(b.subject, 'tk') || a.grade - b.grade);
 
 export const deckById = (id: string) => deckList().find((d) => d.id === id);
+
+/*
+ * The decks, by the subject they belong to.
+ *
+ * 46 decks is 46 rows of "Informatika · 3-nji synp kartlary", and twelve of
+ * those say Informatika. A subject is what a reader picks first — the grade is
+ * *which* deck, not *what* it is about — so the list is folded one level: one
+ * card per subject, its grades under it. What each card states is what the
+ * catalogue knows and the reader cannot count for themselves: how many cards
+ * the subject holds and which grades they cover.
+ */
+export type DeckSubject = {
+  slug: string; subject: string; accent: string; tint: string;
+  group: SubjectGroup;
+  decks: DeckMeta[];
+  /** cards across every grade of this subject */
+  cards: number;
+  grades: number[];
+};
+
+export const deckSubjects = (): DeckSubject[] => {
+  const by = new Map<string, DeckSubject>();
+  /* deckList is already sorted by subject then grade, so the decks and grades
+     collected here come out in grade order without a second sort */
+  for (const d of deckList()) {
+    const s = by.get(d.slug) ?? {
+      slug: d.slug, subject: d.subject, accent: d.accent, tint: d.tint,
+      group: subjectGroup(d.slug), decks: [], cards: 0, grades: [],
+    };
+    s.decks.push(d);
+    s.cards += d.total;
+    s.grades.push(d.grade);
+    by.set(d.slug, s);
+  }
+  return [...by.values()]
+    .sort((a, b) => b.cards - a.cards || a.subject.localeCompare(b.subject, 'tk'));
+};
+
+/** The same subjects under the school's own shelves, empty shelves dropped. */
+export const deckGroups = (): { id: SubjectGroup; title: string; subjects: DeckSubject[] }[] => {
+  const subjects = deckSubjects();
+  return GROUP_ORDER
+    .map((id) => ({ id, title: GROUP_LABEL[id], subjects: subjects.filter((s) => s.group === id) }))
+    .filter((g) => g.subjects.length > 0);
+};
 
 /*
  * The cards themselves, cut from the lessons when a deck is opened.

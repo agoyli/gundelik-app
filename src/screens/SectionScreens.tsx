@@ -1,31 +1,38 @@
 import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
-  BookmarkIcon, BooksIcon, CardsIcon, CheckIcon, ChevronIcon, GameIcon, LockIcon, UsersIcon,
+  BookmarkIcon, BooksIcon, CardsIcon, CheckIcon, ChevronIcon, GameIcon, GlobeIcon, LockIcon,
+  UsersIcon,
 } from '../components/Icons';
 import { TeaserCard } from '../components/Paywall';
 import {
-  ChipRow, EmptyState, IconBadge, PointsPill, RowChevron, SectionHeading, SubPage, SubjectRow,
-  SurfaceRow, TagPill,
+  ChipRow, EmptyState, IconBadge, RowChevron, SectionHeading, Segmented, SubPage,
+  SubjectRow, SubjectTile, SurfaceRow, TagPill, ViewToggle,
 } from '../components/Ui';
 import { KIND_LABEL, KIND_ORDER, useBookmarks } from '../state/bookmarks';
 import type { Bookmark } from '../state/bookmarks';
-import { tierFor, useCan } from '../state/prefs';
+import { setPref, tierFor, useCan, usePrefs } from '../state/prefs';
 import {
-  BOOKS, BOOK_CATS, CONTESTS, CONTEST_STATE,
+  BOOKS, BOOK_CATS, CONTEST_LEVEL, INTL_OLYMPIADS, OLYMPIADS, OLYMPIAD_STAGE, PRIZE_CONTESTS,
+  olympiadEntrants, olympiadSelf, olympiadTitle,
 } from '../data/guides';
-import type { Book, Contest, Deck } from '../data/guides';
+import type {
+  Book, Deck, IntlOlympiad, Olympiad, PrizeContest, PrizePhase,
+} from '../data/guides';
 import {
-  bankTotal, deckById, deckList, loadDeckCards, playById, playGroups, subjectBank,
+  bankTotal, deckById, deckGroups, loadDeckCards, playById, playGroups, subjectBank,
 } from '../data/library';
 import {
   USER_GRADE, curriculum, pathLength, subjectLook, subjectsForGrade,
 } from '../data/curriculum';
 import { chipGrade, chipValue, gradeChips } from '../lib/gradeFilter';
+import { absDate, fmtWhen } from '../lib/date';
 import { ordinal } from '../lib/tm';
-import type { DeckMeta } from '../data/library';
+import type { DeckMeta, DeckSubject } from '../data/library';
 import {
-  BookDetailScreen, ContestDetailScreen, DeckDetailScreen,
+  BookDetailScreen, DeckDetailScreen, DeckSubjectScreen, IntlOlympiadScreen, OlympiadDetailScreen,
+  PrizeContestScreen, prizePhase,
 } from './DetailScreens';
 import { PlayerScreen } from './PlayScreens';
 import { tokens } from '../theme';
@@ -117,9 +124,24 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
   const can = useCan('roadmap');
   const canGames = useCan('games');
   const plan = tierFor('roadmap');
+  /* the reader's own way of looking at a subject list, kept between visits */
+  const view = usePrefs().subjectView;
+
+  /* Whether a subject is behind the lock, and what happens when it is tapped —
+     one answer for both views, so the row and the card can never disagree about
+     which subjects are open. The free tier keeps the first subject whole: one
+     subject you can actually finish is an argument; a list you can only look at
+     is a wall. */
+  const isLocked = (i: number) => !can && i > 0;
+  const open = (id: string, i: number) => (isLocked(i) ? onUpgrade() : onOpenSubject(id, grade));
 
   return (
-    <SubPage title="Sapaklar" onBack={onBack} help="Her dersiň temalary yzygiderli sapaklar görnüşinde — 1-nji synpdan 12-nji synpa çenli. Sapaklary geçip, indiki synpa açylýarsyň. Her dersiň aşagynda oýun görnüşinde gaýtalama bar.">
+    <SubPage
+      title="Sapaklar"
+      onBack={onBack}
+      action={<ViewToggle value={view} onChange={(v) => setPref('subjectView', v)} />}
+      help="Her dersiň temalary yzygiderli sapaklar görnüşinde — 1-nji synpdan 12-nji synpa çenli. Sapaklary geçip, indiki synpa açylýarsyň. Her dersiň aşagynda oýun görnüşinde gaýtalama bar."
+    >
 
       {/* Grade filter — the same chip row the lesson path filters with */}
       <Box sx={{ pt: '4px', pb: '2px' }}>
@@ -137,29 +159,57 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
           ? <TagPill label="Meniň synpym" onClick={() => toast('Öz synpyňyzyň dersleri')} />
           : <TagPill label={`${ordinal(USER_GRADE)} synpa dolan`} onClick={() => setGrade(USER_GRADE)} />}
       />
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {subjects.map((s, i) => (
-          <SubjectRow
-            key={s.id}
-            icon={s.icon}
-            tint={s.tint}
-            accent={s.accent}
-            label={s.label}
-            sub={bankLine(s.id, grade)}
-            /* `total` is every stop on this subject's path in this grade —
-               reading, interactive and checkpoint alike — so the row and the
-               page behind it count the same thing */
-            progress={{ done: s.done, total: s.total }}
-            /* the free tier keeps the first subject whole — one subject you can
-               actually finish is an argument; a list you can only look at is a wall */
-            locked={!can && i > 0}
-            lockNote={`${plan?.name} bilen açylýar`}
-            /* every subject has a path now — the "only Matematika opens, the
-               rest are coming soon" guard was scaffolding from the mock data */
-            onClick={() => (!can && i > 0 ? onUpgrade() : onOpenSubject(s.id, grade))}
-          />
-        ))}
-      </Box>
+      {/*
+        * Two ways of reading the same list, and the switch above chooses.
+        *
+        * The row is the *considered* view: it has the width for what the bank
+        * holds ("128 sapak taýýar · 12 test · 96 kart") and for progress, which
+        * is what you want when you are deciding what to study next. The card is
+        * the *scanning* view: seventeen subjects on two screens instead of
+        * five, each one its own colour, which is what you want when you already
+        * know the subject and are looking for it by sight. Neither is a
+        * decoration of the other, so each carries the line it has room for —
+        * the card states the path's length, the number its progress bar would
+        * otherwise measure against.
+        */}
+      {view === 'grid' ? (
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          {subjects.map((s, i) => (
+            <SubjectTile
+              key={s.id}
+              icon={s.icon}
+              tint={s.tint}
+              accent={s.accent}
+              label={s.label}
+              sub={`${s.total} sapak`}
+              locked={isLocked(i)}
+              onClick={() => open(s.id, i)}
+            />
+          ))}
+        </Box>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {subjects.map((s, i) => (
+            <SubjectRow
+              key={s.id}
+              icon={s.icon}
+              tint={s.tint}
+              accent={s.accent}
+              label={s.label}
+              sub={bankLine(s.id, grade)}
+              /* `total` is every stop on this subject's path in this grade —
+                 reading, interactive and checkpoint alike — so the row and the
+                 page behind it count the same thing */
+              progress={{ done: s.done, total: s.total }}
+              locked={isLocked(i)}
+              lockNote={`${plan?.name} bilen açylýar`}
+              /* every subject has a path now — the "only Matematika opens, the
+                 rest are coming soon" guard was scaffolding from the mock data */
+              onClick={() => open(s.id, i)}
+            />
+          ))}
+        </Box>
+      )}
 
       {!can && (
         <Box sx={{ pt: '14px' }}>
@@ -285,16 +335,32 @@ function DeckStudy({ deck, onBack, toast }: { deck: Deck; onBack: () => void; to
   );
 }
 
+/*
+ * Where a card session starts: which subject.
+ *
+ * It used to be 46 rows, one per subject-grade, each labelled "Informatika ·
+ * 3-nji synp kartlary" — the word *kartlary* on all 46 of them, under a page
+ * already titled Öwrediji kartlar, and Informatika twelve times. What the
+ * reader picks first is the subject, so that is what the page holds: one tile
+ * per subject, under the shelf the school files it on, with the grades one
+ * level down.
+ *
+ * Each tile's second line is the two numbers a reader cannot count for
+ * themselves — how many cards the subject holds, which grades they cover — and
+ * not a sentence saying "cards to learn", which is what the page title says.
+ */
 export function KartlarScreen({ onBack, toast, onUpgrade }: {
   onBack: () => void; toast: Toast; onUpgrade: () => void;
 }) {
-  /* deck → its overview page → the study session */
+  /* subject → its decks → the deck's overview page → the study session */
+  const [subject, setSubject] = useState<DeckSubject | null>(null);
   const [open, setOpen] = useState<Deck | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [studying, setStudying] = useState(false);
   const can = useCan('cards');
   const plan = tierFor('cards');
-  const decks = deckList();
+  const groups = deckGroups();
+  const bank = bankTotal();
 
   /* The list knows how many cards a deck holds — the catalogue says so — but
      the cards themselves are a lesson file, fetched when one is opened. */
@@ -326,6 +392,16 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
       />
     );
   }
+  if (subject) {
+    return (
+      <DeckSubjectScreen
+        subject={subject}
+        loading={loading}
+        onBack={() => setSubject(null)}
+        onOpenDeck={(d) => void openDeck(d)}
+      />
+    );
+  }
 
   return (
     <SubPage title="Öwrediji kartlar" onBack={onBack} help="Bir tarapynda sowal, beýleki tarapynda jogap. Kartlary gaýtalap, formulalary we sözleri ýatda saklaýarsyň.">
@@ -338,87 +414,270 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
         <Box sx={{ pt: '14px' }}>
           <TeaserCard
             title="Öwrediji kartlar ýapyk"
-            note={`${bankTotal().decks} toplum, ${bankTotal().cards} kart taýýar — ${plan?.name} bilen açylýar.`}
+            note={`${bank.decks} toplum, ${bank.cards} kart taýýar — ${plan?.name} bilen açylýar.`}
             feature="cards"
             onUpgrade={onUpgrade}
           />
         </Box>
       )}
 
-      <SectionHeading title="Toplumlar" />
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {decks.map((d) => (
-          <SurfaceRow
-            key={d.id}
-            icon={can
-              ? <IconBadge bg={d.tint} color={d.accent} size={44}><CardsIcon size={22} /></IconBadge>
-              : <IconBadge bg={tokens.lockTile} color={tokens.lockInk} size={44}><LockIcon size={20} /></IconBadge>}
-            label={`${d.subject} · ${d.label}`}
-            sub={loading === d.id ? 'Açylýar…' : `${d.total} kart`}
-            end={<RowChevron />}
-            onClick={() => { if (!can) { onUpgrade(); return; } void openDeck(d); }}
+      {groups.map((g) => (
+        <Box key={g.id}>
+          {/* the shelf's own size, so the heading is a fact and not a divider */}
+          <SectionHeading
+            title={g.title}
+            action={(
+              <Typography sx={{ fontSize: 13, color: tokens.ink3, fontVariantNumeric: 'tabular-nums' }}>
+                {g.subjects.length} ders
+              </Typography>
+            )}
           />
-        ))}
-      </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* An odd shelf ends on a half-width tile with a gap beside it. The
+                Gollanmalar grid spans its last tile instead, but that grid is
+                the whole page; here the next heading follows immediately, so the
+                gap reads as the end of the shelf — and widening a tile would
+                give the *smallest* subject in it the largest card. */}
+            {g.subjects.map((s) => (
+              <SubjectTile
+                key={s.slug}
+                icon={subjectLook(s.slug).icon}
+                tint={s.tint}
+                accent={s.accent}
+                label={s.subject}
+                sub={`${s.cards} kart · ${gradeSpan(s.grades)}`}
+                locked={!can}
+                onClick={() => (can ? setSubject(s) : onUpgrade())}
+              />
+            ))}
+          </Box>
+        </Box>
+      ))}
     </SubPage>
   );
 }
 
+/* "7-nji synp" for one grade, "1–6 synp" for a run of them — the tile is 165px
+   wide and cannot spell out six ordinals. */
+const gradeSpan = (grades: number[]) => {
+  const first = grades[0];
+  const last = grades[grades.length - 1];
+  return first === last ? `${ordinal(first)} synp` : `${first}–${last} synp`;
+};
+
 /* ---------------- Bäsleşikler ---------------- */
 
+/*
+ * One card for both kinds of contest.
+ *
+ * A test contest and a prize contest are the same decision in the list — which
+ * one am I entering — and differ only in what they hand out, so they are one
+ * card with one footer strip and one thing swapped in it: the points on offer,
+ * or the object on offer. Two card designs for two tabs of the same section
+ * would make a tab switch look like a page change.
+ */
+function ContestCard({ title, meta, state, players, end, onClick }: {
+  title: string; meta: string;
+  state: { label: string; color: string; tint: string };
+  players: number; end: ReactNode; onClick: () => void;
+}) {
+  return (
+    <ButtonBase
+      onClick={onClick}
+      aria-label={`${title}, ${state.label}`}
+      sx={{
+        display: 'block', width: '100%', textAlign: 'left',
+        bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '15px 15px 13px',
+        transition: 'background .15s ease', '&:active': { bgcolor: tokens.surfacePress },
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.2px' }}>{title}</Typography>
+          <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px' }}>{meta}</Typography>
+        </Box>
+        <Box sx={{
+          flex: 'none', px: '10px', height: 26, borderRadius: `${tokens.rPill}px`,
+          bgcolor: state.tint, color: state.color, fontSize: 12, fontWeight: 700,
+          display: 'grid', placeItems: 'center',
+        }}>{state.label}</Box>
+      </Box>
+      <Box sx={{
+        display: 'flex', alignItems: 'center', gap: '14px', mt: '12px',
+        pt: '12px', borderTop: `1px solid ${tokens.dividerSoft}`,
+      }}>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: tokens.ink3, fontSize: 13 }}>
+          <UsersIcon size={16} />{players}
+        </Box>
+        {end}
+        <Box aria-hidden sx={{ ml: 'auto', color: tokens.inkDisabled, display: 'flex' }}>
+          <ChevronIcon />
+        </Box>
+      </Box>
+    </ButtonBase>
+  );
+}
+
+/*
+ * Bäsleşikler, in two kinds.
+ *
+ * The section holds two things that are both "competition" in Turkmen and
+ * nothing alike in use. An olimpiada happens on paper, in a hall, run by the
+ * school or the ministry: by the time it reaches a phone it is a *record* — a
+ * date, a stage, and what each pupil scored. An onlaýn bäsleşik happens in the
+ * app: it opens on a date, runs on the work you do, and hands out objects that
+ * sponsors put up. One list mixing "Welaýat tapgyry, 89%" with "Macbook Air,
+ * 23 gün galdy" makes the reader sort them by eye on every scroll, so the tab
+ * sorts them once — and the two tabs then answer two different questions, "how
+ * did we do" and "what can I enter".
+ */
+type ContestTab = 'olimpiada' | 'bayrak';
+
+/* The state pill's three readings, so the card and the page it opens agree. */
+const PRIZE_STATE: Record<PrizePhase, { label: string; color: string; tint: string }> = {
+  soon: { label: 'Ýakynda', color: tokens.blueText, tint: tokens.blueTint },
+  live: { label: 'Dowam edýär', color: tokens.orangeText, tint: tokens.orangeTint },
+  done: { label: 'Tamamlandy', color: tokens.ink3, tint: tokens.surfacePress },
+};
+
+/** `7–9-njy synp` — the grades an olympiad's boards cover, in one phrase. */
+const olympiadGradeSpan = (o: Olympiad) => {
+  const gs = o.grades.map((g) => g.grade).sort((a, b) => a - b);
+  const [first, last] = [gs[0], gs[gs.length - 1]];
+  return first === last ? `${ordinal(first)} synp` : `${first}–${ordinal(last)} synp`;
+};
+
 export function BaslesiklerScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
-  const [open, setOpen] = useState<Contest | null>(null);
-  if (open) return <ContestDetailScreen contest={open} onBack={() => setOpen(null)} toast={toast} />;
+  const [tab, setTab] = useState<ContestTab>('olimpiada');
+  const [open, setOpen] = useState<Olympiad | null>(null);
+  const [openIntl, setOpenIntl] = useState<IntlOlympiad | null>(null);
+  const [openPrize, setOpenPrize] = useState<PrizeContest | null>(null);
+
+  if (open) return <OlympiadDetailScreen olympiad={open} onBack={() => setOpen(null)} />;
+  if (openIntl) return <IntlOlympiadScreen item={openIntl} onBack={() => setOpenIntl(null)} />;
+  if (openPrize) {
+    return <PrizeContestScreen contest={openPrize} onBack={() => setOpenPrize(null)} toast={toast} />;
+  }
 
   return (
     <SubPage
       title="Bäsleşikler"
       onBack={onBack}
-      action={<TagPill label="1251 bal" onClick={() => toast('Beýleki okuwçylar bilen ýaryş. Her bäsleşik ballar getirýär — ballar umumy reýtingiňi kesgitleýär.')} />}
+      /* The points pill belongs to the tab that pays points. Above the
+         olympiads it would promise a score for a paper that is marked in
+         percent and hands out no bal at all. */
+      action={tab === 'bayrak'
+        ? <TagPill label="1251 bal" onClick={() => toast('Onlaýn bäsleşiklerde toplan ballaryň jemi. Ballar umumy reýtingiňi kesgitleýär.')} />
+        : undefined}
     >
-
-      <SectionHeading title="Ähli bäsleşikler" />
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {CONTESTS.map((c) => {
-          const st = CONTEST_STATE[c.state];
-          return (
-            <ButtonBase
-              key={c.id}
-              onClick={() => setOpen(c)}
-              aria-label={`${c.title}, ${st.label}`}
-              sx={{
-                display: 'block', width: '100%', textAlign: 'left',
-                bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '15px 15px 13px',
-                transition: 'background .15s ease', '&:active': { bgcolor: tokens.surfacePress },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.2px' }}>{c.title}</Typography>
-                  <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px' }}>{c.subject} · {c.when}</Typography>
-                </Box>
-                <Box sx={{
-                  flex: 'none', px: '10px', height: 26, borderRadius: `${tokens.rPill}px`,
-                  bgcolor: st.tint, color: st.color, fontSize: 12, fontWeight: 700,
-                  display: 'grid', placeItems: 'center',
-                }}>{st.label}</Box>
-              </Box>
-              <Box sx={{
-                display: 'flex', alignItems: 'center', gap: '14px', mt: '12px',
-                pt: '12px', borderTop: `1px solid ${tokens.dividerSoft}`,
-              }}>
-                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: tokens.ink3, fontSize: 13 }}>
-                  <UsersIcon size={16} />{c.players}
-                </Box>
-                <PointsPill value={c.prize} unit="bal" />
-                <Box aria-hidden sx={{ ml: 'auto', color: tokens.inkDisabled, display: 'flex' }}>
-                  <ChevronIcon />
-                </Box>
-              </Box>
-            </ButtonBase>
-          );
-        })}
+      <Box sx={{ pt: '14px', pb: '16px' }}>
+        <Segmented
+          label="Bäsleşigiň görnüşi"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { id: 'olimpiada', label: 'Olimpiýadalar' },
+            { id: 'bayrak', label: 'Onlaýn bäsleşikler' },
+          ]}
+        />
       </Box>
+
+      {tab === 'olimpiada' ? (
+        <>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {OLYMPIADS.map((o) => {
+              const st = OLYMPIAD_STAGE[o.stage];
+              const self = olympiadSelf(o);
+              return (
+                <ContestCard
+                  key={o.id}
+                  title={olympiadTitle(o)}
+                  meta={absDate(o.date)}
+                  state={{ label: st.short, color: st.color, tint: st.tint }}
+                  players={olympiadEntrants(o)}
+                  /* Nothing to win here, so the slot the prize tab gives to a
+                     level carries the one thing that decides whether to open a
+                     finished olympiad: your own result, or whose results are
+                     inside when you did not sit it. */
+                  end={self ? (
+                    <Box sx={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px', height: 26, px: '10px',
+                      borderRadius: `${tokens.rPill}px`, bgcolor: tokens.blueTint, color: tokens.blueText,
+                      fontSize: 12, fontWeight: 700, flex: 'none', fontVariantNumeric: 'tabular-nums',
+                    }}>Netijäň {self.percent}%</Box>
+                  ) : (
+                    <Typography sx={{ fontSize: 13, color: tokens.ink3 }}>{olympiadGradeSpan(o)}</Typography>
+                  )}
+                  onClick={() => setOpen(o)}
+                />
+              );
+            })}
+          </Box>
+
+          {/*
+            * The other half of an olympiad section: the ones still ahead.
+            *
+            * Everything above is a result — closed, marked, nothing to do about
+            * it. A pupil who scored 96% in the welaýat tapgyry is exactly the
+            * reader who needs to know that a selection exists, what it takes to
+            * reach it, and who to ring, and that reader is on this screen with
+            * no other route to that page. So it sits under the results rather
+            * than in a section of its own.
+            */}
+          <SectionHeading title="Halkara olimpiadalar" />
+          <Typography sx={{ fontSize: 13, color: tokens.ink3, px: '6px', mb: '12px', lineHeight: 1.5 }}>
+            Milli tapgyrlardan geçen okuwçylar üçin. Her biriniň derejesi, arza möhleti we habarlaşmak
+            üçin belgisi içinde.
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {INTL_OLYMPIADS.map((it) => (
+              <SurfaceRow
+                key={it.id}
+                icon={(
+                  <IconBadge bg={tokens.purpleTint} color={tokens.purpleText} size={44}>
+                    <GlobeIcon size={20} />
+                  </IconBadge>
+                )}
+                label={it.name}
+                sub={`${it.short} · ${OLYMPIAD_STAGE[it.through].label} arkaly`}
+                end={<RowChevron />}
+                onClick={() => setOpenIntl(it)}
+              />
+            ))}
+          </Box>
+        </>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {PRIZE_CONTESTS.map((c) => {
+            /* the phase is the dates', not a stored field — the card and the
+               countdown on the page behind it read the same clock */
+            const phase = prizePhase(c);
+            const lvl = CONTEST_LEVEL[c.level];
+            return (
+              <ContestCard
+                key={c.id}
+                title={c.title}
+                meta={fmtWhen(c.startsAt)}
+                state={PRIZE_STATE[phase]}
+                players={c.players}
+                /* Not the top prize. Every one of these cards would print a
+                   laptop or a tablet, and a column of prizes sorts nothing —
+                   every reader wants all of them. What decides whether to enter
+                   is whether the questions are within reach, so the slot the
+                   points pill has in the other tab carries the level here. */
+                end={(
+                  <Box sx={{
+                    display: 'inline-flex', alignItems: 'center', height: 26, px: '10px',
+                    borderRadius: `${tokens.rPill}px`, bgcolor: lvl.tint, color: lvl.color,
+                    fontSize: 12, fontWeight: 700, flex: 'none',
+                  }}>{lvl.label}</Box>
+                )}
+                onClick={() => setOpenPrize(c)}
+              />
+            );
+          })}
+        </Box>
+      )}
     </SubPage>
   );
 }
@@ -563,8 +822,12 @@ export function BookmarksScreen({ onBack, toast, onUpgrade }: {
       if (meta) return <SavedDeck meta={meta} onBack={back} toast={toast} />;
     }
     if (open.kind === 'contest') {
-      const c = CONTESTS.find((x) => x.id === open.id);
-      if (c) return <ContestDetailScreen contest={c} onBack={back} toast={toast} />;
+      /* one bookmark kind, two pages behind it — a saved olympiad is a result,
+         a saved halkara olimpiada is a deadline, and the id says which */
+      const o = OLYMPIADS.find((x) => x.id === open.id);
+      if (o) return <OlympiadDetailScreen olympiad={o} onBack={back} />;
+      const it = INTL_OLYMPIADS.find((x) => x.id === open.id);
+      if (it) return <IntlOlympiadScreen item={it} onBack={back} />;
     }
     if (open.kind === 'game') {
       /* a saved interactive re-opens in the player, not in a page about it */

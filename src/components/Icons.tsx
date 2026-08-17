@@ -231,7 +231,7 @@ export const MedalIcon = (p: P & { n?: number }) => {
     <circle cx="14" cy="14" r="13" fill="currentColor" opacity={0.25} />
     <circle cx="14" cy="14" r="10" fill="currentColor" />
     {/* near-black numeral: the medal colours are all light, so a tinted digit is unreadable */}
-    <text x="14" y="18.5" textAnchor="middle" fontSize="12" fontWeight="700" fill="currentColor" opacity={0.82}>{n}</text>
+    <text x="14" y="18.5" textAnchor="middle" fontSize="12" fontWeight="700" fill={tokens.ink} opacity={0.82}>{n}</text>
   </>, 0.745);
 };
 
@@ -459,6 +459,17 @@ export const ListIcon = (p: P) =>
     <circle cx="4.8" cy="6.6" r="1.5" fill="currentColor" />
     <circle cx="4.8" cy="12" r="1.5" fill="currentColor" />
     <circle cx="4.8" cy="17.4" r="1.5" fill="currentColor" />
+  </>, 1.135);
+
+/* The list's counterpart in a view switch: four tiles, the same 1.8 stroke.
+   TabGridIcon is the Gollanmalar tab's own mark and is not reused here — a tab
+   icon inside a page control reads as "go to that tab". */
+export const GridIcon = (p: P) =>
+  svg(p, '0 0 24 24', 24, 24, <>
+    <rect x="4.2" y="4.2" width="6.6" height="6.6" rx="2" stroke="currentColor" strokeWidth={1.8} fill="none" />
+    <rect x="13.2" y="4.2" width="6.6" height="6.6" rx="2" stroke="currentColor" strokeWidth={1.8} fill="none" />
+    <rect x="4.2" y="13.2" width="6.6" height="6.6" rx="2" stroke="currentColor" strokeWidth={1.8} fill="none" />
+    <rect x="13.2" y="13.2" width="6.6" height="6.6" rx="2" stroke="currentColor" strokeWidth={1.8} fill="none" />
   </>, 1.135);
 
 export const PhoneIcon = (p: P) =>

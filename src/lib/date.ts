@@ -85,6 +85,39 @@ export const fmtWhen = (isoDateTime: string) => {
 /** Day heading over a grouped feed. */
 export const dayHeading = (iso: string) => fmtDate(iso);
 
+/* ---------------- counting down ----------------
+ *
+ * A countdown is the one place the app needs a *clock*, and the app's day is
+ * fixed at `TODAY` — so it counts from the app's own now: the anchor's date
+ * with the device's time of day. Counting from the device's date instead would
+ * put every seeded date months in the past and print a dead timer; ignoring the
+ * device's clock entirely would print a timer that never moves.
+ */
+export const appNow = () => {
+  const t = new Date();
+  const [y, m, d] = TODAY.split('-').map(Number);
+  return new Date(y, m - 1, d, t.getHours(), t.getMinutes(), t.getSeconds());
+};
+
+const parseDateTime = (isoDateTime: string) => {
+  const [y, m, d] = dateOf(isoDateTime).split('-').map(Number);
+  const [hh, mm] = timeOf(isoDateTime).split(':').map(Number);
+  return new Date(y, m - 1, d, hh || 0, mm || 0, 0);
+};
+
+/** What is left until a datetime, already split into the four cells a timer shows. */
+export const untilParts = (isoDateTime: string) => {
+  const ms = parseDateTime(isoDateTime).getTime() - appNow().getTime();
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return {
+    past: ms <= 0,
+    days: Math.floor(s / 86_400),
+    hours: Math.floor((s % 86_400) / 3600),
+    mins: Math.floor((s % 3600) / 60),
+    secs: s % 60,
+  };
+};
+
 /* ---------------- weekdays ----------------
    The date strip used to carry `d`, `w` and `full` as three hand-written
    fields per day, which is three chances for the number and the weekday to

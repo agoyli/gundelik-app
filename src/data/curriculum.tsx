@@ -297,3 +297,35 @@ export const look = (subjectName: string) => {
   const l = subjectLook(byName().get(subjectName) ?? '');
   return { accent: l.accent, tint: l.tint };
 };
+
+/** The slug behind a printed subject name, for the same reason. */
+export const slugOf = (subjectName: string) => byName().get(subjectName) ?? '';
+
+/*
+ * Which shelf a subject sits on.
+ *
+ * Twenty subjects in one alphabetical run is a wall to read; the school itself
+ * already sorts them, and Analitika prints those very words. The grouping hangs
+ * off the accent families rather than a second list of slugs, so a subject
+ * cannot be blue in one screen and filed under a different shelf in another.
+ */
+export type SubjectGroup = 'takyk' | 'tebigy' | 'ynsanperwer' | 'durmus';
+
+const FAMILY_GROUP: Record<keyof typeof FAMILY, SubjectGroup> = {
+  maths: 'takyk', physics: 'takyk', tech: 'takyk',
+  chemistry: 'tebigy', nature: 'tebigy', geography: 'tebigy',
+  society: 'ynsanperwer', language: 'ynsanperwer',
+  craft: 'durmus', sport: 'durmus', music: 'durmus', life: 'durmus',
+};
+
+export const GROUP_LABEL: Record<SubjectGroup, string> = {
+  takyk: 'Takyk',
+  tebigy: 'Tebigy',
+  ynsanperwer: 'Ynsanperwer',
+  durmus: 'Durmuş we zähmet',
+};
+
+export const GROUP_ORDER: SubjectGroup[] = ['takyk', 'tebigy', 'ynsanperwer', 'durmus'];
+
+export const subjectGroup = (slug: string): SubjectGroup =>
+  FAMILY_GROUP[SUBJECT_FAMILY[slug] ?? 'language'];

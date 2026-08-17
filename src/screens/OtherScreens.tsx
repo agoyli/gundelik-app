@@ -11,7 +11,7 @@ import {
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
 import { AdSlot, LockedPreview, TeaserCard } from '../components/Paywall';
-import { RATING } from '../data/guides';
+import { OLYMPIADS, PRIZE_CONTESTS, RATING } from '../data/guides';
 import { bankTotal, playCount, testSubjects } from '../data/library';
 import { USER_GRADE, pathTotal, subjectBySlug } from '../data/curriculum';
 import type { CurriculumSubject } from '../data/curriculum';
@@ -20,7 +20,7 @@ import { capitalise, ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/library';
 import { PLAN, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
 import { AiChatScreen } from './AiChatScreen';
-import { TestDetailScreen, TestSubjectScreen } from './DetailScreens';
+import { TestDetailScreen, TestSubjectScreen, prizePhase } from './DetailScreens';
 import { ReferralScreen } from './ReferralScreen';
 import { CareerTestScreen, careerDreamLabel, careerRowValue } from './CareerTestScreen';
 import { SPECIALITIES } from '../data/career';
@@ -517,7 +517,15 @@ const GUIDE_TILES: { id: SectionId; label: string; sub: string; icon: React.Reac
   { id: 'ai', label: 'Akylly mugallym', sub: 'Islendik sorag — 24/7', icon: <SparkleIcon size={26} /> },
   { id: 'kartlar', label: 'Öwrediji kartlar', sub: `${bankTotal().cards} kart`, icon: <CardsIcon size={26} /> },
   { id: 'testler', label: 'Testler', sub: `${bankTotal().tests} test`, icon: <BigCheckIcon size={26} /> },
-  { id: 'basleshikler', label: 'Bäsleşikler', sub: '1 dowam edýär', icon: <TrophyIcon size={26} /> },
+  /* The tile counts what is open, not what exists: the olympiads behind it are
+     finished results, and only a running contest is something to go and do. */
+  {
+    id: 'basleshikler', label: 'Bäsleşikler', icon: <TrophyIcon size={26} />,
+    sub: (() => {
+      const live = PRIZE_CONTESTS.filter((c) => prizePhase(c) === 'live').length;
+      return live ? `${live} dowam edýär` : `${OLYMPIADS.length} olimpiada`;
+    })(),
+  },
   { id: 'kitaphana', label: 'Kitaphana', sub: '4 kitap', icon: <BooksIcon size={26} /> },
 ];
 

@@ -24,6 +24,9 @@ export type LangId = 'tk' | 'ru' | 'en';
  */
 export type TierId = 'free' | 'gorelde' | 'zehin';
 
+/** List of rows, or a two-column grid of cards. */
+export type ViewId = 'list' | 'grid';
+
 export type Prefs = {
   /* entitlement */
   tier: TierId;
@@ -34,6 +37,10 @@ export type Prefs = {
   /* security */
   biometry: boolean; twoFactor: boolean;
   lang: LangId;
+  /* How the subject list is drawn. Remembered rather than held in the screen's
+     own state: the reader chooses a way of looking, not a way of looking *this
+     once*, and the screen unmounts every time they step back to the tile grid. */
+  subjectView: ViewId;
 };
 
 const store: Prefs = {
@@ -43,10 +50,11 @@ const store: Prefs = {
   quiet: true, sound: true, haptics: true,
   biometry: true, twoFactor: false,
   lang: 'tk',
+  subjectView: 'list',
 };
 
-/* every pref except the language and the tier is a switch */
-export type BoolPref = Exclude<keyof Prefs, 'lang' | 'tier'>;
+/* every pref except the language, the tier and the view is a switch */
+export type BoolPref = Exclude<keyof Prefs, 'lang' | 'tier' | 'subjectView'>;
 
 /* `premium` is derived, never stored — "is this account paying at all?" is a
    question about the tier, and a second copy of it would be free to disagree */

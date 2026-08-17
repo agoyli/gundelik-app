@@ -7,12 +7,13 @@ import {
 } from '../lib/date';
 import { toggleBookmark, useIsBookmarked } from '../state/bookmarks';
 import type { Bookmark } from '../state/bookmarks';
+import type { ViewId } from '../state/prefs';
 import { tokens } from '../theme';
 import type { DayInfo, Lesson, TabId } from '../types';
 import { useSwipeLock } from './SwipeLock';
 import {
   BackIcon, BookmarkFilledIcon, BookmarkIcon, CalendarIcon, CheckIcon, ChevronIcon, CoinIcon,
-  LockIcon, MedalIcon, NavChevronIcon, QuestionOutlineIcon,
+  GridIcon, ListIcon, LockIcon, MedalIcon, NavChevronIcon, QuestionOutlineIcon,
   TabBookIcon, TabChartIcon, TabGridIcon, TabPersonIcon, TrendUpIcon,
 } from './Icons';
 
@@ -241,6 +242,58 @@ export function SubjectRow({
         )}
       </Box>
       <RowChevron />
+    </ButtonBase>
+  );
+}
+
+/*
+ * The same decision, in a grid.
+ *
+ * Where a section holds twenty subjects and nothing to say about any of them
+ * beyond its size, a full-width row spends a whole line on a name and 200px of
+ * whitespace, and twenty of them are two screens of scrolling before the first
+ * shelf ends. The tile is the row folded in half: the same subject colour in
+ * the badge, the same second line — a *value*, never a sentence explaining that
+ * this is a subject — and the same lock. It carries no progress bar: a
+ * two-column tile is too narrow to read one, which is exactly why the sections
+ * that *have* progress keep the row.
+ */
+export function SubjectTile({ icon, tint, accent, label, sub, locked, onClick }: {
+  icon: ReactNode; tint: string; accent: string; label: string; sub: string;
+  locked?: boolean; onClick: () => void;
+}) {
+  return (
+    <ButtonBase
+      onClick={onClick}
+      aria-label={`${label}, ${sub}${locked ? ', ýapyk' : ''}`}
+      sx={{
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+        width: '100%', height: '100%', minHeight: 140,
+        bgcolor: locked ? tokens.lockTile : tint, borderRadius: `${tokens.rCard}px`,
+        p: '15px 15px 16px', textAlign: 'left',
+        transition: 'filter .15s ease', '&:active': { filter: 'brightness(.96)' },
+      }}
+    >
+      <IconBadge
+        bg="#fff"
+        color={locked ? tokens.lockInk : accent}
+        size={44}
+      >{locked ? <LockIcon size={20} /> : icon}</IconBadge>
+      {/* the name sits at the bottom of the tile, so two tiles side by side
+          align on their labels however long the names are */}
+      <Box sx={{ mt: 'auto', pt: '16px', width: '100%', minWidth: 0 }}>
+        <Typography sx={{
+          fontSize: 16, fontWeight: 700, letterSpacing: '-.2px', lineHeight: 1.25,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>{label}</Typography>
+        {/* A locked tile keeps its count rather than swapping in "opens with
+            Zehin": the badge and the grey already say it is locked, twenty
+            tiles saying it in words is one sentence printed twenty times, and
+            the size of what is behind the lock is the reason to open it. */}
+        <Typography sx={{
+          fontSize: 12.5, color: locked ? tokens.inkMuted : tokens.ink3, mt: '4px',
+        }} noWrap>{sub}</Typography>
+      </Box>
     </ButtonBase>
   );
 }
@@ -563,6 +616,36 @@ export function HeaderIconButton({ label, onClick, pressed, count, children }: {
   );
 }
 
+/*
+ * How the list is drawn — a header control, not a setting.
+ *
+ * It was first built as a two-glyph segmented switch, which is the clearer
+ * control in the abstract: both views stay on screen and the lit one says where
+ * you are. It does not fit. A 375px capsule header holds a 44px back button, a
+ * centred title and about 96px of controls before the title starts being
+ * clipped, and a switch (85) beside the "?" (44) is 135. Given the choice
+ * between a control that reads perfectly and a page title that reads at all,
+ * the title wins.
+ *
+ * So it is the app's one 44px header button, and it carries the view you would
+ * get, not the one you are in — which is why it is never drawn `pressed`: a lit
+ * button would claim to be a state, and this is an action. The label says the
+ * action in words, and the list redrawing under it is the confirmation.
+ */
+export function ViewToggle({ value, onChange }: {
+  value: ViewId; onChange: (v: ViewId) => void;
+}) {
+  const next: ViewId = value === 'list' ? 'grid' : 'list';
+  return (
+    <HeaderIconButton
+      label={next === 'grid' ? 'Kart görnüşine geçir' : 'Sanaw görnüşine geçir'}
+      onClick={() => onChange(next)}
+    >
+      {next === 'grid' ? <GridIcon size={20} /> : <ListIcon size={20} />}
+    </HeaderIconButton>
+  );
+}
+
 /* The one "?" in the app. It was two: a 40px circle in SubPage's header and a
    bare 44px glyph on the diary's signature panel — the same affordance drawn
    two ways, so neither read as a control the reader had met before. It is a
@@ -853,7 +936,16 @@ export function SubPage({ title, onBack, action, help, children }: {
       <PillHeader
         title={title}
         onBack={onBack}
-        action={action ?? (help ? <HelpButton onClick={() => setHelpOpen(true)} /> : undefined)}
+        /* A page's own control and its "?" are not alternatives — a page that
+           has something to switch still has something to explain — so when both
+           are given they share the slot, the "?" last and nearest the edge
+           where every other page keeps it. */
+        action={action || help ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {action}
+            {help && <HelpButton onClick={() => setHelpOpen(true)} />}
+          </Box>
+        ) : undefined}
       />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>{children}</Box>
       {help && (
