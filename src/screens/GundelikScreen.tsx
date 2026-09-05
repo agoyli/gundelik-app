@@ -26,6 +26,7 @@ import { BannerSlot } from './BannerScreens';
 import { ChildHeaderPill } from './ChildScreens';
 import { useChild } from '../state/children';
 import { EARN_POINTS, award, useEarns } from '../state/earn';
+import { celebrate } from '../components/PointsFx';
 import { tokens } from '../theme';
 import type { Lesson } from '../types';
 
@@ -142,6 +143,15 @@ function EarnPill({ kind, earns, done }: { kind: 'hw' | 'test'; earns: boolean; 
       borderRadius: `${tokens.rPill}px`, fontSize: 11, fontWeight: 700,
       bgcolor: banked ? tokens.greenTint : earns ? tokens.orangeTint : tokens.surfacePress,
       color: banked ? tokens.greenText : earns ? tokens.orangeText : tokens.inkMuted,
+      transition: 'background .2s ease, color .2s ease',
+      /* the pill is at the far end of the row the thumb just touched, so it
+         answers with a small pop of its own rather than only changing colour */
+      '@keyframes bank': {
+        '0%': { transform: 'scale(1)' },
+        '45%': { transform: 'scale(1.18)' },
+        '100%': { transform: 'scale(1)' },
+      },
+      animation: banked ? 'bank .34s ease-out' : 'none',
     }}>
       {!earns && <LockIcon size={10} />}+{n} bal
     </Box>
@@ -191,7 +201,11 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
     await s.setHwDone(lesson.id, next);
     if (!next) { toast('Belgi aýryldy'); return; }
     const points = earns ? award('hw', lesson.id) : 0;
-    toast(points ? `Öý işi bellendi ✓ +${points} bal` : 'Öý işi bellendi ✓');
+    /* the number is the animation's job now — a toast that also said "+5 bal"
+       would announce the same thing twice, in the shape the app uses for
+       errors */
+    celebrate(points);
+    toast('Öý işi bellendi ✓');
   };
 
   if (page === 'inbox') {

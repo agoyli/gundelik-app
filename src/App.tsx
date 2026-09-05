@@ -11,6 +11,7 @@ const DesignSystemScreen = lazy(() => import('./brand/DesignSystemScreen')
   .then((m) => ({ default: m.DesignSystemScreen })));
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PhoneFrame } from './components/PhoneFrame';
+import { PointsFx } from './components/PointsFx';
 import { SwipeLockProvider, useSwipeLocked } from './components/SwipeLock';
 import { TabBar } from './components/Ui';
 import { GundelikScreen } from './screens/GundelikScreen';
@@ -162,6 +163,9 @@ function Shell() {
               preserves where they were. `locked` is set by PillHeader, so
               "has a back button" and "hides the nav" cannot drift apart. */}
           {!locked && <TabBar value={tab} onChange={goToTab} />}
+          {/* the one thing that celebrates: `bal`, thrown up the screen when
+              it is actually banked. Above the sheets, and it blocks nothing. */}
+          <PointsFx />
       </PhoneFrame>
 
       <Snackbar

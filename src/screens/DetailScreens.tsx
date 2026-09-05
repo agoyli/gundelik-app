@@ -24,6 +24,7 @@ import type { ContestPack, DeckMeta, DeckSubject, TestItem, TestSubject } from '
 import { loadLesson } from '../data/lessons';
 import { contestTotals, fmtDuration, savePackRun, useContestRuns } from '../state/contest';
 import { EARN_POINTS, award, useEarns } from '../state/earn';
+import { celebrate } from '../components/PointsFx';
 import { POINTS_PER_TMT } from '../state/wallet';
 import { absDate, dayMonth, fmtWhen, untilParts } from '../lib/date';
 import { ordinal } from '../lib/tm';
@@ -1169,7 +1170,13 @@ export function DeckSubjectScreen({ subject, loading, onBack, onOpenDeck }: {
  */
 function TestReward({ test, earns }: { test: TestItem; earns: boolean }) {
   const [points, setPoints] = useState(0);
-  useEffect(() => { if (earns) setPoints(award('test', test.id)); }, [earns, test.id]);
+  useEffect(() => {
+    if (!earns) return;
+    const paid = award('test', test.id);
+    setPoints(paid);
+    /* only a first pass pays, so only a first pass celebrates */
+    celebrate(paid);
+  }, [earns, test.id]);
 
   const paid = earns && points > 0;
   return (
