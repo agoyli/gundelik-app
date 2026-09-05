@@ -22,7 +22,7 @@ import { useSchedule } from '../hooks/useSchedule';
 import { tierFor, useCan } from '../state/prefs';
 import { ShareSheet } from './ShareScreens';
 import { ClassHwRow, ClassHwSheet } from './ClassScreens';
-import { BannerSlot } from './BannerScreens';
+import { BannerSlot, MyBannersScreen } from './BannerScreens';
 import { ChildHeaderPill } from './ChildScreens';
 import { useChild } from '../state/children';
 import { EARN_POINTS, award, useEarns } from '../state/earn';
@@ -47,7 +47,7 @@ const NOTE_TEXTS = [
   'Sapakda has ünsli bolmagy maslahat berilýär.',
 ];
 
-type Page = 'diary' | 'inbox' | 'badges' | 'upgrade';
+type Page = 'diary' | 'inbox' | 'badges' | 'upgrade' | 'mahabat';
 
 /* One third of the day-summary card: the figure is the headline, the word under
    it is the caption. No icon badge — three of them side by side turned a
@@ -209,12 +209,21 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
   };
 
   if (page === 'inbox') {
-    return <InboxScreen onBack={home} toast={toast} onUpgrade={() => setPage('upgrade')} />;
+    return (
+      <InboxScreen
+        onBack={home} toast={toast}
+        onUpgrade={() => setPage('upgrade')}
+        onAdvertise={() => setPage('mahabat')}
+      />
+    );
   }
   if (page === 'badges') {
     return <BadgeStatsScreen onBack={home} onUpgrade={() => setPage('upgrade')} />;
   }
   if (page === 'upgrade') return <UpgradeScreen onBack={home} toast={toast} />;
+  /* the banner desk belongs to the banner: it opens from the ad a free account
+     is looking at, and has no menu row anywhere */
+  if (page === 'mahabat') return <MyBannersScreen onBack={home} toast={toast} />;
 
   return (
     <>
@@ -318,7 +327,10 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
           it. The app's own Premium card stays on the pages where nobody is
           reading a task list. */}
       <Box sx={{ px: tokens.gutter, pt: '12px' }}>
-        <BannerSlot placement="diary" onUpgrade={() => setPage('upgrade')} toast={toast} />
+        <BannerSlot
+          placement="diary" onUpgrade={() => setPage('upgrade')}
+          onAdvertise={() => setPage('mahabat')}
+        />
       </Box>
 
       {/* Parent signature.

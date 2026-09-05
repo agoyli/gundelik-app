@@ -484,8 +484,8 @@ function ArticlePage({ article, onBack, toast }: { article: Article; onBack: () 
 
 /* ---------------- the hub ---------------- */
 
-export function InboxScreen({ onBack, toast, onUpgrade }: {
-  onBack: () => void; toast: Toast; onUpgrade: () => void;
+export function InboxScreen({ onBack, toast, onUpgrade, onAdvertise }: {
+  onBack: () => void; toast: Toast; onUpgrade: () => void; onAdvertise: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('notifs');
   const [read, setRead] = useState<string[]>([]);
@@ -731,7 +731,7 @@ export function InboxScreen({ onBack, toast, onUpgrade }: {
           </Box>
 
           <Box sx={{ pt: '16px' }}>
-            <BannerSlot placement="inbox" onUpgrade={onUpgrade} toast={toast} />
+            <BannerSlot placement="inbox" onUpgrade={onUpgrade} onAdvertise={onAdvertise} />
           </Box>
         </>
       )}

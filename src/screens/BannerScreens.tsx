@@ -25,7 +25,7 @@ import {
 } from '../components/Icons';
 import { MonthCalendar } from '../components/Ui';
 import {
-  AD_SCHOOLS, BANNERS, BannerArt, PLACEMENTS, bannerFor, bannerPrice, bannerReach,
+  AD_SCHOOLS, BannerArt, PLACEMENTS, bannerFor, bannerPrice, bannerReach,
   clashesFor, isBusyDay, nextFree, placementOf, schoolOf,
 } from '../data/banners';
 import type { Banner, BannerArtId, PlacementId } from '../data/banners';
@@ -106,8 +106,8 @@ export function BannerCard({ brand, title, note, art, tint, ink, onOpen, onRemov
 
 /* ---------------- the slot a page puts on the screen ---------------- */
 
-export function BannerSlot({ placement, onUpgrade, toast, onAdvertise }: {
-  placement: PlacementId; onUpgrade: () => void; toast: Toast; onAdvertise?: () => void;
+export function BannerSlot({ placement, onUpgrade, onAdvertise }: {
+  placement: PlacementId; onUpgrade: () => void; onAdvertise: () => void;
 }) {
   const { premium } = usePrefs();
   const [open, setOpen] = useState(false);
@@ -122,11 +122,12 @@ export function BannerSlot({ placement, onUpgrade, toast, onAdvertise }: {
         onOpen={() => setOpen(true)}
         onRemove={() => setRemove(true)}
       />
+      {/* "Öz bannerim" is the only door to the banner desk, so it is never a
+          dead end: it used to fall back to a toast naming a Profil menu row. */}
       <BannerDetailSheet
         banner={banner}
         open={open}
         onClose={() => setOpen(false)}
-        toast={toast}
         onAdvertise={onAdvertise}
       />
       <PaidFeatureSheet
@@ -150,8 +151,8 @@ export function BannerSlot({ placement, onUpgrade, toast, onAdvertise }: {
    A sheet rather than a page: an ad that navigates away from the diary has
    taken something the reader did not offer. */
 
-export function BannerDetailSheet({ banner, open, onClose, toast, onAdvertise }: {
-  banner: Banner; open: boolean; onClose: () => void; toast: Toast; onAdvertise?: () => void;
+export function BannerDetailSheet({ banner, open, onClose, onAdvertise }: {
+  banner: Banner; open: boolean; onClose: () => void; onAdvertise: () => void;
 }) {
   return (
     <SheetDrawer open={open} onClose={onClose}>
@@ -203,11 +204,7 @@ export function BannerDetailSheet({ banner, open, onClose, toast, onAdvertise }:
         <Button fullWidth onClick={onClose} sx={{ bgcolor: tokens.surface, color: tokens.ink }}>Ýap</Button>
         <Button
           fullWidth variant="contained" disableElevation
-          onClick={() => {
-            onClose();
-            if (onAdvertise) onAdvertise();
-            else toast('Öz banneriňi Profil → Mahabat bölüminde ýerleşdirip bolýar');
-          }}
+          onClick={() => { onClose(); onAdvertise(); }}
         >Öz bannerim</Button>
       </Box>
     </SheetDrawer>
@@ -500,31 +497,6 @@ export function BannerCreateScreen({ onBack, onDone, toast }: {
           />
         </Box>
       </SheetDrawer>
-    </SubPage>
-  );
-}
-
-/* ---------------- the catalogue, for the design gallery ----------------
-   Every campaign in the app, so a banner can be looked at deliberately
-   instead of by waiting for the right slot to come round. */
-export function BannerGalleryScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
-  const [open, setOpen] = useState<Banner | null>(null);
-  return (
-    <SubPage title="Bannerler" onBack={onBack} help="Mugt hasapda görkezilýän ähli bannerler.">
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '12px' }}>
-        {BANNERS.map((b) => (
-          <BannerCard
-            key={b.id}
-            brand={b.brand} title={b.title} note={b.blurb}
-            art={b.art} tint={b.tint} ink={b.ink}
-            onOpen={() => setOpen(b)}
-          />
-        ))}
-      </Box>
-      {open && (
-        <BannerDetailSheet banner={open} open onClose={() => setOpen(null)} toast={toast} />
-      )}
-      <Box sx={{ height: 24 }} />
     </SubPage>
   );
 }

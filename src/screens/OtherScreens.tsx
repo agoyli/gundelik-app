@@ -2,7 +2,7 @@ import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/materi
 import { useMemo, useState } from 'react';
 import {
   BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon, GearIcon,
-  HistoryIcon, LayersIcon, LockIcon, MegaphoneIcon, QuestionOutlineIcon, QuizIcon, ShopIcon,
+  HistoryIcon, LayersIcon, LockIcon, QuestionOutlineIcon, QuizIcon,
   SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
@@ -29,7 +29,7 @@ import { useCareerResult } from '../state/career';
 import { PlayScreen } from './PlayScreens';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
-import { BalanceRow, ShopScreen, WalletScreen } from './WalletScreens';
+import { BalanceRow, PointsScreen, ShopScreen, WalletScreen } from './WalletScreens';
 import { childClassShort, childListName, useStudent } from '../state/children';
 import { usePointsBalance } from '../state/points';
 import { EARN_POINTS, useEarns } from '../state/earn';
@@ -703,7 +703,7 @@ function TestlerFlow({ onBack, toast, onUpgrade }: {
    and it is reachable from both ends: its own tile here, and the strip under
    the subjects in Sapaklar, where the topic it drills is. */
 type SectionId = 'sapaklar' | 'gonukmeler' | 'ai' | 'kartlar' | 'testler' | 'basleshikler' | 'kitaphana';
-type GuideView = 'grid' | SectionId | 'roadmap' | 'upgrade' | 'bellikler';
+type GuideView = 'grid' | SectionId | 'roadmap' | 'upgrade' | 'bellikler' | 'mahabat';
 
 export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   const [view, setView] = useState<GuideView>('grid');
@@ -769,6 +769,8 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   if (view === 'kitaphana') return <KitaphanaScreen onBack={back} toast={toast} />;
   if (view === 'testler') return <TestlerFlow onBack={back} toast={toast} onUpgrade={upgrade} />;
   if (view === 'bellikler') return <BookmarksScreen onBack={back} toast={toast} onUpgrade={upgrade} />;
+  /* the banner desk, reached from the banner itself and nowhere else */
+  if (view === 'mahabat') return <MyBannersScreen onBack={back} toast={toast} />;
 
   return (
     <>
@@ -798,7 +800,10 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
         ))}
       </Box>
       <Box sx={{ px: tokens.gutter, pt: '14px' }}>
-        <BannerSlot placement="sections" onUpgrade={upgrade} toast={toast} />
+        <BannerSlot
+          placement="sections" onUpgrade={upgrade}
+          onAdvertise={() => setView('mahabat')}
+        />
       </Box>
     </>
   );
@@ -985,13 +990,15 @@ const ChoiceRow = ({ icon, tint, color, label, value, onClick }: {
 );
 
 type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referral' | 'upgrade'
-  | 'career' | 'wallet' | 'shop' | 'ads';
+  | 'career' | 'wallet' | 'points' | 'shop';
 
 export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   const { premium, tier } = usePrefs();
   const [view, setView] = useState<ProfilView>('root');
   /* Kartlar is reachable from Profil and from the payments page — remember which */
   const [cardsFrom, setCardsFrom] = useState<ProfilView>('root');
+  /* and the shop from either balance, so it goes back where it came from */
+  const [shopFrom, setShopFrom] = useState<ProfilView>('wallet');
   const [map, setMap] = useState<'bahalar' | 'gatnasyk'>('bahalar');
   const [term, setTerm] = useState<TermId>('q34');
   const [fav, setFav] = useState('Matematika');
@@ -1043,14 +1050,33 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   if (view === 'edit') return <ProfileEditScreen onBack={root} toast={toast} />;
   if (view === 'referral') return <ReferralScreen onBack={root} toast={toast} />;
   if (view === 'upgrade') return <UpgradeScreen onBack={root} toast={toast} />;
-  if (view === 'ads') {
-    return <MyBannersScreen onBack={root} toast={toast} />;
-  }
   if (view === 'wallet') {
-    return <WalletScreen onBack={root} toast={toast} onShop={() => setView('shop')} />;
+    return (
+      <WalletScreen
+        onBack={root} toast={toast}
+        onShop={() => { setShopFrom('wallet'); setView('shop'); }}
+        onPoints={() => setView('points')}
+      />
+    );
   }
+  if (view === 'points') {
+    return (
+      <PointsScreen
+        onBack={() => setView('wallet')} toast={toast}
+        onShop={() => { setShopFrom('points'); setView('shop'); }}
+      />
+    );
+  }
+  /* The shop has no menu row of its own: it is what a balance is *for*, so it
+     opens from whichever of the two balances the reader was counting, and goes
+     back to it. */
   if (view === 'shop') {
-    return <ShopScreen onBack={() => setView('wallet')} toast={toast} onTopUp={() => setView('wallet')} />;
+    return (
+      <ShopScreen
+        onBack={() => setView(shopFrom)} toast={toast}
+        onTopUp={() => setView('wallet')}
+      />
+    );
   }
   if (view === 'cards') return <PayMethodsScreen onBack={() => setView(cardsFrom)} toast={toast} />;
   if (view === 'career') {
@@ -1194,28 +1220,12 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
 
         {/* Directly under the subscription, because it is the same subject:
             this is where that payment comes from. It is not a paid feature —
-            on a free account it is the one row in this pair that still does
-            something. */}
-        <SectionLabel>Balans we dükan</SectionLabel>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <BalanceRow onClick={() => setView('wallet')} />
-          <SurfaceRow
-            icon={<IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={44}><ShopIcon size={20} /></IconBadge>}
-            label="Dükan"
-            sub="Hyzmatdaş dükanlaryň harytlary"
-            end={<RowChevron />}
-            onClick={() => setView('shop')}
-          />
-          {/* The other side of the banners a free account sees: a shop or a
-              course can buy one of those slots from here. */}
-          <SurfaceRow
-            icon={<IconBadge bg={tokens.purpleTint} color={tokens.purpleText} size={44}><MegaphoneIcon size={20} /></IconBadge>}
-            label="Mahabat"
-            sub="Öz banneriňi mekdeplerde ýerleşdir"
-            end={<RowChevron />}
-            onClick={() => setView('ads')}
-          />
-        </Box>
+            on a free account it is the one row here that still does something.
+            The shop and the banner desk used to sit beside it as menu rows;
+            both are now reached from the thing they belong to — the shop from
+            a balance, the banner desk from a banner. */}
+        <SectionLabel>Balans</SectionLabel>
+        <BalanceRow onClick={() => setView('wallet')} />
 
         {/* ---- The year at a glance ----
              One card, two maps, a switch. Two stacked cards drawing the same
