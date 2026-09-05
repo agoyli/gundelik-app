@@ -1,8 +1,8 @@
 import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
 import {
-  BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon, GearIcon,
-  HistoryIcon, LayersIcon, LockIcon, QuestionOutlineIcon, QuizIcon,
+  BigCheckIcon, BookmarkIcon, BooksIcon, CardsIcon, CheckIcon, CoinIcon, GearIcon,
+  LayersIcon, LockIcon, QuestionOutlineIcon, QuizIcon,
   SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
@@ -18,7 +18,7 @@ import type { CurriculumSubject } from '../data/curriculum';
 import { fmtRange } from '../lib/date';
 import { ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/library';
-import { PLAN, planLeftLabel, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
+import { PLAN, tierFor, tierName, tierOf, useCan, usePrefs } from '../state/prefs';
 import { useAllowance } from '../state/allowance';
 import { AiChatScreen } from './AiChatScreen';
 import { TestDetailScreen, TestSubjectScreen, prizePhase } from './DetailScreens';
@@ -860,21 +860,21 @@ function HeatGrid({ months, colorOf, todayCell, label }: {
 }) {
   return (
     <Box role="img" aria-label={label}>
-      <Box sx={{ display: 'flex', pl: '26px', mb: '6px' }}>
+      <Box sx={{ display: 'flex', pl: '23px', mb: '5px' }}>
         {months.map((m) => (
-          <Typography key={m} sx={{ flex: 1, fontSize: 13, color: tokens.inkMuted }}>{m}</Typography>
+          <Typography key={m} sx={{ flex: 1, fontSize: 12, color: tokens.inkMuted }}>{m}</Typography>
         ))}
       </Box>
-      <Box sx={{ display: 'flex', gap: '6px' }}>
+      <Box sx={{ display: 'flex', gap: '5px' }}>
         <Box sx={{
-          width: 20, display: 'flex', flexDirection: 'column',
-          justifyContent: 'space-between', py: '2px', flex: 'none',
+          width: 18, display: 'flex', flexDirection: 'column',
+          justifyContent: 'space-between', py: '1px', flex: 'none',
         }}>
-          <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>Du</Typography>
-          <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>An</Typography>
+          <Typography sx={{ fontSize: 11, color: tokens.inkMuted }}>Du</Typography>
+          <Typography sx={{ fontSize: 11, color: tokens.inkMuted }}>An</Typography>
         </Box>
         <Box sx={{
-          flex: 1, display: 'grid', gap: '4px',
+          flex: 1, display: 'grid', gap: '3px',
           gridTemplateColumns: `repeat(${HEAT_COLS}, 1fr)`,
         }}>
           {Array.from({ length: HEAT_ROWS }, (_, r) =>
@@ -897,11 +897,11 @@ function HeatGrid({ months, colorOf, todayCell, label }: {
 /* Passive legend — swatch + label, never styled like a control */
 const HeatLegend = ({ items, label }: { items: [string, string][]; label: string }) => (
   <Box role="img" aria-label={label}
-    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
+    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '9px' }}>
     {items.map(([text, color]) => (
       <Box key={text} sx={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-        <Box aria-hidden sx={{ width: 12, height: 12, borderRadius: `${tokens.rChip}px`, flex: 'none', bgcolor: color }} />
-        <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>{text}</Typography>
+        <Box aria-hidden sx={{ width: 10, height: 10, borderRadius: `${tokens.rChip}px`, flex: 'none', bgcolor: color }} />
+        <Typography sx={{ fontSize: 11, color: tokens.ink3 }}>{text}</Typography>
       </Box>
     ))}
   </Box>
@@ -1003,8 +1003,7 @@ type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referra
 export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   const { premium, tier } = usePrefs();
   const [view, setView] = useState<ProfilView>('root');
-  /* Kartlar is reachable from Profil and from the payments page — remember which */
-  const [cardsFrom, setCardsFrom] = useState<ProfilView>('root');
+
   /* which of the two pots the balance page opens on */
   const [pot, setPot] = useState<PotId>('money');
   /* the account's two balances, stated here and read on the page they open */
@@ -1079,7 +1078,8 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
       />
     );
   }
-  if (view === 'cards') return <PayMethodsScreen onBack={() => setView(cardsFrom)} toast={toast} />;
+  /* Kartlar has one door — the payment method row inside the töleg page */
+  if (view === 'cards') return <PayMethodsScreen onBack={() => setView('payments')} toast={toast} />;
   if (view === 'career') {
     return (
       <CareerTestScreen
@@ -1094,7 +1094,7 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
       <>
         <PaymentsScreen
           onBack={root} toast={toast}
-          onOpenCards={() => { setCardsFrom('payments'); setView('cards'); }}
+          onOpenCards={() => setView('cards')}
           onPay={() => setPay(true)}
         />
         <PaySheet open={pay} onClose={() => setPay(false)} toast={toast} />
@@ -1143,80 +1143,23 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           <RowChevron />
         </ButtonBase>
 
-        {/* ---- Where the student stands right now ----
-             Three different indicators than before, chosen for what this page
-             is: the average, the points total and the class rank are all
-             *performance*, and Analitika is the performance tab — repeating
-             them here made the profile a worse copy of it. What only this page
-             answers is how the student turns up and follows through, so the
-             row is attendance, homework and the mark, each against the maximum
-             it is measured out of. */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', mt: '10px' }}>
-          {/* the same figure the attendance map counts, not a second copy of
-              it — two numbers for one fact is how a screen starts lying */}
-          <MeterTile
-            value={`${attendance.pct}%`} label="Gatnaşyk"
-            pct={attendance.pct} color={tokens.greenDeep}
-          />
-          <MeterTile
-            value={`${student.hwRate}%`} label="Öý işi"
-            pct={student.hwRate} color={tokens.blue}
-          />
-          <MeterTile
-            value={student.avg} label="Ortaça baha"
-            pct={(Number(student.avg) / 5) * 100} color={tokens.orangeText}
-          />
-        </Box>
-
         <SectionLabel>{premium ? 'Töleg' : 'Nyrhnamalar'}</SectionLabel>
         {!premium ? (
           <AdSlot onUpgrade={() => setView('upgrade')} />
         ) : (
-        <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, overflow: 'hidden' }}>
-          <ButtonBase
-            onClick={() => setView('payments')}
-            aria-label={`Abuna: ${tierName(tier)}, ${PLAN.until} çenli, ${planLeftLabel()}`}
-            sx={{
-              display: 'flex', alignItems: 'center', gap: '13px', width: '100%', textAlign: 'left',
-              p: `16px ${tokens.padCard}`, '&:active': { bgcolor: tokens.surfacePress },
-            }}
-          >
-            <IconBadge bg={tokens.greenTint} color={tokens.greenText} size={48}><WalletIcon size={24} /></IconBadge>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.2px' }}>{tierName(tier)}</Typography>
-                <PlanBadge />
-              </Box>
-              <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px' }}>
-                {PLAN.until} çenli
-              </Typography>
-            </Box>
-            <RowChevron />
-          </ButtonBase>
-          {/* three payment actions, split evenly under the status */}
-          <Box sx={{ display: 'flex', borderTop: `1px solid ${tokens.dividerSoft}` }}>
-            {[
-              { id: 'taryh', label: 'Taryh', icon: <HistoryIcon size={20} />, go: () => setView('payments') },
-              { id: 'usullar', label: 'Töleg usuly', icon: <CardIcon size={20} />, go: () => { setCardsFrom('root'); setView('cards'); } },
-              { id: 'tole', label: 'Tölemek', icon: <WalletIcon size={20} />, go: () => setPay(true) },
-            ].map((a, i) => (
-              <ButtonBase
-                key={a.id}
-                onClick={a.go}
-                aria-label={a.label}
-                sx={{
-                  flex: 1, minHeight: 64, display: 'flex', flexDirection: 'column', gap: '5px',
-                  color: tokens.ink2, fontSize: 12.5, fontWeight: 600,
-                  borderLeft: i > 0 ? `1px solid ${tokens.dividerSoft}` : 'none',
-                  '&:active': { bgcolor: tokens.surfacePress },
-                }}
-              >
-                <Box aria-hidden sx={{ color: tokens.blue, display: 'flex' }}>{a.icon}</Box>
-                {a.label}
-              </ButtonBase>
-            ))}
-          </Box>
-        </Box>
+        /* One row: which plan, how long is left, what it costs — and it opens
+           the page that owns the three things that used to be a strip of icon
+           buttons under it (the history, the card that gets charged, and
+           paying). Three doors to one page, drawn as a control panel, made a
+           status card look like a dashboard. */
+        <SurfaceRow
+          icon={<IconBadge bg={tokens.greenTint} color={tokens.greenText} size={48}><WalletIcon size={24} /></IconBadge>}
+          label={tierName(tier)}
+          labelEnd={<PlanBadge />}
+          sub={`${PLAN.until} çenli · aýda ${tierOf(tier)?.monthly ?? 0} TMT`}
+          end={<RowChevron />}
+          onClick={() => setView('payments')}
+        />
         )}
 
         {/* Directly under the subscription, because it is the same subject:
@@ -1242,24 +1185,30 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           ]}
         />
 
-        {/* ---- The year at a glance ----
-             One card, two maps, a switch. Two stacked cards drawing the same
-             grid at the same size made the page look like it repeated itself,
-             and the second one pushed everything below it off the screen. The
-             switch also makes the pair comparable: flipping between them holds
-             the grid still, so a thin week of grades and a run of missed days
-             land on the same cells.
+        {/* ---- The year ----
+             One card, and everything in it is about the same twelve months:
+             the three figures the year is judged on, then the map behind them.
+             The figures used to sit at the top of the page, three tiles under
+             the photograph with nothing to compare them to — a number is a
+             headline for something, and this card is the something. They are
+             flat here: a tile with its own surface, on a surface, is a box
+             drawn for no reason.
 
-             The term stays a Segmented (a period is a place you are in); the
-             map is a PeriodNav-free pair of tabs above it. The old "Diňe köp
-             bahaly" filter is gone — a third control on one card, for dimming
-             cells that were already the lightest thing on it. */}
+             Two maps, one grid. Two stacked cards drawing the same grid at the
+             same size made the page look like it repeated itself, and flipping
+             in place holds the cells still, so a thin week of grades and a run
+             of missed days land on the same square.
+
+             Both switches share one line — what is being mapped and over which
+             term are one question ("show me this, for that"), and stacking two
+             full-width tracks spent 88px of a phone screen on it. The terms use
+             their short form for the same reason. */}
         <Box sx={{
           mt: '16px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
-          p: `18px ${tokens.padCard}`, display: 'flex', flexDirection: 'column', gap: '14px',
+          p: `16px ${tokens.padCard}`, display: 'flex', flexDirection: 'column', gap: '12px',
         }}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h2" component="h2">Ýylyň kartasy</Typography>
+            <Typography variant="h2" component="h2">Ýylyň netijesi</Typography>
             <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }}>
               {map === 'bahalar'
                 ? `${summary.grades} baha · ${summary.days} işjeň gün`
@@ -1267,25 +1216,43 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             </Typography>
           </Box>
 
-          <Segmented
-            label="Karta"
-            value={map}
-            onChange={setMap}
-            options={[
-              { id: 'bahalar', label: 'Bahalar' },
-              { id: 'gatnasyk', label: 'Gatnaşyk' },
-            ]}
-          />
+          {/* the same figure the attendance map counts, not a second copy of
+              it — two numbers for one fact is how a screen starts lying */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+            {[
+              { label: 'Gatnaşyk', value: `${attendance.pct}%`, pct: attendance.pct, color: tokens.greenDeep },
+              { label: 'Öý işi', value: `${student.hwRate}%`, pct: student.hwRate, color: tokens.blue },
+              { label: 'Ortaça baha', value: student.avg, pct: (Number(student.avg) / 5) * 100, color: tokens.orangeText },
+            ].map((m, i) => (
+              <Box key={m.label} sx={{
+                borderLeft: i > 0 ? `1px solid ${tokens.dividerSoft}` : 'none',
+                px: i > 0 ? '6px' : 0,
+              }}>
+                <MeterTile flat value={m.value} label={m.label} pct={m.pct} color={m.color} />
+              </Box>
+            ))}
+          </Box>
 
-          <Segmented
-            label="Çärýek"
-            value={term}
-            onChange={setTerm}
-            options={[
-              { id: 'q12', label: TERMS.q12.label },
-              { id: 'q34', label: TERMS.q34.label },
-            ]}
-          />
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <Segmented
+              label="Karta"
+              value={map}
+              onChange={setMap}
+              options={[
+                { id: 'bahalar', label: 'Bahalar' },
+                { id: 'gatnasyk', label: 'Gatnaşyk' },
+              ]}
+            />
+            <Segmented
+              label="Çärýek"
+              value={term}
+              onChange={setTerm}
+              options={[
+                { id: 'q12', label: TERMS.q12.short },
+                { id: 'q34', label: TERMS.q34.short },
+              ]}
+            />
+          </Box>
 
           {map === 'bahalar' ? (
             <>
@@ -1401,7 +1368,6 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           >Bilemok — synagdan geçeýin</Button>
         )}
       />
-      <PaySheet open={pay} onClose={() => setPay(false)} toast={toast} />
     </>
   );
 }

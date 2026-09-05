@@ -1441,14 +1441,19 @@ export const StatTile = ({ value, label, color = tokens.ink }: {
    the reader supply the scale — is 92 good? out of what? — and a 4.6 next to a
    96% next to a 1251 share nothing but a font size. A meter answers "out of
    what" in 3px of height, and three of them read as one instrument panel. */
-export const MeterTile = ({ value, label, pct, color }: {
+export const MeterTile = ({ value, label, pct, color, flat }: {
   value: string; label: string; pct: number; color: string;
+  /* `flat` drops the tile's own surface, for a row of meters that already sits
+     inside a card — a surface on a surface is a box drawn for no reason */
+  flat?: boolean;
 }) => (
   <Box
     role="img"
     aria-label={`${label}: ${value}`}
     sx={{
-      bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, p: '13px 11px 12px',
+      ...(flat
+        ? { p: '2px 4px 0' }
+        : { bgcolor: tokens.surface, borderRadius: `${tokens.rRow}px`, p: '13px 11px 12px' }),
       display: 'flex', flexDirection: 'column', gap: '7px',
     }}
   >

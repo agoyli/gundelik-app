@@ -320,8 +320,15 @@ export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
   const { tier } = usePrefs();
   const plan = tierOf(tier) ?? ENTRY;
   return (
-    <SubPage title="Abuna we töleg" onBack={onBack}>
-      {/* plan */}
+    <SubPage
+      title="Abuna we töleg"
+      onBack={onBack}
+      help={`Abunanyň ähli tarapy şu ýerde: haçana çenli işleýär, haýsy karttan alynýar we öň näçe tölendi. Aýlyk töleg — ${plan.monthly} TMT.`}
+    >
+      {/* The plan, and the one thing to do with it. Profil used to carry three
+          icon buttons under its status card — Taryh, Töleg usuly, Tölemek —
+          which were three doors to this page drawn as a control panel. Paying
+          is the action; the other two are what the page is made of. */}
       <Box sx={{
         mt: '14px', borderRadius: `${tokens.rCard}px`, p: `18px ${tokens.padCard}`,
         background: `linear-gradient(155deg, ${tokens.blue}, ${tokens.bluePress})`, color: '#fff',
@@ -331,7 +338,7 @@ export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
           <PlanBadge tone="onDark" />
         </Box>
         <Typography sx={{ fontSize: 13.5, opacity: .9, mt: '4px' }}>
-          {PLAN.until} çenli
+          {PLAN.until} çenli · aýda {plan.monthly} TMT
         </Typography>
         <Box sx={{ display: 'flex', gap: '10px', mt: '16px' }}>
           <Button
