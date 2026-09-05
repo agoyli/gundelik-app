@@ -1,10 +1,10 @@
 import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import { StarFilledIcon } from '../components/Icons';
-import { PillHeader, StickyFooter } from '../components/Ui';
+import { StickyFooter } from '../components/Ui';
 import { TIERS, perMonth } from '../state/prefs';
 import { PREMIUM_ADS } from '../data/premium';
 import {
-  BalanceNote, SaveLine, Tick, TrustLine, addsOf, freeBase, priceLine, usePay,
+  BalanceNote, PayHeader, SaveLine, Tick, TrustLine, addsOf, freeBase, priceLine, usePay,
 } from './payBits';
 import type { PayProps } from './payBits';
 import { tokens } from '../theme';
@@ -35,12 +35,12 @@ const ENTRY = TIERS[0];  /* Göreldeli — the aside */
 /* Four reasons, taken from the ad copy so the sales lines are written once */
 const REASONS = ['roadmap', 'tests', 'cards', 'ai'] as const;
 
-export function PayOfferScreen({ onBack, onDone, toast }: PayProps) {
+export function PayOfferScreen({ onBack, onDone, toast, onSwitch }: PayProps) {
   const { buy } = usePay({ onDone, toast });
 
   return (
     <>
-      <PillHeader title="Abuna" onBack={onBack} />
+      <PayHeader title="Abuna" onBack={onBack} onSwitch={onSwitch} />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
         {/* The price, and nothing competing with it. */}
         <Box sx={{

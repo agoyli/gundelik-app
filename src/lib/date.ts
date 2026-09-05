@@ -163,6 +163,12 @@ export const WEEKDAY_HEADS = ['Duş', 'Siş', 'Çar', 'Pen', 'Ann', 'Şen', 'Ýe
 /** Sunday is the day off; a school calendar should say so. */
 export const isDayOff = (iso: string) => parse(iso).getDay() === 0;
 
+/** ISO date `n` days from `iso` — booking windows are counted in whole days. */
+export const addDays = (iso: string, n: number) => {
+  const d = new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)) + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 /** Shift a month by ±1, keeping the day at 01. */
 export const shiftMonth = (iso: string, by: number) => {
   const d = new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1 + by, 1);

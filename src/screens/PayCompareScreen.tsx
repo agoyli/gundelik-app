@@ -1,9 +1,9 @@
 import { Box, Button, ButtonBase, Typography } from '@mui/material';
-import { PillHeader, SectionLabel } from '../components/Ui';
+import { SectionLabel } from '../components/Ui';
 import { TIERS } from '../state/prefs';
 import type { Tier } from '../state/prefs';
 import {
-  BalanceNote, Tick, TrustLine, addsOf, freeBase, perMonthOf, priceLine, usePay,
+  BalanceNote, PayHeader, Tick, TrustLine, addsOf, freeBase, perMonthOf, priceLine, usePay,
 } from './payBits';
 import type { PayProps, Term } from './payBits';
 import { tokens } from '../theme';
@@ -90,12 +90,12 @@ function PlanCard({ tier, term, best, includes, onBuy }: {
   );
 }
 
-export function PayCompareScreen({ onBack, onDone, toast }: PayProps) {
+export function PayCompareScreen({ onBack, onDone, toast, onSwitch }: PayProps) {
   const { term, setTerm, buy } = usePay({ onDone, toast });
 
   return (
     <>
-      <PillHeader title="Nyrhnamalar" onBack={onBack} />
+      <PayHeader title="Nyrhnamalar" onBack={onBack} onSwitch={onSwitch} />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
         {/* Term first and small: it is the cheap decision, and settling it lets
             each card show one price instead of four numbers competing. */}

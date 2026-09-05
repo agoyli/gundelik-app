@@ -155,7 +155,7 @@ export const perMonth = (t: Tier) => {
  */
 export type FeatureId =
   | 'diary' | 'notices' | 'chat'
-  | 'sms' | 'badges' | 'tests' | 'contests'
+  | 'sms' | 'badges' | 'tests' | 'contests' | 'classmates' | 'noads'
   | 'notes' | 'analytics' | 'roadmap' | 'cards' | 'games' | 'ai';
 
 export const FEATURES: { id: FeatureId; label: string; tier: TierId }[] = [
@@ -166,6 +166,8 @@ export const FEATURES: { id: FeatureId; label: string; tier: TierId }[] = [
   { id: 'badges', label: 'Ýyldyzlaryň doly seljermesi', tier: 'gorelde' },
   { id: 'tests', label: 'Test bankasy — ähli testler', tier: 'gorelde' },
   { id: 'contests', label: 'Premium bäsleşikler', tier: 'gorelde' },
+  { id: 'classmates', label: 'Synpdaşlaryň öý işi — at-at', tier: 'gorelde' },
+  { id: 'noads', label: 'Mahabatsyz programma', tier: 'gorelde' },
   { id: 'notes', label: 'Mugallymyň ähli bellikleri', tier: 'zehin' },
   { id: 'analytics', label: 'Analitika we hasabatlar', tier: 'zehin' },
   { id: 'roadmap', label: 'Ähli dersleriň sapaklary 1–12', tier: 'zehin' },

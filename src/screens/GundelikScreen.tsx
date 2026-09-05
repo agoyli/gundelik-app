@@ -4,23 +4,27 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  DateStrip, GradeBadge, HeaderIconButton, HelpButton, LessonCard, MonthCalendar, SheetDrawer,
-  SheetSection, TodoList, TodoRow,
+  DateStrip, GradeBadge, HeaderIconButton, HelpButton, LessonCard, MonthCalendar, Segmented,
+  SheetDrawer, SheetSection, TodoList, TodoRow,
 } from '../components/Ui';
 import {
   BellIcon, CalendarIcon, CheckIcon, ClockIcon, HwIcon, LockIcon,
   NotesIcon, ShareIcon, TemaIcon, TrophyIcon,
 } from '../components/Icons';
-import { AdSlot, TeaserCard } from '../components/Paywall';
+import { TeaserCard } from '../components/Paywall';
 import { BadgeChip, BadgeScore, BadgeStatsScreen } from './BadgeScreens';
 import { InboxScreen } from './InboxScreens';
 import { UpgradeScreen } from './UpgradeScreen';
 import { TONE, awardsForLesson, badgeType, toneOf } from '../data/badges';
 import type { Award } from '../data/badges';
-import { absDate, fmtDate } from '../lib/date';
+import { fmtDate } from '../lib/date';
 import { inboxUnread } from '../data/inbox';
 import { useSchedule } from '../hooks/useSchedule';
 import { tierFor, useCan } from '../state/prefs';
+import { ShareSheet } from './ShareScreens';
+import { ClassHwRow, ClassHwSheet } from './ClassScreens';
+import { BannerSlot } from './BannerScreens';
+import { useChild } from '../state/children';
 import { EARN_POINTS, award, useEarns } from '../state/earn';
 import { tokens } from '../theme';
 import type { Lesson } from '../types';
@@ -29,6 +33,7 @@ type SheetState =
   | { type: 'lesson'; lesson: Lesson }
   | { type: 'notes' }
   | { type: 'hw' }
+  | { type: 'class'; focus?: string }
   | { type: 'picker' }
   | { type: 'help' }
   | null;
@@ -145,12 +150,17 @@ function EarnPill({ kind, earns, done }: { kind: 'hw' | 'test'; earns: boolean; 
 
 export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
   const s = useSchedule();
+  /* whose diary is on screen — the switcher only appears on an account that
+     actually has a second child */
+  const { id: childId, child, children, select } = useChild();
   const canBadges = useCan('badges');
   const canNotes = useCan('notes');
   /* whether ticks and tests actually credit bal on this account */
   const earns = useEarns();
   const [sheet, setSheet] = useState<SheetState>(null);
   const [page, setPage] = useState<Page>('diary');
+  /* the share sheet: three forms, and nothing leaves until its own button */
+  const [sharing, setSharing] = useState(false);
   const close = () => setSheet(null);
   /* the diary is the tab root, so every sub-page returns here */
   const home = () => setPage('diary');
@@ -170,24 +180,6 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
     document.querySelector('[data-datecell="active"]')
       ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [s.dateKey]);
-
-  const share = async () => {
-    const text = `Gündelik — ${absDate(s.dateKey)}: ${s.day?.lessons.length ?? 0} sapak`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Gündelik', text });
-        return;
-      } catch (e) {
-        if ((e as DOMException).name === 'AbortError') return; /* user cancelled */
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-      toast('Bufere göçürildi');
-    } catch {
-      toast(text); /* clipboard unavailable — at least show what would be shared */
-    }
-  };
 
   /* One call for every tick in the app — the card's chip, the day's to-do list
      and the lesson's own row all land here, so the three can never disagree
@@ -232,6 +224,24 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
           <BellIcon size={21} />
         </HeaderIconButton>
       </Box>
+
+      {/* Two children, one diary: the switch is above the dates because it
+          changes what the dates mean. A segmented control rather than a menu —
+          with two or three children every option is worth showing, and the
+          answer to "which one am I reading" has to be visible without a tap. */}
+      {children.length > 1 && (
+        <Box sx={{ px: tokens.gutter, pt: '12px' }}>
+          <Segmented
+            label="Çaga"
+            value={childId}
+            options={children.map((c) => ({ id: c.id, label: c.short }))}
+            onChange={select}
+          />
+          <Typography variant="caption" sx={{ display: 'block', mt: '6px', px: '4px' }}>
+            {child.cls} · {child.school}
+          </Typography>
+        </Box>
+      )}
 
       <DateStrip
         days={s.days}
@@ -309,9 +319,12 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         })}
       </Box>
 
-      {/* free tier sees one ad, and it only ever sells Premium */}
+      {/* A free account sees one paid banner here, under the lessons rather
+          than over them — and the ✕ on it opens the only thing that removes
+          it. The app's own Premium card stays on the pages where nobody is
+          reading a task list. */}
       <Box sx={{ px: tokens.gutter, pt: '12px' }}>
-        <AdSlot onUpgrade={() => setPage('upgrade')} />
+        <BannerSlot placement="diary" onUpgrade={() => setPage('upgrade')} toast={toast} />
       </Box>
 
       {/* Parent signature.
@@ -364,7 +377,7 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         <Button
           fullWidth
           disableElevation
-          onClick={() => void share()}
+          onClick={() => setSharing(true)}
           startIcon={<ShareIcon size={18} />}
           sx={{
             height: 46, bgcolor: tokens.surface, color: tokens.ink2, fontWeight: 600,
@@ -377,6 +390,16 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
       </Box>
 
       {/* ---------------- Sheets ---------------- */}
+      <ShareSheet
+        open={sharing}
+        onClose={() => setSharing(false)}
+        day={s.day}
+        dateKey={s.dateKey}
+        student={child.name}
+        school={`${child.school} · ${child.cls}`}
+        toast={toast}
+      />
+
       <SheetDrawer open={sheet?.type === 'lesson'} onClose={close}>
         {sheet?.type === 'lesson' && (
           <>
@@ -404,6 +427,15 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
                 </TodoList>
               ) : (
                 <Typography variant="body2">Öý işi girizilmedi.</Typography>
+              )}
+              {sheet.lesson.hw && (
+                <Box sx={{ mt: '10px' }}>
+                  <ClassHwRow
+                    lessons={[sheet.lesson]}
+                    selfDone={sheet.lesson.hwDone ? 1 : 0}
+                    onOpen={() => setSheet({ type: 'class', focus: sheet.lesson.id })}
+                  />
+                </Box>
               )}
             </SheetSection>
             {sheet.lesson.grade && (
@@ -547,10 +579,28 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
             <SheetSection><Typography variant="body2">Bu gün öý işi ýok 🎉</Typography></SheetSection>
           )}
         </Box>
+        {/* The evening's other question: is it just me? */}
+        {s.hwStats.total > 0 && (
+          <Box sx={{ mt: '14px' }}>
+            <ClassHwRow
+              lessons={s.day?.lessons ?? []}
+              selfDone={s.hwStats.done}
+              onOpen={() => setSheet({ type: 'class' })}
+            />
+          </Box>
+        )}
         <Box sx={{ mt: '18px' }}>
           <Button fullWidth onClick={close} sx={{ bgcolor: tokens.surface, color: tokens.ink }}>Ýap</Button>
         </Box>
       </SheetDrawer>
+
+      <ClassHwSheet
+        open={sheet?.type === 'class'}
+        onClose={close}
+        lessons={s.day?.lessons ?? []}
+        focus={sheet?.type === 'class' ? sheet.focus : undefined}
+        onUpgrade={() => { close(); setPage('upgrade'); }}
+      />
 
       <SheetDrawer open={sheet?.type === 'picker'} onClose={close}>
         <Typography variant="h2">Senäni saýlaň</Typography>

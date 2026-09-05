@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as api from '../api/mockApi';
 import { TODAY } from '../lib/date';
+import { useChild } from '../state/children';
 import type { DayInfo, DaySchedule } from '../types';
 
 export function useSchedule(initialKey = TODAY) {
+  /* whose diary this is — a change of child is a change of every answer below,
+     so it is a dependency of the fetch rather than a filter over the result */
+  const { id: child } = useChild();
   const [days, setDays] = useState<DayInfo[]>([]);
   const [dateKey, setDateKey] = useState(initialKey);
   const [day, setDay] = useState<DaySchedule | null>(null);
@@ -16,18 +20,21 @@ export function useSchedule(initialKey = TODAY) {
     const id = ++req.current;
     setLoading(true);
     try {
-      const d = await api.fetchDay(key);
+      const d = await api.fetchDay(key, child);
       if (id === req.current) setDay(d);
     } finally {
       if (id === req.current) setLoading(false);
     }
-  }, []);
+  }, [child]);
 
   useEffect(() => {
     void api.fetchWeek().then(setDays);
     void api.fetchLastChecked().then(setLastChecked);
-    void loadDay(initialKey);
-  }, [initialKey, loadDay]);
+    void loadDay(dateKey);
+    /* `dateKey` is intentionally not a dependency: selectDate loads the day it
+       selects. This effect is the first load and the reload after a switch. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadDay]);
 
   const selectDate = useCallback((key: string) => {
     if (key === dateKey) return;
@@ -37,9 +44,9 @@ export function useSchedule(initialKey = TODAY) {
   }, [dateKey, loadDay]);
 
   const setHwDone = useCallback(async (lessonId: string, done: boolean) => {
-    const updated = await api.setHomeworkDone(dateKey, lessonId, done);
+    const updated = await api.setHomeworkDone(dateKey, lessonId, done, child);
     setDay(updated);
-  }, [dateKey]);
+  }, [dateKey, child]);
 
   /* Signing is per-day: `signed` is a fact about the selected date, not a
      global "last refreshed" stamp, so switching days switches the answer. */

@@ -1,22 +1,23 @@
 import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
 import {
-  BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon, GameIcon,
-  GearIcon, HistoryIcon, LayersIcon, LockIcon, QuestionIcon, QuestionOutlineIcon, QuizIcon,
-  ShopIcon, SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
+  BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon, GearIcon,
+  HistoryIcon, LayersIcon, LockIcon, MegaphoneIcon, QuestionIcon, QuestionOutlineIcon, QuizIcon,
+  ShopIcon,
+  SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
   Avatar, DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav, PillHeader,
   MeterTile, PointsPill, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
-import { AdSlot, LockedPreview, TeaserCard } from '../components/Paywall';
+import { AdSlot, TeaserCard } from '../components/Paywall';
 import { OLYMPIADS, PRIZE_CONTESTS, RATING } from '../data/guides';
 import { bankTotal, playCount, testSubjects } from '../data/library';
 import { USER_GRADE, pathTotal, subjectBySlug } from '../data/curriculum';
 import type { CurriculumSubject } from '../data/curriculum';
 import { fmtRange } from '../lib/date';
-import { capitalise, ordinal } from '../lib/tm';
+import { ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/library';
 import { PLAN, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
 import { useAllowance } from '../state/allowance';
@@ -30,6 +31,7 @@ import { PlayScreen } from './PlayScreens';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
 import { BalanceRow, ShopScreen, WalletScreen } from './WalletScreens';
+import { BannerSlot, MyBannersScreen } from './BannerScreens';
 import {
   BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, SapaklarScreen,
 } from './SectionScreens';
@@ -213,52 +215,65 @@ const SUBJECT_WEEK: [string, number][] = [
   ['Matematika', 82], ['Himiýa', 76], ['Fizika', 71],
 ];
 
-/* the strongest subject of the week — the one true sentence the free tier gets
-   about the subject report */
-const BEST_SUBJECT = SUBJECT_WEEK.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
 
 /*
  * What the free tier sees instead of the reports.
  *
- * Not an empty wall: every card is the real one, blurred, and every line under
- * it is true. The line is the same one the badge history draws — **how much**
- * there is to read is free, **what it says** is paid. "3 hepdelik taryh" is a
- * fact the reader can check; it creates a specific gap where "Premium gerek"
- * creates only a refusal. Nothing here invents urgency or a deadline.
+ * Not a wall, and no longer a blur either. A blurred chart says "there is
+ * something here" and nothing else — the reader cannot tell whether it is
+ * worth 400 TMT, and a smear of colour is the same smear whatever the numbers
+ * behind it are.
+ *
+ * So the free tier gets **part of the real report**: this week's figure, the
+ * top two subjects, the current average — the *latest* value, which is the one
+ * they can already work out from the diary anyway. What the plan buys is the
+ * rest and the history: the other five subjects, the term's trend, the
+ * comparison over time. The lock line then names exactly what is missing, as a
+ * count, so the gap is specific and checkable rather than mysterious.
+ *
+ * The rule this follows everywhere in the app: **how much there is, is free;
+ * what it says over time, is paid.**
  */
-function LockedReport({ title, note, preview, onUpgrade }: {
-  title: string; note: string; preview: React.ReactNode; onUpgrade: () => void;
+function PartialReport({ title, note, shown, hidden, onUpgrade }: {
+  title: string; note: string;
+  /** the real, unblurred part — the newest figure or the first rows */
+  shown: React.ReactNode;
+  /** what stays behind the plan, counted rather than described */
+  hidden: string;
+  onUpgrade: () => void;
 }) {
+  const plan = tierFor('analytics');
   return (
-    <ButtonBase
-      onClick={onUpgrade}
-      aria-label={`${title} — ${note}, ${tierFor('analytics')?.name} bilen açylýar`}
-      sx={{
-        display: 'block', width: '100%', textAlign: 'left', overflow: 'hidden',
-        bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
-        '&:active': { bgcolor: tokens.surfacePress },
-      }}
-    >
-      <LockedPreview height={104}>{preview}</LockedPreview>
-      <Box sx={{
-        display: 'flex', alignItems: 'center', gap: '12px',
-        p: `0 ${tokens.padCard} 15px`, mt: '-10px', position: 'relative',
-      }}>
-        <IconBadge bg={tokens.blueTint} color={tokens.blueText} size={40}>
-          <LockIcon size={19} />
+    <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, overflow: 'hidden' }}>
+      <Box sx={{ p: `15px ${tokens.padCard} 0` }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>{title}</Typography>
+        <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px', lineHeight: 1.4 }}>{note}</Typography>
+      </Box>
+
+      {shown}
+
+      {/* The lock, stated as an amount. It sits under real data rather than
+          over it, so nothing the reader can already see is being taken away. */}
+      <ButtonBase
+        onClick={onUpgrade}
+        aria-label={`${title}: ${hidden}, ${plan?.name} bilen açylýar`}
+        sx={{
+          display: 'flex', alignItems: 'center', gap: '11px', width: '100%',
+          textAlign: 'left', justifyContent: 'flex-start',
+          p: `12px ${tokens.padCard}`, borderTop: `1px solid ${tokens.dividerSoft}`,
+          '&:active': { bgcolor: tokens.surfacePress },
+        }}
+      >
+        <IconBadge bg={tokens.blueTint} color={tokens.blueText} size={32} radius={tokens.rTile}>
+          <LockIcon size={16} />
         </IconBadge>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }} noWrap>{title}</Typography>
-          {/* the note carries the one true sentence about the hidden report, so
-              it is allowed to run to a second line rather than ellipsize */}
-          <Typography sx={{
-            fontSize: 12.5, color: tokens.ink3, mt: '2px', lineHeight: 1.4,
-            display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-          }}>{note}</Typography>
+          <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{hidden}</Typography>
+          <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>{plan?.name} bilen açylýar</Typography>
         </Box>
         <RowChevron />
-      </Box>
-    </ButtonBase>
+      </ButtonBase>
+    </Box>
   );
 }
 
@@ -281,30 +296,30 @@ function AnalitikaLocked({ onUpgrade }: { onUpgrade: () => void }) {
 
       <SectionLabel>Hasabatlar</SectionLabel>
 
-      {/* Each note is a true sentence about the report behind it — the movement,
-          the best subject, the change in the average. The direction is free; the
-          figure it moved to is what the plan buys. A reader who is told they
-          climbed two places has a question the blurred card answers. */}
-      <LockedReport
+      {/* Each card shows this week's real figures and locks the history behind
+          them. The reader can check every number here against their own diary,
+          which is what makes the missing part worth buying. */}
+      <PartialReport
         title="Synpda hepdelik ýetişigi"
-        note={`Synpdaşlaryň arasynda näçinji orunda? ${capitalise(weekMove(WEEKS.length - 1)!)}.`}
+        note="Şu hepdäniň orny — açyk. Öňki hepdeler we synpyň sanawy ýapyk."
         onUpgrade={onUpgrade}
-        preview={(
-          <Box sx={{ p: '18px 15px', textAlign: 'center' }}>
+        shown={(
+          <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
             <HeroStat>{placeLabel(WEEKS[WEEKS.length - 1].place)}</HeroStat>
             <DeltaLine>{weekMove(WEEKS.length - 1)}</DeltaLine>
           </Box>
         )}
+        hidden={`${WEEKS.length - 1} hepdelik taryh · synpyň doly sanawy`}
       />
 
-      <LockedReport
+      <PartialReport
         title="Dersler boýunça ýetişigi"
-        note={`Iň gowy ugruň — ${BEST_SUBJECT}. ${SUBJECT_WEEK.length} dersiň hemmesi hasabatda.`}
+        note={`Iň gowy iki ugruň açyk. Galan ${SUBJECT_WEEK.length - 2} ders ýapyk.`}
         onUpgrade={onUpgrade}
-        preview={(
-          <Box sx={{ p: '16px 15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {SUBJECT_WEEK.slice(0, 3).map(([name, val]) => (
-              <Box key={name} sx={{ display: 'grid', gridTemplateColumns: '96px 1fr', alignItems: 'center', gap: '10px' }}>
+        shown={(
+          <Box sx={{ p: '12px 15px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {SUBJECT_WEEK.slice(0, 2).map(([name, val]) => (
+              <Box key={name} sx={{ display: 'grid', gridTemplateColumns: '96px 1fr 34px', alignItems: 'center', gap: '10px' }}>
                 <Typography noWrap sx={{ fontSize: 13, color: tokens.ink2 }}>{name}</Typography>
                 <LinearProgress
                   variant="determinate" value={val}
@@ -313,31 +328,45 @@ function AnalitikaLocked({ onUpgrade }: { onUpgrade: () => void }) {
                     '& .MuiLinearProgress-bar': { borderRadius: `${tokens.rPill}px`, bgcolor: tokens.greenDeep },
                   }}
                 />
+                <Typography sx={{
+                  fontSize: 12.5, fontWeight: 700, color: tokens.ink2, textAlign: 'right',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>{val}%</Typography>
+              </Box>
+            ))}
+            {/* the shape of what is missing, without its numbers: the same rows,
+                drawn empty, so the reader can see how much more there is */}
+            {SUBJECT_WEEK.slice(2, 5).map(([name]) => (
+              <Box key={name} sx={{ display: 'grid', gridTemplateColumns: '96px 1fr 34px', alignItems: 'center', gap: '10px' }}>
+                <Typography noWrap sx={{ fontSize: 13, color: tokens.inkMuted }}>{name}</Typography>
+                <Box aria-hidden sx={{ height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft }} />
+                <Typography sx={{ fontSize: 12.5, color: tokens.inkDisabled, textAlign: 'right' }}>—</Typography>
               </Box>
             ))}
           </Box>
         )}
+        hidden={`Ýene ${SUBJECT_WEEK.length - 2} dersiň göterimi`}
       />
 
-      <LockedReport
+      <PartialReport
         title="Çärýegiň ortaça bahasy"
-        note={`Çärýek bahalary, ${qtrMove(QUARTER_HISTORY.length - 1)}.`}
+        note="Şu çärýegiň ortaçasy — açyk. Öňki çärýekler bilen deňeşdirme ýapyk."
         onUpgrade={onUpgrade}
-        preview={(
-          <Box sx={{ p: '18px 15px', textAlign: 'center' }}>
+        shown={(
+          <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
             <HeroStat>Baha: {QUARTER_HISTORY[QUARTER_HISTORY.length - 1].avg.toFixed(1)}</HeroStat>
             <DeltaLine>{qtrMove(QUARTER_HISTORY.length - 1)}</DeltaLine>
           </Box>
         )}
+        hidden={`${QUARTER_HISTORY.length - 1} çärýegiň taryhy · ders-ders bölünişi`}
       />
 
-      <LockedReport
+      <PartialReport
         title="Sapaklaryň görnüşleri boýunça"
-        note={`Wagtyň köp bölegi haýsy görnüşdäki sapaklara gidýär? ${LESSON_KINDS.length} topar boýunça bölünişi.`}
+        note="Bölünişik açyk. Hepde-hepde üýtgeýşi ýapyk."
         onUpgrade={onUpgrade}
-        preview={(
-          <Box sx={{ display: 'grid', placeItems: 'center', pt: '6px' }}><KindBubbles /></Box>
-        )}
+        shown={<Box sx={{ display: 'grid', placeItems: 'center', pt: '6px', pb: '10px' }}><KindBubbles /></Box>}
+        hidden="Hepdelik dinamika we sagat hasaby"
       />
 
       <Box sx={{ pt: '4px' }}>
@@ -501,21 +530,23 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
   );
 }
 
-/* ---------------- Gollanmalar (tile grid + Testler sub-screen) ---------------- */
-/* Six sections, paired the way the user reads them:
-   Sapaklar + Kartlar (learn) / Testler + Bäsleşikler (prove) / Oýunlar + Kitaphana (explore) */
+/* ---------------- Gollanmalar (tile grid + Testler sub-screen) ----------------
+ *
+ * Six tiles, in three pairs, and the pairs are the reader's own three
+ * questions: **learn** (Sapaklar · Öwrediji kartlar), **prove** (Testler ·
+ * Bäsleşikler), **the rest** (Akylly mugallym · Kitaphana).
+ *
+ * It was seven, and the seventh was *Interaktiw sapaklar* — which is not a
+ * seventh thing, it is the lesson path's own interactives listed a second way.
+ * It already has a home under Sapaklar, beside the topics it drills, and a
+ * grid whose tiles are not parallel makes the reader work out the relationship
+ * on every visit. One route to one body of material.
+ *
+ * A tile's second line is a count from the catalogue, never a slogan: how much
+ * there is, is the reason to open it.
+ */
 const GUIDE_TILES: { id: SectionId; label: string; sub: string; icon: React.ReactNode }[] = [
-  { id: 'sapaklar', label: 'Sapaklar', sub: `${pathTotal()} sapak`, icon: <LayersIcon size={26} /> },
-  /* Interaktiw sapaklar is the interactives on their own — the same stops the
-     paths hold, indexed by activity. It earns a tile the way Testler and Kartlar
-     do: it is a body of real material (766 mini-apps), not the four invented
-     arcade games that used to sit here and were rightly pushed under the topics.
-     It stays next to Sapaklar, because it is the same material read another way. */
-  { id: 'gonukmeler', label: 'Interaktiw sapaklar', sub: `${playCount()} sapak`, icon: <GameIcon size={26} /> },
-  /* The helper belongs with the other ways of studying, not only inside a
-     lesson: a question comes up over homework, away from the page that raised
-     it, and this is where a student comes looking. */
-  { id: 'ai', label: 'Akylly mugallym', sub: 'Islendik sorag — 24/7', icon: <SparkleIcon size={26} /> },
+  { id: 'sapaklar', label: 'Sapaklar', sub: `${pathTotal()} sapak · ${playCount()} interaktiw`, icon: <LayersIcon size={26} /> },
   { id: 'kartlar', label: 'Öwrediji kartlar', sub: `${bankTotal().cards} kart`, icon: <CardsIcon size={26} /> },
   { id: 'testler', label: 'Testler', sub: `${bankTotal().tests} test`, icon: <BigCheckIcon size={26} /> },
   /* The tile counts what is open, not what exists: the olympiads behind it are
@@ -527,6 +558,10 @@ const GUIDE_TILES: { id: SectionId; label: string; sub: string; icon: React.Reac
       return live ? `${live} dowam edýär` : `${OLYMPIADS.length} olimpiada`;
     })(),
   },
+  /* The helper belongs with the other ways of studying, not only inside a
+     lesson: a question comes up over homework, away from the page that raised
+     it, and this is where a student comes looking. */
+  { id: 'ai', label: 'Akylly mugallym', sub: 'Islendik sorag — 24/7', icon: <SparkleIcon size={26} /> },
   { id: 'kitaphana', label: 'Kitaphana', sub: '4 kitap', icon: <BooksIcon size={26} /> },
 ];
 
@@ -756,19 +791,12 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
               gridColumn: i === GUIDE_TILES.length - 1 && GUIDE_TILES.length % 2 ? 'span 2' : undefined,
             }}
           >
-            <GridTile
-              icon={t.icon} label={t.label} sub={t.sub}
-              onClick={() => {
-                /* arriving by the tile is arriving with no filter in hand */
-                if (t.id === 'gonukmeler') setPlay(null);
-                setView(t.id);
-              }}
-            />
+            <GridTile icon={t.icon} label={t.label} sub={t.sub} onClick={() => setView(t.id)} />
           </Box>
         ))}
       </Box>
       <Box sx={{ px: tokens.gutter, pt: '14px' }}>
-        <AdSlot onUpgrade={upgrade} />
+        <BannerSlot placement="sections" onUpgrade={upgrade} toast={toast} />
       </Box>
     </>
   );
@@ -955,7 +983,7 @@ const ChoiceRow = ({ icon, tint, color, label, value, onClick }: {
 );
 
 type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referral' | 'upgrade'
-  | 'career' | 'wallet' | 'shop';
+  | 'career' | 'wallet' | 'shop' | 'ads';
 
 export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   const { premium, tier } = usePrefs();
@@ -1011,6 +1039,9 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   if (view === 'edit') return <ProfileEditScreen onBack={root} toast={toast} />;
   if (view === 'referral') return <ReferralScreen onBack={root} toast={toast} />;
   if (view === 'upgrade') return <UpgradeScreen onBack={root} toast={toast} />;
+  if (view === 'ads') {
+    return <MyBannersScreen onBack={root} toast={toast} />;
+  }
   if (view === 'wallet') {
     return <WalletScreen onBack={root} toast={toast} onShop={() => setView('shop')} />;
   }
@@ -1174,6 +1205,15 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             sub="Hyzmatdaş dükanlaryň harytlary"
             end={<RowChevron />}
             onClick={() => setView('shop')}
+          />
+          {/* The other side of the banners a free account sees: a shop or a
+              course can buy one of those slots from here. */}
+          <SurfaceRow
+            icon={<IconBadge bg={tokens.purpleTint} color={tokens.purpleText} size={44}><MegaphoneIcon size={20} /></IconBadge>}
+            label="Mahabat"
+            sub="Öz banneriňi mekdeplerde ýerleşdir"
+            end={<RowChevron />}
+            onClick={() => setView('ads')}
           />
         </Box>
 

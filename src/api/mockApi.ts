@@ -49,7 +49,12 @@ const week: DayInfo[] = WEEK.map(({ date, checked }) => ({
   checked,
 }));
 
-const store: Record<string, DaySchedule> = {
+/*
+ * One timetable per child. The elder's week is the app's reference week; the
+ * younger one is a real primary-school week rather than the same lessons under
+ * a different name — switching child has to look like switching child.
+ */
+const store8b: Record<string, DaySchedule> = {
   '2026-02-12': {
     key: '2026-02-12',
     notes: 12,
@@ -151,6 +156,92 @@ const store: Record<string, DaySchedule> = {
   '2026-02-14': { key: '2026-02-14', notes: 0, lessons: [] },
 };
 
+const store4a: Record<string, DaySchedule> = {
+  '2026-02-12': {
+    key: '2026-02-12',
+    notes: 5,
+    lessons: [
+      L('a0212-1', 'Türkmen dili', '8:00 – 8:45', {
+        teacher: 'G. Nazarowa', people: 2, grade: 5, hwDone: true,
+        tema: 'At we onuň düşümleri.', hw: '42-nji gönükme, sözlemleri göçürmeli.',
+      }),
+      L('a0212-2', 'Matematika', '8:55 – 9:40', {
+        teacher: 'G. Nazarowa', people: 1, grade: 4,
+        tema: 'Köp belgili sanlary goşmak.', hw: '№118–121.',
+      }),
+      L('a0212-3', 'Tebigaty öwreniş', '9:50 – 10:35', {
+        teacher: 'S. Ýazowa',
+        tema: 'Suwuň tebigatdaky aýlanyşy.', hw: 'Surat çekmeli: suwuň ýoly.',
+      }),
+      L('a0212-4', 'Şekillendiriş sungaty', '10:45 – 11:30', {
+        teacher: 'A. Hommadowa', people: 1, grade: 5,
+        tema: 'Gyş görnüşi: reňkler.',
+      }),
+    ],
+  },
+  '2026-02-11': {
+    key: '2026-02-11',
+    notes: 3,
+    lessons: [
+      L('a0211-1', 'Matematika', '8:00 – 8:45', {
+        teacher: 'G. Nazarowa', people: 2, grade: 5, hwDone: true,
+        tema: 'Aňsat we çylşyrymly meseleler.', hw: '№104–108.',
+      }),
+      L('a0211-2', 'Iňlis dili', '8:55 – 9:40', {
+        teacher: 'A. Gurbanowa',
+        tema: 'My family: täze sözler.', hw: '10 sözi ýat tutmaly.',
+      }),
+      L('a0211-3', 'Beden terbiýesi', '9:50 – 10:35', {
+        teacher: 'R. Öwezow', people: 1, grade: 5,
+        tema: 'Ýeňil atletika: ylgaw.',
+      }),
+      L('a0211-4', 'Türkmen dili', '10:45 – 11:30', {
+        teacher: 'G. Nazarowa',
+        tema: 'Nakyllar we atalar sözi.', hw: '5 nakyl ýazmaly.',
+      }),
+    ],
+  },
+  '2026-02-10': {
+    key: '2026-02-10',
+    notes: 2,
+    lessons: [
+      L('a0210-1', 'Okuw', '8:00 – 8:45', {
+        teacher: 'G. Nazarowa', people: 2, grade: 5, hwDone: true,
+        tema: 'Ertekiler: «Ýartygulak».', hw: 'Ertekini okamaly, gürrüň bermeli.',
+      }),
+      L('a0210-2', 'Matematika', '8:55 – 9:40', {
+        teacher: 'G. Nazarowa',
+        tema: 'Kwadrat we gönüburçluk.', hw: '№96–99.',
+      }),
+      L('a0210-3', 'Aýdym-saz', '9:50 – 10:35', {
+        teacher: 'L. Söýünowa',
+        tema: 'Çagalar aýdymlary.',
+      }),
+    ],
+  },
+  '2026-02-09': {
+    key: '2026-02-09',
+    notes: 1,
+    lessons: [
+      L('a0209-1', 'Türkmen dili', '8:00 – 8:45', {
+        teacher: 'G. Nazarowa', people: 1, grade: 4,
+        tema: 'Sözlemiň agzalary.', hw: '38-nji gönükme.',
+      }),
+      L('a0209-2', 'Zähmet', '8:55 – 9:40', {
+        teacher: 'A. Hommadowa', people: 2, grade: 5, hwDone: true,
+        tema: 'Kagyzdan ýasamak.',
+      }),
+    ],
+  },
+  '2026-02-13': { key: '2026-02-13', notes: 0, lessons: [] },
+  '2026-02-14': { key: '2026-02-14', notes: 0, lessons: [] },
+};
+
+/* Keyed by the child ids in `state/children.ts` — the diary asks for a child
+   and a date, never for "the" day. */
+const books: Record<string, Record<string, DaySchedule>> = { m: store8b, a: store4a };
+const book = (child: string) => books[child] ?? store8b;
+
 let lastChecked = absDate(TODAY);
 
 /* ---------------- Public API ---------------- */
@@ -160,18 +251,18 @@ export const fetchWeek = (): Promise<DayInfo[]> => delay(week);
 /* Any date is reachable now that the picker is a calendar, so a day with no
    schedule is an ordinary answer rather than an error — the screen has an
    empty state for it and does not need an exception. */
-export const fetchDay = (key: string): Promise<DaySchedule> =>
-  delay(store[key] ?? { key, notes: 0, lessons: [] });
+export const fetchDay = (key: string, child = 'm'): Promise<DaySchedule> =>
+  delay(book(child)[key] ?? { key, notes: 0, lessons: [] });
 
 /* Homework is a checkbox, so it unticks. Marking one done by mistake and
    having no way back is the kind of small trap that teaches people not to
    touch the control at all. */
 export const setHomeworkDone = (
-  dayKey: string, lessonId: string, done: boolean,
+  dayKey: string, lessonId: string, done: boolean, child = 'm',
 ): Promise<DaySchedule> => {
-  const lesson = store[dayKey]?.lessons.find((l) => l.id === lessonId);
+  const lesson = book(child)[dayKey]?.lessons.find((l) => l.id === lessonId);
   if (lesson) lesson.hwDone = done;
-  return delay(store[dayKey]);
+  return delay(book(child)[dayKey]);
 };
 
 export const fetchLastChecked = (): Promise<string> => delay(lastChecked);

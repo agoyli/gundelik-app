@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { useState } from 'react';
-import { CheckIcon } from '../components/Icons';
+import { CheckIcon, SparkleIcon } from '../components/Icons';
+import { HeaderIconButton, PillHeader, VariantSheet } from '../components/Ui';
 import {
   FEATURES, TIERS, listYearly, perMonth, savePct, setTier, usePrefs,
 } from '../state/prefs';
@@ -21,22 +22,35 @@ import { tokens } from '../theme';
 
 export type Term = 'year' | 'month';
 
-/** The three payment screens, as the chooser lists them. */
-export type PayVariant = 'offer' | 'compare' | 'value';
+/**
+ * The payment screens, as the chooser lists them.
+ *
+ * `table` is the reference page itself, listed here like the rest so the
+ * switcher can get *back* to it — a chooser you can leave but not return to is
+ * a one-way door, and the reference is the page most of these are argued
+ * against.
+ */
+export type PayVariant = 'table' | 'offer' | 'compare' | 'value' | 'trial' | 'worth';
 
 export const PAY_VARIANTS: { id: PayVariant; name: string; note: string }[] = [
+  { id: 'table', name: 'Doly deňeşdirme', note: 'Ähli aýratynlyklar tablisada — häzirki sahypa' },
   { id: 'offer', name: 'Bir teklip', note: 'Bir nyrhnama, bir baha, bir düwme' },
   { id: 'compare', name: 'Deňeşdirme', note: 'Iki nyrhnama gapma-garşy, diňe tapawudy' },
   { id: 'value', name: 'Näme açylýar', note: 'Ilki peýdasy, soň bahasy' },
+  { id: 'trial', name: '7 gün synag', note: 'Mugt synagdan başlaýar, tölegi soň düşündirýär' },
+  { id: 'worth', name: 'Näçä durýar', note: 'Bahany gündelik zatlar bilen deňeşdirýär' },
 ];
 
-/** Every payment screen's props: the two ways out, and the toast. */
+/** Every payment screen's props: the ways out, the toast, and the switcher. */
 export type PayProps = {
   onBack: () => void;
   /** where a completed purchase lands — the whole tariff area closes, because
       the thing it was arguing for is now bought */
   onDone: () => void;
   toast: (m: string) => void;
+  /** open the variant chooser — every payment screen carries the same ✦, so
+      whichever one you are looking at, the others are one tap away */
+  onSwitch?: () => void;
 };
 
 /*
@@ -178,5 +192,51 @@ export function BalanceNote({ price, onTopUp }: { price: number; onTopUp?: () =>
         >Doldur</Typography>
       )}
     </Typography>
+  );
+}
+
+/*
+ * The header every payment screen wears.
+ *
+ * Same capsule, same back button, same ✦ in the action slot — a switcher that
+ * moved or changed shape between variants would itself become a difference
+ * between them, which is exactly what a comparison must not have. The icon
+ * button rather than a labelled pill because at 375px the capsule holds a back
+ * button, a centred title and about 96px of controls.
+ */
+export function PayHeader({ title, onBack, onSwitch }: {
+  title: string; onBack: () => void; onSwitch?: () => void;
+}) {
+  return (
+    <PillHeader
+      title={title}
+      onBack={onBack}
+      action={onSwitch && (
+        <HeaderIconButton label="Töleg sahypasynyň görnüşleri" onClick={onSwitch}>
+          <SparkleIcon size={20} />
+        </HeaderIconButton>
+      )}
+    />
+  );
+}
+
+/*
+ * The chooser, which is the app's own `VariantSheet` with this page's words in
+ * it — the badges page uses the same control, and two sheets that looked
+ * slightly different would themselves become a difference between screens.
+ */
+export function PayVariantSheet({ open, current, onClose, onPick }: {
+  open: boolean; current: PayVariant; onClose: () => void; onPick: (id: PayVariant) => void;
+}) {
+  return (
+    <VariantSheet
+      open={open}
+      title="Töleg sahypasynyň görnüşleri"
+      lede="Bir teklip, alty dürli aýdylyşy. Bahalar we aýratynlyklar ählisinde birmeňzeş."
+      variants={PAY_VARIANTS}
+      current={current}
+      onClose={onClose}
+      onPick={onPick}
+    />
   );
 }

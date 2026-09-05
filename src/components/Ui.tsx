@@ -441,8 +441,12 @@ export function LessonCard({ lesson, marks, onOpen, onToggleHw }: {
  * which is what a checkbox is for, and screen readers announce the list's
  * progress from it.
  */
-export function TodoRow({ label, sub, done, onToggle, end }: {
+export function TodoRow({ label, sub, done, onToggle, end, strike = true }: {
   label: string; sub?: string; done: boolean; onToggle?: () => void; end?: ReactNode;
+  /* A task that is done gets struck through; a *person* who is done does not —
+     the same row lists classmates, and crossing out someone's name says
+     something about them rather than about their homework. */
+  strike?: boolean;
 }) {
   return (
     <ButtonBase
@@ -472,8 +476,8 @@ export function TodoRow({ label, sub, done, onToggle, end }: {
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{
           fontSize: 15, fontWeight: 500, lineHeight: 1.4,
-          color: done ? tokens.inkMuted : tokens.ink,
-          textDecoration: done ? 'line-through' : 'none',
+          color: done && strike ? tokens.inkMuted : tokens.ink,
+          textDecoration: done && strike ? 'line-through' : 'none',
         }}>{label}</Typography>
         {sub && (
           <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, mt: '2px' }} noWrap>{sub}</Typography>
@@ -521,6 +525,128 @@ export function TodoList({ done, total, children }: {
         ))}
       </Box>
     </Box>
+  );
+}
+
+/* ---------------- SnapSlides ----------------
+ *
+ * A row of full-width panels the thumb flicks through, with the dots under it.
+ *
+ * Three screens had grown their own copy of this — onboarding, the premium
+ * page's promises, and now a banner's description — and each copy scrolled a
+ * different way. The dots are also buttons here, because a dot that shows
+ * where you are and refuses to take you there is a control pretending to be a
+ * decoration.
+ *
+ * The track scrolls itself by `scrollLeft` on its own ref. `scrollIntoView`
+ * would drag every scroller between the panel and the document, and one of
+ * those is the four-pane swipe strip the whole app lives in.
+ */
+export function SnapSlides({ children, labels, sx, onChange, footer }: {
+  children: ReactNode;
+  labels?: string[];
+  sx?: SxProps<Theme>;
+  onChange?: (at: number) => void;
+  /** anything below the dots that needs to move the track — a "next" button */
+  footer?: (ctx: { at: number; last: boolean; go: (i: number) => void }) => ReactNode;
+}) {
+  const track = useRef<HTMLDivElement | null>(null);
+  const [at, setAt] = useState(0);
+  const slides = Children.toArray(children);
+  const go = (i: number) => {
+    const el = track.current;
+    if (el) el.scrollTo({ left: el.clientWidth * i, behavior: 'smooth' });
+  };
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, ...sx }}>
+      <Box
+        ref={track}
+        onScroll={(e) => {
+          const i = Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth));
+          if (i === at) return;
+          setAt(i);
+          onChange?.(i);
+        }}
+        sx={{
+          flex: 1, minHeight: 0, display: 'flex', overflowX: 'auto', overflowY: 'hidden',
+          scrollSnapType: 'x mandatory', scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+        }}
+      >
+        {slides.map((slide, i) => (
+          <Box key={i} sx={{ flex: '0 0 100%', width: '100%', scrollSnapAlign: 'start', display: 'flex' }}>
+            <Box sx={{ width: '100%', minWidth: 0 }}>{slide}</Box>
+          </Box>
+        ))}
+      </Box>
+      {slides.length > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: '7px', py: '12px' }}>
+          {slides.map((_, i) => (
+            <ButtonBase
+              key={i}
+              onClick={() => go(i)}
+              aria-label={labels?.[i] ?? `${i + 1}-nji sahypa`}
+              aria-current={i === at}
+              sx={{ width: 22, height: 22, borderRadius: '50%' }}
+            >
+              <Box aria-hidden sx={{
+                width: i === at ? 9 : 7, height: i === at ? 9 : 7, borderRadius: '50%',
+                bgcolor: i === at ? tokens.blue : tokens.inkDisabled,
+                transition: 'width .15s ease, height .15s ease, background .15s ease',
+              }} />
+            </ButtonBase>
+          ))}
+        </Box>
+      )}
+      {footer?.({ at, last: at === slides.length - 1, go })}
+    </Box>
+  );
+}
+
+/* ---------------- VariantSheet ----------------
+ *
+ * "Show me this page another way."
+ *
+ * Two places now hold several designs of one screen — the payment pages and
+ * Ýyldyzlar — because the right answer is a question for the numbers rather
+ * than for taste. They use the same control: a ✦ in the header, and this
+ * sheet, which lists every version with what it is betting on and marks the
+ * one you are looking at. A chooser that hid the current page would make the
+ * reader count rows to work out where they are.
+ */
+export type Variant<T extends string> = { id: T; name: string; note: string };
+
+export function VariantSheet<T extends string>({ open, title, lede, variants, current, onClose, onPick }: {
+  open: boolean; title: string; lede: string;
+  variants: Variant<T>[]; current: T;
+  onClose: () => void; onPick: (id: T) => void;
+}) {
+  return (
+    <SheetDrawer open={open} onClose={onClose}>
+      <Typography variant="h2">{title}</Typography>
+      <Typography sx={{ fontSize: 13.5, color: tokens.ink3, lineHeight: 1.5, mt: '8px', mb: '14px' }}>
+        {lede}
+      </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {variants.map((v) => (
+          <SurfaceRow
+            key={v.id}
+            label={v.name}
+            sub={v.note}
+            end={v.id === current
+              ? (
+                <Box sx={{
+                  px: '9px', height: 22, borderRadius: `${tokens.rPill}px`, flex: 'none',
+                  bgcolor: tokens.blueTint, color: tokens.blueText, fontSize: 11, fontWeight: 700,
+                  display: 'grid', placeItems: 'center',
+                }}>Açyk</Box>
+              )
+              : <RowChevron />}
+            onClick={() => { onClose(); onPick(v.id); }}
+          />
+        ))}
+      </Box>
+    </SheetDrawer>
   );
 }
 

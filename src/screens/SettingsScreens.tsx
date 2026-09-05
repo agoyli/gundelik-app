@@ -16,11 +16,13 @@ import {
 import {
   AboutScreen, APP, FaqScreen, HelpScreen, SupportScreen, UpdatesScreen,
 } from './HelpScreens';
+import { CustomPagesScreen } from './StateScreens';
 import {
   BANKS, PAY_NUMBERS, addPayMethod, bankOf, mainPayMethod, methodLabel, methodNote, methodTone,
   removePayMethod, setMainPayMethod, usePayMethods,
 } from '../state/payMethods';
 import type { BankId } from '../state/payMethods';
+import { spend, useWallet } from '../state/wallet';
 import { LABEL_SX, NEUTRAL, RowGroup, rowIcon } from './settingsBits';
 import type { Toast } from './settingsBits';
 import type { TierId } from '../state/prefs';
@@ -667,8 +669,11 @@ export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () 
   const [gift, setGift] = useState('');
   const { tier } = usePrefs();
   const t = tierOf(tier) ?? ENTRY;
-  const payWith = pick ?? mainPayMethod()?.id ?? 'gift';
   const amount = plan === 'month' ? t.monthly : t.yearly;
+  const { balance } = useWallet();
+  /* the balance is the default when it covers the amount — the cheapest press
+     for the reader, and the one that needs nothing typed */
+  const payWith = pick ?? (balance >= amount ? 'balance' : mainPayMethod()?.id ?? 'gift');
 
   const options = [
     { id: 'month' as const, label: 'Aýlyk', price: `${t.monthly} TMT`, note: 'Islendik wagt ýatyrsa bolýar' },
@@ -742,6 +747,12 @@ export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () 
 
       <SectionLabel>Töleg usuly</SectionLabel>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* The account's own money, first — it is the only method that needs no
+            card, no code and no second app, and it is where earned bal end up.
+            It is offered only when it actually covers the amount: a method that
+            fails at the last press is worse than one that is not shown. */}
+        {balance >= amount && row('balance', tokens.blueTint, tokens.blueText, <WalletIcon size={18} />,
+          'Balans', `${balance} TMT bar`)}
         {methods.map((m) => row(
           m.id, methodTone(m).tint, methodTone(m).ink, <CardIcon size={18} />,
           methodLabel(m), methodNote(m),
@@ -810,12 +821,19 @@ export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () 
               const m = methods.find((x) => x.id === payWith);
               onClose();
               setGift('');
+              if (payWith === 'balance') {
+                spend(amount, `${t.name} — ${plan === 'year' ? 'bir ýyl' : 'bir aý'}`);
+                toast(`${amount} TMT balansdan tölendi`);
+                return;
+              }
               toast(m
                 ? `${methodLabel(m)} · ${amount} TMT tassyklanýar`
                 : 'Sowgat karty ulanyldy');
             }}
           >
-            {payWith === 'gift' ? 'Sowgat kartyny ulan' : `${amount} TMT tölemek`}
+            {payWith === 'gift' ? 'Sowgat kartyny ulan'
+              : payWith === 'balance' ? `Balansdan ${amount} TMT töle`
+                : `${amount} TMT tölemek`}
           </Button>
         </Box>
       )}
@@ -826,7 +844,7 @@ export function PaySheet({ open, onClose, toast }: { open: boolean; onClose: () 
 /* ---------------- Sazlamalar (root) ---------------- */
 
 type View = 'root' | 'profile' | 'notifications' | 'security' | 'language' | 'payments' | 'cards'
-  | 'help' | 'faq' | 'support' | 'about' | 'updates';
+  | 'help' | 'faq' | 'support' | 'about' | 'updates' | 'states';
 
 export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
   onBack: () => void; toast: Toast; initial?: View; onUpgrade?: () => void;
@@ -871,6 +889,7 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
   }
   if (view === 'support') return <SupportScreen onBack={() => setView('help')} toast={toast} />;
   if (view === 'updates') return <UpdatesScreen onBack={() => setView('about')} />;
+  if (view === 'states') return <CustomPagesScreen onBack={() => setView('root')} />;
   if (view === 'payments') {
     return (
       <>
@@ -968,6 +987,18 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
           features. Both say plainly what turning them on does. */}
       <SectionLabel>Synag</SectionLabel>
       <RowGroup>
+        {/* The screens the app only shows when something has gone wrong, plus
+            the first-run slides. They are here rather than in Kömek because
+            they are a *testing* surface: a way to look at a page deliberately
+            that otherwise needs the wifi unplugged to find. */}
+        <SurfaceRow
+          icon={rowIcon(<GlobeIcon size={22} />, tokens.blueTint, tokens.blueText)}
+          label="Ýörite sahypalar"
+          labelSx={LABEL_SX}
+          sub="Ýalňyşlyklar, boş bölümler, tanyşdyryş"
+          end={<RowEnd />}
+          onClick={() => setView('states')}
+        />
         {/* Three plans, so this is a picker and not a switch: a boolean could
             only say "paying or not", and the whole point of the tiers is that
             two paying accounts see different apps. */}

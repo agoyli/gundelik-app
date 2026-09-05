@@ -17,33 +17,38 @@ import { usePrefs } from './prefs';
  * an allowance; the hooks below simply say yes.
  */
 
-export type AllowanceId = 'cards' | 'tests';
+export type AllowanceId = 'cards' | 'tests' | 'games';
 
 /** How many free goes a day, per kind. */
-export const DAILY_FREE: Record<AllowanceId, number> = { cards: 1, tests: 1 };
+export const DAILY_FREE: Record<AllowanceId, number> = { cards: 1, tests: 1, games: 1 };
 
 export const ALLOWANCE_LABEL: Record<AllowanceId, string> = {
   cards: 'Günde bir toplum mugt',
   tests: 'Günde bir test mugt',
+  games: 'Günde bir gönükme mugt',
 };
 
 /* what was opened today, per kind — the ids, so re-opening the same deck or
    the same test does not spend a second go */
 type Used = Record<AllowanceId, string[]>;
+const empty = (): Used => ({ cards: [], tests: [], games: [] });
 let day = TODAY;
-let used: Used = { cards: [], tests: [] };
+let used: Used = empty();
 
 const listeners = new Set<() => void>();
 const subscribe = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 let snapshot: Used = used;
-const publish = () => { snapshot = { cards: [...used.cards], tests: [...used.tests] }; listeners.forEach((fn) => fn()); };
+const publish = () => {
+  snapshot = { cards: [...used.cards], tests: [...used.tests], games: [...used.games] };
+  listeners.forEach((fn) => fn());
+};
 
 /* The app's day is fixed while it runs, but a real one rolls over — so the
    reset lives here rather than in whatever screen happens to render first. */
 const roll = () => {
   if (day === TODAY) return;
   day = TODAY;
-  used = { cards: [], tests: [] };
+  used = empty();
   publish();
 };
 

@@ -5,7 +5,8 @@ import {
   BellIcon, CameraIcon, CheckIcon, ClipIcon, ClockIcon,
   DocIcon, ImageIcon, LockIcon, SendIcon, SparkleIcon,
 } from '../components/Icons';
-import { AdSlot, BetaPill } from '../components/Paywall';
+import { BetaPill } from '../components/Paywall';
+import { BannerSlot } from './BannerScreens';
 import {
   CountPill, EmptyState, IconBadge, RowChevron, SectionLabel, Segmented, SheetDrawer, SubPage,
   SurfaceRow,
@@ -730,7 +731,7 @@ export function InboxScreen({ onBack, toast, onUpgrade }: {
           </Box>
 
           <Box sx={{ pt: '16px' }}>
-            <AdSlot onUpgrade={onUpgrade} variant="slim" />
+            <BannerSlot placement="inbox" onUpgrade={onUpgrade} toast={toast} />
           </Box>
         </>
       )}

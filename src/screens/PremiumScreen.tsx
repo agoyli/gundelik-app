@@ -1,12 +1,14 @@
 import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { CheckIcon, StarFilledIcon } from '../components/Icons';
-import { IconBadge, PillHeader, RowChevron, SectionLabel, StickyFooter } from '../components/Ui';
+import { IconBadge, RowChevron, SectionLabel, StickyFooter } from '../components/Ui';
 import { PREMIUM_ADS } from '../data/premium';
 import type { PremiumAd } from '../data/premium';
 import { FEATURES, PLAN, PROOF, TIERS, meets, tierName } from '../state/prefs';
 import type { Tier } from '../state/prefs';
-import { BalanceNote, ListPrice, SavePill, TrustLine, perMonthOf, priceLine, usePay } from './payBits';
+import {
+  BalanceNote, ListPrice, PayHeader, SavePill, TrustLine, perMonthOf, priceLine, usePay,
+} from './payBits';
 import type { PayProps, Term } from './payBits';
 import { PREMIUM_GRADIENT, tokens } from '../theme';
 
@@ -237,7 +239,7 @@ function AdDetail({ index, tier, term, onBack, onBuy }: {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <PillHeader title="Premium" onBack={onBack} />
+      <PayHeader title="Premium" onBack={onBack} />
 
       <Box
         ref={track}
@@ -329,7 +331,7 @@ const BuyButton = ({ tier, term, onBuy }: { tier: Tier; term: Term; onBuy: () =>
 
 /* ---------------- the page ---------------- */
 
-export function PremiumScreen({ onBack, onDone, toast }: PayProps) {
+export function PremiumScreen({ onBack, onDone, toast, onSwitch }: PayProps) {
   const { pick, setPick, term, setTerm, tier, buy, premium } = usePay({ onDone, toast });
   const [open, setOpen] = useState<number | null>(null);
 
@@ -344,7 +346,7 @@ export function PremiumScreen({ onBack, onDone, toast }: PayProps) {
 
   return (
     <>
-      <PillHeader title="Premium" onBack={onBack} />
+      <PayHeader title="Premium" onBack={onBack} onSwitch={onSwitch} />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
         <Hero
           title="Gündelik Premium"

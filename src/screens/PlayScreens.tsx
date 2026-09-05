@@ -1,11 +1,12 @@
 import { Box, ButtonBase, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import { CheckIcon, GameIcon, LockIcon } from '../components/Icons';
+import { CheckIcon, GameIcon } from '../components/Icons';
 import { TeaserCard } from '../components/Paywall';
 import {
   ChipRow, EmptyState, IconBadge, RowChevron, SectionHeading, SubPage, SurfaceRow,
 } from '../components/Ui';
 import { tierFor, useCan } from '../state/prefs';
+import { useAllowance } from '../state/allowance';
 import { USER_GRADE } from '../data/curriculum';
 import { KIND_META } from '../data/kinds';
 import { loadPlayCards, playCount, playGroups } from '../data/library';
@@ -73,8 +74,10 @@ const groupSub = (g: PlayGroup, withGrade: boolean) =>
 
 /* ---------------- One group: the cards, with what each is about ---------------- */
 
-function PlayGroupScreen({ group, onBack, onUpgrade }: {
+function PlayGroupScreen({ group, onBack, onUpgrade, gate }: {
   group: PlayGroup; onBack: () => void; onUpgrade: () => void;
+  /** may this interactive be opened? spends the free tier's daily go if so */
+  gate: (id: string) => boolean;
 }) {
   /* undefined while the subject-grade's lesson file is in flight */
   const [cards, setCards] = useState<PlayCard[] | undefined>(undefined);
@@ -128,7 +131,7 @@ function PlayGroupScreen({ group, onBack, onUpgrade }: {
         {(cards ?? group.items.map((it) => ({ ...it, note: '' }))).map((c, i) => (
           <ButtonBase
             key={c.id}
-            onClick={() => setPlaying(c)}
+            onClick={() => (gate(c.id) ? setPlaying(c) : onUpgrade())}
             sx={{
               display: 'block', textAlign: 'start', width: '100%',
               bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '14px',
@@ -180,13 +183,26 @@ export function PlayScreen({ startGrade, startGroupId, onBack, onUpgrade }: {
     () => playGroups(opening).find((g) => g.id === startGroupId) ?? null,
   );
   const can = useCan('games');
+  /* the same daily go the decks and the tests give — one interactive a day,
+     spent when one is opened rather than on arriving at the list */
+  const allow = useAllowance('games');
   const plan = tierFor('games');
 
   const groups = useMemo(() => playGroups(grade), [grade]);
   const total = useMemo(() => playCount(grade), [grade]);
 
   if (group) {
-    return <PlayGroupScreen group={group} onBack={() => setGroup(null)} onUpgrade={onUpgrade} />;
+    return (
+      <PlayGroupScreen
+        group={group}
+        onBack={() => setGroup(null)}
+        onUpgrade={onUpgrade}
+        gate={(id) => {
+          if (can || allow.canOpen(id)) { if (!can) allow.take(id); return true; }
+          return false;
+        }}
+      />
+    );
   }
 
   return (
@@ -204,8 +220,38 @@ export function PlayScreen({ startGrade, startGroupId, onBack, onUpgrade }: {
         />
       </Box>
 
+      {/*
+        * One lock treatment, not three.
+        *
+        * The page used to carry the state in three places at once: a grey icon
+        * and a padlock on every locked row, the plan's name appended to each
+        * row's second line, and a teaser card at the bottom repeating both. A
+        * reader met the same sentence four times before reaching a subject.
+        *
+        * It now reads like Kartlar and Testler, which is the point — one
+        * teaser at the top saying what the free tier gets today, then a plain
+        * list. The catalogue is the argument, so the catalogue stays legible.
+        */}
+      {!can && groups.length > 0 && (
+        <Box sx={{ pb: '14px' }}>
+          <TeaserCard
+            title={allow.left > 0 ? 'Şu gün bir gönükme mugt' : 'Şu günki mugt gönükme ulanyldy'}
+            note={allow.left > 0
+              ? `${playCount()} gönükmäniň birini şu gün mugt işläp bilersiň. Ählisi — ${plan?.name} bilen.`
+              : `Ertir ýene biri açylýar. Ähli ${playCount()} gönükme — ${plan?.name} bilen.`}
+            feature="games"
+            onUpgrade={onUpgrade}
+          />
+        </Box>
+      )}
+
       <SectionHeading
         title={grade === undefined ? 'Ähli synplar' : `${ordinal(grade)} synp`}
+        action={(
+          <Typography sx={{ fontSize: 13, color: tokens.ink3, fontVariantNumeric: 'tabular-nums' }}>
+            {total} gönükme
+          </Typography>
+        )}
       />
 
       {groups.length === 0 ? (
@@ -215,39 +261,19 @@ export function PlayScreen({ startGrade, startGroupId, onBack, onUpgrade }: {
           note="Interaktiw gönükmeler materialy taýýar bolan temalar bilen bilelikde çykýar. Başga synpy saýlap gör."
         />
       ) : (
-        <>
-          <Typography sx={{ fontSize: 13.5, color: tokens.ink2, pb: '10px' }}>
-            {total} gönükme · {groups.length} ders
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {groups.map((g, i) => (
-              <SurfaceRow
-                key={g.id}
-                icon={can || i === 0
-                  ? <IconBadge bg={g.tint} color={g.accent} size={44}><GameIcon size={22} /></IconBadge>
-                  : <IconBadge bg={tokens.lockTile} color={tokens.lockInk} size={44}><LockIcon size={20} /></IconBadge>}
-                label={g.subject}
-                /* the grade is on every row only in the all-grades view, where
-                   the same subject appears once per year it is taught */
-                sub={can || i === 0
-                  ? groupSub(g, grade === undefined)
-                  : `${groupSub(g, grade === undefined)} · ${plan?.name} bilen açylýar`}
-                end={<RowChevron />}
-                onClick={() => (can || i === 0 ? setGroup(g) : onUpgrade())}
-              />
-            ))}
-          </Box>
-        </>
-      )}
-
-      {!can && groups.length > 1 && (
-        <Box sx={{ pt: '14px' }}>
-          <TeaserCard
-            title={`${playCount()} gönükme`}
-            note={`Ähli synplaryň interaktiw gönükmeleri — ${plan?.name} bilen açylýar.`}
-            feature="games"
-            onUpgrade={onUpgrade}
-          />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {groups.map((g) => (
+            <SurfaceRow
+              key={g.id}
+              icon={<IconBadge bg={g.tint} color={g.accent} size={44}><GameIcon size={22} /></IconBadge>}
+              label={g.subject}
+              /* the grade is on every row only in the all-grades view, where
+                 the same subject appears once per year it is taught */
+              sub={groupSub(g, grade === undefined)}
+              end={<RowChevron />}
+              onClick={() => setGroup(g)}
+            />
+          ))}
         </Box>
       )}
     </SubPage>

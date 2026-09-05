@@ -6,9 +6,11 @@ import {
   QuestionOutlineIcon, SendIcon, ShieldIcon, SparkleIcon, TabBookIcon,
 } from '../components/Icons';
 import {
-  GradeBadge, GradeSlot, RowEnd, SectionLabel, Segmented, SheetDrawer,
+  GradeBadge, GradeSlot, RowChevron, RowEnd, SectionLabel, Segmented, SheetDrawer,
   SubPage, SurfaceRow, ToggleSwitch,
 } from '../components/Ui';
+import { AiChatSheet } from '../components/AiHelper';
+import type { AiSuggestion } from '../components/AiHelper';
 import { BadgeScore } from './BadgeScreens';
 import { absDate } from '../lib/date';
 import { tierName, usePrefs } from '../state/prefs';
@@ -1295,9 +1297,54 @@ const CHANNELS: { icon: ReactNode; tint: string; ink: string; label: string; val
   },
 ];
 
+/*
+ * The support chat.
+ *
+ * Most of what arrives at a help desk is the same six questions, and every one
+ * of them is answered somewhere in this app already — in the FAQ, on the
+ * tariff page, in Sazlamalar. A bot that can answer those instantly is worth
+ * more to the reader than a queue, and it is worth more to the desk than
+ * another ticket saying "how do I change my password".
+ *
+ * Two rules keep it honest. It only answers what it actually knows — anything
+ * else gets the fallback and the way to a human, which sits under the composer
+ * at all times rather than appearing after three failed replies. And it does
+ * **not** join the Akylly mugallym history: a question about billing is not
+ * part of a pupil's study record.
+ */
+const SUPPORT_ASKS: AiSuggestion[] = [
+  {
+    label: 'Abunany nädip ýatyrmaly?',
+    reply: 'Profil → Töleg → Taryh bölüminden abunany ýatyryp bolýar. Ýatyranyňdan soň hem tölenen möhletiň soňuna çenli ähli aýratynlyklar açyk galýar, hiç zat ýitmeýär.',
+  },
+  {
+    label: 'Bahalar näme üçin täzelenmeýär?',
+    reply: 'Bahalary mugallym žurnala girizenden soň görünýär — köplenç sapak gutaransoň 1–2 sagadyň içinde. Gündelikde günüň üstünden aşak çekseň, maglumat täzeden alynýar. Bir günden soň hem görünmese, mugallym entek girizmedik bolmagy mümkin.',
+  },
+  {
+    label: 'Balans nädip dolduryp bolar?',
+    reply: 'Profil → Balans → «Doldur». Telefon geçirimi ýa-da sowgat kart bilen dolduryp bolýar; geçirimden soň balans 5 minudyň içinde dolýar. Bäsleşiklerde toplanan ballary hem pula öwrüp bolýar: 100 bal = 1 TMT.',
+  },
+  {
+    label: 'Çagamy nädip goşmaly?',
+    reply: 'Sazlamalar → Hasap → «Çaga goş». Mekdebiň berýän goşulyş kody gerek — ony synp ýolbaşçysyndan alyp bolýar. Bir hasapda birnäçe çaga bolup biler.',
+  },
+  {
+    label: 'Paroly ýatdan çykardym',
+    reply: 'Girişde «Paroly unutdyňyzmy?» düwmesine bas — telefon belgiňe SMS bilen kod gelýär. Belgi üýtgän bolsa, mekdebiň administratory täzeläp berýär.',
+  },
+  {
+    label: 'Bildirişler gelmeýär',
+    reply: 'Sazlamalar → Bildirişler bölüminde gerekli görnüşleriň açykdygyny barla. Telefonyň öz sazlamalarynda hem Gündelik üçin bildirişlere rugsat berilmelidir.',
+  },
+];
+
+const SUPPORT_FALLBACK = 'Muny takyk bilemok. Operator bilen habarlaşsaň has çalt çözüler — aşakdaky düwme arkaly ýaz, hasabyň maglumatlary awtomatiki goşulýar.';
+
 export function SupportScreen({ onBack, toast }: { onBack: () => void; toast: Toast }) {
   const p = usePrefs();
   const [report, setReport] = useState(false);
+  const [chat, setChat] = useState(false);
   const [text, setText] = useState('');
   const hour = new Date().getHours();
   const open = hour >= SUPPORT_OPEN.from && hour < SUPPORT_OPEN.to;
@@ -1310,6 +1357,29 @@ export function SupportScreen({ onBack, toast }: { onBack: () => void; toast: To
 
   return (
     <SubPage title="Goldaw" onBack={onBack}>
+      <AiChatSheet
+        open={chat}
+        onClose={() => setChat(false)}
+        suggestions={SUPPORT_ASKS}
+        fallback={SUPPORT_FALLBACK}
+        title="Goldaw kömekçisi"
+        note="Programma boýunça soraglara jogap berýär"
+        greeting="Salam! 👋 Programma boýunça soragyňy ýaz — hasap, töleg, bahalar, bildirişler. Bilmesem, operatora geçireýin."
+        icon={<QuestionOutlineIcon size={22} />}
+        remember={false}
+        footer={(
+          <Box sx={{ mt: '10px' }}>
+            <Button
+              fullWidth disableElevation
+              onClick={() => { setChat(false); setReport(true); }}
+              sx={{ bgcolor: tokens.surface, color: tokens.ink2, fontWeight: 600 }}
+            >
+              Operator bilen habarlaş
+            </Button>
+          </Box>
+        )}
+      />
+
       {/* Is anyone there — the question every support screen is opened with */}
       <Box sx={{
         bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
@@ -1332,6 +1402,21 @@ export function SupportScreen({ onBack, toast }: { onBack: () => void; toast: To
           </Typography>
         </Box>
       </Box>
+
+      {/* The fastest answer first. It is free on every tier — support is not a
+          feature to sell — and it says what it is: a bot that knows this app,
+          not a person. */}
+      <SectionLabel>Çalt jogap</SectionLabel>
+      <RowGroup>
+        <SurfaceRow
+          icon={rowIcon(<SparkleIcon size={18} />, tokens.blueTint, tokens.blueText)}
+          label="Goldaw kömekçisi"
+          labelSx={LABEL_SX}
+          sub="Ýygy soralýan soraglara derrew jogap berýär"
+          end={<RowChevron />}
+          onClick={() => setChat(true)}
+        />
+      </RowGroup>
 
       <SectionLabel>Habarlaşmak</SectionLabel>
       <RowGroup>

@@ -483,3 +483,18 @@ export const UsersIcon = (p: P) =>
     <path d="M3.4 19.2a5.8 5.8 0 0 1 11.6 0" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" fill="none" />
     <path d="M16.2 5.4a3.4 3.4 0 0 1 0 6M17.4 14.2a5.8 5.8 0 0 1 3.2 5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" fill="none" />
   </>, 1.103);
+
+/* A megaphone — advertising, and only advertising. It is deliberately unlike
+   BellIcon: a notice from the school and a banner someone paid for must never
+   wear the same glyph. */
+export const MegaphoneIcon = (p: P) =>
+  svg(p, '0 0 24 24', 24, 24, <>
+    <path d="M4 10.4v3.2c0 .9.7 1.6 1.6 1.6H8l8.6 4.2c.7.3 1.4-.2 1.4-.9V5.5c0-.7-.7-1.2-1.4-.9L8 8.8H5.6c-.9 0-1.6.7-1.6 1.6Z" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" fill="none" />
+    <path d="M8 15.2V20h3v-3.4M20.2 9.6a3.4 3.4 0 0 1 0 4.8" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </>, 1.1);
+
+/* The ✕ that closes or dismisses. */
+export const CloseIcon = (p: P) =>
+  svg(p, '0 0 24 24', 24, 24, <>
+    <path d="M6.6 6.6l10.8 10.8M17.4 6.6 6.6 17.4" stroke="currentColor" strokeWidth={2} strokeLinecap="round" fill="none" />
+  </>, 1);

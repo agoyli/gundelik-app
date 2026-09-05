@@ -1,13 +1,13 @@
 import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import { useState } from 'react';
 import { CheckIcon, LockIcon, SparkleIcon } from '../components/Icons';
-import {
-  HeaderIconButton, RowChevron, SectionLabel, SheetDrawer, StickyFooter, SubPage, SurfaceRow,
-} from '../components/Ui';
+import { HeaderIconButton, SectionLabel, StickyFooter, SubPage } from '../components/Ui';
 import { PayCompareScreen } from './PayCompareScreen';
 import { PayOfferScreen } from './PayOfferScreen';
+import { PayTrialScreen } from './PayTrialScreen';
+import { PayWorthScreen } from './PayWorthScreen';
 import { PremiumScreen } from './PremiumScreen';
-import { PAY_VARIANTS } from './payBits';
+import { PayVariantSheet } from './payBits';
 import type { PayVariant } from './payBits';
 import {
   FEATURES, TIERS, listYearly, meets, savePct, setTier, usePrefs,
@@ -149,11 +149,32 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
     onBack();
   };
 
-  if (variant) {
-    const props = { onBack: () => setVariant(null), onDone: onBack, toast };
-    if (variant === 'offer') return <PayOfferScreen {...props} />;
-    if (variant === 'compare') return <PayCompareScreen {...props} />;
-    return <PremiumScreen {...props} />;
+  if (variant && variant !== 'table') {
+    /* Every variant gets the same three doors out — back to this page, back to
+       the app when the thing is bought, and the ✦ that swaps the presentation
+       without losing your place in the decision. */
+    const props = {
+      onBack: () => setVariant(null),
+      onDone: onBack,
+      toast,
+      onSwitch: () => setPicker(true),
+    };
+    const page = variant === 'offer' ? <PayOfferScreen {...props} />
+      : variant === 'compare' ? <PayCompareScreen {...props} />
+        : variant === 'trial' ? <PayTrialScreen {...props} />
+          : variant === 'worth' ? <PayWorthScreen {...props} />
+            : <PremiumScreen {...props} />;
+    return (
+      <>
+        {page}
+        <PayVariantSheet
+          open={picker}
+          current={variant}
+          onClose={() => setPicker(false)}
+          onPick={(id) => setVariant(id === 'table' ? null : id)}
+        />
+      </>
+    );
   }
 
   return (
@@ -261,25 +282,15 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
         </Typography>
       </StickyFooter>
 
-      {/* The showroom, not a product surface: three ways of asking for the
-          same money, listed with what each one is betting on. */}
-      <SheetDrawer open={picker} onClose={() => setPicker(false)}>
-        <Typography variant="h2">Töleg sahypasynyň görnüşleri</Typography>
-        <Typography sx={{ fontSize: 13.5, color: tokens.ink3, lineHeight: 1.5, mt: '8px', mb: '14px' }}>
-          Bir teklip, üç dürli aýdylyşy. Bahalar we aýratynlyklar ählisinde birmeňzeş.
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {PAY_VARIANTS.map((v) => (
-            <SurfaceRow
-              key={v.id}
-              label={v.name}
-              sub={v.note}
-              end={<RowChevron />}
-              onClick={() => { setPicker(false); setVariant(v.id); }}
-            />
-          ))}
-        </Box>
-      </SheetDrawer>
+      {/* The showroom, not a product surface: six ways of asking for the same
+          money, listed with what each one is betting on — and this page listed
+          among them, so the switcher is a door and not a trapdoor. */}
+      <PayVariantSheet
+        open={picker}
+        current="table"
+        onClose={() => setPicker(false)}
+        onPick={(id) => setVariant(id === 'table' ? null : id)}
+      />
     </SubPage>
   );
 }

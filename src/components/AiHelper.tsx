@@ -1,5 +1,6 @@
 import { Box, ButtonBase, InputBase, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { SendIcon, SparkleIcon } from './Icons';
 import { SheetDrawer } from './Ui';
 import { TODAY } from '../lib/date';
@@ -46,8 +47,23 @@ export function AiFab({ onClick, lift }: { onClick: () => void; lift?: boolean }
  *
  * Mock replies for now; swap `ask` for a real model call when the backend exists.
  */
-export function AiChatSheet({ open, onClose, suggestions, fallback }: {
+export function AiChatSheet({
+  open, onClose, suggestions, fallback,
+  title = 'Akylly mugallym', note = 'Sapak boýunça islendik zat soraň',
+  greeting = 'Salam! 👋 Men bu sapak boýunça kömek edip bilerin. Taýýar soraglardan birini saýla ýa-da özüň ýaz.',
+  icon, remember = true, footer,
+}: {
   open: boolean; onClose: () => void; suggestions: AiSuggestion[]; fallback: string;
+  /* The same sheet answers two different jobs — a question about a lesson, and
+     a question about the app. Only the words and the icon change, because a
+     second chat component would be a second set of bugs and a second thing to
+     keep looking like the app. */
+  title?: string; note?: string; greeting?: string; icon?: ReactNode;
+  /** whether the conversation joins the Akylly mugallym history — support
+      threads do not: a help query is not part of a pupil's study record */
+  remember?: boolean;
+  /** what sits under the composer — for support, the way to a human */
+  footer?: ReactNode;
 }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
@@ -56,6 +72,7 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
   /* one stored conversation per opening of the sheet */
   const chatId = useRef<string | null>(null);
   const record = (m: Msg) => {
+    if (!remember) return;
     if (!chatId.current) chatId.current = newAiChat();
     addAiMsg(chatId.current, { ...m, at: `${TODAY}T${new Date().toTimeString().slice(0, 5)}` });
   };
@@ -114,10 +131,10 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
         <Box aria-hidden sx={{
           width: 40, height: 40, borderRadius: `${tokens.rTile}px`, flex: 'none',
           bgcolor: tokens.blueSoft, color: tokens.blue, display: 'grid', placeItems: 'center',
-        }}><SparkleIcon size={22} /></Box>
+        }}>{icon ?? <SparkleIcon size={22} />}</Box>
         <Box>
-          <Typography variant="h2" component="h2" sx={{ fontSize: 17 }}>Akylly mugallym</Typography>
-          <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted }}>Sapak boýunça islendik zat soraň</Typography>
+          <Typography variant="h2" component="h2" sx={{ fontSize: 17 }}>{title}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted }}>{note}</Typography>
         </Box>
       </Box>
 
@@ -128,7 +145,7 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
         scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
         pb: '4px',
       }}>
-        {bubble({ role: 'ai', text: 'Salam! 👋 Men bu sapak boýunça kömek edip bilerin. Taýýar soraglardan birini saýla ýa-da özüň ýaz.' }, 'hello')}
+        {bubble({ role: 'ai', text: greeting }, 'hello')}
         {msgs.length === 0 && !thinking && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px', pt: '2px' }}>
             {suggestions.map((s) => (
@@ -161,7 +178,7 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
           sx={{ flex: 1, fontSize: 14 }}
-          inputProps={{ 'aria-label': 'Akylly mugallyma sorag' }}
+          inputProps={{ 'aria-label': `${title} — sorag` }}
         />
         <ButtonBase onClick={send} disabled={!draft.trim()} aria-label="Ugrat"
           sx={{
@@ -172,6 +189,7 @@ export function AiChatSheet({ open, onClose, suggestions, fallback }: {
           <SendIcon size={15} />
         </ButtonBase>
       </Box>
+      {footer}
     </SheetDrawer>
   );
 }

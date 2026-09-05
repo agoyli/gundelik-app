@@ -14,6 +14,7 @@ import { SwipeLockProvider, useSwipeLocked } from './components/SwipeLock';
 import { TabBar } from './components/Ui';
 import { GundelikScreen } from './screens/GundelikScreen';
 import { AnalitikaScreen, GollanmalarScreen, ProfilScreen } from './screens/OtherScreens';
+import { OnboardingScreen } from './screens/StateScreens';
 import { theme, tokens } from './theme';
 import { TAB_ORDER } from './types';
 import type { TabId } from './types';
@@ -219,6 +220,17 @@ export default function App() {
    */
   const hash = useHash();
   const [docs, setDocs] = useState<'brand' | 'design' | null>(null);
+  /*
+   * The first three screens, before anything else.
+   *
+   * A new family arriving at a school diary has no idea whether it is free,
+   * whether it needs a code, or what is inside it — three questions the
+   * onboarding answers with facts and then gets out of the way. It shows once
+   * (state is in memory, like everything else in this prototype) and can be
+   * replayed from Sazlamalar → Ýörite sahypalar, which is also where the error
+   * pages live.
+   */
+  const [onboarding, setOnboarding] = useState(true);
   useEffect(() => {
     if (hash.startsWith('#/brand')) setDocs('brand');
     else if (hash.startsWith('#/design')) setDocs('design');
@@ -242,7 +254,9 @@ export default function App() {
           },
         },
       }} />
-      {docs ? (
+      {onboarding && !docs ? (
+        <OnboardingScreen onDone={() => setOnboarding(false)} />
+      ) : docs ? (
         <ErrorBoundary>
           <Suspense fallback={<Box sx={{ minHeight: '100dvh', bgcolor: tokens.surface }} />}>
             {docs === 'brand' ? <BrandbookScreen /> : <DesignSystemScreen />}

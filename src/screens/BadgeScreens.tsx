@@ -1,10 +1,11 @@
 import { Box, ButtonBase, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
-import { LockIcon, TrophyIcon } from '../components/Icons';
+import { LockIcon, SparkleIcon, TrophyIcon } from '../components/Icons';
 import { BetaPill, TeaserCard } from '../components/Paywall';
 import {
-  EmptyState, IconBadge, SectionLabel, Segmented, StatTile, SubPage,
+  EmptyState, HeaderIconButton, IconBadge, SectionLabel, Segmented, StatTile, SubPage, VariantSheet,
 } from '../components/Ui';
+import type { Variant } from '../components/Ui';
 import { AWARDS, BADGE_TYPES, TONE, WEEK_LABELS, badgeType, toneOf } from '../data/badges';
 import type { Award, BadgeTone } from '../data/badges';
 import { fmtDate } from '../lib/date';
@@ -110,12 +111,174 @@ const AwardRow = ({ a }: { a: Award }) => {
 
 type Range = 'week' | 'term';
 
+/* ---------------- three ways to read a term of badges ----------------
+ *
+ * The stats page answers "how is the term going" and answers it well, but it
+ * is the only question it answers — and it is a parent's question. A pupil
+ * opening Ýyldyzlar wants to know which badges they have collected; a parent
+ * catching up on the week wants to read what the teachers actually wrote, in
+ * order, without decoding three charts first.
+ *
+ * So the same term of `AWARDS` is read three ways, behind the app's own
+ * `VariantSheet`: statistics, a collection, and a diary. Nothing is duplicated
+ * — every screen aggregates the same array at render time — and switching
+ * keeps the period you had chosen, because the period is a fact about what you
+ * are looking at rather than a setting of one layout.
+ */
+export type BadgeView = 'stats' | 'collection' | 'feed';
+
+export const BADGE_VIEWS: Variant<BadgeView>[] = [
+  { id: 'stats', name: 'Statistika', note: 'Sanlar, paýlar we hepdelik tendensiýa' },
+  { id: 'collection', name: 'Kolleksiýa', note: 'Ýygnalan ýyldyzlar — görnüşi boýunça' },
+  { id: 'feed', name: 'Gündelik ýazgy', note: 'Mugallymlaryň ýazany — wagt tertibinde' },
+];
+
+/*
+ * The collection.
+ *
+ * Nine badge types exist; a pupil has some of them and not others, and that is
+ * the shape of the thing they are actually trying to fill. So every type gets
+ * a tile — earned ones in their tone with a count, unearned ones flat with
+ * what earns them — and the good ones come first, because a wall that opens
+ * with four red tiles is a wall nobody opens twice.
+ *
+ * The unearned tile is the useful half: it is the only place in the app that
+ * says *how* a badge is given, in the teacher's own terms.
+ */
+function BadgeCollection({ awards, can, onUpgrade, plan }: {
+  awards: Award[]; can: boolean; onUpgrade: () => void; plan?: { name: string };
+}) {
+  const counted = BADGE_TYPES.map((t) => ({
+    t,
+    n: awards.filter((a) => a.typeId === t.id).length,
+  })).sort((a, b) => (a.t.tone === b.t.tone ? b.n - a.n : a.t.tone === 'good' ? -1 : 1));
+
+  const earned = counted.filter((c) => c.n > 0).length;
+
+  return (
+    <>
+      <Box sx={{
+        mt: '12px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
+        p: `16px ${tokens.padCard}`,
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Ýygnalan görnüşler</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+            {earned}/{BADGE_TYPES.length}
+          </Typography>
+        </Box>
+        <Box aria-hidden sx={{
+          mt: '10px', height: 8, borderRadius: `${tokens.rPill}px`,
+          bgcolor: tokens.dividerSoft, overflow: 'hidden',
+        }}>
+          <Box sx={{
+            height: '100%', width: `${(earned / BADGE_TYPES.length) * 100}%`,
+            bgcolor: tokens.blue, borderRadius: `${tokens.rPill}px`,
+          }} />
+        </Box>
+      </Box>
+
+      <SectionLabel>Ýyldyzlaryň görnüşleri</SectionLabel>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        {counted.map(({ t, n }) => {
+          const tone = TONE[t.tone];
+          const has = n > 0;
+          return (
+            <Box key={t.id} sx={{
+              bgcolor: has ? tone.tint : tokens.surface,
+              borderRadius: `${tokens.rCard}px`, p: '14px 13px', minHeight: 128,
+              display: 'flex', flexDirection: 'column', gap: '6px',
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box aria-hidden sx={{
+                  width: 40, height: 40, borderRadius: `${tokens.rTile}px`,
+                  bgcolor: has ? '#fff' : tokens.surfacePress,
+                  display: 'grid', placeItems: 'center', fontSize: 20,
+                  filter: has ? 'none' : 'grayscale(1)', opacity: has ? 1 : .55,
+                }}>{t.emoji}</Box>
+                {has && (
+                  <Typography sx={{
+                    fontSize: 20, fontWeight: 700, color: tone.ink, fontVariantNumeric: 'tabular-nums',
+                  }}>{n}</Typography>
+                )}
+              </Box>
+              <Typography sx={{
+                fontSize: 15, fontWeight: 700, color: has ? tokens.ink : tokens.ink3,
+              }}>{t.label}</Typography>
+              <Typography sx={{
+                fontSize: 12.5, color: has ? tokens.ink2 : tokens.inkMuted, lineHeight: 1.4,
+              }}>{has ? `${n} gezek berildi` : t.note}</Typography>
+            </Box>
+          );
+        })}
+      </Box>
+
+      {!can && (
+        <Box sx={{ pt: '14px' }}>
+          <TeaserCard
+            title="Her ýyldyzyň arkasynda bir waka bar"
+            note={`Haýsy sapakda, haýsy mugallym we näme üçin berlenini ${plan?.name} bilen oka.`}
+            feature="badges"
+            onUpgrade={onUpgrade}
+          />
+        </Box>
+      )}
+    </>
+  );
+}
+
+/*
+ * The diary.
+ *
+ * What a parent reads on a Sunday: the term in order, grouped by day, each
+ * entry saying who gave it and — where there is one — the sentence the teacher
+ * wrote. It is the plainest of the three views and probably the most read; the
+ * charts are for deciding, this is for knowing.
+ */
+function BadgeFeed({ awards, can, onUpgrade }: {
+  awards: Award[]; can: boolean; onUpgrade: () => void;
+}) {
+  const days = useMemo(() => {
+    const map = new Map<string, Award[]>();
+    awards.forEach((a) => map.set(a.date, [...(map.get(a.date) ?? []), a]));
+    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [awards]);
+
+  if (!can) return <LockedFeed awards={awards} onUpgrade={onUpgrade} />;
+
+  return (
+    <>
+      {days.map(([date, items]) => (
+        <Box key={date}>
+          <SectionLabel>{fmtDate(date)}</SectionLabel>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {items.map((a) => <AwardRow key={a.id} a={a} />)}
+          </Box>
+        </Box>
+      ))}
+      {days.length === 0 && (
+        <Box sx={{ pt: '20px' }}>
+          <EmptyState
+            icon={<TrophyIcon size={26} />}
+            title="Bu döwürde ýyldyz ýok"
+            note="Başga döwri saýlap gör."
+          />
+        </Box>
+      )}
+    </>
+  );
+}
+
 export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; onUpgrade: () => void }) {
   const { beta } = usePrefs();
   const can = useCan('badges');
   const plan = tierFor('badges');
   const [range, setRange] = useState<Range>('term');
   const [tone, setTone] = useState<BadgeTone | 'all'>('all');
+  /* which reading of the same term — kept above the period, because the period
+     survives a switch: it is a fact about what you are looking at */
+  const [view, setView] = useState<BadgeView>('stats');
+  const [picker, setPicker] = useState(false);
 
   const scoped = useMemo(
     () => (range === 'week' ? AWARDS.filter((a) => a.week >= 6) : AWARDS),
@@ -162,7 +325,25 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
   const feed = tone === 'all' ? scoped : scoped.filter((a) => toneOf(a) === tone);
 
   return (
-    <SubPage title="Ýyldyzlar" onBack={onBack} help="Mugallymlaryň sapakda beren ýyldyzlary. Baha näme edileni, ýyldyz bolsa nähili işlenilenini görkezýär.">
+    <SubPage
+      title="Ýyldyzlar"
+      onBack={onBack}
+      action={(
+        <HeaderIconButton label="Sahypanyň görnüşleri" onClick={() => setPicker(true)}>
+          <SparkleIcon size={20} />
+        </HeaderIconButton>
+      )}
+      help="Mugallymlaryň sapakda beren ýyldyzlary. Baha näme edileni, ýyldyz bolsa nähili işlenilenini görkezýär."
+    >
+      <VariantSheet
+        open={picker}
+        title="Ýyldyzlar sahypasynyň görnüşleri"
+        lede="Bir çärýek — üç dürli okalyşy. Maglumat ählisinde birmeňzeş."
+        variants={BADGE_VIEWS}
+        current={view}
+        onClose={() => setPicker(false)}
+        onPick={setView}
+      />
 
       <Box sx={{ pt: '14px' }}>
         <Segmented
@@ -172,6 +353,13 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
           options={[{ id: 'week', label: 'Şu hepde' }, { id: 'term', label: 'Çärýek' }]}
         />
       </Box>
+
+      {view === 'collection' && (
+        <BadgeCollection awards={scoped} can={can} onUpgrade={onUpgrade} plan={plan} />
+      )}
+      {view === 'feed' && <BadgeFeed awards={scoped} can={can} onUpgrade={onUpgrade} />}
+      {view === 'stats' && (
+      <>
 
       {/* headline — free tier sees this much */}
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', mt: '12px' }}>
@@ -352,6 +540,8 @@ export function BadgeStatsScreen({ onBack, onUpgrade }: { onBack: () => void; on
         </>
       ) : (
         <LockedFeed awards={scoped} onUpgrade={onUpgrade} />
+      )}
+      </>
       )}
     </SubPage>
   );
