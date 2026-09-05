@@ -163,9 +163,14 @@ export const fetchWeek = (): Promise<DayInfo[]> => delay(week);
 export const fetchDay = (key: string): Promise<DaySchedule> =>
   delay(store[key] ?? { key, notes: 0, lessons: [] });
 
-export const markHomeworkDone = (dayKey: string, lessonId: string): Promise<DaySchedule> => {
+/* Homework is a checkbox, so it unticks. Marking one done by mistake and
+   having no way back is the kind of small trap that teaches people not to
+   touch the control at all. */
+export const setHomeworkDone = (
+  dayKey: string, lessonId: string, done: boolean,
+): Promise<DaySchedule> => {
   const lesson = store[dayKey]?.lessons.find((l) => l.id === lessonId);
-  if (lesson) lesson.hwDone = true;
+  if (lesson) lesson.hwDone = done;
   return delay(store[dayKey]);
 };
 

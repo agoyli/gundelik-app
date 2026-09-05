@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   DateStrip, GradeBadge, HeaderIconButton, HelpButton, LessonCard, MonthCalendar, SheetDrawer,
-  SheetSection,
+  SheetSection, TodoList, TodoRow,
 } from '../components/Ui';
 import {
   BellIcon, CalendarIcon, CheckIcon, ClockIcon, HwIcon, LockIcon,
@@ -21,6 +21,7 @@ import { absDate, fmtDate } from '../lib/date';
 import { inboxUnread } from '../data/inbox';
 import { useSchedule } from '../hooks/useSchedule';
 import { tierFor, useCan } from '../state/prefs';
+import { EARN_POINTS, award, useEarns } from '../state/earn';
 import { tokens } from '../theme';
 import type { Lesson } from '../types';
 
@@ -32,9 +33,8 @@ type SheetState =
   | { type: 'help' }
   | null;
 
-/* the teacher notes the free tier is allowed to read in full */
-const FREE_NOTES = 1;
-
+/* What a note says. The free tier never reaches these — it sees who wrote,
+   not what they wrote — so they exist only behind `canNotes`. */
 const NOTE_TEXTS = [
   'Okuwçynyň işjeňligi gowulandy, sapaga taýýarlykly geldi.',
   'Öý işini wagtynda we doly ýerine ýetirdi.',
@@ -119,10 +119,36 @@ function LockedAward({ award, onUpgrade }: { award: Award; onUpgrade: () => void
   );
 }
 
+/*
+ * What a tick is worth, printed on the tick itself.
+ *
+ * Free accounts do not collect the bal — but they are shown the figure, in
+ * grey, with the lock. A reward you can see and cannot take is the clearest
+ * argument the paywall has; a reward the free tier never hears about does no
+ * work at all. On a paying account it is the same pill in the app's coin
+ * colours, and it goes green once the points are banked.
+ */
+function EarnPill({ kind, earns, done }: { kind: 'hw' | 'test'; earns: boolean; done: boolean }) {
+  const n = EARN_POINTS[kind];
+  const banked = earns && done;
+  return (
+    <Box sx={{
+      display: 'inline-flex', alignItems: 'center', gap: '4px', height: 22, px: '8px',
+      borderRadius: `${tokens.rPill}px`, fontSize: 11, fontWeight: 700,
+      bgcolor: banked ? tokens.greenTint : earns ? tokens.orangeTint : tokens.surfacePress,
+      color: banked ? tokens.greenText : earns ? tokens.orangeText : tokens.inkMuted,
+    }}>
+      {!earns && <LockIcon size={10} />}+{n} bal
+    </Box>
+  );
+}
+
 export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
   const s = useSchedule();
   const canBadges = useCan('badges');
   const canNotes = useCan('notes');
+  /* whether ticks and tests actually credit bal on this account */
+  const earns = useEarns();
   const [sheet, setSheet] = useState<SheetState>(null);
   const [page, setPage] = useState<Page>('diary');
   const close = () => setSheet(null);
@@ -163,18 +189,18 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
     }
   };
 
-  const markDone = async (lesson: Lesson) => {
-    await s.markHwDone(lesson.id);
-    close();
-    toast('Öý işi bellendi ✓');
-  };
-
-  /* Ticking from the list: same call, no sheet to close, and it says what it
-     did — a chip that changes colour under the thumb is easy to miss. */
+  /* One call for every tick in the app — the card's chip, the day's to-do list
+     and the lesson's own row all land here, so the three can never disagree
+     about what "done" means. It says what it did, because a control that
+     changes colour under a thumb is easy to miss, and it goes both ways.
+     Ticking pays, on a paying account: the toast is where the bal is announced,
+     and it announces nothing when the work was already paid for. */
   const toggleHw = async (lesson: Lesson) => {
-    if (lesson.hwDone) return;
-    await s.markHwDone(lesson.id);
-    toast('Öý işi bellendi ✓');
+    const next = !lesson.hwDone;
+    await s.setHwDone(lesson.id, next);
+    if (!next) { toast('Belgi aýryldy'); return; }
+    const points = earns ? award('hw', lesson.id) : 0;
+    toast(points ? `Öý işi bellendi ✓ +${points} bal` : 'Öý işi bellendi ✓');
   };
 
   if (page === 'inbox') {
@@ -361,11 +387,24 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
             <SheetSection title={<><TemaIcon />Tema</>}>
               <Typography variant="body2">{sheet.lesson.tema}</Typography>
             </SheetSection>
-            <SheetSection
-              title={<><HwIcon />Öý işi</>}
-              end={sheet.lesson.hwDone ? <Box sx={{ color: tokens.greenDeep, display: 'flex' }}><CheckIcon size={15} /></Box> : undefined}
-            >
-              <Typography variant="body2">{sheet.lesson.hw ?? 'Öý işi girizilmedi.'}</Typography>
+            {/* The same to-do row the day's list uses, so a task looks and
+                behaves identically wherever it is met. It is also why the
+                footer no longer carries a "Ýerine ýetirildi diý" button: one
+                state, one control, and the control is the task itself. */}
+            <SheetSection title={<><HwIcon />Öý işi</>}>
+              {sheet.lesson.hw ? (
+                <TodoList>
+                  <TodoRow
+                    label={sheet.lesson.hw}
+                    sub={sheet.lesson.subject}
+                    done={sheet.lesson.hwDone}
+                    onToggle={() => void toggleHw(sheet.lesson)}
+                    end={<EarnPill kind="hw" earns={earns} done={sheet.lesson.hwDone} />}
+                  />
+                </TodoList>
+              ) : (
+                <Typography variant="body2">Öý işi girizilmedi.</Typography>
+              )}
             </SheetSection>
             {sheet.lesson.grade && (
               <SheetSection>
@@ -399,52 +438,73 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
                 </Box>
               </SheetSection>
             )}
-            <Box sx={{ display: 'flex', gap: '10px', mt: '18px' }}>
+            <Box sx={{ mt: '18px' }}>
               <Button fullWidth onClick={close} sx={{ bgcolor: tokens.surface, color: tokens.ink }}>Ýap</Button>
-              <Button fullWidth variant="contained" disableElevation
-                disabled={sheet.lesson.hwDone}
-                onClick={() => void markDone(sheet.lesson)}>
-                {sheet.lesson.hwDone ? 'Ýerine ýetirildi ✓' : 'Ýerine ýetirildi diý'}
-              </Button>
             </Box>
           </>
         )}
       </SheetDrawer>
 
+      {/*
+        * Teacher notes, and what a free account is shown of them.
+        *
+        * It used to hand the free tier the first note in full and lock the
+        * rest. That gives away the one thing the plan is sold on and still
+        * leaves the reader guessing how many they are missing. Now the free
+        * tier sees the **register**: which teacher wrote, in which lesson, at
+        * what time — every one of them, nothing hidden about the shape of the
+        * day — and the words themselves are the paid part. You know exactly
+        * what is there and exactly what is behind the wall, which is the only
+        * honest way to run a paywall over someone else's writing about you.
+        */}
       <SheetDrawer open={sheet?.type === 'notes'} onClose={close}>
         <Typography variant="h2">Mugallymdan bellikler</Typography>
-        <Typography variant="caption">{s.day?.notes ?? 0} täze belligiňiz bar</Typography>
+        <Typography variant="caption">
+          {canNotes
+            ? `${s.day?.notes ?? 0} täze belligiňiz bar`
+            : `${s.day?.notes ?? 0} mugallym bellik ýazdy — teksti ${tierFor('notes')?.name} bilen açylýar`}
+        </Typography>
         {s.day && s.day.notes > 0
           ? (
             <>
-              {/* the free tier reads the first note in full — enough to know a
-                  real comment is there, and never a wall in front of nothing */}
-              {s.day.lessons.slice(0, canNotes ? 3 : FREE_NOTES).map((l, i) => (
-                <SheetSection key={l.id} title={<>{l.subject} · {l.teacher}</>}>
-                  <Typography variant="body2">{NOTE_TEXTS[i % NOTE_TEXTS.length]}</Typography>
-                </SheetSection>
-              ))}
+              {canNotes
+                ? s.day.lessons.slice(0, 3).map((l, i) => (
+                  <SheetSection key={l.id} title={<>{l.subject} · {l.teacher}</>}>
+                    <Typography variant="body2">{NOTE_TEXTS[i % NOTE_TEXTS.length]}</Typography>
+                  </SheetSection>
+                ))
+                : (
+                  <Box sx={{ mt: '14px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, px: '13px' }}>
+                    {s.day.lessons.slice(0, s.day.notes).map((l, i) => (
+                      <Box key={l.id} sx={{
+                        display: 'flex', alignItems: 'center', gap: '12px', minHeight: 56,
+                        borderTop: i > 0 ? `1px solid ${tokens.dividerSoft}` : 'none',
+                      }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontSize: 15, fontWeight: 600 }} noWrap>{l.teacher}</Typography>
+                          <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted }} noWrap>
+                            {l.subject} · {l.time}
+                          </Typography>
+                        </Box>
+                        <Box aria-label="ýapyk" sx={{
+                          display: 'inline-flex', alignItems: 'center', gap: '5px', flex: 'none',
+                          height: 24, px: '9px', borderRadius: `${tokens.rPill}px`,
+                          bgcolor: tokens.surfacePress, color: tokens.inkMuted,
+                          fontSize: 11, fontWeight: 700,
+                        }}><LockIcon size={11} />Bellik</Box>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
               {!canNotes && (
                 <Box sx={{ mt: '14px' }}>
                   <TeaserCard
                     compact
-                    title={`Ýene ${Math.max(0, (s.day.notes ?? 0) - FREE_NOTES)} bellik ýapyk`}
-                    note={`Mugallymlaryň ähli belliklerini we olaryň taryhyny ${tierFor('notes')?.name} bilen oka.`}
+                    title={`${s.day.notes} belligiň teksti ýapyk`}
+                    note={`Mugallymlaryň ýazan sözlerini we olaryň taryhyny ${tierFor('notes')?.name} bilen oka.`}
                     feature="notes"
                     icon={<NotesIcon />}
                     onUpgrade={() => { close(); setPage('upgrade'); }}
-                    preview={(
-                      <Box sx={{ p: '14px 15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {s.day.lessons.slice(1, 3).map((l, i) => (
-                          <Box key={l.id}>
-                            <Typography sx={{ fontSize: 13, fontWeight: 600, color: tokens.ink2 }}>
-                              {l.subject} · {l.teacher}
-                            </Typography>
-                            <Typography variant="body2">{NOTE_TEXTS[(i + 1) % NOTE_TEXTS.length]}</Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
                   />
                 </Box>
               )}
@@ -456,17 +516,37 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         </Box>
       </SheetDrawer>
 
+      {/* The day's homework, as a to-do list rather than a stack of document
+          sections. This is the one place a pupil sees the whole evening at
+          once, so it is the place that has to be workable: tick from the list,
+          untick from the list, and a bar that fills as the pile shrinks. */}
       <SheetDrawer open={sheet?.type === 'hw'} onClose={close}>
         <Typography variant="h2">Şu günki öý işler</Typography>
-        <Typography variant="caption">{s.hwStats.done}/{s.hwStats.total} ýerine ýetirildi</Typography>
-        {s.day && s.day.lessons.filter((l) => l.hw).length > 0
-          ? s.day.lessons.filter((l) => l.hw).map((l) => (
-            <SheetSection key={l.id} title={<>{l.subject}</>}
-              end={l.hwDone ? <Box sx={{ color: tokens.greenDeep, display: 'flex' }}><CheckIcon size={15} /></Box> : undefined}>
-              <Typography variant="body2">{l.hw}</Typography>
-            </SheetSection>
-          ))
-          : <SheetSection><Typography variant="body2">Bu gün öý işi ýok 🎉</Typography></SheetSection>}
+        <Typography variant="caption">
+          {s.hwStats.total === 0
+            ? 'Bu gün tabşyryk berilmedi'
+            : s.hwStats.done === s.hwStats.total
+              ? 'Ählisi ýerine ýetirildi 🎉'
+              : `${s.hwStats.total - s.hwStats.done} tabşyryk galdy`}
+        </Typography>
+        <Box sx={{ mt: '14px' }}>
+          {s.day && s.day.lessons.filter((l) => l.hw).length > 0 ? (
+            <TodoList done={s.hwStats.done} total={s.hwStats.total}>
+              {s.day.lessons.filter((l) => l.hw).map((l) => (
+                <TodoRow
+                  key={l.id}
+                  label={l.hw!}
+                  sub={`${l.subject} · ${l.time}`}
+                  done={l.hwDone}
+                  onToggle={() => void toggleHw(l)}
+                  end={<EarnPill kind="hw" earns={earns} done={l.hwDone} />}
+                />
+              ))}
+            </TodoList>
+          ) : (
+            <SheetSection><Typography variant="body2">Bu gün öý işi ýok 🎉</Typography></SheetSection>
+          )}
+        </Box>
         <Box sx={{ mt: '18px' }}>
           <Button fullWidth onClick={close} sx={{ bgcolor: tokens.surface, color: tokens.ink }}>Ýap</Button>
         </Box>

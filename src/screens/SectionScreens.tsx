@@ -13,6 +13,7 @@ import {
 import { KIND_LABEL, KIND_ORDER, useBookmarks } from '../state/bookmarks';
 import type { Bookmark } from '../state/bookmarks';
 import { setPref, tierFor, useCan, usePrefs } from '../state/prefs';
+import { useAllowance } from '../state/allowance';
 import {
   BOOKS, BOOK_CATS, CONTEST_LEVEL, INTL_OLYMPIADS, OLYMPIADS, OLYMPIAD_STAGE, PRIZE_CONTESTS,
   olympiadEntrants, olympiadSelf, olympiadTitle,
@@ -358,6 +359,8 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
   const [loading, setLoading] = useState<string | null>(null);
   const [studying, setStudying] = useState(false);
   const can = useCan('cards');
+  /* the free tier's daily go — one deck a day, spent when a deck is opened */
+  const allow = useAllowance('cards');
   const plan = tierFor('cards');
   const groups = deckGroups();
   const bank = bankTotal();
@@ -365,6 +368,16 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
   /* The list knows how many cards a deck holds — the catalogue says so — but
      the cards themselves are a lesson file, fetched when one is opened. */
   const openDeck = async (d: DeckMeta) => {
+    /* A free account may open one deck a day. The go is spent on *this* deck,
+       so re-opening it later today is free and a second deck is not — a limit
+       that punished going back to the same cards would teach people to hoard
+       the one they picked. */
+    if (!can && !allow.canOpen(d.id)) {
+      toast(`Şu günki mugt toplum ulanyldy — ${plan?.name} bilen çäk aýrylýar`);
+      onUpgrade();
+      return;
+    }
+    if (!can) allow.take(d.id);
     setLoading(d.id);
     try {
       const cards = await loadDeckCards(d.grade, d.slug);
@@ -410,11 +423,16 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
           fact about the product, and it is the reason the lock is worth
           opening. The free tier no longer gets a session a week — a weekly
           allowance taught people to ration the thing instead of using it. */}
+      {/* Not a wall: an allowance. "You have today's go" is a truer sentence
+          than "this is locked", and it is the one that gets a pupil to open a
+          deck at all — which is the only thing that ever sells the rest. */}
       {!can && (
         <Box sx={{ pt: '14px' }}>
           <TeaserCard
-            title="Öwrediji kartlar ýapyk"
-            note={`${bank.decks} toplum, ${bank.cards} kart taýýar — ${plan?.name} bilen açylýar.`}
+            title={allow.left > 0 ? 'Şu gün bir toplum mugt' : 'Şu günki mugt toplum ulanyldy'}
+            note={allow.left > 0
+              ? `${bank.decks} toplumyň birini şu gün mugt aç. Ählisi — ${bank.cards} kart — ${plan?.name} bilen.`
+              : `Ertir ýene bir toplum açylýar. Ähli ${bank.decks} toplum — ${plan?.name} bilen.`}
             feature="cards"
             onUpgrade={onUpgrade}
           />
@@ -446,8 +464,11 @@ export function KartlarScreen({ onBack, toast, onUpgrade }: {
                 accent={s.accent}
                 label={s.subject}
                 sub={`${s.cards} kart · ${gradeSpan(s.grades)}`}
-                locked={!can}
-                onClick={() => (can ? setSubject(s) : onUpgrade())}
+                /* the subject list stays open on the free tier — the meter is
+                   on opening a deck, and a grid of grey tiles hides the very
+                   catalogue that is the argument for paying */
+                locked={false}
+                onClick={() => setSubject(s)}
               />
             ))}
           </Box>

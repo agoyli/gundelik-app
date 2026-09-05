@@ -86,3 +86,17 @@ export const fmtDuration = (seconds: number) => {
   const m = Math.floor((s % 3600) / 60);
   return h > 0 ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
 };
+
+/*
+ * Every bal the account has earned, across every contest.
+ *
+ * The wallet needs one number — what is there to convert — and the honest
+ * source of it is the runs themselves, summed. Anything else would be a second
+ * copy of a total the contest pages already compute from these same rows.
+ */
+export const useAllPoints = () => {
+  const map = useSyncExternalStore(subscribe, () => snapshot);
+  let n = 0;
+  map.forEach((run) => { n += pointsOf(run); });
+  return n;
+};

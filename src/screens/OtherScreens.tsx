@@ -1,12 +1,12 @@
 import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
 import {
-  BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon,
-  GameIcon, GearIcon, HistoryIcon, LayersIcon, LockIcon, QuestionIcon, QuestionOutlineIcon,
-  QuizIcon, SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
+  BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon, GameIcon,
+  GearIcon, HistoryIcon, LayersIcon, LockIcon, QuestionIcon, QuestionOutlineIcon, QuizIcon,
+  ShopIcon, SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
-  DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav, PillHeader,
+  Avatar, DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav, PillHeader,
   MeterTile, PointsPill, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
@@ -19,6 +19,7 @@ import { fmtRange } from '../lib/date';
 import { capitalise, ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/library';
 import { PLAN, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
+import { useAllowance } from '../state/allowance';
 import { AiChatScreen } from './AiChatScreen';
 import { TestDetailScreen, TestSubjectScreen, prizePhase } from './DetailScreens';
 import { ReferralScreen } from './ReferralScreen';
@@ -28,6 +29,7 @@ import { useCareerResult } from '../state/career';
 import { PlayScreen } from './PlayScreens';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
+import { BalanceRow, ShopScreen, WalletScreen } from './WalletScreens';
 import {
   BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, SapaklarScreen,
 } from './SectionScreens';
@@ -71,6 +73,8 @@ export const STUDENT = {
 
 /* ---------------- Çagam ---------------- */
 export function CagamScreen({ toast }: { toast: (msg: string) => void }) {
+  /* the ring is the subscription's, so it is read from the subscription */
+  const { premium } = usePrefs();
   return (
     <>
       <TopBar title="Çagam" />
@@ -79,10 +83,7 @@ export function CagamScreen({ toast }: { toast: (msg: string) => void }) {
           mt: '4px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
           p: `22px ${tokens.padCard}`, display: 'flex', alignItems: 'center', gap: '14px',
         }}>
-          <Box sx={{
-            width: 56, height: 56, borderRadius: '50%', bgcolor: tokens.blueSoft, color: tokens.blue,
-            display: 'grid', placeItems: 'center', fontSize: 20, fontWeight: 700, flex: 'none',
-          }}>{STUDENT.initials}</Box>
+          <Avatar initials={STUDENT.initials} size={56} premium={premium} />
           <Box>
             <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px' }}>{STUDENT.name}</Typography>
             <Typography variant="caption">{STUDENT.cls} · {STUDENT.schoolLong}</Typography>
@@ -534,22 +535,18 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
   onOpenSubject: (s: TestSubject) => void; onUpgrade: () => void;
 }) {
   const can = useCan('tests');
+  /* one test a day on the free tier — the meter is on sitting a test, not on
+     seeing that tests exist */
+  const allow = useAllowance('tests');
   const plan = tierFor('tests');
+  const { premium } = usePrefs();
   return (
     <>
       <PillHeader title="Testler" onBack={onBack} />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
         {/* Profile */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: '14px', gap: '10px' }}>
-          <Box aria-hidden sx={{
-            width: 104, height: 104, borderRadius: '50%',
-            border: `5px solid ${tokens.blue}`, p: '4px', display: 'grid', placeItems: 'center',
-          }}>
-            <Box sx={{
-              width: '100%', height: '100%', borderRadius: '50%', bgcolor: tokens.blueSoft,
-              color: tokens.blueText, display: 'grid', placeItems: 'center', fontSize: 30, fontWeight: 700,
-            }}>{STUDENT.initials}</Box>
-          </Box>
+          <Avatar initials={STUDENT.initials} size={104} premium={premium} />
           <Box sx={{ textAlign: 'center' }}>
             <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px' }}>
               {STUDENT.name}
@@ -581,8 +578,10 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
         {!can && (
           <Box sx={{ pt: '16px' }}>
             <TeaserCard
-              title="Testler ýapyk"
-              note={`${bankTotal().tests} test, ${bankTotal().questions} sowal taýýar — ${plan?.name} bilen açylýar.`}
+              title={allow.left > 0 ? 'Şu gün bir test mugt' : 'Şu günki mugt test ulanyldy'}
+              note={allow.left > 0
+                ? `${bankTotal().tests} testiň birini şu gün mugt işläp bilersiň. Ählisi — ${plan?.name} bilen.`
+                : `Ertir ýene bir test açylýar. ${bankTotal().tests} testiň ählisi — ${plan?.name} bilen.`}
               feature="tests"
               onUpgrade={onUpgrade}
             />
@@ -605,9 +604,10 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
                 accent={s.accent}
                 label={s.label}
                 sub={`${s.tests.length} test · ${questions} sowal`}
-                locked={!can}
-                lockNote={`${s.tests.length} test · ${plan?.name} bilen açylýar`}
-                onClick={() => (can ? onOpenSubject(s) : onUpgrade())}
+                /* the catalogue stays visible: the allowance is spent on
+                   opening a test, and a list of grey rows hides the argument */
+                locked={false}
+                onClick={() => onOpenSubject(s)}
               />
             );
           })}
@@ -629,6 +629,22 @@ function TestlerFlow({ onBack, toast, onUpgrade }: {
 }) {
   const [subject, setSubject] = useState<TestSubject | null>(null);
   const [test, setTest] = useState<TestItem | null>(null);
+  const can = useCan('tests');
+  const allow = useAllowance('tests');
+  const plan = tierFor('tests');
+
+  /* The meter sits on the last door, not the first: browse the subjects, open
+     a subject's list, and the day's go is spent when a test is actually
+     opened — and spent on *that* test, so coming back to finish it is free. */
+  const openTest = (t: TestItem) => {
+    if (!can && !allow.canOpen(t.id)) {
+      toast(`Şu günki mugt test ulanyldy — ${plan?.name} bilen çäk aýrylýar`);
+      onUpgrade();
+      return;
+    }
+    if (!can) allow.take(t.id);
+    setTest(t);
+  };
 
   if (subject && test) {
     return (
@@ -639,7 +655,7 @@ function TestlerFlow({ onBack, toast, onUpgrade }: {
     );
   }
   if (subject) {
-    return <TestSubjectScreen subject={subject} onBack={() => setSubject(null)} onOpenTest={setTest} />;
+    return <TestSubjectScreen subject={subject} onBack={() => setSubject(null)} onOpenTest={openTest} />;
   }
   return <TestlerSubScreen onBack={onBack} toast={toast} onOpenSubject={setSubject} onUpgrade={onUpgrade} />;
 }
@@ -939,7 +955,7 @@ const ChoiceRow = ({ icon, tint, color, label, value, onClick }: {
 );
 
 type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referral' | 'upgrade'
-  | 'career';
+  | 'career' | 'wallet' | 'shop';
 
 export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   const { premium, tier } = usePrefs();
@@ -995,6 +1011,12 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   if (view === 'edit') return <ProfileEditScreen onBack={root} toast={toast} />;
   if (view === 'referral') return <ReferralScreen onBack={root} toast={toast} />;
   if (view === 'upgrade') return <UpgradeScreen onBack={root} toast={toast} />;
+  if (view === 'wallet') {
+    return <WalletScreen onBack={root} toast={toast} onShop={() => setView('shop')} />;
+  }
+  if (view === 'shop') {
+    return <ShopScreen onBack={() => setView('wallet')} toast={toast} onTopUp={() => setView('wallet')} />;
+  }
   if (view === 'cards') return <PayMethodsScreen onBack={() => setView(cardsFrom)} toast={toast} />;
   if (view === 'career') {
     return (
@@ -1047,11 +1069,7 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             '&:active': { bgcolor: tokens.surfacePress },
           }}
         >
-          <Box aria-hidden sx={{
-            width: 62, height: 62, borderRadius: '50%', flex: 'none',
-            background: `linear-gradient(150deg, ${tokens.blue} 0%, ${tokens.bluePress} 70%)`,
-            color: '#fff', display: 'grid', placeItems: 'center', fontSize: 22, fontWeight: 700,
-          }}>{STUDENT.initials}</Box>
+          <Avatar initials={STUDENT.initials} size={62} fill="gradient" premium={premium} />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography noWrap sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px' }}>
               {STUDENT.name}
@@ -1088,35 +1106,6 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           />
         </Box>
 
-        {/* ---- Goals ----
-             Up here with the identity rather than buried under the heatmap:
-             they are two facts *about the student*, and they were sitting
-             below a full screen of subscription and history that has nothing
-             to do with them. */}
-        <SectionLabel>Maksatlarym</SectionLabel>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <ChoiceRow
-            icon={<StarIcon size={22} />} tint={tokens.orangeTint} color={tokens.orangeText}
-            label="Söýgüli dersim" value={fav} onClick={() => setPicker('fav')}
-          />
-          <ChoiceRow
-            icon={<TargetIcon size={22} />} tint={tokens.purpleTint} color={tokens.purpleText}
-            label="Arzuwymdaky hünär" value={dreamLabel} onClick={() => setPicker('dream')}
-          />
-          {/* The other way to answer the row above it. A list of jobs is the
-              right control for a student who already knows and useless for one
-              who does not — the test ends by writing into that same goal. */}
-          <ChoiceRow
-            icon={<QuizIcon size={22} />} tint={tokens.blueTint} color={tokens.blueText}
-            label="Hünär synagy"
-            value={careerRowValue(career?.answers)}
-            onClick={() => setView('career')}
-          />
-        </Box>
-
-        {/* ---- Payment / subscription ----
-            Free users get the offer here instead of a subscription card; the
-            slot is the same so the page structure never shifts under them. */}
         <SectionLabel>{premium ? 'Töleg' : 'Nyrhnamalar'}</SectionLabel>
         {!premium ? (
           <AdSlot onUpgrade={() => setView('upgrade')} />
@@ -1171,6 +1160,22 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           </Box>
         </Box>
         )}
+
+        {/* Directly under the subscription, because it is the same subject:
+            this is where that payment comes from. It is not a paid feature —
+            on a free account it is the one row in this pair that still does
+            something. */}
+        <SectionLabel>Balans we dükan</SectionLabel>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <BalanceRow onClick={() => setView('wallet')} />
+          <SurfaceRow
+            icon={<IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={44}><ShopIcon size={20} /></IconBadge>}
+            label="Dükan"
+            sub="Hyzmatdaş dükanlaryň harytlary"
+            end={<RowChevron />}
+            onClick={() => setView('shop')}
+          />
+        </Box>
 
         {/* ---- The year at a glance ----
              One card, two maps, a switch. Two stacked cards drawing the same
@@ -1246,6 +1251,35 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           )}
         </Box>
 
+        {/* ---- Goals, near the bottom ----
+             These are answered once and changed rarely — a favourite subject,
+             a job, a test taken one afternoon. They sat third, above the two
+             blocks that expire and need money, which put a set-once question
+             in front of a monthly errand. */}
+        <SectionLabel>Maksatlarym</SectionLabel>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <ChoiceRow
+            icon={<StarIcon size={22} />} tint={tokens.orangeTint} color={tokens.orangeText}
+            label="Söýgüli dersim" value={fav} onClick={() => setPicker('fav')}
+          />
+          <ChoiceRow
+            icon={<TargetIcon size={22} />} tint={tokens.purpleTint} color={tokens.purpleText}
+            label="Arzuwymdaky hünär" value={dreamLabel} onClick={() => setPicker('dream')}
+          />
+          {/* The other way to answer the row above it. A list of jobs is the
+              right control for a student who already knows and useless for one
+              who does not — the test ends by writing into that same goal. */}
+          <ChoiceRow
+            icon={<QuizIcon size={22} />} tint={tokens.blueTint} color={tokens.blueText}
+            label="Hünär synagy"
+            value={careerRowValue(career?.answers)}
+            onClick={() => setView('career')}
+          />
+        </Box>
+
+        {/* ---- Payment / subscription ----
+            Free users get the offer here instead of a subscription card; the
+            slot is the same so the page structure never shifts under them. */}
         {/* ---- One way into the account tree; the rest lives inside it ----
              Dostuňy çagyr sits here rather than in a "Gazan" section of its
              own near the top. As a tinted offer card above the fold it was the

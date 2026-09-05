@@ -138,6 +138,17 @@ export const listYearly = (t: Tier) => t.monthly * 12;
 export const savePct = (t: Tier) => Math.round((1 - t.yearly / listYearly(t)) * 100);
 
 /*
+ * What a year costs *per month* — the figure that makes two terms comparable.
+ * Derived from the yearly price rather than typed beside it, so the headline
+ * price and the per-month reading of it can never disagree. One decimal, and
+ * only when there is one: "3,3" is a price, "3,33" is an invoice.
+ */
+export const perMonth = (t: Tier) => {
+  const v = Math.round((t.yearly / 12) * 10) / 10;
+  return Number.isInteger(v) ? String(v) : v.toFixed(1).replace('.', ',');
+};
+
+/*
  * What each tier unlocks. One table, read by the comparison page *and* by the
  * screens themselves, so a row that promises a feature and the screen that
  * gates it can never drift apart.

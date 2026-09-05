@@ -1,7 +1,14 @@
 import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import { useState } from 'react';
 import { CheckIcon, LockIcon, SparkleIcon } from '../components/Icons';
-import { SectionLabel, StickyFooter, SubPage } from '../components/Ui';
+import {
+  HeaderIconButton, RowChevron, SectionLabel, SheetDrawer, StickyFooter, SubPage, SurfaceRow,
+} from '../components/Ui';
+import { PayCompareScreen } from './PayCompareScreen';
+import { PayOfferScreen } from './PayOfferScreen';
+import { PremiumScreen } from './PremiumScreen';
+import { PAY_VARIANTS } from './payBits';
+import type { PayVariant } from './payBits';
 import {
   FEATURES, TIERS, listYearly, meets, savePct, setTier, usePrefs,
 } from '../state/prefs';
@@ -116,6 +123,23 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
   const { tier: current, premium } = usePrefs();
   const [term, setTerm] = useState<Term>('year');
   const [pick, setPick] = useState<Tier['id']>('zehin');
+  /*
+   * The same offer, told four ways.
+   *
+   * This page is the *reference*: every price and every feature visible at
+   * once, which is what someone who has already decided to pay wants. It is a
+   * poor first pitch, so there are three others — one offer, a two-plan
+   * comparison, and the value-led page — and they all read the same `TIERS`
+   * and `FEATURES` and end in the same `setTier` (see [`payBits.tsx`]).
+   *
+   * They live behind one pill rather than an A/B split that shows a family one
+   * page and their neighbour another: nobody has measured anything yet, and a
+   * split that nobody is reading the numbers of is just a coin toss with extra
+   * code. When there are numbers, the winner replaces this page and the rest
+   * are deleted.
+   */
+  const [variant, setVariant] = useState<PayVariant | null>(null);
+  const [picker, setPicker] = useState(false);
 
   const chosen = TIERS.find((t) => t.id === pick)!;
 
@@ -125,8 +149,26 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
     onBack();
   };
 
+  if (variant) {
+    const props = { onBack: () => setVariant(null), onDone: onBack, toast };
+    if (variant === 'offer') return <PayOfferScreen {...props} />;
+    if (variant === 'compare') return <PayCompareScreen {...props} />;
+    return <PremiumScreen {...props} />;
+  }
+
   return (
-    <SubPage title="Nyrhnamalar" onBack={onBack}>
+    <SubPage
+      title="Nyrhnamalar"
+      onBack={onBack}
+      /* a 44px icon button, not a labelled pill: at 375px the capsule holds a
+         back button, a centred title and ~96px of controls, and "Görnüşler"
+         with an icon overran the title */
+      action={(
+        <HeaderIconButton label="Töleg sahypasynyň görnüşleri" onClick={() => setPicker(true)}>
+          <SparkleIcon size={20} />
+        </HeaderIconButton>
+      )}
+    >
       {/* One short hero. It used to read "Okuwyň doly güýji" over a user count —
           a boast about the product and a boast about its size, neither of which
           says what the reader gets. The line now names the benefit in the
@@ -218,6 +260,26 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
           Ilkinji 7 gün mugt · islendik wagt ýatyrylýar
         </Typography>
       </StickyFooter>
+
+      {/* The showroom, not a product surface: three ways of asking for the
+          same money, listed with what each one is betting on. */}
+      <SheetDrawer open={picker} onClose={() => setPicker(false)}>
+        <Typography variant="h2">Töleg sahypasynyň görnüşleri</Typography>
+        <Typography sx={{ fontSize: 13.5, color: tokens.ink3, lineHeight: 1.5, mt: '8px', mb: '14px' }}>
+          Bir teklip, üç dürli aýdylyşy. Bahalar we aýratynlyklar ählisinde birmeňzeş.
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {PAY_VARIANTS.map((v) => (
+            <SurfaceRow
+              key={v.id}
+              label={v.name}
+              sub={v.note}
+              end={<RowChevron />}
+              onClick={() => { setPicker(false); setVariant(v.id); }}
+            />
+          ))}
+        </Box>
+      </SheetDrawer>
     </SubPage>
   );
 }

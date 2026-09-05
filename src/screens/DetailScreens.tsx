@@ -23,6 +23,8 @@ import { contestPacks } from '../data/library';
 import type { ContestPack, DeckMeta, DeckSubject, TestItem, TestSubject } from '../data/library';
 import { loadLesson } from '../data/lessons';
 import { contestTotals, fmtDuration, savePackRun, useContestRuns } from '../state/contest';
+import { EARN_POINTS, award, useEarns } from '../state/earn';
+import { POINTS_PER_TMT } from '../state/wallet';
 import { absDate, dayMonth, fmtWhen, untilParts } from '../lib/date';
 import { ordinal } from '../lib/tm';
 import { QuizQuestions, QuizResult, useQuiz } from '../components/Quiz';
@@ -1155,6 +1157,47 @@ export function DeckSubjectScreen({ subject, loading, onBack, onOpenDeck }: {
   );
 }
 
+/*
+ * What sitting a test paid.
+ *
+ * It sits above the answer review, because the reward is the first thing a
+ * pupil looks for and the review is what they stay for. On a paying account it
+ * banks the bal once — a test re-sat is practice, not a second wage — and on a
+ * free one it shows the same figure greyed, with what would have collected it.
+ * The point of showing it at all is that a reward you can see is the only kind
+ * that argues for itself.
+ */
+function TestReward({ test, earns }: { test: TestItem; earns: boolean }) {
+  const [points, setPoints] = useState(0);
+  useEffect(() => { if (earns) setPoints(award('test', test.id)); }, [earns, test.id]);
+
+  const paid = earns && points > 0;
+  return (
+    <Box sx={{
+      display: 'flex', alignItems: 'center', gap: '12px',
+      bgcolor: earns ? tokens.orangeTint : tokens.surface,
+      borderRadius: `${tokens.rCard}px`, p: '13px 15px',
+    }}>
+      <IconBadge
+        bg="#fff"
+        color={earns ? tokens.orangeText : tokens.inkMuted}
+        size={40}
+        radius={tokens.rTile}
+      >{earns ? <CoinIcon size={19} /> : <LockIcon size={18} />}</IconBadge>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
+          {paid ? `+${EARN_POINTS.test} bal ýazyldy` : earns ? 'Bu test öň hasaba alnypdy' : `+${EARN_POINTS.test} bal ýygnalmady`}
+        </Typography>
+        <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }}>
+          {earns
+            ? `${POINTS_PER_TMT} bal = 1 TMT — balansa öwrüp bolýar`
+            : `Test tabşyranyň üçin ${EARN_POINTS.test} bal — abuna bilen ýygnalýar`}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
 export function TestDetailScreen({ test, accent, tint, onBack, toast }: {
   test: TestItem; accent: string; tint: string; onBack: () => void; toast: Toast;
 }) {
@@ -1164,6 +1207,7 @@ export function TestDetailScreen({ test, accent, tint, onBack, toast }: {
   const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
   const [loading, setLoading] = useState(false);
   const quiz = useQuiz(questions ?? []);
+  const earns = useEarns();
 
   const start = async () => {
     setLoading(true);
@@ -1191,7 +1235,12 @@ export function TestDetailScreen({ test, accent, tint, onBack, toast }: {
               onQuit={() => { quiz.reset(); setQuestions(null); }}
             />
           )}
-          {quiz.stage === 'result' && <QuizResult questions={questions} quiz={quiz} />}
+          {quiz.stage === 'result' && (
+            <>
+              <TestReward test={test} earns={earns} />
+              <QuizResult questions={questions} quiz={quiz} />
+            </>
+          )}
         </Box>
       </SubPage>
     );

@@ -1,6 +1,7 @@
 import { Box, Button, ButtonBase, SwipeableDrawer, Typography } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { Children, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   WEEKDAY_HEADS, dayInMonth, daysInMonth, firstWeekdayIndex, isDayOff, isToday,
   monthLabel, shiftMonth, weekdayLong,
@@ -8,7 +9,7 @@ import {
 import { toggleBookmark, useIsBookmarked } from '../state/bookmarks';
 import type { Bookmark } from '../state/bookmarks';
 import type { ViewId } from '../state/prefs';
-import { tokens } from '../theme';
+import { PREMIUM_GRADIENT, tokens } from '../theme';
 import type { DayInfo, Lesson, TabId } from '../types';
 import { useSwipeLock } from './SwipeLock';
 import {
@@ -417,6 +418,108 @@ export function LessonCard({ lesson, marks, onOpen, onToggleHw }: {
           </ButtonBase>
         </Box>
       )}
+    </Box>
+  );
+}
+
+/* ---------------- TodoRow / TodoList ----------------
+ *
+ * Homework, as the thing it actually is: a list of tasks you tick off.
+ *
+ * It used to be read-only prose in two places — a paragraph under "Öý işi" in
+ * the day sheet and another in the lesson sheet — with the ticking done by a
+ * separate button at the bottom of the sheet. Three shapes for one job, and
+ * the only place a pupil could see all of the day's tasks at once showed them
+ * as sections of a document rather than as a list they could work through.
+ *
+ * So there is one row: a box you can tap, the task, and what it belongs to. It
+ * is the same row in the day's list and on the lesson's own page, because a
+ * task is the same task wherever it is read — and it **unticks**, since a
+ * checkbox that only goes one way is a trap you learn not to touch.
+ *
+ * `role="checkbox"` and not a switch: this is one item in a list of items,
+ * which is what a checkbox is for, and screen readers announce the list's
+ * progress from it.
+ */
+export function TodoRow({ label, sub, done, onToggle, end }: {
+  label: string; sub?: string; done: boolean; onToggle?: () => void; end?: ReactNode;
+}) {
+  return (
+    <ButtonBase
+      onClick={onToggle}
+      disabled={!onToggle}
+      role="checkbox"
+      aria-checked={done}
+      aria-label={sub ? `${label} — ${sub}` : label}
+      sx={{
+        display: 'flex', alignItems: 'flex-start', gap: '12px', width: '100%',
+        minHeight: 52, px: '4px', py: '11px', textAlign: 'left', justifyContent: 'flex-start',
+        borderRadius: `${tokens.rTile}px`,
+        '&:active': { bgcolor: tokens.surfacePress },
+        '&.Mui-disabled': { opacity: 1 },
+      }}
+    >
+      {/* The box, at the size a thumb expects and the colour the app gives
+          every other completed thing. */}
+      <Box aria-hidden sx={{
+        width: 22, height: 22, borderRadius: `${tokens.rCell}px`, flex: 'none', mt: '1px',
+        display: 'grid', placeItems: 'center', color: '#fff',
+        bgcolor: done ? tokens.greenDeep : 'transparent',
+        border: done ? 'none' : `1.8px solid ${tokens.inkDisabled}`,
+        transition: 'background .15s ease, border-color .15s ease',
+      }}>{done && <CheckIcon size={13} />}</Box>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{
+          fontSize: 15, fontWeight: 500, lineHeight: 1.4,
+          color: done ? tokens.inkMuted : tokens.ink,
+          textDecoration: done ? 'line-through' : 'none',
+        }}>{label}</Typography>
+        {sub && (
+          <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, mt: '2px' }} noWrap>{sub}</Typography>
+        )}
+      </Box>
+      {end && <Box sx={{ flex: 'none', mt: '2px' }}>{end}</Box>}
+    </ButtonBase>
+  );
+}
+
+/* The list the rows sit in: one surface, hairlines between tasks, and the
+   count at the top — a to-do list's own progress, stated once. */
+export function TodoList({ done, total, children }: {
+  done?: number; total?: number; children: ReactNode;
+}) {
+  const rows = Children.toArray(children);
+  const all = total !== undefined && done === total && total > 0;
+  return (
+    <Box>
+      {total !== undefined && done !== undefined && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', mb: '10px', px: '4px' }}>
+          <Box sx={{
+            flex: 1, height: 6, borderRadius: `${tokens.rPill}px`,
+            bgcolor: tokens.dividerSoft, overflow: 'hidden',
+          }}>
+            <Box sx={{
+              height: '100%', borderRadius: `${tokens.rPill}px`,
+              width: `${total ? (done / total) * 100 : 0}%`,
+              bgcolor: all ? tokens.greenDeep : tokens.blue,
+              transition: 'width .2s ease',
+            }} />
+          </Box>
+          <Typography sx={{
+            fontSize: 12.5, fontWeight: 600, flex: 'none',
+            color: all ? tokens.greenText : tokens.ink3, fontVariantNumeric: 'tabular-nums',
+          }}>{done}/{total}</Typography>
+        </Box>
+      )}
+      <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, px: '11px', py: '2px' }}>
+        {rows.map((row, i) => (
+          <Box key={i}>
+            {i > 0 && <Box aria-hidden sx={{ height: '1px', bgcolor: tokens.dividerSoft, ml: '34px' }} />}
+            {row}
+          </Box>
+        ))}
+      </Box>
     </Box>
   );
 }
@@ -856,6 +959,65 @@ export function RankRow({ rank, name, sub, points, self }: {
         <Typography sx={{ fontSize: 13, color: tokens.inkMuted, mt: '1px' }} noWrap>{sub}</Typography>
       </Box>
       <PointsPill value={points} />
+    </Box>
+  );
+}
+
+/* ---------------- Avatar ----------------
+ *
+ * One student, drawn the same way everywhere — and one place that knows what a
+ * *subscriber's* avatar looks like.
+ *
+ * The profile, Çagam and Testler each drew their own circle before this, which
+ * is how the same person ended up with three different faces (a soft blue
+ * disc, a gradient disc, a disc inside a 5px blue ring). They are the same
+ * object at three sizes.
+ *
+ * The premium ring is the one thing the app shows a paying account that costs
+ * it nothing to show: the subscription gradient, drawn as a ring with a gap of
+ * the page's own colour so the ring reads as *around* the avatar rather than as
+ * a thick coloured border on it. The gap has to be told what it is sitting on
+ * (`gap`) — a ring gap the colour of the wrong ground is a grey halo.
+ *
+ * It is presentation, not entitlement: pass `premium` from `usePrefs()`, so the
+ * ring appears and disappears with the subscription rather than being drawn by
+ * whoever remembered.
+ */
+export function Avatar({ initials, size = 56, fill = 'soft', premium, gap = '#fff', sx }: {
+  initials: string;
+  size?: number;
+  /** `soft` is the tinted disc, `gradient` the brand-blue one the profile uses */
+  fill?: 'soft' | 'gradient';
+  premium?: boolean;
+  /** the colour behind the ring, so its gap disappears into the page */
+  gap?: string;
+  sx?: SxProps<Theme>;
+}) {
+  /* the ring and its gap eat into the box, so the face keeps its size */
+  const band = size >= 90 ? 4 : 3;
+  const face = (
+    <Box aria-hidden sx={{
+      width: '100%', height: '100%', borderRadius: '50%',
+      display: 'grid', placeItems: 'center',
+      fontSize: size >= 90 ? 30 : size >= 60 ? 22 : 20,
+      fontWeight: 700, letterSpacing: '-.3px',
+      ...(fill === 'gradient'
+        ? { background: `linear-gradient(150deg, ${tokens.blue} 0%, ${tokens.bluePress} 70%)`, color: '#fff' }
+        : { bgcolor: tokens.blueSoft, color: tokens.blueText }),
+    }}>{initials}</Box>
+  );
+
+  if (!premium) {
+    return <Box sx={{ width: size, height: size, flex: 'none', ...sx }}>{face}</Box>;
+  }
+  return (
+    <Box sx={{
+      width: size, height: size, flex: 'none', borderRadius: '50%', p: `${band}px`,
+      background: PREMIUM_GRADIENT, ...sx,
+    }}>
+      <Box sx={{ width: '100%', height: '100%', borderRadius: '50%', p: `${band - 1}px`, bgcolor: gap }}>
+        {face}
+      </Box>
     </Box>
   );
 }

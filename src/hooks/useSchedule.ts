@@ -36,8 +36,8 @@ export function useSchedule(initialKey = TODAY) {
     void loadDay(key);
   }, [dateKey, loadDay]);
 
-  const markHwDone = useCallback(async (lessonId: string) => {
-    const updated = await api.markHomeworkDone(dateKey, lessonId);
+  const setHwDone = useCallback(async (lessonId: string, done: boolean) => {
+    const updated = await api.setHomeworkDone(dateKey, lessonId, done);
     setDay(updated);
   }, [dateKey]);
 
@@ -65,6 +65,6 @@ export function useSchedule(initialKey = TODAY) {
 
   return {
     days, dateKey, day, loading, lastChecked, needsCheck, checking, hwStats, signed,
-    selectDate, markHwDone, signDay,
+    selectDate, setHwDone, signDay,
   };
 }

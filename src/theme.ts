@@ -91,6 +91,27 @@ export const tokens = {
  * and below 13. Declaring them is honest; pretending the scale was 13/14 was
  * not. Everything sparser than that was snapped onto a neighbour.
  */
+/*
+ * The premium treatment — the brand blue running into the palette's purple.
+ *
+ * It is not a token because it is not a colour: it is the *mark* on the two
+ * places a subscription is visible (the emblem on the subscription page, the
+ * ring around a subscriber's avatar), and a second copy of it anywhere would
+ * drift a few degrees and read as a different product.
+ *
+ * Both stops are tokens on purpose. A subscription page is exactly where a
+ * third-party gradient gets invented — and then the app has two identities,
+ * one for the product and one for selling it. Blue first because the brand
+ * leads; purple, which the palette already owns, so the ring is visibly *not*
+ * the plain blue fill every other avatar has.
+ *
+ * It is a mark, not a theme: the page it sits on is the same daylight every
+ * other page is. A dark subscription page was tried and reverted — one screen
+ * in a different mode is a different app wearing the product's name.
+ */
+export const PREMIUM_GRADIENT =
+  `linear-gradient(150deg, ${tokens.blue} 0%, ${tokens.purple} 100%)`;
+
 export const TYPE_SCALE = [34, 30, 26, 22, 20, 17, 16, 15, 14, 13.5, 13, 12.5, 12, 11] as const;
 
 export const theme = createTheme({
