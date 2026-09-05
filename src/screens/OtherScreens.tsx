@@ -32,7 +32,7 @@ import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
 import { BalanceRow, ShopScreen, WalletScreen } from './WalletScreens';
 import { useStudent } from '../state/children';
-import { ChildBar, ChildPickerRow } from './ChildScreens';
+import { ChildPickerRow } from './ChildScreens';
 import { BannerSlot, MyBannersScreen } from './BannerScreens';
 import {
   BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, SapaklarScreen,
@@ -400,11 +400,6 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
           </HeaderIconButton>
         )}
       />
-
-      {/* Analitika is one child's numbers, so it says whose and lets you
-          change it in place — the alternative is going back to the diary to
-          switch and returning here to read. */}
-      <ChildBar />
 
       {!can && <AnalitikaLocked onUpgrade={() => setView('upgrade')} />}
 

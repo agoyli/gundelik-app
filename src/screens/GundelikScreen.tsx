@@ -4,11 +4,11 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  DateStrip, GradeBadge, HeaderIconButton, HelpButton, LessonCard, MonthCalendar,
+  DateStrip, GradeBadge, HelpButton, LessonCard, MonthCalendar,
   SheetDrawer, SheetSection, TodoList, TodoRow,
 } from '../components/Ui';
 import {
-  BellIcon, CalendarIcon, CheckIcon, ClockIcon, HwIcon, LockIcon,
+  CalendarIcon, CheckIcon, ClockIcon, HwIcon, LockIcon,
   NotesIcon, ShareIcon, TemaIcon, TrophyIcon,
 } from '../components/Icons';
 import { TeaserCard } from '../components/Paywall';
@@ -18,13 +18,12 @@ import { UpgradeScreen } from './UpgradeScreen';
 import { TONE, awardsForLesson, badgeType, toneOf } from '../data/badges';
 import type { Award } from '../data/badges';
 import { fmtDate } from '../lib/date';
-import { inboxUnread } from '../data/inbox';
 import { useSchedule } from '../hooks/useSchedule';
 import { tierFor, useCan } from '../state/prefs';
 import { ShareSheet } from './ShareScreens';
 import { ClassHwRow, ClassHwSheet } from './ClassScreens';
 import { BannerSlot } from './BannerScreens';
-import { ChildBar } from './ChildScreens';
+import { ChildHeaderPill } from './ChildScreens';
 import { useChild } from '../state/children';
 import { EARN_POINTS, award, useEarns } from '../state/earn';
 import { tokens } from '../theme';
@@ -216,18 +215,13 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1,
       }}>
         <Typography variant="h1">Gündelik</Typography>
-        {/* One action in the header now. Three icons in a row read as a
-            toolbar, and only one of them was about the whole screen: the
-            calendar belongs beside the dates it changes, and sharing the day
-            is something you do after reading it, not before. */}
-        <HeaderIconButton label="Habarlar we söhbetler" count={inboxUnread()} onClick={() => setPage('inbox')}>
-          <BellIcon size={21} />
-        </HeaderIconButton>
+        {/* One control in the header, and it answers the question this screen
+            is asked most: whose diary is this. Habarlar moved inside the sheet
+            it opens — a bell beside it would be a second icon competing for
+            the same corner, and "what is new" is asked far less often than
+            "which child". The unread count survives as a dot on the avatar. */}
+        <ChildHeaderPill onInbox={() => setPage('inbox')} />
       </Box>
-
-      {/* Whose diary this is, and the way to change it. Above the dates
-          because it changes what the dates mean. */}
-      <ChildBar />
 
       <DateStrip
         days={s.days}

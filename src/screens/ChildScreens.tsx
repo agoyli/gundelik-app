@@ -14,11 +14,15 @@
  * today's homework each child has in. A parent of five opens it to find who
  * needs them tonight, not to read a list of names they already know.
  *
- * The choice is app-wide, so the pill appears on every tab whose content is
- * about one child — Gündelik and Analitika — and Profil gets `ChildPickerRow`
- * in its account list instead, because the identity card above it already
- * shows who this is and a second portrait would be noise. All three open the
- * same sheet and write the same store: one selection, not one per screen.
+ * The pill lives **in the diary's header**, where the notification bell used
+ * to be. Which child you are reading is asked far more often than "what is
+ * new", and a root screen holds one control: the bell moved *inside* the
+ * sheet, as a row with its own unread count, and the pill carries a dot when
+ * something is waiting — so nothing was lost except a second icon competing
+ * for the same corner. Analitika has no switcher at all: it is one tab away
+ * from the diary, and a control repeated on every screen is a control the eye
+ * stops reading. Profil keeps `ChildPickerRow` in its account list, because
+ * the identity card above it already shows who this is.
  *
  * One child means no control at all: nothing here renders rather than offering
  * a choice of one.
@@ -26,10 +30,13 @@
 
 import { useState } from 'react';
 import { Box, ButtonBase, Typography } from '@mui/material';
-import { Avatar, DoneBadge, IconBadge, RowEnd, SheetDrawer, SurfaceRow } from '../components/Ui';
-import { ChevronIcon, UsersIcon } from '../components/Icons';
+import {
+  Avatar, CountPill, DoneBadge, IconBadge, RowChevron, RowEnd, SheetDrawer, SurfaceRow,
+} from '../components/Ui';
+import { BellIcon, ChevronIcon, UsersIcon } from '../components/Icons';
 import { PlanBadge } from '../components/Paywall';
 import { hwGlance } from '../api/mockApi';
+import { inboxUnread } from '../data/inbox';
 import { useChild } from '../state/children';
 import type { Child } from '../state/children';
 import { TODAY } from '../lib/date';
@@ -44,15 +51,42 @@ const glanceOf = (c: Child) => {
 
 /* ---------------- the sheet, shared by every entry point ---------------- */
 
-export function ChildSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ChildSheet({ open, onClose, onInbox }: {
+  open: boolean; onClose: () => void;
+  /** where the bell went: a row in here, with its own count */
+  onInbox?: () => void;
+}) {
   const { id, children, select } = useChild();
+  const unread = inboxUnread();
   return (
     <SheetDrawer open={open} onClose={onClose}>
       <Typography variant="h2">Çagalarym</Typography>
-      <Typography variant="caption">
+
+      {/* Habarlar is the first thing in the sheet, not the last. It used to be
+          a bell in the header and it has to stay as reachable as it was: the
+          bottom of a five-row list is a place people scroll past, and an
+          unread count nobody meets is a notification that did not happen. */}
+      {onInbox && (
+        <Box sx={{ mt: '12px' }}>
+          <SurfaceRow
+            icon={<IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={44}><BellIcon size={20} /></IconBadge>}
+            label="Habarlar we söhbetler"
+            labelSx={{ fontSize: 15, fontWeight: 500 }}
+            end={(
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {unread > 0 && <CountPill n={unread} label="okalmadyk habar" />}
+                <RowChevron />
+              </Box>
+            )}
+            onClick={() => { onClose(); onInbox(); }}
+          />
+        </Box>
+      )}
+
+      <Typography variant="caption" sx={{ display: 'block', mt: '16px' }}>
         {`${children.length} çaga · saýlanan çaganyň maglumatlary görkezilýär`}
       </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px', mt: '14px' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px', mt: '10px' }}>
         {children.map((c) => (
           <SurfaceRow
             key={c.id}
@@ -71,42 +105,60 @@ export function ChildSheet({ open, onClose }: { open: boolean; onClose: () => vo
           />
         ))}
       </Box>
+
     </SheetDrawer>
   );
 }
 
-/* ---------------- the pill over a child's own screens ---------------- */
+/* ---------------- the pill in the diary's header ---------------- */
 
-export function ChildBar() {
+export function ChildHeaderPill({ onInbox }: { onInbox?: () => void }) {
   const { child, children } = useChild();
   const [open, setOpen] = useState(false);
-  if (children.length < 2) return null;
+  const unread = inboxUnread();
+  /* A single-child account has nothing to switch, but the sheet is also where
+     Habarlar lives now — so the control stays, and it is the bell's dot that
+     justifies it. */
+  const only = children.length < 2;
 
   return (
     <>
-      <Box sx={{ px: tokens.gutter, pt: '10px' }}>
-        <ButtonBase
-          onClick={() => setOpen(true)}
-          aria-haspopup="dialog"
-          aria-label={`${child.name} — çagany çalyşmak`}
-          sx={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px', maxWidth: '100%',
-            height: 40, pl: '5px', pr: '10px', borderRadius: `${tokens.rPill}px`,
-            bgcolor: tokens.surface, '&:active': { bgcolor: tokens.surfacePress },
-          }}
-        >
+      <ButtonBase
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-label={only
+          ? `Habarlar${unread ? `, ${unread} okalmadyk` : ''}`
+          : `${child.name} — çagany çalyşmak${unread ? `, ${unread} okalmadyk habar` : ''}`}
+        sx={{
+          display: 'inline-flex', alignItems: 'center', gap: '7px', flex: 'none', maxWidth: 172,
+          height: 40, pl: '5px', pr: only ? '5px' : '9px', borderRadius: `${tokens.rPill}px`,
+          bgcolor: tokens.surface, '&:active': { bgcolor: tokens.surfacePress },
+        }}
+      >
+        <Box sx={{ position: 'relative', display: 'flex', flex: 'none' }}>
           <Avatar initials={child.initials} size={30} />
-          <Typography noWrap sx={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px', minWidth: 0 }}>
-            {child.short}
-          </Typography>
-          {/* points down, because it opens a list rather than a page */}
-          <Box aria-hidden sx={{
-            color: tokens.inkMuted, display: 'flex', flex: 'none', transform: 'rotate(90deg)',
-          }}><ChevronIcon /></Box>
-        </ButtonBase>
-      </Box>
+          {/* what is left of the bell on the surface: a dot, in the same red
+              every unread count in the app uses */}
+          {unread > 0 && (
+            <Box aria-hidden sx={{
+              position: 'absolute', top: -1, right: -1, width: 11, height: 11,
+              borderRadius: '50%', bgcolor: tokens.red, border: '2px solid #fff',
+            }} />
+          )}
+        </Box>
+        {!only && (
+          <>
+            <Typography noWrap sx={{ fontSize: 14, fontWeight: 700, letterSpacing: '-.2px', minWidth: 0 }}>
+              {child.short}
+            </Typography>
+            <Box aria-hidden sx={{
+              color: tokens.inkMuted, display: 'flex', flex: 'none', transform: 'rotate(90deg)',
+            }}><ChevronIcon /></Box>
+          </>
+        )}
+      </ButtonBase>
 
-      <ChildSheet open={open} onClose={() => setOpen(false)} />
+      <ChildSheet open={open} onClose={() => setOpen(false)} onInbox={onInbox} />
     </>
   );
 }
