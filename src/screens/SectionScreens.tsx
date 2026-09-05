@@ -11,6 +11,7 @@ import {
   SubjectRow, SubjectTile, SurfaceRow, TagPill, ViewToggle,
 } from '../components/Ui';
 import { KIND_LABEL, KIND_ORDER, useBookmarks } from '../state/bookmarks';
+import { useGrade } from '../state/children';
 import type { Bookmark } from '../state/bookmarks';
 import { setPref, tierFor, useCan, usePrefs } from '../state/prefs';
 import { useAllowance } from '../state/allowance';
@@ -25,7 +26,7 @@ import {
   bankTotal, deckById, deckGroups, loadDeckCards, playById, playGroups, subjectBank,
 } from '../data/library';
 import {
-  USER_GRADE, curriculum, pathLength, subjectLook, subjectsForGrade,
+  curriculum, pathLength, subjectLook, subjectsForGrade,
 } from '../data/curriculum';
 import { chipGrade, chipValue, gradeChips } from '../lib/gradeFilter';
 import { absDate, fmtWhen } from '../lib/date';
@@ -111,7 +112,11 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
    * `undefined` is "Ählisi": every subject the programme has, counted over all
    * of its grades.
    */
-  const [grade, setGrade] = useState<number | undefined>(USER_GRADE);
+  /* "My grade" is whichever child is selected, so switching child re-opens
+     this list on *their* year rather than leaving the last child's. */
+  const myGrade = useGrade();
+  const [grade, setGrade] = useState<number | undefined>(myGrade);
+  useEffect(() => { setGrade(myGrade); }, [myGrade]);
   const subjects = useMemo(() => (grade === undefined ? curriculum() : subjectsForGrade(grade))
     .map((s) => ({
       id: s.slug,
@@ -156,9 +161,9 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
 
       <SectionHeading
         title={grade === undefined ? 'Ähli dersler' : 'Dersler'}
-        action={grade === USER_GRADE
+        action={grade === myGrade
           ? <TagPill label="Meniň synpym" onClick={() => toast('Öz synpyňyzyň dersleri')} />
-          : <TagPill label={`${ordinal(USER_GRADE)} synpa dolan`} onClick={() => setGrade(USER_GRADE)} />}
+          : <TagPill label={`${ordinal(myGrade)} synpa dolan`} onClick={() => setGrade(myGrade)} />}
       />
       {/*
         * Two ways of reading the same list, and the switch above chooses.

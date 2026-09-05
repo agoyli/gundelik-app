@@ -10,6 +10,7 @@ const BrandbookScreen = lazy(() => import('./brand/BrandbookScreen')
 const DesignSystemScreen = lazy(() => import('./brand/DesignSystemScreen')
   .then((m) => ({ default: m.DesignSystemScreen })));
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PhoneFrame } from './components/PhoneFrame';
 import { SwipeLockProvider, useSwipeLocked } from './components/SwipeLock';
 import { TabBar } from './components/Ui';
 import { GundelikScreen } from './screens/GundelikScreen';
@@ -113,17 +114,7 @@ function Shell() {
         body: { background: tokens.pageBg, overscrollBehavior: 'none' },
       }} />
 
-      <Box sx={{ height: '100dvh', display: 'flex', justifyContent: 'center' }}>
-        {/* Phone frame on desktop, edge-to-edge on mobile */}
-        <Box sx={{
-          width: '100%', maxWidth: 393, height: '100%', position: 'relative',
-          bgcolor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          '@media (min-width:480px)': {
-            my: '24px', height: 'min(852px, calc(100dvh - 48px))',
-            /* a handset bezel, not a UI radius — deliberately off the ladder */
-            borderRadius: '44px', boxShadow: '0 10px 40px rgba(17,18,19,.14)',
-          },
-        }}>
+      <PhoneFrame>
           <Box
             ref={trackRef}
             onScroll={onTrackScroll}
@@ -171,8 +162,7 @@ function Shell() {
               preserves where they were. `locked` is set by PillHeader, so
               "has a back button" and "hides the nav" cannot drift apart. */}
           {!locked && <TabBar value={tab} onChange={goToTab} />}
-        </Box>
-      </Box>
+      </PhoneFrame>
 
       <Snackbar
         open={!!toastMsg}
@@ -255,7 +245,9 @@ export default function App() {
         },
       }} />
       {onboarding && !docs ? (
-        <OnboardingScreen onDone={() => setOnboarding(false)} />
+        /* the same frame the app runs in — the first screen a family sees is
+           not the one screen that ignores the phone surface */
+        <PhoneFrame><OnboardingScreen onDone={() => setOnboarding(false)} /></PhoneFrame>
       ) : docs ? (
         <ErrorBoundary>
           <Suspense fallback={<Box sx={{ minHeight: '100dvh', bgcolor: tokens.surface }} />}>

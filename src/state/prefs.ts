@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { absDate, daysUntil } from '../lib/date';
 
 /*
  * One app-wide preference store.
@@ -190,12 +191,40 @@ export const useCan = (id: FeatureId) => meets(usePrefs().tier, featureTier(id))
 /** The cheapest plan that unlocks a feature — what a teaser should offer. */
 export const tierFor = (id: FeatureId) => tierOf(featureTier(id));
 
-/* Subscription state, separate from which plan is on offer. */
+/*
+ * Subscription state, separate from which plan is on offer.
+ *
+ * The end of the term is an **ISO date**, like every other date in the app, and
+ * everything about it is derived from that one value: the printed date, how
+ * many days are left, and whether the term is close enough to say so. Two
+ * screens used to print "28 gün galdy" as a literal beside a date they did not
+ * count from — a number that was wrong the day after it was typed.
+ */
 export const PLAN = {
   status: 'Işjeň',
-  until: '12.03.2026',
+  untilIso: '2026-03-12',
+  get until() { return absDate(PLAN.untilIso); },
   /* what the referral programme pays for each friend who subscribes */
   referralReward: 5,
+};
+
+/** Days left on the subscription — negative once the term is past. */
+export const planDaysLeft = () => daysUntil(PLAN.untilIso);
+
+/** The short form a badge carries: "28 gün galdy" / "Şu gün gutarýar". */
+export const planLeftLabel = () => {
+  const d = planDaysLeft();
+  if (d < 0) return 'Möhleti gutardy';
+  if (d === 0) return 'Şu gün gutarýar';
+  if (d === 1) return 'Ertir gutarýar';
+  return `${d} gün galdy`;
+};
+
+/** Under a fortnight is where "renew" stops being a setting and starts being
+    news, so the badge changes colour rather than only its wording. */
+export const planEndingSoon = () => {
+  const d = planDaysLeft();
+  return d >= 0 && d <= 14;
 };
 
 /* Social proof shown on ads and the tariff page. Kept here so the same

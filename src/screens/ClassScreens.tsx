@@ -21,10 +21,9 @@ import {
 } from '../components/Ui';
 import { TeaserCard } from '../components/Paywall';
 import { UsersIcon } from '../components/Icons';
-import {
-  CLASS_SIZE, CLASSMATES, classDoneCount, mateDidHw, mateDoneCount,
-} from '../data/classmates';
+import { classDoneCount, classOf, classSize, mateDidHw, mateDoneCount } from '../data/classmates';
 import { tierFor, useCan } from '../state/prefs';
+import { useChild } from '../state/children';
 import { tokens } from '../theme';
 import type { Lesson } from '../types';
 
@@ -40,15 +39,16 @@ const ALL = 'all';
 export function ClassHwRow({ lessons, selfDone, onOpen }: {
   lessons: Lesson[]; selfDone: number; onOpen: () => void;
 }) {
+  const { id: child } = useChild();
   const ids = hwLessons(lessons).map((l) => l.id);
   const total = ids.length;
-  const done = classDoneCount(ids) + (total > 0 && selfDone === total ? 1 : 0);
+  const done = classDoneCount(child, ids) + (total > 0 && selfDone === total ? 1 : 0);
   return (
     <SurfaceRow
       icon={<IconBadge bg={tokens.blueTint} color={tokens.blueText} size={38}><UsersIcon size={19} /></IconBadge>}
       label="Synpdaşlar"
       sub={total === 0 ? 'Bu gün tabşyryk ýok' : 'Kim ýerine ýetirdi'}
-      end={<RowEnd value={`${done}/${CLASS_SIZE}`} />}
+      end={<RowEnd value={`${done}/${classSize(child)}`} />}
       onClick={onOpen}
     />
   );
@@ -63,6 +63,9 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
   onUpgrade: () => void;
 }) {
   const can = useCan('classmates');
+  const { id: child } = useChild();
+  const mates = classOf(child);
+  const size = classSize(child);
   const tasks = hwLessons(lessons);
   /* null means "not chosen yet" — only then does the opening lesson decide,
      so picking «Ählisi» is not overruled by where the sheet was opened from. */
@@ -73,13 +76,13 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
 
   /* One task: done or not. All of them: done means all of them. */
   const isDone = (mateIndex: number) =>
-    mateDoneCount(CLASSMATES[mateIndex], ids) === ids.length;
-  const done = CLASSMATES.filter((_, i) => isDone(i)).length
+    mateDoneCount(mates[mateIndex], ids) === ids.length;
+  const done = mates.filter((_, i) => isDone(i)).length
     + (ids.length > 0 && ids.every((id) => lessons.find((l) => l.id === id)?.hwDone) ? 1 : 0);
 
   const roster = (limit?: number) => (
-    <TodoList done={done} total={CLASS_SIZE}>
-      {CLASSMATES.slice(0, limit).map((m, i) => (
+    <TodoList done={done} total={size}>
+      {mates.slice(0, limit).map((m, i) => (
         <TodoRow
           key={m.id}
           label={m.name}
@@ -100,8 +103,8 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
         {tasks.length === 0
           ? 'Bu gün synpa tabşyryk berilmedi'
           : chosen === ALL
-            ? `${CLASS_SIZE} okuwçydan ${done}-si ähli tabşyrygy ýerine ýetirdi`
-            : `${CLASS_SIZE} okuwçydan ${done}-si ýerine ýetirdi`}
+            ? `${size} okuwçydan ${done}-si ähli tabşyrygy ýerine ýetirdi`
+            : `${size} okuwçydan ${done}-si ýerine ýetirdi`}
       </Typography>
 
       {tasks.length > 1 && (

@@ -163,6 +163,9 @@ export const WEEKDAY_HEADS = ['Duş', 'Siş', 'Çar', 'Pen', 'Ann', 'Şen', 'Ýe
 /** Sunday is the day off; a school calendar should say so. */
 export const isDayOff = (iso: string) => parse(iso).getDay() === 0;
 
+/** Whole days from the app's today to `iso`; negative once it is past. */
+export const daysUntil = (iso: string) => dayDiff(iso);
+
 /** ISO date `n` days from `iso` — booking windows are counted in whole days. */
 export const addDays = (iso: string, n: number) => {
   const d = new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)) + n);

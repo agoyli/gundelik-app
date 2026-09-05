@@ -121,8 +121,9 @@ export const loadCurriculum = async () => {
 /** Every subject in the programme, in name order. */
 export const curriculum = () => CURRICULUM;
 
-/** The grade this account is in. The diary, the profile and the path read it. */
-export const USER_GRADE = 8;
+/* The grade the app is read against used to live here as a constant. It moved
+   to `state/children.ts` (`useGrade()`) when an account gained more than one
+   child: a programme year is a fact about a child, not about an account. */
 
 export const subjectBySlug = (slug: string) => CURRICULUM.find((s) => s.slug === slug);
 

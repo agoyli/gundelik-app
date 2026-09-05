@@ -41,8 +41,27 @@ export const CLASSMATES: Classmate[] = [
   { id: 'c23', name: 'Ýollyýewa Sähra', initials: 'ÝS', rate: 89 },
 ];
 
-/** The reader counts too — 23 classmates plus the one holding the phone. */
-export const CLASS_SIZE = CLASSMATES.length + 1;
+/*
+ * The account holds five children in five different classes, so the roster is
+ * a pool rather than a class: each child gets a stable slice of it, rotated
+ * and sized by their own id. Handing every child the same 23 names would make
+ * the switcher look broken — the one thing a class list must do is look like
+ * *that* class.
+ */
+const CLASS_SIZES = [19, 21, 23, 20, 22];
+
+const seed = (id: string) => [...id].reduce((n, c) => n + c.charCodeAt(0), 0);
+
+export const classOf = (childId: string): Classmate[] => {
+  const n = seed(childId);
+  const size = CLASS_SIZES[n % CLASS_SIZES.length];
+  const start = n % CLASSMATES.length;
+  return Array.from({ length: Math.min(size, CLASSMATES.length) },
+    (_, i) => CLASSMATES[(start + i) % CLASSMATES.length]);
+};
+
+/** The reader counts too — the classmates plus the one holding the phone. */
+export const classSize = (childId: string) => classOf(childId).length + 1;
 
 /* A small stable hash: same pupil, same lesson, same answer — every session. */
 const hash = (s: string) => {
@@ -62,7 +81,9 @@ export const mateDoneCount = (mate: Classmate, lessonIds: string[]) =>
   lessonIds.filter((id) => mateDidHw(mate, id)).length;
 
 /** Classmates who have finished everything set for the day. */
-export const classDoneCount = (lessonIds: string[]) =>
-  lessonIds.length === 0
-    ? CLASSMATES.length
-    : CLASSMATES.filter((m) => mateDoneCount(m, lessonIds) === lessonIds.length).length;
+export const classDoneCount = (childId: string, lessonIds: string[]) => {
+  const mates = classOf(childId);
+  return lessonIds.length === 0
+    ? mates.length
+    : mates.filter((m) => mateDoneCount(m, lessonIds) === lessonIds.length).length;
+};

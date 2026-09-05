@@ -2,7 +2,9 @@ import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { CheckIcon, LockIcon, SparkleIcon, TrendUpIcon, UsersIcon } from './Icons';
 import { IconBadge, SheetDrawer } from './Ui';
-import { ENTRY, PROOF, tierFor, usePrefs } from '../state/prefs';
+import {
+  ENTRY, PLAN, PROOF, planDaysLeft, planEndingSoon, planLeftLabel, tierFor, usePrefs,
+} from '../state/prefs';
 import type { FeatureId } from '../state/prefs';
 import { tokens } from '../theme';
 
@@ -46,6 +48,42 @@ export const BetaPill = () => (
     bgcolor: tokens.purpleTint, color: tokens.purpleText, fontSize: 11, fontWeight: 700,
   }}>BETA</Box>
 );
+
+/* ---------------- how long is left ----------------
+ *
+ * The subscription's status and its remaining days are one fact stated in two
+ * halves, so they are one component. It was two: a green "Işjeň" pill drawn by
+ * hand on the profile and a white one in the payments header, with the days
+ * left typed underneath as the literal "28 gün galdy" — a number that stopped
+ * being true the day after it was written.
+ *
+ * `tone="onDark"` is the same badge over the blue payments card; the wording,
+ * the counting and the "ending soon" threshold stay in one place either way.
+ */
+export function PlanBadge({ tone = 'light' }: { tone?: 'light' | 'onDark' }) {
+  const soon = planEndingSoon();
+  const over = planDaysLeft() < 0;
+  const look = tone === 'onDark'
+    ? { bg: 'rgba(255,255,255,.22)', ink: '#fff' }
+    : over ? { bg: tokens.redTint, ink: tokens.redText }
+      : soon ? { bg: tokens.orangeTint, ink: tokens.orangeText }
+        : { bg: tokens.greenTint, ink: tokens.greenText };
+  return (
+    <Box component="span" sx={{
+      display: 'inline-flex', alignItems: 'center', gap: '6px', flex: 'none',
+      height: 22, px: '9px', borderRadius: `${tokens.rPill}px`,
+      bgcolor: look.bg, color: look.ink, fontSize: 12, fontWeight: 700,
+    }}>
+      {over ? 'Möhleti gutardy' : PLAN.status}
+      {!over && (
+        <>
+          <Box aria-hidden component="span" sx={{ opacity: .5 }}>·</Box>
+          {planLeftLabel()}
+        </>
+      )}
+    </Box>
+  );
+}
 
 /* ---------------- obscured real content ----------------
    The preview is rendered, then blurred and made inert — the point of a teaser

@@ -1,5 +1,6 @@
 import { absDate, dayOfMonth, TODAY, weekdayLong, weekdayShort } from '../lib/date';
 import type { DayInfo, DaySchedule, Lesson } from '../types';
+import { CHILDREN, isJunior } from '../state/children';
 
 /* ------------------------------------------------------------------ */
 /*  Mock API — replace each exported fn with a real fetch() later.     */
@@ -237,10 +238,23 @@ const store4a: Record<string, DaySchedule> = {
   '2026-02-14': { key: '2026-02-14', notes: 0, lessons: [] },
 };
 
-/* Keyed by the child ids in `state/children.ts` — the diary asks for a child
-   and a date, never for "the" day. */
-const books: Record<string, Record<string, DaySchedule>> = { m: store8b, a: store4a };
-const book = (child: string) => books[child] ?? store8b;
+/*
+ * A book per child, cloned from the seed for their stage on first read.
+ *
+ * The clone is the point: five children share two timetables, and without it
+ * ticking Muhammet's homework would tick Nurmuhammet's too — one object behind
+ * two names. Which seed a child gets is their stage, read from the same
+ * `isJunior` the profile reads, so a second-year and an eleventh-year are never
+ * handed the same lesson list.
+ */
+const books: Record<string, Record<string, DaySchedule>> = {};
+const book = (child: string) => {
+  if (!books[child]) {
+    const kid = CHILDREN.find((c) => c.id === child);
+    books[child] = structuredClone(kid && isJunior(kid) ? store4a : store8b);
+  }
+  return books[child];
+};
 
 let lastChecked = absDate(TODAY);
 
@@ -263,6 +277,21 @@ export const setHomeworkDone = (
   const lesson = book(child)[dayKey]?.lessons.find((l) => l.id === lessonId);
   if (lesson) lesson.hwDone = done;
   return delay(book(child)[dayKey]);
+};
+
+/*
+ * A glance at one child's day, without a fetch.
+ *
+ * The child switcher lists five children and wants one useful fact beside each
+ * name — how much of today's homework is in. Five awaited fetches to fill a
+ * sheet that opens instantly would show five spinners; this reads the same
+ * store the diary reads, synchronously, because it is a mock and the answer is
+ * already in memory. A real client would keep this behind the same cache.
+ */
+export const hwGlance = (child: string, key: string) => {
+  const day = book(child)[key];
+  const tasks = day?.lessons.filter((l) => l.hw) ?? [];
+  return { done: tasks.filter((l) => l.hwDone).length, total: tasks.length };
 };
 
 export const fetchLastChecked = (): Promise<string> => delay(lastChecked);

@@ -4,7 +4,7 @@ import { CheckIcon, StarFilledIcon } from '../components/Icons';
 import { IconBadge, RowChevron, SectionLabel, StickyFooter } from '../components/Ui';
 import { PREMIUM_ADS } from '../data/premium';
 import type { PremiumAd } from '../data/premium';
-import { FEATURES, PLAN, PROOF, TIERS, meets, tierName } from '../state/prefs';
+import { FEATURES, PLAN, PROOF, TIERS, meets, tierName, planLeftLabel } from '../state/prefs';
 import type { Tier } from '../state/prefs';
 import {
   BalanceNote, ListPrice, PayHeader, SavePill, TrustLine, perMonthOf, priceLine, usePay,
@@ -433,7 +433,7 @@ export function PremiumScreen({ onBack, onDone, toast, onSwitch }: PayProps) {
           <BuyButton tier={tier} term={term} onBuy={() => buy(tier, term)} />
           {premium ? (
             <Typography sx={{ fontSize: 12, color: tokens.inkMuted, textAlign: 'center', mt: '8px' }}>
-              Häzirki abunaň {PLAN.until} çenli · uzaldylýar
+              Häzirki abunaň {PLAN.until} çenli · {planLeftLabel()}
             </Typography>
           ) : <TrustLine />}
         </StickyFooter>

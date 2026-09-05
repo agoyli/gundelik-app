@@ -4,7 +4,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  DateStrip, GradeBadge, HeaderIconButton, HelpButton, LessonCard, MonthCalendar, Segmented,
+  DateStrip, GradeBadge, HeaderIconButton, HelpButton, LessonCard, MonthCalendar,
   SheetDrawer, SheetSection, TodoList, TodoRow,
 } from '../components/Ui';
 import {
@@ -24,6 +24,7 @@ import { tierFor, useCan } from '../state/prefs';
 import { ShareSheet } from './ShareScreens';
 import { ClassHwRow, ClassHwSheet } from './ClassScreens';
 import { BannerSlot } from './BannerScreens';
+import { ChildBar } from './ChildScreens';
 import { useChild } from '../state/children';
 import { EARN_POINTS, award, useEarns } from '../state/earn';
 import { tokens } from '../theme';
@@ -150,9 +151,8 @@ function EarnPill({ kind, earns, done }: { kind: 'hw' | 'test'; earns: boolean; 
 
 export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
   const s = useSchedule();
-  /* whose diary is on screen — the switcher only appears on an account that
-     actually has a second child */
-  const { id: childId, child, children, select } = useChild();
+  /* the share card names whoever is selected */
+  const { child } = useChild();
   const canBadges = useCan('badges');
   const canNotes = useCan('notes');
   /* whether ticks and tests actually credit bal on this account */
@@ -225,23 +225,9 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
         </HeaderIconButton>
       </Box>
 
-      {/* Two children, one diary: the switch is above the dates because it
-          changes what the dates mean. A segmented control rather than a menu —
-          with two or three children every option is worth showing, and the
-          answer to "which one am I reading" has to be visible without a tap. */}
-      {children.length > 1 && (
-        <Box sx={{ px: tokens.gutter, pt: '12px' }}>
-          <Segmented
-            label="Çaga"
-            value={childId}
-            options={children.map((c) => ({ id: c.id, label: c.short }))}
-            onChange={select}
-          />
-          <Typography variant="caption" sx={{ display: 'block', mt: '6px', px: '4px' }}>
-            {child.cls} · {child.school}
-          </Typography>
-        </Box>
-      )}
+      {/* Whose diary this is, and the way to change it. Above the dates
+          because it changes what the dates mean. */}
+      <ChildBar />
 
       <DateStrip
         days={s.days}

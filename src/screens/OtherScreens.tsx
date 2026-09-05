@@ -11,15 +11,15 @@ import {
   MeterTile, PointsPill, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
-import { AdSlot, TeaserCard } from '../components/Paywall';
+import { AdSlot, PlanBadge, TeaserCard } from '../components/Paywall';
 import { OLYMPIADS, PRIZE_CONTESTS, RATING } from '../data/guides';
 import { bankTotal, playCount, testSubjects } from '../data/library';
-import { USER_GRADE, pathTotal, subjectBySlug } from '../data/curriculum';
+import { pathTotal, subjectBySlug } from '../data/curriculum';
 import type { CurriculumSubject } from '../data/curriculum';
 import { fmtRange } from '../lib/date';
 import { ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/library';
-import { PLAN, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
+import { PLAN, planLeftLabel, tierFor, tierName, useCan, usePrefs } from '../state/prefs';
 import { useAllowance } from '../state/allowance';
 import { AiChatScreen } from './AiChatScreen';
 import { TestDetailScreen, TestSubjectScreen, prizePhase } from './DetailScreens';
@@ -31,6 +31,8 @@ import { PlayScreen } from './PlayScreens';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
 import { BalanceRow, ShopScreen, WalletScreen } from './WalletScreens';
+import { useStudent } from '../state/children';
+import { ChildBar, ChildPickerRow } from './ChildScreens';
 import { BannerSlot, MyBannersScreen } from './BannerScreens';
 import {
   BaslesiklerScreen, BookmarksScreen, KartlarScreen, KitaphanaScreen, SapaklarScreen,
@@ -58,25 +60,15 @@ const TopBar = ({ title, action }: { title: string; action?: React.ReactNode }) 
   </Box>
 );
 
-/* One student everywhere: Muhammedow Muhammet, 8-nji «B», 16-njy mekdep.
-   The grade is USER_GRADE — the same number the curriculum is read against, so
-   the profile and the subject list cannot disagree about what year this is. */
-export const STUDENT = {
-  name: 'Muhammedow Muhammet',
-  initials: 'MM',
-  cls: `${ordinal(USER_GRADE)} «B» synp`,
-  school: '16-njy mekdep',
-  schoolLong: '16-njy orta mekdep',
-  points: 1251,
-  avg: '4.6',
-  rank: '2-nji',
-  hwRate: 92,
-};
+/* There is no "the student" any more — an account can hold five of them — so
+   every screen below asks `useStudent()` who is selected rather than reading a
+   constant. See `state/children.ts`. */
 
 /* ---------------- Çagam ---------------- */
 export function CagamScreen({ toast }: { toast: (msg: string) => void }) {
   /* the ring is the subscription's, so it is read from the subscription */
   const { premium } = usePrefs();
+  const student = useStudent();
   return (
     <>
       <TopBar title="Çagam" />
@@ -85,10 +77,10 @@ export function CagamScreen({ toast }: { toast: (msg: string) => void }) {
           mt: '4px', bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`,
           p: `22px ${tokens.padCard}`, display: 'flex', alignItems: 'center', gap: '14px',
         }}>
-          <Avatar initials={STUDENT.initials} size={56} premium={premium} />
+          <Avatar initials={student.initials} size={56} premium={premium} />
           <Box>
-            <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px' }}>{STUDENT.name}</Typography>
-            <Typography variant="caption">{STUDENT.cls} · {STUDENT.schoolLong}</Typography>
+            <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px' }}>{student.name}</Typography>
+            <Typography variant="caption">{student.cls} · {student.schoolLong}</Typography>
           </Box>
         </Box>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', mt: '12px' }}>
@@ -409,6 +401,11 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
         )}
       />
 
+      {/* Analitika is one child's numbers, so it says whose and lets you
+          change it in place — the alternative is going back to the diary to
+          switch and returning here to read. */}
+      <ChildBar />
+
       {!can && <AnalitikaLocked onUpgrade={() => setView('upgrade')} />}
 
       {can && (
@@ -575,23 +572,24 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
   const allow = useAllowance('tests');
   const plan = tierFor('tests');
   const { premium } = usePrefs();
+  const student = useStudent();
   return (
     <>
       <PillHeader title="Testler" onBack={onBack} />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
         {/* Profile */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: '14px', gap: '10px' }}>
-          <Avatar initials={STUDENT.initials} size={104} premium={premium} />
+          <Avatar initials={student.initials} size={104} premium={premium} />
           <Box sx={{ textAlign: 'center' }}>
             <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px' }}>
-              {STUDENT.name}
+              {student.name}
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', mt: '3px', fontSize: 15 }}>
-              {STUDENT.school}
+              {student.school}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <PointsPill value={STUDENT.points} unit="bal" />
+            <PointsPill value={student.points} unit="bal" />
             <Box
               component="button"
               aria-label="Ballar barada"
@@ -997,6 +995,8 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   const [picker, setPicker] = useState<'fav' | 'dream' | null>(null);
   const career = useCareerResult();
   const [pay, setPay] = useState(false);
+  /* the profile is a child's profile — whichever child is selected */
+  const student = useStudent();
 
   const root = () => setView('root');
 
@@ -1092,7 +1092,7 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
              quarter of the height, and the whole row is the one way in. */}
         <ButtonBase
           onClick={() => setView('edit')}
-          aria-label={`${STUDENT.name} — maglumatlary üýtget`}
+          aria-label={`${student.name} — maglumatlary üýtget`}
           sx={{
             display: 'flex', alignItems: 'center', gap: '14px', width: '100%',
             textAlign: 'left', justifyContent: 'flex-start', mt: '6px',
@@ -1100,13 +1100,13 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             '&:active': { bgcolor: tokens.surfacePress },
           }}
         >
-          <Avatar initials={STUDENT.initials} size={62} fill="gradient" premium={premium} />
+          <Avatar initials={student.initials} size={62} fill="gradient" premium={premium} />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography noWrap sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px' }}>
-              {STUDENT.name}
+              {student.name}
             </Typography>
             <Typography variant="caption" noWrap sx={{ display: 'block', mt: '2px', fontSize: 14 }}>
-              {STUDENT.school} · {STUDENT.cls}
+              {student.school} · {student.cls}
             </Typography>
           </Box>
           <RowChevron />
@@ -1128,12 +1128,12 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             pct={attendance.pct} color={tokens.greenDeep}
           />
           <MeterTile
-            value={`${STUDENT.hwRate}%`} label="Öý işi"
-            pct={STUDENT.hwRate} color={tokens.blue}
+            value={`${student.hwRate}%`} label="Öý işi"
+            pct={student.hwRate} color={tokens.blue}
           />
           <MeterTile
-            value={STUDENT.avg} label="Ortaça baha"
-            pct={(Number(STUDENT.avg) / 5) * 100} color={tokens.orangeText}
+            value={student.avg} label="Ortaça baha"
+            pct={(Number(student.avg) / 5) * 100} color={tokens.orangeText}
           />
         </Box>
 
@@ -1144,7 +1144,7 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
         <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, overflow: 'hidden' }}>
           <ButtonBase
             onClick={() => setView('payments')}
-            aria-label={`Abuna: ${tierName(tier)}, ${PLAN.until} çenli`}
+            aria-label={`Abuna: ${tierName(tier)}, ${PLAN.until} çenli, ${planLeftLabel()}`}
             sx={{
               display: 'flex', alignItems: 'center', gap: '13px', width: '100%', textAlign: 'left',
               p: `16px ${tokens.padCard}`, '&:active': { bgcolor: tokens.surfacePress },
@@ -1154,11 +1154,7 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.2px' }}>{tierName(tier)}</Typography>
-                <Box sx={{
-                  px: '9px', height: 22, borderRadius: `${tokens.rPill}px`,
-                  bgcolor: tokens.greenTint, color: tokens.greenText, fontSize: 12, fontWeight: 700,
-                  display: 'grid', placeItems: 'center', flex: 'none',
-                }}>{PLAN.status}</Box>
+                <PlanBadge />
               </Box>
               <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '3px' }}>
                 {PLAN.until} çenli
@@ -1330,6 +1326,10 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
              without the row having to shout it. */}
         <SectionLabel>Hasap</SectionLabel>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* The identity card above already says which child this is, so the
+              switch is a row with the current name as its value — not a second
+              portrait of the same person. */}
+          <ChildPickerRow />
           <SurfaceRow
             icon={<IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={44}><CoinIcon size={22} /></IconBadge>}
             label="Dostuňy çagyr"

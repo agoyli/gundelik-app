@@ -7,7 +7,7 @@ import {
 } from '../components/Ui';
 import { tierFor, useCan } from '../state/prefs';
 import { useAllowance } from '../state/allowance';
-import { USER_GRADE } from '../data/curriculum';
+import { useGrade } from '../state/children';
 import { KIND_META } from '../data/kinds';
 import { loadPlayCards, playCount, playGroups } from '../data/library';
 import type { PlayCard, PlayGroup, PlayItem } from '../data/library';
@@ -177,7 +177,8 @@ export function PlayScreen({ startGrade, startGroupId, onBack, onUpgrade }: {
   startGroupId?: string;
   onBack: () => void; onUpgrade: () => void;
 }) {
-  const opening = startGrade === null ? undefined : startGrade ?? USER_GRADE;
+  const myGrade = useGrade();
+  const opening = startGrade === null ? undefined : startGrade ?? myGrade;
   const [grade, setGrade] = useState<number | undefined>(opening);
   const [group, setGroup] = useState<PlayGroup | null>(
     () => playGroups(opening).find((g) => g.id === startGroupId) ?? null,

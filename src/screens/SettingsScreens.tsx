@@ -17,6 +17,7 @@ import {
   AboutScreen, APP, FaqScreen, HelpScreen, SupportScreen, UpdatesScreen,
 } from './HelpScreens';
 import { CustomPagesScreen } from './StateScreens';
+import { PlanBadge } from '../components/Paywall';
 import {
   BANKS, PAY_NUMBERS, addPayMethod, bankOf, mainPayMethod, methodLabel, methodNote, methodTone,
   removePayMethod, setMainPayMethod, usePayMethods,
@@ -326,13 +327,10 @@ export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
           <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px' }}>{plan.name}</Typography>
-          <Box sx={{
-            px: '9px', height: 22, borderRadius: `${tokens.rPill}px`, bgcolor: 'rgba(255,255,255,.22)',
-            fontSize: 12, fontWeight: 700, display: 'grid', placeItems: 'center',
-          }}>{PLAN.status}</Box>
+          <PlanBadge tone="onDark" />
         </Box>
         <Typography sx={{ fontSize: 13.5, opacity: .9, mt: '4px' }}>
-          {PLAN.until} çenli · 28 gün galdy
+          {PLAN.until} çenli
         </Typography>
         <Box sx={{ display: 'flex', gap: '10px', mt: '16px' }}>
           <Button

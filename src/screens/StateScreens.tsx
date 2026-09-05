@@ -236,9 +236,9 @@ export const ONBOARDING: { id: string; art: ArtId; tint: string; ink: string; ti
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   return (
     <Box sx={{
-      /* it is the whole screen, not a page inside the shell: the tab bar and
-         the day strip do not exist yet for someone who has not arrived */
-      minHeight: '100dvh', height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#fff',
+      /* it fills the phone frame it is mounted in — the tab bar and the day
+         strip do not exist yet for someone who has not arrived */
+      height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', bgcolor: '#fff',
       pt: 'env(safe-area-inset-top)',
     }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: '10px 12px' }}>
