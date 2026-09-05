@@ -277,3 +277,7 @@ export const careerRowValue = (answers?: Answers) => {
 };
 
 export const careerDreamLabel = (id: string) => specialityOf(id)?.label ?? '—';
+
+/** The school subjects a goal rests on — the half of a job title a pupil can
+    act on this term, so the goal is never only a word. */
+export const careerDreamHint = (id: string) => specialityOf(id)?.hint ?? '';

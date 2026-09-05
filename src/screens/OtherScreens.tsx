@@ -15,7 +15,7 @@ import { OLYMPIADS, PRIZE_CONTESTS, RATING } from '../data/guides';
 import { bankTotal, playCount, testSubjects } from '../data/library';
 import { pathTotal, subjectBySlug } from '../data/curriculum';
 import type { CurriculumSubject } from '../data/curriculum';
-import { fmtRange } from '../lib/date';
+import { fmtDate, fmtRange } from '../lib/date';
 import { ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/library';
 import { PLAN, tierFor, tierName, tierOf, useCan, usePrefs } from '../state/prefs';
@@ -23,7 +23,7 @@ import { useAllowance } from '../state/allowance';
 import { AiChatScreen } from './AiChatScreen';
 import { TestDetailScreen, TestSubjectScreen, prizePhase } from './DetailScreens';
 import { ReferralScreen } from './ReferralScreen';
-import { CareerTestScreen, careerDreamLabel, careerRowValue } from './CareerTestScreen';
+import { CareerTestScreen, careerDreamHint, careerDreamLabel, careerRowValue } from './CareerTestScreen';
 import { SPECIALITIES } from '../data/career';
 import { useCareerResult } from '../state/career';
 import { PlayScreen } from './PlayScreens';
@@ -984,19 +984,6 @@ function ChoiceSheet({ open, title, note, options, value, onPick, onClose, foote
   );
 }
 
-/* Row that shows a chosen value and opens its picker */
-const ChoiceRow = ({ icon, tint, color, label, value, onClick }: {
-  icon: React.ReactNode; tint: string; color: string; label: string; value: string; onClick: () => void;
-}) => (
-  <SurfaceRow
-    icon={<IconBadge bg={tint} color={color} size={44}>{icon}</IconBadge>}
-    label={label}
-    labelSx={{ fontSize: 15, fontWeight: 500 }}
-    end={<RowEnd value={value} />}
-    onClick={onClick}
-  />
-);
-
 type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referral' | 'upgrade'
   | 'career' | 'wallet' | 'shop';
 
@@ -1284,29 +1271,112 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
         </Box>
 
         {/* ---- Goals, near the bottom ----
-             These are answered once and changed rarely — a favourite subject,
-             a job, a test taken one afternoon. They sat third, above the two
-             blocks that expire and need money, which put a set-once question
-             in front of a monthly errand. */}
+             Answered once and changed rarely, so they sit below the blocks
+             that expire and need money.
+
+             They were three equal rows — favourite subject, dream job, career
+             test — which is one row too many and the wrong shape for all
+             three. Two of them are *answers* and the third is the *instrument*
+             that produces one of them: "what do I want to be" asked twice,
+             once as a picker for a pupil who knows and once as a test for one
+             who does not. So the goal is the card and the test is attached to
+             it — an invitation while there is no result, the result itself
+             once there is one. And a goal is not only a word: the subjects it
+             rests on are printed under it, because that is the part a pupil
+             can do something about this term.
+
+             The favourite subject is not a goal at all. It stays a row, under
+             the card rather than above it, and it says what it changes. */}
         <SectionLabel>Maksatlarym</SectionLabel>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <ChoiceRow
-            icon={<StarIcon size={22} />} tint={tokens.orangeTint} color={tokens.orangeText}
-            label="Söýgüli dersim" value={fav} onClick={() => setPicker('fav')}
-          />
-          <ChoiceRow
-            icon={<TargetIcon size={22} />} tint={tokens.purpleTint} color={tokens.purpleText}
-            label="Arzuwymdaky hünär" value={dreamLabel} onClick={() => setPicker('dream')}
-          />
-          {/* The other way to answer the row above it. A list of jobs is the
-              right control for a student who already knows and useless for one
-              who does not — the test ends by writing into that same goal. */}
-          <ChoiceRow
-            icon={<QuizIcon size={22} />} tint={tokens.blueTint} color={tokens.blueText}
-            label="Hünär synagy"
-            value={careerRowValue(career?.answers)}
-            onClick={() => setView('career')}
-          />
+        <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, overflow: 'hidden' }}>
+          <ButtonBase
+            onClick={() => setPicker('dream')}
+            aria-label={`Arzuwymdaky hünär: ${dreamLabel} — üýtgetmek`}
+            sx={{
+              display: 'flex', alignItems: 'center', gap: '13px', width: '100%', textAlign: 'left',
+              p: `15px ${tokens.padCard}`, '&:active': { bgcolor: tokens.surfacePress },
+            }}
+          >
+            <IconBadge bg={tokens.purpleTint} color={tokens.purpleText} size={48}>
+              <TargetIcon size={24} />
+            </IconBadge>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontSize: 12.5, color: tokens.ink3 }} noWrap>Arzuwymdaky hünär</Typography>
+              <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px' }} noWrap>
+                {dream ? dreamLabel : 'Saýlanmadyk'}
+              </Typography>
+              <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '1px' }} noWrap>
+                {dream ? careerDreamHint(dream) : 'Sekiz hünärden birini saýla'}
+              </Typography>
+            </Box>
+            <RowChevron />
+          </ButtonBase>
+
+          <Box sx={{ borderTop: `1px solid ${tokens.dividerSoft}` }}>
+            {career ? (
+              <ButtonBase
+                onClick={() => setView('career')}
+                aria-label={`Hünär synagynyň netijesi: ${careerRowValue(career.answers)}`}
+                sx={{
+                  display: 'flex', alignItems: 'center', gap: '13px', width: '100%', textAlign: 'left',
+                  p: `13px ${tokens.padCard}`, '&:active': { bgcolor: tokens.surfacePress },
+                }}
+              >
+                <IconBadge bg={tokens.blueTint} color={tokens.blueText} size={40} radius={tokens.rTile}>
+                  <QuizIcon size={20} />
+                </IconBadge>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: 15, fontWeight: 600 }} noWrap>Hünär synagynyň netijesi</Typography>
+                  <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '1px' }} noWrap>
+                    {careerRowValue(career.answers)} · {fmtDate(career.at)}
+                  </Typography>
+                </Box>
+                <RowChevron />
+              </ButtonBase>
+            ) : (
+              <Box sx={{ p: `14px ${tokens.padCard} 16px` }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Haýsy hünär maňa gelşer?</Typography>
+                <Typography sx={{ fontSize: 12.5, color: tokens.ink3, lineHeight: 1.5, mt: '3px' }}>
+                  12 sorag, 2 minut. Netije üç hünäri, näçe gabat gelýändigini we haýsy
+                  dersleriň gerekdigini görkezýär.
+                </Typography>
+                <Button
+                  fullWidth variant="contained" disableElevation
+                  startIcon={<QuizIcon size={18} />}
+                  sx={{ mt: '12px' }}
+                  onClick={() => setView('career')}
+                >Synagdan geç</Button>
+              </Box>
+            )}
+          </Box>
+
+          {/* The third answer, and the smallest: not a goal but a preference,
+              so it keeps the test row's shape rather than the goal's. Its
+              value leads the second line instead of sitting in a right-hand
+              slot, which leaves the whole width for saying what it changes —
+              a row that states a setting and not its effect is a question the
+              reader has to guess the point of. */}
+          <Box sx={{ borderTop: `1px solid ${tokens.dividerSoft}` }}>
+            <ButtonBase
+              onClick={() => setPicker('fav')}
+              aria-label={`Söýgüli dersim: ${fav} — üýtgetmek`}
+              sx={{
+                display: 'flex', alignItems: 'center', gap: '13px', width: '100%', textAlign: 'left',
+                p: `13px ${tokens.padCard}`, '&:active': { bgcolor: tokens.surfacePress },
+              }}
+            >
+              <IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={40} radius={tokens.rTile}>
+                <StarIcon size={20} />
+              </IconBadge>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 600 }} noWrap>Söýgüli dersim</Typography>
+                <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '1px' }} noWrap>
+                  {fav} · şu ders boýunça maslahat
+                </Typography>
+              </Box>
+              <RowChevron />
+            </ButtonBase>
+          </Box>
         </Box>
 
         {/* ---- Payment / subscription ----

@@ -350,18 +350,22 @@ export function PaymentsScreen({ onBack, toast, onOpenCards, onPay }: {
         </Box>
       </Box>
 
-      {/* the method that will actually be charged, read from the store rather
-          than printed here — a second copy is free to go stale */}
-      <SectionLabel>Töleg usuly</SectionLabel>
+      {/* The row Profil used to carry as an icon button. It is named for what
+          it does, not for the bank behind it — someone looking for "töleg
+          usuly" is looking for those two words — and which card will actually
+          be charged is read from the store rather than printed here, because a
+          second copy is free to go stale. */}
+      <SectionLabel>Nädip tölenýär</SectionLabel>
       <SurfaceRow
         icon={rowIcon(
           <CardIcon size={22} />,
           main ? methodTone(main).tint : tokens.blueTint,
           main ? methodTone(main).ink : tokens.blueText,
         )}
-        label={main ? methodLabel(main) : 'Kart goşulmadyk'}
+        label="Töleg usuly"
         labelSx={LABEL_SX}
-        end={<RowEnd value={main ? methodNote(main) : undefined} />}
+        sub={main ? `${methodLabel(main)} · ${methodNote(main)}` : 'Kart goşulmadyk'}
+        end={<RowEnd />}
         onClick={onOpenCards}
       />
 
