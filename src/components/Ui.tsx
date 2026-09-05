@@ -1075,8 +1075,13 @@ export function PointsPill({ value, unit }: { value: number; unit?: string }) {
 
 /* Leaderboard row — medal, name, school, points (original: Reýting) */
 const MEDAL = [tokens.gold, tokens.silver, tokens.bronze];
-export function RankRow({ rank, name, sub, points, self }: {
-  rank: number; name: string; sub: string; points: number; self?: boolean;
+export function RankRow({ rank, name, sub, points, end, self }: {
+  rank: number; name: string; sub: string;
+  /* A placing is not always a score. Contests rank by points and say so;
+     homework ranks by who handed in first, and the thing worth showing on the
+     right is the time — so the pill is optional and `end` takes whatever the
+     ranking is actually made of. */
+  points?: number; end?: ReactNode; self?: boolean;
 }) {
   return (
     <Box sx={{
@@ -1101,7 +1106,7 @@ export function RankRow({ rank, name, sub, points, self }: {
         </Box>
         <Typography sx={{ fontSize: 13, color: tokens.inkMuted, mt: '1px' }} noWrap>{sub}</Typography>
       </Box>
-      <PointsPill value={points} />
+      {points !== undefined ? <PointsPill value={points} /> : end}
     </Box>
   );
 }

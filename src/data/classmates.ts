@@ -64,14 +64,16 @@ export const classOf = (childId: string): Classmate[] => {
 export const classSize = (childId: string) => classOf(childId).length + 1;
 
 /* A small stable hash: same pupil, same lesson, same answer — every session. */
-const hash = (s: string) => {
+const hash32 = (s: string) => {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
-  return (h >>> 0) % 100;
+  return h >>> 0;
 };
+
+const hash = (s: string) => hash32(s) % 100;
 
 export const mateDidHw = (mate: Classmate, lessonId: string) =>
   hash(`${mate.id}:${lessonId}`) < mate.rate;
@@ -79,6 +81,56 @@ export const mateDidHw = (mate: Classmate, lessonId: string) =>
 /** How many of a pupil's tasks for the day are in. */
 export const mateDoneCount = (mate: Classmate, lessonIds: string[]) =>
   lessonIds.filter((id) => mateDidHw(mate, id)).length;
+
+/* ---------------- when it was handed in ----------------
+ *
+ * The page shows who *did* it, in the order they did it — so every doer needs
+ * a time. It is the same trick as the answer itself: a hash of (pupil, task),
+ * spread across the evening between 15:00 and 22:00, stable for the life of
+ * the app. Nobody's homework arrives at a different hour on a second look.
+ */
+const EVENING_START = 15 * 60;
+const EVENING_LENGTH = 7 * 60;
+
+const minutesFor = (key: string) => EVENING_START + (hash32(`${key}:t`) % EVENING_LENGTH);
+
+export const fmtHandIn = (mins: number) =>
+  `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+
+/** When a pupil finished the last of the tasks in question. */
+const handInOf = (key: string, lessonIds: string[]) =>
+  Math.max(...lessonIds.map((id) => minutesFor(`${key}:${id}`)));
+
+export type Doer = { mate: Classmate; at: number };
+
+/**
+ * Everyone in the class who has finished *all* of the given tasks, earliest
+ * first. Whoever has not is deliberately absent: a list of names under
+ * "has not done their homework" is a wall of shame a diary has no business
+ * printing, and the ones who did it are the only ones the reader can learn
+ * anything useful from.
+ */
+export const doersOf = (childId: string, lessonIds: string[]): Doer[] => {
+  if (lessonIds.length === 0) return [];
+  return classOf(childId)
+    .filter((m) => mateDoneCount(m, lessonIds) === lessonIds.length)
+    .map((mate) => ({ mate, at: handInOf(mate.id, lessonIds) }))
+    .sort((a, b) => a.at - b.at);
+};
+
+/** The reader's own hand-in time — their place is read against the doers. */
+export const selfHandIn = (childId: string, lessonIds: string[]) =>
+  lessonIds.length === 0 ? 0 : handInOf(`self:${childId}`, lessonIds);
+
+/**
+ * Where the reader came in: 1 + however many classmates were ahead of them.
+ * Their own place is *their* fact, so it is shown on every tier — the names of
+ * the others are what the subscription buys.
+ */
+export const selfPlace = (childId: string, lessonIds: string[]) => {
+  const mine = selfHandIn(childId, lessonIds);
+  return doersOf(childId, lessonIds).filter((d) => d.at < mine).length + 1;
+};
 
 /** Classmates who have finished everything set for the day. */
 export const classDoneCount = (childId: string, lessonIds: string[]) => {
