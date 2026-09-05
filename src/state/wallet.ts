@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { TODAY } from '../lib/date';
+import { childId } from './children';
 
 /*
  * The account's balance, and where it came from.
@@ -52,18 +53,21 @@ let entries: Entry[] = [
   { id: 'w1', kind: 'topup', amount: 50, note: 'Sowgat kart', at: '2026-01-12' },
 ];
 
-/* How many earned bal have already been turned into money. The bal themselves
-   are counted where they are earned (`state/contest.ts`); this is the only
-   thing the wallet needs to remember about them, because "what is left to
-   convert" is earned minus converted and never a third stored number. */
-let converted = 0;
+/* How many bal have already been turned into money, **per child**. The bal
+   themselves are counted where they are earned (`state/contest.ts`,
+   `state/earn.ts`) and where the child started (`state/children.ts`); this is
+   the only thing the wallet needs to remember about them, because "what is
+   left to convert" is earned minus converted and never a third stored number.
+   It is keyed by child because the pot belongs to the pupil who earned it,
+   while the money it becomes belongs to the family account. */
+let converted: Record<string, number> = {};
 
 let seq = entries.length;
 
 const listeners = new Set<() => void>();
 const subscribe = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 
-type Snapshot = { balance: number; entries: Entry[]; converted: number };
+type Snapshot = { balance: number; entries: Entry[]; converted: Record<string, number> };
 
 const derive = (): Snapshot => ({
   balance: entries.reduce((n, e) => n + e.amount, 0),
@@ -99,7 +103,8 @@ export const spend = (amount: number, note: string) => {
 export const convertPoints = (points: number) => {
   const tmt = pointsToTmt(points);
   if (tmt <= 0) return 0;
-  converted += tmt * POINTS_PER_TMT;
+  const id = childId();
+  converted = { ...converted, [id]: (converted[id] ?? 0) + tmt * POINTS_PER_TMT };
   add({ kind: 'convert', amount: tmt, note: `${tmt * POINTS_PER_TMT} bal öwrüldi`, points: tmt * POINTS_PER_TMT });
   return tmt;
 };

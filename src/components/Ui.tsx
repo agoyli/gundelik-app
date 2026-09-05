@@ -1073,6 +1073,45 @@ export function PointsPill({ value, unit }: { value: number; unit?: string }) {
   );
 }
 
+/* ---------------- BalanceHero ----------------
+ *
+ * What the account holds, at the top of the page that spends it.
+ *
+ * There are two pots — money and `bal` — and they are the same object seen
+ * twice: a total, what it is, and what can be done with it. They were drawn
+ * differently, so the wallet announced 87 TMT in a 34px figure on a tinted
+ * card while the points a pupil actually earns were a 36px pill under an
+ * avatar, which reads as a badge rather than a balance. One shape for both:
+ * the pot's own colour, a disc on white, the figure at display size, its name,
+ * and an optional line of what it converts to. `actions` is for whatever the
+ * page can do with it — money can be topped up and spent, `bal` cannot.
+ */
+export function BalanceHero({ tint, color, icon, value, label, note, actions }: {
+  tint: string; color: string; icon: ReactNode;
+  value: string; label: string; note?: string; actions?: ReactNode;
+}) {
+  return (
+    <Box sx={{
+      mt: '14px', borderRadius: `${tokens.rCard}px`, p: `20px ${tokens.padCard}`,
+      bgcolor: tint, textAlign: 'center',
+    }}>
+      <Box aria-hidden sx={{
+        width: 48, height: 48, borderRadius: '50%', mx: 'auto', bgcolor: '#fff',
+        color, display: 'grid', placeItems: 'center',
+      }}>{icon}</Box>
+      <Typography sx={{
+        fontSize: 34, fontWeight: 700, letterSpacing: '-.5px', color,
+        fontVariantNumeric: 'tabular-nums', mt: '10px', lineHeight: 1.15,
+      }}>{value}</Typography>
+      <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '2px' }}>{label}</Typography>
+      {note && (
+        <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '6px' }}>{note}</Typography>
+      )}
+      {actions && <Box sx={{ display: 'flex', gap: '10px', mt: '16px' }}>{actions}</Box>}
+    </Box>
+  );
+}
+
 /* Leaderboard row — medal, name, school, points (original: Reýting) */
 const MEDAL = [tokens.gold, tokens.silver, tokens.bronze];
 export function RankRow({ rank, name, sub, points, end, self }: {

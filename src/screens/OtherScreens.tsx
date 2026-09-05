@@ -2,13 +2,12 @@ import { Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/materi
 import { useMemo, useState } from 'react';
 import {
   BigCheckIcon, BookmarkIcon, BooksIcon, CardIcon, CardsIcon, CheckIcon, CoinIcon, GearIcon,
-  HistoryIcon, LayersIcon, LockIcon, MegaphoneIcon, QuestionIcon, QuestionOutlineIcon, QuizIcon,
-  ShopIcon,
+  HistoryIcon, LayersIcon, LockIcon, MegaphoneIcon, QuestionOutlineIcon, QuizIcon, ShopIcon,
   SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
-  Avatar, DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav, PillHeader,
-  MeterTile, PointsPill, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
+  Avatar, BalanceHero, DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav,
+  PillHeader, MeterTile, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
 import { AdSlot, PlanBadge, TeaserCard } from '../components/Paywall';
@@ -31,7 +30,9 @@ import { PlayScreen } from './PlayScreens';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
 import { BalanceRow, ShopScreen, WalletScreen } from './WalletScreens';
-import { useStudent } from '../state/children';
+import { childClassShort, childListName, useStudent } from '../state/children';
+import { usePointsBalance } from '../state/points';
+import { EARN_POINTS, useEarns } from '../state/earn';
 import { ChildPickerRow } from './ChildScreens';
 import { BannerSlot, MyBannersScreen } from './BannerScreens';
 import {
@@ -566,39 +567,45 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
      seeing that tests exist */
   const allow = useAllowance('tests');
   const plan = tierFor('tests');
-  const { premium } = usePrefs();
   const student = useStudent();
+  /* the same pot the wallet converts, in the section that fills it */
+  const pot = usePointsBalance();
+  /* whether sitting a test actually credits this child */
+  const earns = useEarns();
+
+  /* Two named rivals plus whoever is reading, ordered by the balance above —
+     one board, no second total. */
+  const rating = [
+    ...RATING.filter((r) => !r.self).map(({ name, sub, points }) => ({ name, sub, points })),
+    {
+      name: childListName(student),
+      sub: `${student.school}, ${childClassShort(student)}`,
+      points: pot.balance,
+      self: true,
+    },
+  ]
+    .sort((a, b) => b.points - a.points)
+    .map((r, i) => ({ ...r, rank: i + 1 }));
+
   return (
     <>
       <PillHeader title="Testler" onBack={onBack} />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
-        {/* Profile */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: '14px', gap: '10px' }}>
-          <Avatar initials={student.initials} size={104} premium={premium} />
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px' }}>
-              {student.name}
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', mt: '3px', fontSize: 15 }}>
-              {student.school}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <PointsPill value={student.points} unit="bal" />
-            <Box
-              component="button"
-              aria-label="Ballar barada"
-              onClick={() => toast('Ballar test netijeleri boýunça hasaplanýar')}
-              sx={{
-                border: 0, p: 0, bgcolor: 'transparent', color: tokens.inkMuted, cursor: 'pointer',
-                width: 44, height: 44, display: 'grid', placeItems: 'center',
-                borderRadius: '50%', mx: '-11px',
-              }}
-            >
-              <QuestionIcon size={22} />
-            </Box>
-          </Box>
-        </Box>
+        {/* What the page pays into, stated the way the wallet states money:
+            this is the section where bal is earned, so the balance belongs at
+            the top of it and not as a badge under a passport photograph. */}
+        <BalanceHero
+          tint={tokens.orangeTint}
+          color={tokens.orangeText}
+          icon={<CoinIcon size={24} />}
+          value={`${pot.balance} bal`}
+          label={`${student.short} — toplanan bal`}
+          /* the free tier is shown the figure and told what collects it,
+             the way every other paid reward in the app is written */
+          note={earns
+            ? `Her test +${EARN_POINTS.test} bal · ${pot.rate} bal = 1 TMT · ${pot.worth} TMT bolýar`
+            : `Her test +${EARN_POINTS.test} bal — ${plan?.name} bilen · ${pot.rate} bal = 1 TMT`}
+        />
 
         {/* The lock is stated here, where tests are chosen — not only inside
             the test that refuses to start. What the bank holds is stated with
@@ -641,10 +648,12 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
           })}
         </Box>
 
-        {/* Rating */}
+        {/* The reader's own row is built from the child who is selected, and
+            placed by their own balance — the board used to name Muhammet as
+            "Siz" whichever of the five children the account was reading. */}
         <SectionHeading title="Reýting" action={<TagPill label="TOP-50" onClick={() => toast('Doly sanaw tiz wagtda')} />} />
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {RATING.map((r) => <RankRow key={r.rank} {...r} />)}
+          {rating.map((r) => <RankRow key={r.name} {...r} />)}
         </Box>
       </Box>
     </>

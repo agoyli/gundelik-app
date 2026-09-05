@@ -5,15 +5,15 @@ import {
 } from '../components/Icons';
 import { PrizeArt } from '../components/PrizeArt';
 import {
-  EmptyState, IconBadge, RowChevron, SectionLabel, SheetDrawer, StatTile, SubPage, SurfaceRow,
+  BalanceHero, EmptyState, IconBadge, RowChevron, SectionLabel, SheetDrawer, StatTile, SubPage,
+  SurfaceRow,
 } from '../components/Ui';
 import { PRODUCTS, cheapest, productOf, shopGroups, storeOf } from '../data/shop';
 import type { Product, Store } from '../data/shop';
-import { useAllPoints } from '../state/contest';
-import { useWorkPoints } from '../state/earn';
+import { usePointsBalance } from '../state/points';
 import { buyProduct, useOrders } from '../state/shop';
 import {
-  POINTS_PER_TMT, TOP_UPS, convertPoints, pointsRemainder, pointsToTmt, topUp, useWallet,
+  POINTS_PER_TMT, TOP_UPS, convertPoints, pointsRemainder, topUp, useWallet,
 } from '../state/wallet';
 import { PAY_NUMBERS } from '../state/payMethods';
 import { absDate } from '../lib/date';
@@ -40,17 +40,13 @@ const KIND_LOOK = {
 export function WalletScreen({ onBack, toast, onShop }: {
   onBack: () => void; toast: Toast; onShop: () => void;
 }) {
-  const { balance, entries, converted } = useWallet();
-  /* every bal the account holds, from both sides of the app: contests, and the
-     schoolwork that pays under `state/earn.ts` */
-  const contestPoints = useAllPoints();
-  const work = useWorkPoints();
-  const earned = contestPoints + work.total;
+  const { balance, entries } = useWallet();
+  /* every bal the child holds, and where it came from — one derived number the
+     Testler landing states in the same words (`state/points.ts`) */
+  const pot = usePointsBalance();
+  const spare = pot.balance;
+  const worth = pot.worth;
   const [topOpen, setTopOpen] = useState(false);
-
-  /* what is left to convert — earned everywhere, minus what already became money */
-  const spare = Math.max(0, earned - converted);
-  const worth = pointsToTmt(spare);
 
   const doConvert = () => {
     const tmt = convertPoints(spare);
@@ -65,30 +61,25 @@ export function WalletScreen({ onBack, toast, onShop }: {
       onBack={onBack}
       help={`Balans — hasabyňdaky pul. Abuna töleginiň hem, dükandan alnan harydyň hem puly şu ýerden çykýar. Bäsleşiklerde toplanan ballary pula öwrüp bolýar: ${POINTS_PER_TMT} bal = 1 TMT.`}
     >
-      <Box sx={{
-        mt: '14px', borderRadius: `${tokens.rCard}px`, p: `20px ${tokens.padCard}`,
-        bgcolor: tokens.blueTint, textAlign: 'center',
-      }}>
-        <Box aria-hidden sx={{
-          width: 48, height: 48, borderRadius: '50%', mx: 'auto', bgcolor: '#fff',
-          color: tokens.blueText, display: 'grid', placeItems: 'center',
-        }}><WalletIcon size={24} /></Box>
-        <Typography sx={{
-          fontSize: 34, fontWeight: 700, letterSpacing: '-.5px', color: tokens.blueText,
-          fontVariantNumeric: 'tabular-nums', mt: '10px', lineHeight: 1.15,
-        }}>{balance} TMT</Typography>
-        <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '2px' }}>Hasabyňdaky pul</Typography>
-        <Box sx={{ display: 'flex', gap: '10px', mt: '16px' }}>
-          <Button
-            fullWidth variant="contained" disableElevation onClick={() => setTopOpen(true)}
-          >Doldur</Button>
-          <Button
-            fullWidth disableElevation onClick={onShop}
-            sx={{ bgcolor: '#fff', color: tokens.blueText }}
-            startIcon={<ShopIcon size={18} />}
-          >Dükan</Button>
-        </Box>
-      </Box>
+      <BalanceHero
+        tint={tokens.blueTint}
+        color={tokens.blueText}
+        icon={<WalletIcon size={24} />}
+        value={`${balance} TMT`}
+        label="Hasabyňdaky pul"
+        actions={(
+          <>
+            <Button
+              fullWidth variant="contained" disableElevation onClick={() => setTopOpen(true)}
+            >Doldur</Button>
+            <Button
+              fullWidth disableElevation onClick={onShop}
+              sx={{ bgcolor: '#fff', color: tokens.blueText }}
+              startIcon={<ShopIcon size={18} />}
+            >Dükan</Button>
+          </>
+        )}
+      />
 
       {/* The pupil's own top-up. It states the rate, what they hold, and what
           that is worth — and it refuses politely below one whole TMT rather
@@ -109,7 +100,7 @@ export function WalletScreen({ onBack, toast, onShop }: {
               {POINTS_PER_TMT} bal = 1 TMT · {worth} TMT bolýar
             </Typography>
             <Typography sx={{ fontSize: 12, color: tokens.inkMuted, mt: '1px' }}>
-              {work.hw} öý işi · {work.tests} test · bäsleşiklerden {contestPoints} bal
+              Öňden {pot.before} · öý işi {pot.hw} · test {pot.tests} · bäsleşik {pot.contests}
             </Typography>
           </Box>
         </Box>

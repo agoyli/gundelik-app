@@ -123,6 +123,12 @@ export const setChildTier = (id: string, tier: TierId, days = 30) => {
   emit();
 };
 
+/** "Muhammedow Muhammet" → "M. Muhammet" — the form a class board is written in. */
+export const childListName = (c: Child) => `${c.name.trim()[0]}. ${c.short}`;
+
+/** "8-nji «B» synp" → "8B" — the same class, in the width a rating row has. */
+export const childClassShort = (c: Child) => `${c.grade}${/«(.+?)»/.exec(c.cls)?.[1] ?? ''}`;
+
 /** Primary school reads a different timetable to secondary. */
 export const isJunior = (c: Child) => c.grade <= 4;
 
