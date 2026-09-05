@@ -6,7 +6,7 @@ import {
   SparkleIcon, StarIcon, TargetIcon, TrophyIcon, WalletIcon,
 } from '../components/Icons';
 import {
-  Avatar, BalanceHero, DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav,
+  Avatar, BalancePots, DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav,
   PillHeader, MeterTile, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
@@ -29,9 +29,11 @@ import { useCareerResult } from '../state/career';
 import { PlayScreen } from './PlayScreens';
 import { RoadmapScreen } from './RoadmapScreen';
 import { UpgradeScreen } from './UpgradeScreen';
-import { BalanceRow, PointsScreen, ShopScreen, WalletScreen } from './WalletScreens';
+import { ShopScreen, WalletScreen } from './WalletScreens';
+import type { PotId } from './WalletScreens';
 import { childClassShort, childListName, useStudent } from '../state/children';
 import { usePointsBalance } from '../state/points';
+import { useWallet } from '../state/wallet';
 import { EARN_POINTS, useEarns } from '../state/earn';
 import { ChildPickerRow } from './ChildScreens';
 import { BannerSlot, MyBannersScreen } from './BannerScreens';
@@ -591,21 +593,27 @@ function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
     <>
       <PillHeader title="Testler" onBack={onBack} />
       <Box sx={{ px: tokens.gutter, display: 'flex', flexDirection: 'column' }}>
-        {/* What the page pays into, stated the way the wallet states money:
-            this is the section where bal is earned, so the balance belongs at
-            the top of it and not as a badge under a passport photograph. */}
-        <BalanceHero
-          tint={tokens.orangeTint}
-          color={tokens.orangeText}
-          icon={<CoinIcon size={24} />}
-          value={`${pot.balance} bal`}
-          label={`${student.short} — toplanan bal`}
-          /* the free tier is shown the figure and told what collects it,
-             the way every other paid reward in the app is written */
-          note={earns
-            ? `Her test +${EARN_POINTS.test} bal · ${pot.rate} bal = 1 TMT · ${pot.worth} TMT bolýar`
-            : `Her test +${EARN_POINTS.test} bal — ${plan?.name} bilen · ${pot.rate} bal = 1 TMT`}
-        />
+        {/* What a test pays, and nothing else about the balance: bal is money
+            the account holds, so it is counted beside the manats on Balans —
+            a section page is not where a balance lives. */}
+        <Box sx={{
+          mt: '14px', display: 'flex', alignItems: 'center', gap: '11px',
+          bgcolor: earns ? tokens.orangeTint : tokens.surface,
+          borderRadius: `${tokens.rCard}px`, p: '13px 15px',
+        }}>
+          <IconBadge
+            bg="#fff" color={earns ? tokens.orangeText : tokens.inkMuted}
+            size={40} radius={tokens.rTile}
+          >{earns ? <CoinIcon size={19} /> : <LockIcon size={18} />}</IconBadge>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
+              {`Her tabşyrylan test — +${EARN_POINTS.test} bal`}
+            </Typography>
+            <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }}>
+              {earns ? 'Ballar balansda ýygnalýar' : `${plan?.name} bilen ýygnalýar`}
+            </Typography>
+          </Box>
+        </Box>
 
         {/* The lock is stated here, where tests are chosen — not only inside
             the test that refuses to start. What the bank holds is stated with
@@ -990,15 +998,18 @@ const ChoiceRow = ({ icon, tint, color, label, value, onClick }: {
 );
 
 type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referral' | 'upgrade'
-  | 'career' | 'wallet' | 'points' | 'shop';
+  | 'career' | 'wallet' | 'shop';
 
 export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   const { premium, tier } = usePrefs();
   const [view, setView] = useState<ProfilView>('root');
   /* Kartlar is reachable from Profil and from the payments page — remember which */
   const [cardsFrom, setCardsFrom] = useState<ProfilView>('root');
-  /* and the shop from either balance, so it goes back where it came from */
-  const [shopFrom, setShopFrom] = useState<ProfilView>('wallet');
+  /* which of the two pots the balance page opens on */
+  const [pot, setPot] = useState<PotId>('money');
+  /* the account's two balances, stated here and read on the page they open */
+  const { balance: money } = useWallet();
+  const pointsPot = usePointsBalance();
   const [map, setMap] = useState<'bahalar' | 'gatnasyk'>('bahalar');
   const [term, setTerm] = useState<TermId>('q34');
   const [fav, setFav] = useState('Matematika');
@@ -1053,27 +1064,17 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
   if (view === 'wallet') {
     return (
       <WalletScreen
-        onBack={root} toast={toast}
-        onShop={() => { setShopFrom('wallet'); setView('shop'); }}
-        onPoints={() => setView('points')}
-      />
-    );
-  }
-  if (view === 'points') {
-    return (
-      <PointsScreen
-        onBack={() => setView('wallet')} toast={toast}
-        onShop={() => { setShopFrom('points'); setView('shop'); }}
+        onBack={root} toast={toast} pot={pot}
+        onShop={() => setView('shop')}
       />
     );
   }
   /* The shop has no menu row of its own: it is what a balance is *for*, so it
-     opens from whichever of the two balances the reader was counting, and goes
-     back to it. */
+     opens from the balance page and goes back to the pot it was opened from. */
   if (view === 'shop') {
     return (
       <ShopScreen
-        onBack={() => setView(shopFrom)} toast={toast}
+        onBack={() => setView('wallet')} toast={toast}
         onTopUp={() => setView('wallet')}
       />
     );
@@ -1219,13 +1220,27 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
         )}
 
         {/* Directly under the subscription, because it is the same subject:
-            this is where that payment comes from. It is not a paid feature —
-            on a free account it is the one row here that still does something.
-            The shop and the banner desk used to sit beside it as menu rows;
-            both are now reached from the thing they belong to — the shop from
-            a balance, the banner desk from a banner. */}
+            this is where that payment comes from. Two pots, side by side, in
+            one card rather than two menu rows — `bal` is a balance, not a
+            score kept somewhere else — and each half opens the page on its
+            own pot. The shop and the banner desk used to sit beside them as
+            rows; both are now reached from the thing they belong to. */}
         <SectionLabel>Balans</SectionLabel>
-        <BalanceRow onClick={() => setView('wallet')} />
+        <BalancePots
+          onSelect={(id) => { setPot(id as PotId); setView('wallet'); }}
+          pots={[
+            {
+              id: 'money', icon: <WalletIcon size={17} />,
+              tint: tokens.blueTint, color: tokens.blueText,
+              value: `${money} TMT`, note: 'Hasabyňdaky pul',
+            },
+            {
+              id: 'bal', icon: <CoinIcon size={17} />,
+              tint: tokens.orangeTint, color: tokens.orangeText,
+              value: `${pointsPot.balance} bal`, note: `${pointsPot.worth} TMT bolýar`,
+            },
+          ]}
+        />
 
         {/* ---- The year at a glance ----
              One card, two maps, a switch. Two stacked cards drawing the same

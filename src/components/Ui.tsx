@@ -1073,41 +1073,60 @@ export function PointsPill({ value, unit }: { value: number; unit?: string }) {
   );
 }
 
-/* ---------------- BalanceHero ----------------
+/* ---------------- BalancePots ----------------
  *
- * What the account holds, at the top of the page that spends it.
+ * The account's two pots, side by side, because they are one thing.
  *
- * There are two pots — money and `bal` — and they are the same object seen
- * twice: a total, what it is, and what can be done with it. They were drawn
- * differently, so the wallet announced 87 TMT in a 34px figure on a tinted
- * card while the points a pupil actually earns were a 36px pill under an
- * avatar, which reads as a badge rather than a balance. One shape for both:
- * the pot's own colour, a disc on white, the figure at display size, its name,
- * and an optional line of what it converts to. `actions` is for whatever the
- * page can do with it — money can be topped up and spent, `bal` cannot.
+ * `bal` is a balance. It is earned rather than transferred and it is spent
+ * through a conversion rather than directly, but it is money the account holds
+ * and the reader counts it the same way — so it is not a menu row under a
+ * heading, and it is not a badge in the section that happens to pay it. The
+ * two sit in one card, in their own colours, each a control: on Profil each
+ * half opens its pot, and on Balans the halves are the page's switch, so
+ * choosing which balance to read is the same gesture as looking at it.
  */
-export function BalanceHero({ tint, color, icon, value, label, note, actions }: {
-  tint: string; color: string; icon: ReactNode;
-  value: string; label: string; note?: string; actions?: ReactNode;
+export function BalancePots({ pots, active, onSelect }: {
+  pots: { id: string; icon: ReactNode; tint: string; color: string; value: string; note: string }[];
+  /** the pot being read, tinted; omit where the card is only a pair of doors */
+  active?: string;
+  onSelect: (id: string) => void;
 }) {
   return (
     <Box sx={{
-      mt: '14px', borderRadius: `${tokens.rCard}px`, p: `20px ${tokens.padCard}`,
-      bgcolor: tint, textAlign: 'center',
+      display: 'grid', gridTemplateColumns: `repeat(${pots.length}, minmax(0, 1fr))`,
+      bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, overflow: 'hidden',
     }}>
-      <Box aria-hidden sx={{
-        width: 48, height: 48, borderRadius: '50%', mx: 'auto', bgcolor: '#fff',
-        color, display: 'grid', placeItems: 'center',
-      }}>{icon}</Box>
-      <Typography sx={{
-        fontSize: 34, fontWeight: 700, letterSpacing: '-.5px', color,
-        fontVariantNumeric: 'tabular-nums', mt: '10px', lineHeight: 1.15,
-      }}>{value}</Typography>
-      <Typography sx={{ fontSize: 13, color: tokens.ink3, mt: '2px' }}>{label}</Typography>
-      {note && (
-        <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '6px' }}>{note}</Typography>
-      )}
-      {actions && <Box sx={{ display: 'flex', gap: '10px', mt: '16px' }}>{actions}</Box>}
+      {pots.map((p, i) => {
+        const on = active === p.id;
+        return (
+          <ButtonBase
+            key={p.id}
+            onClick={() => onSelect(p.id)}
+            aria-pressed={active ? on : undefined}
+            sx={{
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '7px',
+              p: '15px 14px', minHeight: 104, textAlign: 'left',
+              bgcolor: on ? p.tint : 'transparent',
+              borderLeft: i > 0 ? `1px solid ${tokens.dividerSoft}` : 'none',
+              '&:active': { bgcolor: on ? p.tint : tokens.surfacePress },
+            }}
+          >
+            <Box aria-hidden sx={{
+              width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center',
+              bgcolor: on ? '#fff' : p.tint, color: p.color,
+            }}>{p.icon}</Box>
+            <Box sx={{ minWidth: 0, width: '100%' }}>
+              <Typography sx={{
+                fontSize: 22, fontWeight: 700, letterSpacing: '-.3px', color: p.color,
+                fontVariantNumeric: 'tabular-nums', lineHeight: 1.15,
+              }} noWrap>{p.value}</Typography>
+              <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px' }} noWrap>
+                {p.note}
+              </Typography>
+            </Box>
+          </ButtonBase>
+        );
+      })}
     </Box>
   );
 }

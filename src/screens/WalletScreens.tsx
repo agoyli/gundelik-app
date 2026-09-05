@@ -5,7 +5,7 @@ import {
 } from '../components/Icons';
 import { PrizeArt } from '../components/PrizeArt';
 import {
-  BalanceHero, EmptyState, IconBadge, RowChevron, SectionLabel, SheetDrawer, StatTile, SubPage,
+  BalancePots, EmptyState, IconBadge, RowChevron, SectionLabel, SheetDrawer, StatTile, SubPage,
   SurfaceRow,
 } from '../components/Ui';
 import { useChild } from '../state/children';
@@ -32,70 +32,156 @@ const KIND_LOOK = {
 } as const;
 
 /*
- * The balance, and the two ways it grows.
+ * The balance — both kinds of it.
  *
- * A wallet screen that only shows a number is a receipt. This one answers the
- * three questions in order: how much is there, how do I put more in, and what
- * happened to what was there — with the earned `bal` sitting between the first
- * two, because for a pupil that is the top-up they can actually do themselves.
+ * The account holds two pots and they are the same object: money that was
+ * transferred in, and `bal` the pupil earned. `bal` was drawn as neither —
+ * a badge in the Testler section, then a menu row under the money — which
+ * made it read as a score, or as somewhere else to go. It is a balance, so it
+ * sits beside the other one: two cells of one card, in their own colours,
+ * and choosing which to read is the same gesture as reading it.
+ *
+ * Below the pair is whichever pot is selected: what it does, and what has
+ * happened to it. One page, because "how much have I got" is one question.
  */
-export function WalletScreen({ onBack, toast, onShop, onPoints }: {
-  onBack: () => void; toast: Toast; onShop: () => void; onPoints: () => void;
+export type PotId = 'money' | 'bal';
+
+export function WalletScreen({ onBack, toast, onShop, pot: initial = 'money' }: {
+  onBack: () => void; toast: Toast; onShop: () => void; pot?: PotId;
 }) {
   const { balance, entries } = useWallet();
-  /* every bal the child holds — the same derived number the Testler landing
-     states, and the page behind this row owns what can be done with it */
-  const pot = usePointsBalance();
+  const points = usePointsBalance();
+  const { child } = useChild();
+  const [pot, setPot] = useState<PotId>(initial);
   const [topOpen, setTopOpen] = useState(false);
+
+  const doConvert = () => {
+    const tmt = convertPoints(points.balance);
+    toast(tmt > 0
+      ? `${tmt * POINTS_PER_TMT} bal → ${tmt} TMT`
+      : `Öwürmek üçin azyndan ${POINTS_PER_TMT} bal gerek`);
+  };
+
+  /* where the bal came from, in the order the pot was filled */
+  const sources = [
+    { id: 'before', label: 'Öňden ýygnalan', sub: 'Geçen çärýekleriň dowamynda', n: points.before },
+    { id: 'hw', label: 'Öý işi', sub: `${points.hw} tabşyryk · +${EARN_POINTS.hw} bal`, n: points.hw * EARN_POINTS.hw },
+    { id: 'test', label: 'Testler', sub: `${points.tests} test · +${EARN_POINTS.test} bal`, n: points.tests * EARN_POINTS.test },
+    { id: 'contest', label: 'Bäsleşikler', sub: 'Toplumlaryň jogaplary', n: points.contests },
+  ].filter((r) => r.n > 0);
+
+  const history = pot === 'bal' ? entries.filter((e) => e.kind === 'convert') : entries;
 
   return (
     <SubPage
       title="Balans"
       onBack={onBack}
-      help={`Balans — hasabyňdaky pul. Abuna töleginiň hem, dükandan alnan harydyň hem puly şu ýerden çykýar. Bäsleşiklerde toplanan ballary pula öwrüp bolýar: ${POINTS_PER_TMT} bal = 1 TMT.`}
+      help={`Hasapda iki balans bar: manat — abuna we dükan töleglerine gidýän pul, we bal — okuwyň özi üçin ýazylýan hasap. ${POINTS_PER_TMT} bal = 1 TMT bolup pula geçýär, galyndysy hasapda galýar.`}
     >
-      <BalanceHero
-        tint={tokens.blueTint}
-        color={tokens.blueText}
-        icon={<WalletIcon size={24} />}
-        value={`${balance} TMT`}
-        label="Hasabyňdaky pul"
-        actions={(
+      <Box sx={{ mt: '14px' }}>
+        <BalancePots
+          active={pot}
+          onSelect={(id) => setPot(id as PotId)}
+          pots={[
+            {
+              id: 'money', icon: <WalletIcon size={17} />,
+              tint: tokens.blueTint, color: tokens.blueText,
+              value: `${balance} TMT`, note: 'Hasabyňdaky pul',
+            },
+            {
+              id: 'bal', icon: <CoinIcon size={17} />,
+              tint: tokens.orangeTint, color: tokens.orangeText,
+              value: `${points.balance} bal`, note: `${points.worth} TMT bolýar`,
+            },
+          ]}
+        />
+      </Box>
+
+      {/* what can be done with the pot that is open */}
+      <Box sx={{ display: 'flex', gap: '10px', mt: '12px' }}>
+        {pot === 'money' ? (
           <>
             <Button
               fullWidth variant="contained" disableElevation onClick={() => setTopOpen(true)}
             >Doldur</Button>
             <Button
               fullWidth disableElevation onClick={onShop}
-              sx={{ bgcolor: '#fff', color: tokens.blueText }}
+              sx={{ bgcolor: tokens.surface, color: tokens.blueText }}
+              startIcon={<ShopIcon size={18} />}
+            >Dükan</Button>
+          </>
+        ) : (
+          <>
+            <Button
+              fullWidth variant="contained" disableElevation
+              disabled={points.worth < 1}
+              onClick={doConvert}
+            >
+              {points.worth >= 1
+                ? `${points.worth} TMT-a öwür`
+                : `${POINTS_PER_TMT - pointsRemainder(points.balance)} bal ýetenok`}
+            </Button>
+            <Button
+              fullWidth disableElevation onClick={onShop}
+              sx={{ bgcolor: tokens.surface, color: tokens.orangeText }}
               startIcon={<ShopIcon size={18} />}
             >Dükan</Button>
           </>
         )}
-      />
+      </Box>
 
-      {/* The account's other pot, one tap away. It used to be converted from
-          here, which put two balances and two primary buttons on the money
-          page; the bal has its own page now, and this row is the door to it. */}
-      <SectionLabel>Toplanan ballar</SectionLabel>
-      <SurfaceRow
-        icon={(
-          <IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={44}>
-            <CoinIcon size={22} />
-          </IconBadge>
-        )}
-        label={`${pot.balance} bal`}
-        sub={`${POINTS_PER_TMT} bal = 1 TMT · ${pot.worth} TMT bolýar`}
-        end={<RowChevron />}
-        onClick={onPoints}
-      />
+      {pot === 'bal' && (
+        <>
+          {pointsRemainder(points.balance) > 0 && points.worth >= 1 && (
+            <Typography sx={{ fontSize: 12, color: tokens.inkMuted, textAlign: 'center', mt: '8px' }}>
+              {pointsRemainder(points.balance)} bal hasapda galýar
+            </Typography>
+          )}
+          <SectionLabel>{`${child.short} — bal nireden geldi`}</SectionLabel>
+          {sources.length === 0 ? (
+            <EmptyState
+              icon={<CoinIcon size={26} />}
+              title="Heniz bal ýok"
+              note="Öý işini belläp ýa-da test tabşyryp başla"
+            />
+          ) : (
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
+              {sources.map((r) => (
+                <SurfaceRow
+                  key={r.id}
+                  icon={(
+                    <IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={40} radius={tokens.rTile}>
+                      <CoinIcon size={18} />
+                    </IconBadge>
+                  )}
+                  label={r.label}
+                  labelSx={{ fontSize: 15, fontWeight: 600 }}
+                  sub={r.sub}
+                  end={(
+                    <Typography sx={{
+                      fontSize: 15, fontWeight: 700, color: tokens.orangeText,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}>{r.n}</Typography>
+                  )}
+                />
+              ))}
+            </Box>
+          )}
+        </>
+      )}
 
-      <SectionLabel>Hereketler</SectionLabel>
-      {entries.length === 0 ? (
-        <EmptyState icon={<HistoryIcon size={26} />} title="Heniz hereket ýok" note="Balansy doldurup başla" />
+      {/* the history each pot is answerable for: every movement of the money,
+          and for bal the conversions — the only thing that ever leaves it */}
+      <SectionLabel>{pot === 'bal' ? 'Pula öwrülenler' : 'Hereketler'}</SectionLabel>
+      {history.length === 0 ? (
+        <EmptyState
+          icon={<HistoryIcon size={26} />}
+          title={pot === 'bal' ? 'Heniz öwrülen bal ýok' : 'Heniz hereket ýok'}
+          note={pot === 'bal' ? `${POINTS_PER_TMT} bal ýygnananda pula öwrüp bolýar` : 'Balansy doldurup başla'}
+        />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {entries.map((e) => {
+          {history.map((e) => {
             const look = KIND_LOOK[e.kind];
             return (
               <SurfaceRow
@@ -154,136 +240,6 @@ export function WalletScreen({ onBack, toast, onShop, onPoints }: {
           Geçirimden soň balans 5 minudyň dowamynda dolýar.
         </Typography>
       </SheetDrawer>
-    </SubPage>
-  );
-}
-
-/*
- * The other pot: `bal`.
- *
- * It was a card on the money page, which gave that page two balances, two
- * primary buttons and two answers to "how much have I got". A pot with its own
- * sources, its own arithmetic and its own way out deserves its own page — and
- * the shop opens from here as well as from the money, because a pupil counting
- * their points is the one most likely to be looking for something to spend
- * them on.
- */
-export function PointsScreen({ onBack, toast, onShop }: {
-  onBack: () => void; toast: Toast; onShop: () => void;
-}) {
-  const pot = usePointsBalance();
-  const { entries } = useWallet();
-  const { child } = useChild();
-  const short = POINTS_PER_TMT - pointsRemainder(pot.balance);
-
-  const doConvert = () => {
-    const tmt = convertPoints(pot.balance);
-    toast(tmt > 0
-      ? `${tmt * POINTS_PER_TMT} bal → ${tmt} TMT`
-      : `Öwürmek üçin azyndan ${POINTS_PER_TMT} bal gerek`);
-  };
-
-  /* where the pot came from, in the order it was filled */
-  const sources = [
-    { id: 'before', label: 'Öňden ýygnalan', sub: 'Çärýekleriň dowamynda', n: pot.before },
-    { id: 'hw', label: 'Öý işi', sub: `${pot.hw} tabşyryk · +${EARN_POINTS.hw} bal`, n: pot.hw * EARN_POINTS.hw },
-    { id: 'test', label: 'Testler', sub: `${pot.tests} test · +${EARN_POINTS.test} bal`, n: pot.tests * EARN_POINTS.test },
-    { id: 'contest', label: 'Bäsleşikler', sub: 'Toplumlaryň jogaplary', n: pot.contests },
-  ].filter((r) => r.n > 0);
-
-  const swaps = entries.filter((e) => e.kind === 'convert');
-
-  return (
-    <SubPage
-      title="Ballar"
-      onBack={onBack}
-      help={`Bal — okuwyň özi üçin tölenýän hasap. Öý işi, test we bäsleşikler ony dolduryar; ${POINTS_PER_TMT} bal = 1 TMT bolup balansa geçýär, galyndysy hasapda galýar.`}
-    >
-      <BalanceHero
-        tint={tokens.orangeTint}
-        color={tokens.orangeText}
-        icon={<CoinIcon size={24} />}
-        value={`${pot.balance} bal`}
-        label={`${child.short} — toplanan bal`}
-        note={`${POINTS_PER_TMT} bal = 1 TMT · ${pot.worth} TMT bolýar`}
-        actions={(
-          <>
-            <Button
-              fullWidth variant="contained" disableElevation
-              disabled={pot.worth < 1}
-              onClick={doConvert}
-            >{pot.worth >= 1 ? `${pot.worth} TMT-a öwür` : `${short} bal ýetenok`}</Button>
-            <Button
-              fullWidth disableElevation onClick={onShop}
-              sx={{ bgcolor: '#fff', color: tokens.orangeText }}
-              startIcon={<ShopIcon size={18} />}
-            >Dükan</Button>
-          </>
-        )}
-      />
-      {pot.worth >= 1 && pointsRemainder(pot.balance) > 0 && (
-        <Typography sx={{ fontSize: 12, color: tokens.inkMuted, textAlign: 'center', mt: '8px' }}>
-          {pointsRemainder(pot.balance)} bal hasapda galýar
-        </Typography>
-      )}
-
-      <SectionLabel>Nireden geldi</SectionLabel>
-      {sources.length === 0 ? (
-        <EmptyState
-          icon={<CoinIcon size={26} />}
-          title="Heniz bal ýok"
-          note="Öý işini belläp ýa-da test tabşyryp başla"
-        />
-      ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
-          {sources.map((r) => (
-            <SurfaceRow
-              key={r.id}
-              icon={(
-                <IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={40} radius={tokens.rTile}>
-                  <CoinIcon size={18} />
-                </IconBadge>
-              )}
-              label={r.label}
-              labelSx={{ fontSize: 15, fontWeight: 600 }}
-              sub={r.sub}
-              end={(
-                <Typography sx={{
-                  fontSize: 15, fontWeight: 700, color: tokens.orangeText,
-                  fontVariantNumeric: 'tabular-nums',
-                }}>{r.n}</Typography>
-              )}
-            />
-          ))}
-        </Box>
-      )}
-
-      {swaps.length > 0 && (
-        <>
-          <SectionLabel>Pula öwrülenler</SectionLabel>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
-            {swaps.map((e) => (
-              <SurfaceRow
-                key={e.id}
-                icon={(
-                  <IconBadge bg={tokens.blueTint} color={tokens.blueText} size={40} radius={tokens.rTile}>
-                    <WalletIcon size={18} />
-                  </IconBadge>
-                )}
-                label={e.note}
-                labelSx={{ fontSize: 15, fontWeight: 600 }}
-                sub={absDate(e.at)}
-                end={(
-                  <Typography sx={{
-                    fontSize: 15, fontWeight: 700, color: tokens.blueText,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}>+{e.amount} TMT</Typography>
-                )}
-              />
-            ))}
-          </Box>
-        </>
-      )}
     </SubPage>
   );
 }
@@ -514,23 +470,3 @@ function StoreScreen({ store, onBack, toast, onTopUp }: {
   );
 }
 
-/** A row for the Profil payment block — the balance, at a glance. */
-export function BalanceRow({ onClick }: { onClick: () => void }) {
-  const { balance } = useWallet();
-  return (
-    <SurfaceRow
-      icon={<IconBadge bg={tokens.blueSoft} color={tokens.blue} size={44}><WalletIcon size={20} /></IconBadge>}
-      label="Balans"
-      sub="Dükan we abuna üçin"
-      end={(
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-            {balance} TMT
-          </Typography>
-          <RowChevron />
-        </Box>
-      )}
-      onClick={onClick}
-    />
-  );
-}
