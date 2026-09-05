@@ -78,7 +78,8 @@ export const usePay = ({ onDone, toast }: Pick<PayProps, 'onDone' | 'toast'>) =>
   const buy = (t: Tier = tier, over: Term = term) => {
     const price = over === 'year' ? t.yearly : t.monthly;
     const fromBalance = spend(price, `${t.name} — ${over === 'year' ? 'bir ýyl' : 'bir aý'}`);
-    setTier(t.id);
+    /* the term is what was paid for, so it is what the countdown counts */
+    setTier(t.id, over === 'year' ? 365 : 30);
     toast(premium && current === t.id
       ? `Abuna uzaldyldy${fromBalance ? ' — balansdan' : ''}`
       : `${t.name} işjeňleşdirildi — ${price} TMT${fromBalance ? ' balansdan' : ''} 🎉`);

@@ -429,7 +429,7 @@ export function BalanceRow({ onClick }: { onClick: () => void }) {
     <SurfaceRow
       icon={<IconBadge bg={tokens.blueSoft} color={tokens.blue} size={44}><WalletIcon size={20} /></IconBadge>}
       label="Balans"
-      sub={`${PRODUCTS.length} haryt · dükan we abuna üçin`}
+      sub="Dükan we abuna üçin"
       end={(
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Typography sx={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>

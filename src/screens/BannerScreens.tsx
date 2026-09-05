@@ -74,7 +74,12 @@ export function BannerCard({ brand, title, note, art, tint, ink, onOpen, onRemov
           <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.2px', lineHeight: 1.25 }}>
             {title}
           </Typography>
-          <Typography sx={{ fontSize: 12.5, color: tokens.ink3, lineHeight: 1.4 }}>
+          <Typography sx={{
+            fontSize: 12.5, color: tokens.ink3, lineHeight: 1.4,
+            /* two lines at most: the card is 2:1 and the rest of it belongs to
+               the headline and the "mahabat" label under the fold of the text */
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
             {note}
           </Typography>
           <Box sx={{ flex: 1 }} />
@@ -221,7 +226,7 @@ function MyBannerRow({ b }: { b: MyBanner }) {
   const st = statusOf(b);
   const look = STATUS_TINT[st];
   return (
-    <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '12px', display: 'grid', gap: '10px' }}>
+    <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '12px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
       <BannerCard brand="Siziň banneriňiz" title={b.title} note={b.note} art={b.art} tint={b.tint} ink={b.ink} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', px: '3px' }}>
         <Box sx={{
@@ -256,7 +261,7 @@ export function MyBannersScreen({ onBack, toast }: { onBack: () => void; toast: 
       help="Mekdep programmasynda öz bannerini ýerleşdirmek isleýän kärhanalar üçin. Ýeri, mekdebi we günleri saýlaýarsyňyz — töleg balansdan aýrylýar."
     >
       <SectionLabel>Bannerler nirede görkezilýär</SectionLabel>
-      <Box sx={{ display: 'grid', gap: '8px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' }}>
         {PLACEMENTS.map((p) => (
           <SurfaceRow
             key={p.id}
@@ -275,7 +280,7 @@ export function MyBannersScreen({ onBack, toast }: { onBack: () => void; toast: 
           note="Ilkinji banneriňizi ýerleşdiriň — ýeri, mekdebi we günleri saýlap, birbada bron ediň."
         />
       ) : (
-        <Box sx={{ display: 'grid', gap: '12px' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '12px' }}>
           {mine.map((b) => <MyBannerRow key={b.id} b={b} />)}
         </Box>
       )}
@@ -359,13 +364,13 @@ export function BannerCreateScreen({ onBack, onDone, toast }: {
       />
 
       <SectionLabel>Tekst</SectionLabel>
-      <Box sx={{ display: 'grid', gap: '12px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '12px' }}>
         <Field label="Ady" value={title} onChange={setTitle} placeholder="Okuw esbaplary — 20% arzanladyş" />
         <Field label="Bir setir düşündiriş" value={note} onChange={setNote} placeholder="Mekdebe eltip bermek mugt" />
       </Box>
 
       <SectionLabel>Görnüşi</SectionLabel>
-      <Box sx={{ display: 'grid', gap: '10px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
         <ChipRow
           label="Reňk"
           value={colour}
@@ -381,7 +386,7 @@ export function BannerCreateScreen({ onBack, onDone, toast }: {
       </Box>
 
       <SectionLabel>Ýeri</SectionLabel>
-      <Box sx={{ display: 'grid', gap: '8px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' }}>
         {PLACEMENTS.map((p) => (
           <SurfaceRow
             key={p.id}
@@ -391,7 +396,9 @@ export function BannerCreateScreen({ onBack, onDone, toast }: {
               size={38}
             ><MegaphoneIcon size={18} /></IconBadge>}
             label={p.label}
-            sub={`${p.where} · ${p.perDay} TMT/gün`}
+            /* the price leads: it is what the row is being chosen on, and the
+               line truncates from the right */
+            sub={`${p.perDay} TMT/gün · ${p.where}`}
             end={p.id === placement ? <DoneBadge size={20} /> : undefined}
             onClick={() => setPlacement(p.id)}
           />
@@ -399,7 +406,7 @@ export function BannerCreateScreen({ onBack, onDone, toast }: {
       </Box>
 
       <SectionLabel>Mekdep</SectionLabel>
-      <Box sx={{ display: 'grid', gap: '8px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' }}>
         {AD_SCHOOLS.map((s) => (
           <SurfaceRow
             key={s.id}
@@ -417,7 +424,7 @@ export function BannerCreateScreen({ onBack, onDone, toast }: {
       </Box>
 
       <SectionLabel>Günler</SectionLabel>
-      <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '14px', display: 'grid', gap: '12px' }}>
+      <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, p: '14px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '12px' }}>
         <SurfaceRow
           icon={<IconBadge bg={tokens.blueTint} color={tokens.blueText} size={38}><CalendarIcon size={18} /></IconBadge>}
           label={absDate(from)}
@@ -444,7 +451,7 @@ export function BannerCreateScreen({ onBack, onDone, toast }: {
         {/* An unavailable window is only half an answer; the other half is the
             first date that would work, as a button rather than a sentence. */}
         {!free && (
-          <Box sx={{ display: 'grid', gap: '8px' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' }}>
             {clashes.map((c) => (
               <Typography key={`${c.from}${c.who}`} sx={{ fontSize: 12.5, color: tokens.ink3, px: '4px' }}>
                 {fmtRange(c.from, c.to)} — {c.who} tarapyndan band edilen
@@ -504,7 +511,7 @@ export function BannerGalleryScreen({ onBack, toast }: { onBack: () => void; toa
   const [open, setOpen] = useState<Banner | null>(null);
   return (
     <SubPage title="Bannerler" onBack={onBack} help="Mugt hasapda görkezilýän ähli bannerler.">
-      <Box sx={{ display: 'grid', gap: '12px' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '12px' }}>
         {BANNERS.map((b) => (
           <BannerCard
             key={b.id}

@@ -157,8 +157,13 @@ export function DateStrip({ days, selected, onSelect, onPick }: {
 }
 
 /* ---------------- SurfaceRow (quick rows, list rows) ---------------- */
-export function SurfaceRow({ icon, label, labelSx, sub, end, onClick }: {
+export function SurfaceRow({ icon, label, labelSx, labelEnd, sub, end, onClick }: {
   icon?: ReactNode; label: ReactNode; labelSx?: object;
+  /* A badge that belongs *to the label* rather than to the row: a plan on a
+     child, a status on a subscription. It sits beside the title, where the
+     label truncates first and the badge keeps its width — the opposite of
+     `end`, which is the row's own trailing control. */
+  labelEnd?: ReactNode;
   sub?: ReactNode; end?: ReactNode; onClick?: () => void;
 }) {
   return (
@@ -176,8 +181,20 @@ export function SurfaceRow({ icon, label, labelSx, sub, end, onClick }: {
     >
       {icon}
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="subtitle1" noWrap sx={labelSx}>{label}</Typography>
-        {sub && <Typography sx={{ fontSize: 12, color: tokens.inkMuted, mt: '2px' }}>{sub}</Typography>}
+        {labelEnd ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <Typography variant="subtitle1" noWrap sx={labelSx}>{label}</Typography>
+            {labelEnd}
+          </Box>
+        ) : (
+          <Typography variant="subtitle1" noWrap sx={labelSx}>{label}</Typography>
+        )}
+        {/* One line, like the label above it: a row's second line is a value,
+            not a paragraph. Wrapping it made rows grow to two and three lines
+            beside a trailing figure and read as a collision. */}
+        {sub && (
+          <Typography noWrap sx={{ fontSize: 12, color: tokens.inkMuted, mt: '2px' }}>{sub}</Typography>
+        )}
       </Box>
       {end}
     </ButtonBase>
@@ -1125,7 +1142,11 @@ export function Avatar({ initials, size = 56, fill = 'soft', premium, gap = '#ff
     <Box aria-hidden sx={{
       width: '100%', height: '100%', borderRadius: '50%',
       display: 'grid', placeItems: 'center',
-      fontSize: size >= 90 ? 30 : size >= 60 ? 22 : 20,
+      /* The initials have to fit the disc they sit in. A flat 20px was fine on
+         a 56px face and 3px wider than the 30px one in the child pill, where
+         two capitals spilled over the circle's edge. Discrete steps, so the
+         type stays on the scale. */
+      fontSize: size >= 90 ? 30 : size >= 60 ? 22 : size >= 48 ? 20 : size >= 36 ? 15 : 13,
       fontWeight: 700, letterSpacing: '-.3px',
       ...(fill === 'gradient'
         ? { background: `linear-gradient(150deg, ${tokens.blue} 0%, ${tokens.bluePress} 70%)`, color: '#fff' }

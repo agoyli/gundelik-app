@@ -10,7 +10,7 @@ import { PremiumScreen } from './PremiumScreen';
 import { PayVariantSheet } from './payBits';
 import type { PayVariant } from './payBits';
 import {
-  FEATURES, TIERS, listYearly, meets, savePct, setTier, usePrefs,
+  FEATURES, TIERS, listYearly, meets, savePct, setTier, tierName, usePrefs,
 } from '../state/prefs';
 import type { Tier, TierId } from '../state/prefs';
 import { tokens } from '../theme';
@@ -36,7 +36,12 @@ import { tokens } from '../theme';
 type Term = 'month' | 'year';
 
 const COLS: TierId[] = ['free', 'gorelde', 'zehin'];
-const COL_LABEL: Record<TierId, string> = { free: 'Mugt', gorelde: 'Göreldeli', zehin: 'Zehinli' };
+/* Read from the same place every other screen reads a plan's name, so the
+   table's first column cannot go on calling the free plan something the
+   picker, the child list and the settings switch no longer call it. */
+const COL_LABEL: Record<TierId, string> = {
+  free: tierName('free'), gorelde: tierName('gorelde'), zehin: tierName('zehin'),
+};
 
 const price = (t: Tier, term: Term) => (term === 'month' ? t.monthly : t.yearly);
 
@@ -144,7 +149,7 @@ export function UpgradeScreen({ onBack, toast }: { onBack: () => void; toast: (m
   const chosen = TIERS.find((t) => t.id === pick)!;
 
   const buy = () => {
-    setTier(pick);
+    setTier(pick, term === 'year' ? 365 : 30);
     toast(premium && current === pick ? 'Abuna uzaldyldy' : `${chosen.name} işjeňleşdirildi 🎉`);
     onBack();
   };

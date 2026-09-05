@@ -1,5 +1,9 @@
 import { useSyncExternalStore } from 'react';
-import { absDate, daysUntil } from '../lib/date';
+import { absDate } from '../lib/date';
+import {
+  childDaysLeft, childEndingSoon, childId, childLeftLabel, childOf, setChildTier,
+  subscribeChildren,
+} from './children';
 
 /*
  * One app-wide preference store.
@@ -29,8 +33,6 @@ export type TierId = 'free' | 'gorelde' | 'zehin';
 export type ViewId = 'list' | 'grid';
 
 export type Prefs = {
-  /* entitlement */
-  tier: TierId;
   beta: boolean;
   /* notifications */
   notify: boolean; nGrades: boolean; nHw: boolean; nLessons: boolean; nContests: boolean; nNews: boolean;
@@ -45,7 +47,6 @@ export type Prefs = {
 };
 
 const store: Prefs = {
-  tier: 'zehin',
   beta: false,
   notify: true, nGrades: true, nHw: true, nLessons: false, nContests: true, nNews: false,
   quiet: true, sound: true, haptics: true,
@@ -54,13 +55,24 @@ const store: Prefs = {
   subjectView: 'list',
 };
 
-/* every pref except the language, the tier and the view is a switch */
-export type BoolPref = Exclude<keyof Prefs, 'lang' | 'tier' | 'subjectView'>;
+/* every pref except the language and the view is a switch */
+export type BoolPref = Exclude<keyof Prefs, 'lang' | 'subjectView'>;
 
-/* `premium` is derived, never stored — "is this account paying at all?" is a
-   question about the tier, and a second copy of it would be free to disagree */
-type Snapshot = Prefs & { premium: boolean };
-const derive = (p: Prefs): Snapshot => ({ ...p, premium: p.tier !== 'free' });
+/*
+ * The tier is **not** a preference — it is the selected child's subscription,
+ * read from `state/children.ts` every time this snapshot is built. Screens
+ * still ask `usePrefs().tier` and `useCan(...)`, so nothing below them had to
+ * learn that an account can hold five different plans at once; what changed is
+ * that the answer follows whoever is selected.
+ *
+ * `premium` stays derived — "is this child paying at all?" is a question about
+ * the tier, and a second copy of it would be free to disagree.
+ */
+type Snapshot = Prefs & { tier: TierId; premium: boolean };
+const derive = (p: Prefs): Snapshot => {
+  const tier = childOf(childId()).tier;
+  return { ...p, tier, premium: tier !== 'free' };
+};
 
 const listeners = new Set<() => void>();
 const subscribe = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
@@ -76,7 +88,20 @@ export const setPref = <K extends keyof Prefs>(key: K, value: Prefs[K]) => {
   publish();
 };
 
-export const setTier = (id: TierId) => setPref('tier', id);
+/**
+ * Move the selected child onto a plan. `days` is how long the term they just
+ * bought runs for — a month or a year — so the badge that counts down is
+ * counting the thing that was actually paid for.
+ */
+export const setTier = (id: TierId, days = 30) => {
+  setChildTier(childId(), id, days);
+  publish();
+};
+
+/* A change of child is a change of tier, so the prefs snapshot has to be
+   rebuilt for it — otherwise a screen holding `usePrefs()` would keep the
+   previous child's entitlement until something else happened to publish. */
+subscribeChildren(publish);
 
 export const usePrefs = () => useSyncExternalStore(subscribe, () => snapshot);
 
@@ -132,7 +157,12 @@ export const TIERS: Tier[] = [
 export const ENTRY = TIERS[0];
 
 export const tierOf = (id: TierId) => TIERS.find((t) => t.id === id);
-export const tierName = (id: TierId) => tierOf(id)?.name ?? 'Mugt';
+/* The free plan has a name like the other two — a family choosing between
+   plans is choosing between Adaty, Göreldeli and Zehinli, and "Mugt" (free of
+   charge) is a price, not a plan. The word still appears in copy where it
+   means the price. */
+export const FREE_NAME = 'Adaty';
+export const tierName = (id: TierId) => tierOf(id)?.name ?? FREE_NAME;
 
 /** A year at the monthly rate — what the yearly price is discounted *from*. */
 export const listYearly = (t: Tier) => t.monthly * 12;
@@ -194,38 +224,32 @@ export const tierFor = (id: FeatureId) => tierOf(featureTier(id));
 /*
  * Subscription state, separate from which plan is on offer.
  *
- * The end of the term is an **ISO date**, like every other date in the app, and
- * everything about it is derived from that one value: the printed date, how
- * many days are left, and whether the term is close enough to say so. Two
- * screens used to print "28 gün galdy" as a literal beside a date they did not
- * count from — a number that was wrong the day after it was typed.
+ * The term belongs to a child, so everything here reads the selected one: the
+ * printed date, the days left, and whether the end is close enough to say so.
+ * Every one of them is derived from that child's `untilIso` — two screens used
+ * to print "28 gün galdy" as a literal beside a date they did not count from,
+ * a number that was wrong the day after it was typed.
  */
 export const PLAN = {
   status: 'Işjeň',
-  untilIso: '2026-03-12',
-  get until() { return absDate(PLAN.untilIso); },
+  get untilIso() { return childOf(childId()).untilIso; },
+  get until() {
+    const iso = childOf(childId()).untilIso;
+    return iso ? absDate(iso) : '—';
+  },
   /* what the referral programme pays for each friend who subscribes */
   referralReward: 5,
 };
 
-/** Days left on the subscription — negative once the term is past. */
-export const planDaysLeft = () => daysUntil(PLAN.untilIso);
+/** Days left on the selected child's term; `null` on the free plan. */
+export const planDaysLeft = () => childDaysLeft(childOf(childId()));
 
-/** The short form a badge carries: "28 gün galdy" / "Şu gün gutarýar". */
-export const planLeftLabel = () => {
-  const d = planDaysLeft();
-  if (d < 0) return 'Möhleti gutardy';
-  if (d === 0) return 'Şu gün gutarýar';
-  if (d === 1) return 'Ertir gutarýar';
-  return `${d} gün galdy`;
-};
+/** "28 gün galdy" / "Şu gün gutarýar", or `null` on a plan that does not end. */
+export const planLeftLabel = () => childLeftLabel(childOf(childId()));
 
 /** Under a fortnight is where "renew" stops being a setting and starts being
     news, so the badge changes colour rather than only its wording. */
-export const planEndingSoon = () => {
-  const d = planDaysLeft();
-  return d >= 0 && d <= 14;
-};
+export const planEndingSoon = () => childEndingSoon(childOf(childId()));
 
 /* Social proof shown on ads and the tariff page. Kept here so the same
    numbers appear everywhere they are claimed. */

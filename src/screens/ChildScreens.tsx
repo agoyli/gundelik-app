@@ -28,6 +28,7 @@ import { useState } from 'react';
 import { Box, ButtonBase, Typography } from '@mui/material';
 import { Avatar, DoneBadge, IconBadge, RowEnd, SheetDrawer, SurfaceRow } from '../components/Ui';
 import { ChevronIcon, UsersIcon } from '../components/Icons';
+import { PlanBadge } from '../components/Paywall';
 import { hwGlance } from '../api/mockApi';
 import { useChild } from '../state/children';
 import type { Child } from '../state/children';
@@ -60,6 +61,10 @@ export function ChildSheet({ open, onClose }: { open: boolean; onClose: () => vo
             icon={<Avatar initials={c.initials} size={40} />}
             label={c.short}
             labelSx={{ fontSize: 16, fontWeight: 700 }}
+            /* Each child is on their own plan, so the plan is a fact about the
+               row and not about the account — a family can pay for the one
+               sitting exams and leave the second-year on Adaty. */
+            labelEnd={<PlanBadge child={c} show="plan" />}
             sub={glanceOf(c)}
             end={c.id === id ? <DoneBadge size={22} /> : undefined}
             onClick={() => { select(c.id); onClose(); }}

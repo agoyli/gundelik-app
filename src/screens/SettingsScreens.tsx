@@ -18,6 +18,7 @@ import {
 } from './HelpScreens';
 import { CustomPagesScreen } from './StateScreens';
 import { PlanBadge } from '../components/Paywall';
+import { useStudent } from '../state/children';
 import {
   BANKS, PAY_NUMBERS, addPayMethod, bankOf, mainPayMethod, methodLabel, methodNote, methodTone,
   removePayMethod, setMainPayMethod, usePayMethods,
@@ -851,6 +852,8 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
   const [logout, setLogout] = useState(false);
   const [pay, setPay] = useState(false);
   const p = usePrefs();
+  /* the plan switch below belongs to a child, so it names one */
+  const child = useStudent();
   const home = () => setView('root');
 
   if (view === 'profile') return <ProfileEditScreen onBack={home} toast={toast} />;
@@ -999,11 +1002,16 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
         />
         {/* Three plans, so this is a picker and not a switch: a boolean could
             only say "paying or not", and the whole point of the tiers is that
-            two paying accounts see different apps. */}
+            two paying accounts see different apps. It sets the plan of the
+            **selected child** — the subscription is bought per child — so the
+            label names whose plan is being changed. */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '13px', p: '11px 15px' }}>
           {rowIcon(<AlertIcon size={22} />, tokens.orangeTint, tokens.orangeText)}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ ...LABEL_SX, mb: '8px' }}>Hasap rejimi</Typography>
+            <Typography sx={{ ...LABEL_SX, mb: '2px' }}>Abuna rejimi</Typography>
+            <Typography sx={{ fontSize: 12, color: tokens.inkMuted, mb: '8px' }}>
+              {`${child.short} · ${tierName(p.tier)}`}
+            </Typography>
             <Box sx={{ display: 'flex', gap: '6px' }}>
               {(['free', ...TIERS.map((t) => t.id)] as TierId[]).map((id) => {
                 const on = p.tier === id;
@@ -1036,7 +1044,8 @@ export function SettingsScreen({ onBack, toast, initial = 'root', onUpgrade }: {
         />
       </RowGroup>
       <Typography sx={{ fontSize: 12.5, color: tokens.ink3, lineHeight: 1.5, px: '6px', pt: '10px' }}>
-        Mugt rejimde mahabat, çäkler we teklipler görüner. Göreldeli — bildirişler,
+        Abuna her çaga aýratyn satyn alynýar — bu ýerde saýlanan çaganyň rejimi
+        çalyşýar. Adaty rejimde mahabat, çäkler we teklipler görüner. Göreldeli — bildirişler,
         ýyldyzlar, testler we bäsleşikler. Zehinli — ählisi. Beta —
         taýýar bolmadyk aýratynlyklar: AI gysgaça mazmun, hepdelik grafikler.
       </Typography>

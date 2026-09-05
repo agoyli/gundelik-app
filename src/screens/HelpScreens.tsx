@@ -248,7 +248,7 @@ const WIDGETS: Record<WidgetId, ReactNode> = {
   tarif: (
     <Panel>
       <Box sx={{ display: 'flex', gap: '7px', width: '100%' }}>
-        <Chip tint={tokens.surfacePress} ink={tokens.ink2}>Mugt</Chip>
+        <Chip tint={tokens.surfacePress} ink={tokens.ink2}>{tierName('free')}</Chip>
         <Chip tint={tokens.surfacePress} ink={tokens.ink2}>Göreldeli</Chip>
         <Chip tint={tokens.blue} ink="#fff">Zehinli</Chip>
       </Box>

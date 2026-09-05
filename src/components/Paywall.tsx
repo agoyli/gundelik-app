@@ -2,9 +2,11 @@ import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { CheckIcon, LockIcon, SparkleIcon, TrendUpIcon, UsersIcon } from './Icons';
 import { IconBadge, SheetDrawer } from './Ui';
+import { ENTRY, PLAN, PROOF, tierFor, tierName, usePrefs } from '../state/prefs';
 import {
-  ENTRY, PLAN, PROOF, planDaysLeft, planEndingSoon, planLeftLabel, tierFor, usePrefs,
-} from '../state/prefs';
+  childDaysLeft, childEndingSoon, childLeftLabel, childLeftShort, useStudent,
+} from '../state/children';
+import type { Child } from '../state/children';
 import type { FeatureId } from '../state/prefs';
 import { tokens } from '../theme';
 
@@ -49,36 +51,48 @@ export const BetaPill = () => (
   }}>BETA</Box>
 );
 
-/* ---------------- how long is left ----------------
+/* ---------------- which plan, and how long is left ----------------
  *
- * The subscription's status and its remaining days are one fact stated in two
- * halves, so they are one component. It was two: a green "Işjeň" pill drawn by
- * hand on the profile and a white one in the payments header, with the days
- * left typed underneath as the literal "28 gün galdy" — a number that stopped
- * being true the day after it was written.
+ * One pill for "what is this child on, and until when". It was two hand-drawn
+ * pills and a literal: a green "Işjeň" on the profile, a white one in the
+ * payments header, and "28 gün galdy" typed under a date nobody counted from.
  *
- * `tone="onDark"` is the same badge over the blue payments card; the wording,
- * the counting and the "ending soon" threshold stay in one place either way.
+ * The subscription is per child, so the badge takes one: `show="plan"` names
+ * the tier (Adaty · Göreldeli · Zehinli), which is what a list of five
+ * children needs; `show="status"` says Işjeň, which is what a page already
+ * titled with the plan name needs. The free plan has no end, so it carries no
+ * countdown — an "unlimited" that counts down would be a lie in a badge.
  */
-export function PlanBadge({ tone = 'light' }: { tone?: 'light' | 'onDark' }) {
-  const soon = planEndingSoon();
-  const over = planDaysLeft() < 0;
+export function PlanBadge({ child, show = 'status', tone = 'light' }: {
+  child?: Child; show?: 'status' | 'plan'; tone?: 'light' | 'onDark';
+}) {
+  const selected = useStudent();
+  const c = child ?? selected;
+  const left = show === 'plan' ? childLeftShort(c) : childLeftLabel(c);
+  const days = childDaysLeft(c);
+  const free = c.tier === 'free';
+  const over = days !== null && days < 0;
+
   const look = tone === 'onDark'
     ? { bg: 'rgba(255,255,255,.22)', ink: '#fff' }
-    : over ? { bg: tokens.redTint, ink: tokens.redText }
-      : soon ? { bg: tokens.orangeTint, ink: tokens.orangeText }
-        : { bg: tokens.greenTint, ink: tokens.greenText };
+    : free ? { bg: tokens.surfacePress, ink: tokens.ink3 }
+      : over ? { bg: tokens.redTint, ink: tokens.redText }
+        : childEndingSoon(c) ? { bg: tokens.orangeTint, ink: tokens.orangeText }
+          : { bg: tokens.greenTint, ink: tokens.greenText };
+
+  const head = show === 'plan' ? tierName(c.tier) : (over ? 'Möhleti gutardy' : PLAN.status);
+
   return (
     <Box component="span" sx={{
-      display: 'inline-flex', alignItems: 'center', gap: '6px', flex: 'none',
+      display: 'inline-flex', alignItems: 'center', gap: '6px', flex: 'none', maxWidth: '100%',
       height: 22, px: '9px', borderRadius: `${tokens.rPill}px`,
-      bgcolor: look.bg, color: look.ink, fontSize: 12, fontWeight: 700,
+      bgcolor: look.bg, color: look.ink, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
     }}>
-      {over ? 'Möhleti gutardy' : PLAN.status}
-      {!over && (
+      {head}
+      {!free && !over && left && (
         <>
           <Box aria-hidden component="span" sx={{ opacity: .5 }}>·</Box>
-          {planLeftLabel()}
+          {left}
         </>
       )}
     </Box>
