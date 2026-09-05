@@ -1,8 +1,10 @@
 import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { CheckIcon, LockIcon, SparkleIcon, TrendUpIcon, UsersIcon } from './Icons';
-import { IconBadge, SheetDrawer } from './Ui';
-import { ENTRY, PLAN, PROOF, tierFor, tierName, usePrefs } from '../state/prefs';
+import { IconBadge, RowChevron, SheetDrawer } from './Ui';
+import {
+  ENTRY, FREE_BLURB, PLAN, PROOF, planDaysLeft, planEndingSoon, tierFor, tierName, tierOf, usePrefs,
+} from '../state/prefs';
 import {
   childDaysLeft, childEndingSoon, childLeftLabel, childLeftShort, useStudent,
 } from '../state/children';
@@ -102,6 +104,86 @@ export function PlanBadge({ child, show = 'status', tone = 'light' }: {
 /* ---------------- obscured real content ----------------
    The preview is rendered, then blurred and made inert — the point of a teaser
    is that you can see the shape of what you are missing. */
+
+/* ---------------- the plan a family is on ----------------
+ *
+ * One widget for the tariff, on every tier.
+ *
+ * Profil used to hold two unrelated objects in this slot: a status row for a
+ * subscriber, and a full ad card for everyone else — so the page changed shape
+ * depending on what the reader had paid, and the free plan was never named. A
+ * tariff is the same fact in both cases ("this is the plan you are on, this is
+ * what it gives, this is what happens next"), so it is one card with the same
+ * three parts, and only the words change.
+ *
+ * The foot is the action, and it is the *right* action: while there is time,
+ * it opens the payment page; under a fortnight it turns amber and says extend,
+ * because a countdown nobody can act on is decoration; on the free plan it
+ * quotes the cheapest way up rather than the dearest.
+ */
+export function PlanWidget({ onOpen, onUpgrade }: { onOpen: () => void; onUpgrade: () => void }) {
+  const { tier, premium } = usePrefs();
+  const plan = tierOf(tier);
+  const soon = planEndingSoon();
+  const over = premium && (planDaysLeft() ?? 1) <= 0;
+
+  const tone = !premium
+    ? { tint: tokens.surfacePress, ink: tokens.ink2 }
+    : over ? { tint: tokens.redTint, ink: tokens.redText }
+      : soon ? { tint: tokens.orangeTint, ink: tokens.orangeText }
+        : { tint: tokens.greenTint, ink: tokens.greenText };
+
+  const foot = premium
+    ? {
+      label: soon || over ? 'Möhleti uzalt' : 'Abuna we töleg',
+      note: `${PLAN.until} çenli · aýda ${plan?.monthly ?? 0} TMT`,
+      ink: soon || over ? tokens.orangeText : tokens.blueText,
+      go: onOpen,
+    }
+    : {
+      label: `${ENTRY.name} bilen açylýar`,
+      note: `Aýda ${ENTRY.monthly} TMT-den · islendik wagt ýatyryp bolýar`,
+      ink: tokens.blueText,
+      go: onUpgrade,
+    };
+
+  return (
+    <Box sx={{ bgcolor: tokens.surface, borderRadius: `${tokens.rCard}px`, overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '13px', p: `15px ${tokens.padCard}` }}>
+        <IconBadge bg={tone.tint} color={tone.ink} size={48}>
+          {premium ? <SparkleIcon size={22} /> : <LockIcon size={21} />}
+        </IconBadge>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px' }} noWrap>
+              {tierName(tier)}
+            </Typography>
+            <PlanBadge />
+          </Box>
+          <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px', lineHeight: 1.4 }}>
+            {plan ? plan.blurb : FREE_BLURB}
+          </Typography>
+        </Box>
+      </Box>
+
+      <ButtonBase
+        onClick={foot.go}
+        aria-label={`${foot.label} — ${foot.note}`}
+        sx={{
+          display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left',
+          p: `12px ${tokens.padCard}`, borderTop: `1px solid ${tokens.dividerSoft}`,
+          '&:active': { bgcolor: tokens.surfacePress },
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, color: foot.ink }} noWrap>{foot.label}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '1px' }} noWrap>{foot.note}</Typography>
+        </Box>
+        <RowChevron />
+      </ButtonBase>
+    </Box>
+  );
+}
 
 export function LockedPreview({ children, height = 132 }: { children: ReactNode; height?: number }) {
   return (

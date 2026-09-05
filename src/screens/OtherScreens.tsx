@@ -10,7 +10,7 @@ import {
   PillHeader, MeterTile, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
 } from '../components/Ui';
-import { AdSlot, PlanBadge, TeaserCard } from '../components/Paywall';
+import { PlanWidget, TeaserCard } from '../components/Paywall';
 import { OLYMPIADS, PRIZE_CONTESTS, RATING } from '../data/guides';
 import { bankTotal, playCount, testSubjects } from '../data/library';
 import { pathTotal, subjectBySlug } from '../data/curriculum';
@@ -18,7 +18,7 @@ import type { CurriculumSubject } from '../data/curriculum';
 import { fmtDate, fmtRange } from '../lib/date';
 import { ordinal } from '../lib/tm';
 import type { TestItem, TestSubject } from '../data/library';
-import { PLAN, tierFor, tierName, tierOf, useCan, usePrefs } from '../state/prefs';
+import { PLAN, tierFor, useCan, usePrefs } from '../state/prefs';
 import { useAllowance } from '../state/allowance';
 import { AiChatScreen } from './AiChatScreen';
 import { TestDetailScreen, TestSubjectScreen, prizePhase } from './DetailScreens';
@@ -272,106 +272,20 @@ function PartialReport({ title, note, shown, hidden, onUpgrade }: {
   );
 }
 
-function AnalitikaLocked({ onUpgrade }: { onUpgrade: () => void }) {
-  const plan = tierFor('analytics');
+/* The streak, which every tier sees.
+   It is counted from grades the diary already shows in full, so hiding it
+   would be hiding the reader's own data back from them — and it is the reason
+   to open the tab tomorrow. */
+function StreakBanner() {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px', px: tokens.gutter, pt: '4px' }}>
-      {/* The streak stays free: it is counted from grades the diary already
-          shows in full, so hiding it would be hiding the reader's own data
-          back from them — and it is the reason to come back tomorrow. */}
-      <Box sx={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
-        bgcolor: tokens.blueTint, borderRadius: `${tokens.rRow}px`, minHeight: 60, px: '16px',
-      }}>
-        <Typography sx={{ fontSize: 15, fontWeight: 600 }}>Yzygider bäşlik alan gün sany</Typography>
-        <Typography sx={{ fontSize: 26, fontWeight: 700, color: tokens.blueText, fontVariantNumeric: 'tabular-nums' }}>
-          12
-        </Typography>
-      </Box>
-
-      <SectionLabel>Hasabatlar</SectionLabel>
-
-      {/* Each card shows this week's real figures and locks the history behind
-          them. The reader can check every number here against their own diary,
-          which is what makes the missing part worth buying. */}
-      <PartialReport
-        title="Synpda hepdelik ýetişigi"
-        note="Şu hepdäniň orny — açyk. Öňki hepdeler we synpyň sanawy ýapyk."
-        onUpgrade={onUpgrade}
-        shown={(
-          <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
-            <HeroStat>{placeLabel(WEEKS[WEEKS.length - 1].place)}</HeroStat>
-            <DeltaLine>{weekMove(WEEKS.length - 1)}</DeltaLine>
-          </Box>
-        )}
-        hidden={`${WEEKS.length - 1} hepdelik taryh · synpyň doly sanawy`}
-      />
-
-      <PartialReport
-        title="Dersler boýunça ýetişigi"
-        note={`Iň gowy iki ugruň açyk. Galan ${SUBJECT_WEEK.length - 2} ders ýapyk.`}
-        onUpgrade={onUpgrade}
-        shown={(
-          <Box sx={{ p: '12px 15px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {SUBJECT_WEEK.slice(0, 2).map(([name, val]) => (
-              <Box key={name} sx={{ display: 'grid', gridTemplateColumns: '96px 1fr 34px', alignItems: 'center', gap: '10px' }}>
-                <Typography noWrap sx={{ fontSize: 13, color: tokens.ink2 }}>{name}</Typography>
-                <LinearProgress
-                  variant="determinate" value={val}
-                  sx={{
-                    height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft,
-                    '& .MuiLinearProgress-bar': { borderRadius: `${tokens.rPill}px`, bgcolor: tokens.greenDeep },
-                  }}
-                />
-                <Typography sx={{
-                  fontSize: 12.5, fontWeight: 700, color: tokens.ink2, textAlign: 'right',
-                  fontVariantNumeric: 'tabular-nums',
-                }}>{val}%</Typography>
-              </Box>
-            ))}
-            {/* the shape of what is missing, without its numbers: the same rows,
-                drawn empty, so the reader can see how much more there is */}
-            {SUBJECT_WEEK.slice(2, 5).map(([name]) => (
-              <Box key={name} sx={{ display: 'grid', gridTemplateColumns: '96px 1fr 34px', alignItems: 'center', gap: '10px' }}>
-                <Typography noWrap sx={{ fontSize: 13, color: tokens.inkMuted }}>{name}</Typography>
-                <Box aria-hidden sx={{ height: 8, borderRadius: `${tokens.rPill}px`, bgcolor: tokens.dividerSoft }} />
-                <Typography sx={{ fontSize: 12.5, color: tokens.inkDisabled, textAlign: 'right' }}>—</Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
-        hidden={`Ýene ${SUBJECT_WEEK.length - 2} dersiň göterimi`}
-      />
-
-      <PartialReport
-        title="Çärýegiň ortaça bahasy"
-        note="Şu çärýegiň ortaçasy — açyk. Öňki çärýekler bilen deňeşdirme ýapyk."
-        onUpgrade={onUpgrade}
-        shown={(
-          <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
-            <HeroStat>Baha: {QUARTER_HISTORY[QUARTER_HISTORY.length - 1].avg.toFixed(1)}</HeroStat>
-            <DeltaLine>{qtrMove(QUARTER_HISTORY.length - 1)}</DeltaLine>
-          </Box>
-        )}
-        hidden={`${QUARTER_HISTORY.length - 1} çärýegiň taryhy · ders-ders bölünişi`}
-      />
-
-      <PartialReport
-        title="Sapaklaryň görnüşleri boýunça"
-        note="Bölünişik açyk. Hepde-hepde üýtgeýşi ýapyk."
-        onUpgrade={onUpgrade}
-        shown={<Box sx={{ display: 'grid', placeItems: 'center', pt: '6px', pb: '10px' }}><KindBubbles /></Box>}
-        hidden="Hepdelik dinamika we sagat hasaby"
-      />
-
-      <Box sx={{ pt: '4px' }}>
-        <TeaserCard
-          title="Hakyky sanlary görmek üçin nyrhnama geçiň"
-          note={`Synpdaky ornuň, dersler boýunça ýetişigiň we çärýek ortaçaň — ${plan?.name} bilen açylýar.`}
-          feature="analytics"
-          onUpgrade={onUpgrade}
-        />
-      </Box>
+    <Box sx={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+      bgcolor: tokens.blueTint, borderRadius: `${tokens.rRow}px`, minHeight: 60, px: '16px',
+    }}>
+      <Typography sx={{ fontSize: 15, fontWeight: 600 }}>Yzygider bäşlik alan gün sany</Typography>
+      <Typography sx={{ fontSize: 26, fontWeight: 700, color: tokens.blueText, fontVariantNumeric: 'tabular-nums' }}>
+        12
+      </Typography>
     </Box>
   );
 }
@@ -387,6 +301,7 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
   const [week, setWeek] = useState(WEEKS.length - 1);
   const [qtr, setQtr] = useState(QUARTER_HISTORY.length - 1);
   const can = useCan('analytics');
+  const upgrade = () => setView('upgrade');
 
   if (view === 'upgrade') return <UpgradeScreen onBack={() => setView('root')} toast={toast} />;
 
@@ -404,71 +319,111 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
         )}
       />
 
-      {!can && <AnalitikaLocked onUpgrade={() => setView('upgrade')} />}
+      {/*
+        One page, one order, both tiers.
 
-      {can && (
+        The free tier used to get a different tab: the same reports in a
+        different sequence, one extra card of its own, and a teaser under them
+        all — so a reader who subscribed found the page they had learned
+        rearranged, and a reader who had not was asked to buy four times on one
+        screen. The three reports are the same three, in the same places now.
+        What the plan changes is inside each card: free sees the newest figure
+        (the one they could work out from their own diary anyway) and a line
+        naming exactly what the history would add; paid gets the ‹ › through
+        that history and the drill-down behind it.
+      */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', px: tokens.gutter, pt: '4px' }}>
-        {/* Streak banner */}
-        <Box sx={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
-          bgcolor: tokens.blueTint, borderRadius: `${tokens.rRow}px`, minHeight: 60, px: '16px',
-        }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 600 }}>Yzygider bäşlik alan gün sany</Typography>
-          <Typography sx={{ fontSize: 26, fontWeight: 700, color: tokens.blueText, fontVariantNumeric: 'tabular-nums' }}>
-            12
-          </Typography>
-        </Box>
+        <StreakBanner />
 
-        {/* Lesson kinds */}
-        <StatCard>
-          <CardTitle>Sapaklaryň görnüşleri boýunça</CardTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {LESSON_KINDS.map((k) => (
-                <Box key={k.label} sx={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                  <Box aria-hidden sx={{
-                    width: 16, height: 16, borderRadius: '50%', flex: 'none',
-                    border: `4.5px solid ${k.color}`,
-                  }} />
-                  <Typography sx={{ fontSize: 15, fontWeight: 600 }}>{k.label}</Typography>
-                </Box>
-              ))}
+        {/* 1 — where the pupil stands this week, the page's headline */}
+        {can ? (
+          <StatCard>
+            <CardTitle>Synpda hepdelik ýetişigi</CardTitle>
+            <PeriodNav
+              label={WEEKS[week].label}
+              onPrev={week > 0 ? () => setWeek(week - 1) : undefined}
+              onNext={week < WEEKS.length - 1 ? () => setWeek(week + 1) : undefined}
+            />
+            <Box sx={{ borderTop: `0.5px solid ${tokens.dividerSoft}`, pt: '16px' }}>
+              <HeroStat>{placeLabel(WEEKS[week].place)}</HeroStat>
+              <DeltaLine>{weekMove(week) ?? 'çärýegiň başy'}</DeltaLine>
             </Box>
-            <KindBubbles />
-          </Box>
-        </StatCard>
-
-        {/* Weekly standing */}
-        <StatCard>
-          <CardTitle>Synpda hepdelik ýetişigi</CardTitle>
-          <PeriodNav
-            label={WEEKS[week].label}
-            onPrev={week > 0 ? () => setWeek(week - 1) : undefined}
-            onNext={week < WEEKS.length - 1 ? () => setWeek(week + 1) : undefined}
+            <DrillButton onClick={() => setSheet('yetisik')}>Dersler boýunça ýetişigi</DrillButton>
+          </StatCard>
+        ) : (
+          <PartialReport
+            title="Synpda hepdelik ýetişigi"
+            note="Şu hepdäniň orny — açyk. Öňki hepdeler we dersler boýunça bölünişik ýapyk."
+            onUpgrade={upgrade}
+            shown={(
+              <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
+                <HeroStat>{placeLabel(WEEKS[WEEKS.length - 1].place)}</HeroStat>
+                <DeltaLine>{weekMove(WEEKS.length - 1)}</DeltaLine>
+              </Box>
+            )}
+            hidden={`${WEEKS.length - 1} hepdelik taryh · ${SUBJECT_WEEK.length} dersiň bölünişigi`}
           />
-          <Box sx={{ borderTop: `0.5px solid ${tokens.dividerSoft}`, pt: '16px' }}>
-            <HeroStat>{placeLabel(WEEKS[week].place)}</HeroStat>
-            <DeltaLine>{weekMove(week) ?? 'çärýegiň başy'}</DeltaLine>
-          </Box>
-          <DrillButton onClick={() => setSheet('yetisik')}>Dersler boýunça ýetişigi</DrillButton>
-        </StatCard>
+        )}
 
-        {/* Quarter average */}
-        <StatCard>
-          <CardTitle>Çärýegiň ortaça bahasy</CardTitle>
-          <PeriodNav
-            label={QUARTER_HISTORY[qtr].label}
-            onPrev={qtr > 0 ? () => setQtr(qtr - 1) : undefined}
-            onNext={qtr < QUARTER_HISTORY.length - 1 ? () => setQtr(qtr + 1) : undefined}
+        {/* 2 — the same question over a term */}
+        {can ? (
+          <StatCard>
+            <CardTitle>Çärýegiň ortaça bahasy</CardTitle>
+            <PeriodNav
+              label={QUARTER_HISTORY[qtr].label}
+              onPrev={qtr > 0 ? () => setQtr(qtr - 1) : undefined}
+              onNext={qtr < QUARTER_HISTORY.length - 1 ? () => setQtr(qtr + 1) : undefined}
+            />
+            <Box sx={{ borderTop: `0.5px solid ${tokens.dividerSoft}`, pt: '16px' }}>
+              <HeroStat>Baha: {QUARTER_HISTORY[qtr].avg.toFixed(1)}</HeroStat>
+              <DeltaLine>{qtrMove(qtr) ?? 'ilkinji çärýek'}</DeltaLine>
+            </Box>
+            <DrillButton onClick={() => setSheet('baha')}>Ders boýunça bahasy</DrillButton>
+          </StatCard>
+        ) : (
+          <PartialReport
+            title="Çärýegiň ortaça bahasy"
+            note="Şu çärýegiň ortaçasy — açyk. Öňki çärýekler bilen deňeşdirme ýapyk."
+            onUpgrade={upgrade}
+            shown={(
+              <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
+                <HeroStat>Baha: {QUARTER_HISTORY[QUARTER_HISTORY.length - 1].avg.toFixed(1)}</HeroStat>
+                <DeltaLine>{qtrMove(QUARTER_HISTORY.length - 1)}</DeltaLine>
+              </Box>
+            )}
+            hidden={`${QUARTER_HISTORY.length - 1} çärýegiň taryhy · ders-ders bölünişi`}
           />
-          <Box sx={{ borderTop: `0.5px solid ${tokens.dividerSoft}`, pt: '16px' }}>
-            <HeroStat>Baha: {QUARTER_HISTORY[qtr].avg.toFixed(1)}</HeroStat>
-            <DeltaLine>{qtrMove(qtr) ?? 'ilkinji çärýek'}</DeltaLine>
-          </Box>
-          <DrillButton onClick={() => setSheet('baha')}>Ders boýunça bahasy</DrillButton>
-        </StatCard>
+        )}
+
+        {/* 3 — what the week was made of */}
+        {can ? (
+          <StatCard>
+            <CardTitle>Sapaklaryň görnüşleri boýunça</CardTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {LESSON_KINDS.map((k) => (
+                  <Box key={k.label} sx={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                    <Box aria-hidden sx={{
+                      width: 16, height: 16, borderRadius: '50%', flex: 'none',
+                      border: `4.5px solid ${k.color}`,
+                    }} />
+                    <Typography sx={{ fontSize: 15, fontWeight: 600 }}>{k.label}</Typography>
+                  </Box>
+                ))}
+              </Box>
+              <KindBubbles />
+            </Box>
+          </StatCard>
+        ) : (
+          <PartialReport
+            title="Sapaklaryň görnüşleri boýunça"
+            note="Bölünişik açyk. Hepde-hepde üýtgeýşi ýapyk."
+            onUpgrade={upgrade}
+            shown={<Box sx={{ display: 'grid', placeItems: 'center', pt: '6px', pb: '10px' }}><KindBubbles /></Box>}
+            hidden="Hepdelik dinamika we sagat hasaby"
+          />
+        )}
       </Box>
-      )}
 
       <SheetDrawer open={help} onClose={() => setHelp(false)}>
         <Typography variant="h2">Analitika näme görkezýär?</Typography>
@@ -988,7 +943,7 @@ type ProfilView = 'root' | 'settings' | 'edit' | 'payments' | 'cards' | 'referra
   | 'career' | 'wallet' | 'shop';
 
 export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
-  const { premium, tier } = usePrefs();
+  const { premium } = usePrefs();
   const [view, setView] = useState<ProfilView>('root');
 
   /* which of the two pots the balance page opens on */
@@ -1130,24 +1085,17 @@ export function ProfilScreen({ toast }: { toast: (msg: string) => void }) {
           <RowChevron />
         </ButtonBase>
 
-        <SectionLabel>{premium ? 'Töleg' : 'Nyrhnamalar'}</SectionLabel>
-        {!premium ? (
-          <AdSlot onUpgrade={() => setView('upgrade')} />
-        ) : (
-        /* One row: which plan, how long is left, what it costs — and it opens
-           the page that owns the three things that used to be a strip of icon
-           buttons under it (the history, the card that gets charged, and
-           paying). Three doors to one page, drawn as a control panel, made a
-           status card look like a dashboard. */
-        <SurfaceRow
-          icon={<IconBadge bg={tokens.greenTint} color={tokens.greenText} size={48}><WalletIcon size={24} /></IconBadge>}
-          label={tierName(tier)}
-          labelEnd={<PlanBadge />}
-          sub={`${PLAN.until} çenli · aýda ${tierOf(tier)?.monthly ?? 0} TMT`}
-          end={<RowChevron />}
-          onClick={() => setView('payments')}
+        {/* The tariff, on every tier: which plan, what it gives, and the one
+           thing to do next — open the payment page, extend it when the term is
+           nearly out, or, on the free plan, see what the cheapest one costs.
+           This slot used to hold two unrelated objects, a status row for a
+           subscriber and a whole ad card for everyone else, so the page
+           changed shape according to what the reader had paid. */}
+        <SectionLabel>Nyrhnamam</SectionLabel>
+        <PlanWidget
+          onOpen={() => setView('payments')}
+          onUpgrade={() => setView('upgrade')}
         />
-        )}
 
         {/* Directly under the subscription, because it is the same subject:
             this is where that payment comes from. Two pots, side by side, in

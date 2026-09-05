@@ -162,6 +162,10 @@ export const tierOf = (id: TierId) => TIERS.find((t) => t.id === id);
    charge) is a price, not a plan. The word still appears in copy where it
    means the price. */
 export const FREE_NAME = 'Adaty';
+
+/** What the free plan actually includes — the counterpart of a tier's `blurb`,
+    so the plan widget can describe all three plans the same way. */
+export const FREE_BLURB = 'Gündelik, bildirişler we söhbet — mahabat bilen';
 export const tierName = (id: TierId) => tierOf(id)?.name ?? FREE_NAME;
 
 /** A year at the monthly rate — what the yearly price is discounted *from*. */
