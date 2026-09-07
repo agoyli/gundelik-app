@@ -8,13 +8,12 @@ import {
 } from '../lib/date';
 import { toggleBookmark, useIsBookmarked } from '../state/bookmarks';
 import type { Bookmark } from '../state/bookmarks';
-import type { ViewId } from '../state/prefs';
 import { PREMIUM_GRADIENT, tokens } from '../theme';
 import type { DayInfo, Lesson, TabId } from '../types';
 import { useSwipeLock } from './SwipeLock';
 import {
   BackIcon, BookmarkFilledIcon, BookmarkIcon, CalendarIcon, CheckIcon, ChevronIcon, CoinIcon,
-  GridIcon, ListIcon, LockIcon, MedalIcon, NavChevronIcon, QuestionOutlineIcon,
+  LockIcon, MedalIcon, NavChevronIcon, QuestionOutlineIcon,
   TabBookIcon, TabChartIcon, TabGridIcon, TabPersonIcon, TrendUpIcon,
 } from './Icons';
 
@@ -859,36 +858,6 @@ export function HeaderIconButton({ label, onClick, pressed, count, children }: {
         }}>{count > 99 ? '99+' : count}</Box>
       )}
     </ButtonBase>
-  );
-}
-
-/*
- * How the list is drawn — a header control, not a setting.
- *
- * It was first built as a two-glyph segmented switch, which is the clearer
- * control in the abstract: both views stay on screen and the lit one says where
- * you are. It does not fit. A 375px capsule header holds a 44px back button, a
- * centred title and about 96px of controls before the title starts being
- * clipped, and a switch (85) beside the "?" (44) is 135. Given the choice
- * between a control that reads perfectly and a page title that reads at all,
- * the title wins.
- *
- * So it is the app's one 44px header button, and it carries the view you would
- * get, not the one you are in — which is why it is never drawn `pressed`: a lit
- * button would claim to be a state, and this is an action. The label says the
- * action in words, and the list redrawing under it is the confirmation.
- */
-export function ViewToggle({ value, onChange }: {
-  value: ViewId; onChange: (v: ViewId) => void;
-}) {
-  const next: ViewId = value === 'list' ? 'grid' : 'list';
-  return (
-    <HeaderIconButton
-      label={next === 'grid' ? 'Kart görnüşine geçir' : 'Sanaw görnüşine geçir'}
-      onClick={() => onChange(next)}
-    >
-      {next === 'grid' ? <GridIcon size={20} /> : <ListIcon size={20} />}
-    </HeaderIconButton>
   );
 }
 

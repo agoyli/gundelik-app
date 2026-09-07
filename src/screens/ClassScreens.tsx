@@ -57,7 +57,7 @@ export function ClassHwRow({ lessons, selfDone, onOpen }: {
     <SurfaceRow
       icon={<IconBadge bg={tokens.blueTint} color={tokens.blueText} size={38}><UsersIcon size={19} /></IconBadge>}
       label="Synpdaşlar"
-      sub={total === 0 ? 'Bu gün tabşyryk ýok' : 'Kim tabşyrdy — we näçinji'}
+      sub={total === 0 ? 'Bu gün tabşyryk ýok' : 'Kim öý iş etdi — we näçinji'}
       end={<RowEnd value={`${done}/${classSize(child)}`} />}
       onClick={onOpen}
     />
@@ -133,7 +133,7 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
 
   return (
     <SheetDrawer open={open} onClose={onClose}>
-      <Typography variant="h2">Kim tabşyrdy</Typography>
+      <Typography variant="h2">Kim öý iş etdi</Typography>
       <Typography variant="caption">
         {tasks.length === 0
           ? 'Bu gün synpa tabşyryk berilmedi'

@@ -218,8 +218,16 @@ export const ONBOARDING: { id: string; art: ArtId; tint: string; ink: string; ti
   },
   {
     id: 'learn', art: 'notfound', tint: tokens.greenTint, ink: tokens.greenText,
-    title: '1–12-nji synplaryň ähli materialy',
+    title: '1–12-nji synp okuw gollanmalary',
     note: 'Sapaklar, testler, öwrediji kartlar we interaktiw gönükmeler — programma boýunça, tema-tema.',
+  },
+  {
+    /* What the app does with the marks once it has them. The three slides
+       before this said what the app *holds*; a parent's own question is what
+       it tells them, and a pupil's is what they get out of it. */
+    id: 'analytics', art: 'maintenance', tint: tokens.purpleTint, ink: tokens.purpleText,
+    title: 'Bilim analitikasy we höweslendiriji gurallar',
+    note: 'Hepdelik ýetişik, çärýek ortaçasy we ýylyň kartasy — bahalardan hasaplanýar. Öý işi we test bolsa bal getirýär: ýyldyzlar, bäsleşikler we balansa öwrülýän ballar.',
   },
   {
     id: 'free', art: 'locked', tint: tokens.orangeTint, ink: tokens.orangeText,

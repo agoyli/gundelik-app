@@ -3,17 +3,19 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   BookmarkIcon, BooksIcon, CardsIcon, CheckIcon, ChevronIcon, GameIcon, GlobeIcon, LockIcon,
-  UsersIcon,
+  SparkleIcon, UsersIcon,
 } from '../components/Icons';
 import { TeaserCard } from '../components/Paywall';
 import {
-  ChipRow, EmptyState, IconBadge, RowChevron, SectionHeading, Segmented, SubPage,
-  SubjectRow, SubjectTile, SurfaceRow, TagPill, ViewToggle,
+  ChipRow, EmptyState, HeaderIconButton, IconBadge, RowChevron, SectionHeading, Segmented, SubPage,
+  SubjectRow, SubjectTile, SurfaceRow, TagPill, VariantSheet,
 } from '../components/Ui';
+import type { Variant } from '../components/Ui';
 import { KIND_LABEL, KIND_ORDER, useBookmarks } from '../state/bookmarks';
 import { useGrade } from '../state/children';
 import type { Bookmark } from '../state/bookmarks';
 import { setPref, tierFor, useCan, usePrefs } from '../state/prefs';
+import type { ViewId } from '../state/prefs';
 import { useAllowance } from '../state/allowance';
 import {
   BOOKS, BOOK_CATS, CONTEST_LEVEL, INTL_OLYMPIADS, OLYMPIADS, OLYMPIAD_STAGE, PRIZE_CONTESTS,
@@ -93,6 +95,26 @@ const bankLine = (slug: string, grade?: number) => {
   return parts.length ? parts.join(' · ') : 'Material taýýarlanýar';
 };
 
+/*
+ * Three readings of the programme.
+ *
+ * Two of them are the same list drawn differently, and the choice between them
+ * used to be a bare grid/list toggle in the header — a control that changed
+ * something without saying what, and which could only ever offer two answers.
+ * The third is the list turned on its side: the twelve years, and what each of
+ * them holds. That is not a layout, it is the other question a reader arrives
+ * with ("what is in 9-njy synp?"), and a toggle had nowhere to put it.
+ *
+ * So all three live behind the app's own `VariantSheet`, which names each one
+ * and says what it is for, and the choice is remembered like the rest of the
+ * reader's preferences.
+ */
+export const SAPAK_READS: Variant<ViewId>[] = [
+  { id: 'list', name: 'Sanaw', note: 'Her ders bir setir — sapak, test we kart sany bilen' },
+  { id: 'grid', name: 'Gözenek', note: 'Reňki boýunça tapmak üçin — iki sütün' },
+  { id: 'grades', name: 'Synplar', note: '1-nji synpdan 12-njä çenli — haýsy ýylda näme bar' },
+];
+
 export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpgrade }: {
   onBack: () => void; toast: Toast;
   onOpenSubject: (id: string, grade?: number) => void;
@@ -130,8 +152,20 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
   const can = useCan('roadmap');
   const canGames = useCan('games');
   const plan = tierFor('roadmap');
-  /* the reader's own way of looking at a subject list, kept between visits */
+  /* the reader's own way of looking at the programme, kept between visits */
   const view = usePrefs().subjectView;
+  const [picker, setPicker] = useState(false);
+
+  /* the programme by year — the third reading, counted from the same source
+     the subject list is: how many subjects that year has, and how many stops
+     they add up to */
+  const grades = useMemo(() => gradeChips
+    .map((c) => chipGrade(c.id))
+    .filter((g): g is number => g !== undefined)
+    .map((g) => {
+      const subs = subjectsForGrade(g);
+      return { g, subjects: subs.length, lessons: subs.reduce((n, x) => n + pathLength(x, g), 0) };
+    }), []);
 
   /* Whether a subject is behind the lock, and what happens when it is tapped —
      one answer for both views, so the row and the card can never disagree about
@@ -145,10 +179,53 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
     <SubPage
       title="Sapaklar"
       onBack={onBack}
-      action={<ViewToggle value={view} onChange={(v) => setPref('subjectView', v)} />}
+      action={(
+        <HeaderIconButton label="Sahypanyň görnüşleri" onClick={() => setPicker(true)}>
+          <SparkleIcon size={20} />
+        </HeaderIconButton>
+      )}
       help="Her dersiň temalary yzygiderli sapaklar görnüşinde — 1-nji synpdan 12-nji synpa çenli. Sapaklary geçip, indiki synpa açylýarsyň. Her dersiň aşagynda oýun görnüşinde gaýtalama bar."
     >
 
+      <VariantSheet
+        open={picker}
+        title="Sapaklar sahypasynyň görnüşleri"
+        lede="Bir programma — üç dürli okalyşy. Dersler we sapaklar ählisinde birmeňzeş."
+        variants={SAPAK_READS}
+        current={view}
+        onClose={() => setPicker(false)}
+        onPick={(v) => setPref('subjectView', v)}
+      />
+
+      {/* The programme by year. Choosing one is choosing the grade filter, so
+          it hands the reader straight back to the subject list they were
+          heading for rather than to a page of its own. */}
+      {view === 'grades' ? (
+        <>
+          <SectionHeading title="Synplar" />
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
+            {grades.map((row) => (
+              <SurfaceRow
+                key={row.g}
+                icon={(
+                  <IconBadge bg={tokens.blueTint} color={tokens.blueText} size={44}>
+                    <Typography sx={{ fontSize: 16, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                      {row.g}
+                    </Typography>
+                  </IconBadge>
+                )}
+                label={`${ordinal(row.g)} synp`}
+                labelSx={{ fontSize: 15, fontWeight: 600 }}
+                labelEnd={row.g === myGrade ? <TagPill label="Meniň synpym" /> : undefined}
+                sub={`${row.subjects} ders · ${row.lessons} sapak`}
+                end={<RowChevron />}
+                onClick={() => { setGrade(row.g); setPref('subjectView', 'list'); }}
+              />
+            ))}
+          </Box>
+        </>
+      ) : (
+      <>
       {/* Grade filter — the same chip row the lesson path filters with */}
       <Box sx={{ pt: '4px', pb: '2px' }}>
         <ChipRow
@@ -262,6 +339,8 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
             ))}
           </Box>
         </>
+      )}
+      </>
       )}
     </SubPage>
   );

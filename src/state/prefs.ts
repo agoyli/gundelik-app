@@ -29,8 +29,14 @@ export type LangId = 'tk' | 'ru' | 'en';
  */
 export type TierId = 'free' | 'gorelde' | 'zehin';
 
-/** List of rows, or a two-column grid of cards. */
-export type ViewId = 'list' | 'grid';
+/*
+ * How the subject list is read. Two of these are layouts of the same list —
+ * rows for deciding, cards for finding — and the third turns it on its side:
+ * the programme by year rather than by subject, which is how a reader looking
+ * ahead or back thinks about it. They live behind one control (`VariantSheet`)
+ * because they answer one question: "show me this page another way".
+ */
+export type ViewId = 'list' | 'grid' | 'grades';
 
 export type Prefs = {
   beta: boolean;

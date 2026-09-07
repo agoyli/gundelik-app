@@ -8,8 +8,9 @@ import {
 import {
   Avatar, BalancePots, DeltaLine, GridTile, HeaderIconButton, HeroStat, IconBadge, PeriodNav,
   PillHeader, MeterTile, RankRow, RowChevron, RowEnd, SectionHeading, SectionLabel, Segmented,
-  SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill,
+  SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill, VariantSheet,
 } from '../components/Ui';
+import type { Variant } from '../components/Ui';
 import { PlanWidget, TeaserCard } from '../components/Paywall';
 import { OLYMPIADS, PRIZE_CONTESTS, RATING } from '../data/guides';
 import { bankTotal, playCount, testSubjects } from '../data/library';
@@ -515,6 +516,47 @@ const GUIDE_TILES: { id: SectionId; label: string; sub: string; icon: React.Reac
   { id: 'kitaphana', label: 'Kitaphana', sub: '4 kitap', icon: <BooksIcon size={26} /> },
 ];
 
+/*
+ * Three readings of the same six sections.
+ *
+ * The grid is deliberately six tiles in three pairs — learn, prove, the rest —
+ * but a grid can only *imply* that grouping, and a reader who is looking for
+ * "somewhere to practise" has to know the pairing to use it. So the pairing is
+ * a reading of its own, and the counts the tiles hold in one line each are a
+ * third. Same six destinations, same order within them; nothing is duplicated
+ * and nothing is hidden in one view that exists in another.
+ */
+/* One section as a row — the shape both non-grid readings are built from, so
+   a section can never say one thing in a list and another in a group. */
+function GuideRow({ tile, onOpen }: {
+  tile: { id: SectionId; label: string; sub: string; icon: React.ReactNode }; onOpen: () => void;
+}) {
+  return (
+    <SurfaceRow
+      icon={<IconBadge size={44}>{tile.icon}</IconBadge>}
+      label={tile.label}
+      sub={tile.sub}
+      end={<RowChevron />}
+      onClick={onOpen}
+    />
+  );
+}
+
+export type GuideRead = 'grid' | 'list' | 'groups';
+
+export const GUIDE_READS: Variant<GuideRead>[] = [
+  { id: 'grid', name: 'Gözenek', note: 'Alty bölüm, üç jübüt — reňki we ýeri boýunça' },
+  { id: 'list', name: 'Sanaw', note: 'Setir-setir, näçe zat barlygy bilen' },
+  { id: 'groups', name: 'Maksat boýunça', note: 'Öwrenmek, barlamak we galanlary' },
+];
+
+/* what each pair is for — the grid's own grouping, said out loud */
+const GUIDE_GROUPS: { label: string; ids: SectionId[] }[] = [
+  { label: 'Öwrenmek', ids: ['sapaklar', 'kartlar'] },
+  { label: 'Barlamak', ids: ['testler', 'basleshikler'] },
+  { label: 'Galanlary', ids: ['ai', 'kitaphana'] },
+];
+
 function TestlerSubScreen({ onBack, toast, onOpenSubject, onUpgrade }: {
   onBack: () => void; toast: (m: string) => void;
   onOpenSubject: (s: TestSubject) => void; onUpgrade: () => void;
@@ -670,6 +712,9 @@ type GuideView = 'grid' | SectionId | 'roadmap' | 'upgrade' | 'bellikler' | 'mah
 
 export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   const [view, setView] = useState<GuideView>('grid');
+  /* how the six sections are drawn — the reader's choice, not the page's */
+  const [read, setRead] = useState<GuideRead>('grid');
+  const [picker, setPicker] = useState(false);
   /* which subject's path is open — every subject has one now, so the roadmap is
      no longer the Algebra page with a general name */
   const [subject, setSubject] = useState<CurriculumSubject | null>(null);
@@ -738,30 +783,72 @@ export function GollanmalarScreen({ toast }: { toast: (msg: string) => void }) {
   return (
     <>
       {/* Saved items get the header, not a seventh tile: they are not a seventh
-          section but a view across the six, and the grid reads as three pairs. */}
+          section but a view across the six, and the grid reads as three pairs.
+          Beside it, the ✦ that every page with more than one honest layout
+          carries — the same control as Ýyldyzlar's. */}
       <TopBar
         title="Gollanmalar"
         action={(
-          <HeaderIconButton label="Bellikledim" onClick={() => setView('bellikler')}>
-            <BookmarkIcon size={21} />
-          </HeaderIconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <HeaderIconButton label="Sahypanyň görnüşleri" onClick={() => setPicker(true)}>
+              <SparkleIcon size={20} />
+            </HeaderIconButton>
+            <HeaderIconButton label="Bellikledim" onClick={() => setView('bellikler')}>
+              <BookmarkIcon size={21} />
+            </HeaderIconButton>
+          </Box>
         )}
       />
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', px: tokens.gutter, pt: '6px' }}>
-        {GUIDE_TILES.map((t, i) => (
-          <Box
-            key={t.id}
-            sx={{
-              display: 'grid',
-              /* an odd number of tiles would leave the last one half-width beside
-                 a hole; it takes the whole row instead */
-              gridColumn: i === GUIDE_TILES.length - 1 && GUIDE_TILES.length % 2 ? 'span 2' : undefined,
-            }}
-          >
-            <GridTile icon={t.icon} label={t.label} sub={t.sub} onClick={() => setView(t.id)} />
-          </Box>
-        ))}
-      </Box>
+
+      <VariantSheet
+        open={picker}
+        title="Gollanmalar sahypasynyň görnüşleri"
+        lede="Alty bölüm — üç dürli okalyşy. Bölümler ählisinde birmeňzeş."
+        variants={GUIDE_READS}
+        current={read}
+        onClose={() => setPicker(false)}
+        onPick={setRead}
+      />
+
+      {read === 'grid' && (
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', px: tokens.gutter, pt: '6px' }}>
+          {GUIDE_TILES.map((t, i) => (
+            <Box
+              key={t.id}
+              sx={{
+                display: 'grid',
+                /* an odd number of tiles would leave the last one half-width beside
+                   a hole; it takes the whole row instead */
+                gridColumn: i === GUIDE_TILES.length - 1 && GUIDE_TILES.length % 2 ? 'span 2' : undefined,
+              }}
+            >
+              <GridTile icon={t.icon} label={t.label} sub={t.sub} onClick={() => setView(t.id)} />
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {read === 'list' && (
+        <Box sx={{ px: tokens.gutter, pt: '6px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
+          {GUIDE_TILES.map((t) => <GuideRow key={t.id} tile={t} onOpen={() => setView(t.id)} />)}
+        </Box>
+      )}
+
+      {read === 'groups' && (
+        <Box sx={{ px: tokens.gutter }}>
+          {GUIDE_GROUPS.map((g) => (
+            <Box key={g.label}>
+              <SectionLabel>{g.label}</SectionLabel>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '10px' }}>
+                {g.ids.map((id) => {
+                  const t = GUIDE_TILES.find((x) => x.id === id);
+                  return t ? <GuideRow key={id} tile={t} onOpen={() => setView(id)} /> : null;
+                })}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      )}
       <Box sx={{ px: tokens.gutter, pt: '14px' }}>
         <BannerSlot
           placement="sections" onUpgrade={upgrade}
