@@ -57,7 +57,7 @@ export function ClassHwRow({ lessons, selfDone, onOpen }: {
     <SurfaceRow
       icon={<IconBadge bg={tokens.blueTint} color={tokens.blueText} size={38}><UsersIcon size={19} /></IconBadge>}
       label="Synpdaşlar"
-      sub={total === 0 ? 'Bu gün tabşyryk ýok' : 'Kim öý iş etdi — we näçinji'}
+      sub={total === 0 ? 'Bu gün öý işi ýok' : 'Kim öý iş etdi — we näçinji'}
       end={<RowEnd value={`${done}/${classSize(child)}`} />}
       onClick={onOpen}
     />
@@ -100,7 +100,7 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
       key="self"
       rank={place}
       name={me.short}
-      sub={`${fmtHandIn(selfHandIn(child, ids))} tabşyrdyňyz`}
+      sub={`${fmtHandIn(selfHandIn(child, ids))} etdiňiz`}
       end={<DoneBadge size={22} />}
       self
     />
@@ -113,7 +113,7 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
           key={d.mate.id}
           rank={i + 1}
           name={d.mate.name}
-          sub={`${fmtHandIn(d.at)} tabşyrdy`}
+          sub={`${fmtHandIn(d.at)} etdi`}
           end={<DoneBadge size={22} />}
         />
       ))}
@@ -125,7 +125,7 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
            leaderboard past the podium, and naming the fourteenth pupil to
            hand in tells the reader nothing they can use. */
         <Typography sx={{ fontSize: 13, color: tokens.ink3, px: '6px', pt: '2px' }}>
-          {`we ýene ${rest} okuwçy tabşyrdy`}
+          {`we ýene ${rest} okuwçy etdi`}
         </Typography>
       )}
     </Box>
@@ -136,16 +136,16 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
       <Typography variant="h2">Kim öý iş etdi</Typography>
       <Typography variant="caption">
         {tasks.length === 0
-          ? 'Bu gün synpa tabşyryk berilmedi'
+          ? 'Bu gün synpa öý işi berilmedi'
           : chosen === ALL
-            ? `${size} okuwçydan ${done}-si ähli tabşyrygy tabşyrdy`
-            : `${size} okuwçydan ${done}-si tabşyrdy`}
+            ? `${size} okuwçydan ${done}-si ähli öý işini etdi`
+            : `${size} okuwçydan ${done}-si etdi`}
       </Typography>
 
       {tasks.length > 1 && (
         <Box sx={{ mt: '12px' }}>
           <ChipRow
-            label="Tabşyryk"
+            label="Öý işi"
             value={chosen}
             onChange={setPick}
             chips={[{ id: ALL, label: 'Ählisi' }, ...tasks.map((l) => ({ id: l.id, label: l.subject }))]}
@@ -168,12 +168,12 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
           >{mineDone ? <TrophyIcon size={19} /> : <HwIcon size={19} />}</IconBadge>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
-              {mineDone ? `Siz ${place}-nji bolup tabşyrdyňyz` : 'Siz entek tabşyrmadyňyz'}
+              {mineDone ? `Siz ${place}-nji bolup etdiňiz` : 'Siz entek etmediňiz'}
             </Typography>
             <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '1px' }} noWrap>
               {mineDone
                 ? `${done} okuwçydan ${place}-nji · ${fmtHandIn(selfHandIn(child, ids))}`
-                : `Synpdan ${doers.length} okuwçy eýýäm tabşyrdy`}
+                : `Synpdan ${doers.length} okuwçy eýýäm etdi`}
             </Typography>
           </Box>
         </Box>
@@ -186,8 +186,8 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
             ? (
               <EmptyState
                 icon={<UsersIcon size={26} />}
-                title="Entek hiç kim tabşyrmady"
-                note="Bu tabşyrygy synpdan ilkinji bolup tabşyryp bilersiň."
+                title="Entek hiç kim etmedi"
+                note="Bu öý işini synpdan ilkinji bolup edip bilersiň."
               />
             )
             : can
@@ -195,7 +195,7 @@ export function ClassHwSheet({ open, onClose, lessons, focus, onUpgrade }: {
               : (
                 <TeaserCard
                   title="Ilkinji üçlügiň atlary"
-                  note={`Kimiň birinji tabşyrandygyny at-at görmek üçin ${tierFor('classmates')?.name} gerek. Sany we öz oruny hemişe açyk.`}
+                  note={`Kimiň birinji edendigini at-at görmek üçin ${tierFor('classmates')?.name} gerek. Sany we öz oruny hemişe açyk.`}
                   feature="classmates"
                   icon={<UsersIcon size={22} />}
                   preview={board}

@@ -11,6 +11,7 @@ import type { Bookmark } from '../state/bookmarks';
 import { PREMIUM_GRADIENT, tokens } from '../theme';
 import type { DayInfo, Lesson, TabId } from '../types';
 import { useSwipeLock } from './SwipeLock';
+import { useShellTab } from '../state/shell';
 import {
   BackIcon, BookmarkFilledIcon, BookmarkIcon, CalendarIcon, CheckIcon, ChevronIcon, CoinIcon,
   LockIcon, MedalIcon, NavChevronIcon, QuestionOutlineIcon,
@@ -411,7 +412,9 @@ export function LessonCard({ lesson, marks, onOpen, onToggleHw }: {
             aria-label={`Öý işi: ${lesson.hw}`}
             sx={{
               display: 'inline-flex', alignItems: 'center', gap: '7px',
-              px: '9px', minHeight: 30, borderRadius: `${tokens.rPill}px`,
+              /* 32px, the app's pill spec: this is the most-tapped control in
+                 the app and it was the one drawn two pixels under it */
+              px: '9px', minHeight: 32, borderRadius: `${tokens.rPill}px`,
               maxWidth: '100%', textAlign: 'left',
               bgcolor: done ? tokens.greenTint : tokens.orangeTint,
               color: done ? tokens.greenText : tokens.orangeText,
@@ -723,6 +726,17 @@ export function TabBar({ value, onChange }: { value: TabId; onChange: (t: TabId)
 export function SheetDrawer({ open, onClose, children }: {
   open: boolean; onClose: () => void; children: ReactNode;
 }) {
+  /* A sheet belongs to the tab it was opened from. All four tabs stay mounted
+     on the shell's track, and a drawer is portalled to `body`, so a homework
+     sheet opened in the diary used to sit over Gollanmalar and Profil until it
+     was dismissed — on top of a page that had never opened it. */
+  const tab = useShellTab();
+  const openedOn = useRef(tab);
+  useEffect(() => {
+    if (!open) { openedOn.current = tab; return; }
+    if (tab !== openedOn.current) onClose();
+  }, [tab, open, onClose]);
+
   return (
     <SwipeableDrawer
       anchor="bottom"

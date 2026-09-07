@@ -1,9 +1,10 @@
 import { Box, Button, ButtonBase, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { CheckIcon, LockIcon, SparkleIcon, TrendUpIcon, UsersIcon } from './Icons';
+import { CheckIcon, LockIcon, SparkleIcon } from './Icons';
 import { IconBadge, RowChevron, SheetDrawer } from './Ui';
 import {
-  ENTRY, FREE_BLURB, PLAN, PROOF, planDaysLeft, planEndingSoon, tierFor, tierName, tierOf, usePrefs,
+  ENTRY, FREE_BLURB, PLAN, PROOF, planDaysLeft, planEndingSoon, tierFor, tierName, tierOf,
+  usePrefs,
 } from '../state/prefs';
 import {
   childDaysLeft, childEndingSoon, childLeftLabel, childLeftShort, useStudent,
@@ -13,17 +14,23 @@ import type { FeatureId } from '../state/prefs';
 import { tokens } from '../theme';
 
 /*
- * The paywall vocabulary. Every gate in the app is built from these four
- * shapes so a locked thing always looks locked the same way:
+ * The paywall vocabulary. Every gate in the app is built from these shapes so
+ * a locked thing always looks locked the same way:
  *
  *   PremiumPill   — the mark that says "this is a Premium thing"
+ *   PlanWidget    — the plan the account is on, and the way up from it
  *   LockedPreview — real content, obscured: you see what you are missing
  *   TeaserCard    — the locked thing plus one honest sentence and one CTA
- *   AdCard        — the only ad surface; it sells Premium, nothing else
  *
  * Rules: a teaser always shows something real (never an empty grey box), it
  * never blocks a path the free tier is entitled to, and it carries exactly one
  * primary action. Free limits state what remains, not just what is forbidden.
+ *
+ * There is no house ad any more. `AdCard` was the app's own full-width
+ * advertisement for itself, and its last home was the slot `PlanWidget` now
+ * holds — a page that names the reader's plan and what the next one costs is
+ * already the argument, and a second one under it would be the nagging the
+ * free tier was redesigned to stop.
  */
 
 /* ---------------- the mark ---------------- */
@@ -82,7 +89,13 @@ export function PlanBadge({ child, show = 'status', tone = 'light' }: {
         : childEndingSoon(c) ? { bg: tokens.orangeTint, ink: tokens.orangeText }
           : { bg: tokens.greenTint, ink: tokens.greenText };
 
-  const head = show === 'plan' ? tierName(c.tier) : (over ? 'Möhleti gutardy' : PLAN.status);
+  /* A free plan has no subscription, so it has no *status*: a green "Işjeň"
+     on Adaty read as a running subscription that would one day stop. It says
+     what it is instead — the price — which is also the only word "Mugt" is
+     allowed to mean anywhere in the app. */
+  const head = show === 'plan'
+    ? tierName(c.tier)
+    : free ? 'Mugt' : (over ? 'Möhleti gutardy' : PLAN.status);
 
   return (
     <Box component="span" sx={{
@@ -232,91 +245,6 @@ export function TeaserCard({ title, note, feature, cta, icon, preview, onUpgrade
       </Box>
     </Box>
   );
-}
-
-/* ---------------- the ad ----------------
-   Free users see promotion in exactly one shape, and it only ever promotes
-   Premium — the social proof is what makes it an argument rather than a nag. */
-
-const PROOF_LINES = [
-  { icon: <UsersIcon size={16} />, text: `${PROOF.teachers} mugallym her gün ulanýar` },
-  { icon: <TrendUpIcon size={16} />, text: `${PROOF.students} okuwçy ýetişigini ýokarlandyrdy` },
-  { icon: <CheckIcon size={16} />, text: `${PROOF.schools} mekdep Premium bilen işleýär` },
-];
-
-export function AdCard({ onUpgrade, variant = 'full' }: {
-  onUpgrade: () => void; variant?: 'full' | 'slim';
-}) {
-  if (variant === 'slim') {
-    return (
-      <ButtonBase
-        onClick={onUpgrade}
-        aria-label="Premium mümkinçilikleri"
-        sx={{
-          display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left',
-          background: `linear-gradient(135deg, ${tokens.blue}, ${tokens.bluePress})`, color: '#fff',
-          borderRadius: `${tokens.rCard}px`, p: '14px 16px', boxShadow: tokens.shadowFab,
-        }}
-      >
-        <Box aria-hidden sx={{
-          width: 40, height: 40, borderRadius: `${tokens.rTile}px`, flex: 'none',
-          bgcolor: 'rgba(255,255,255,.2)', display: 'grid', placeItems: 'center',
-        }}><SparkleIcon size={22} /></Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Premium bilen has köp</Typography>
-          <Typography sx={{ fontSize: 12.5, opacity: .9, mt: '1px' }} noWrap>
-            {PROOF.teachers} mugallym her gün ulanýar
-          </Typography>
-        </Box>
-        <Box aria-hidden sx={{
-          flex: 'none', px: '12px', height: 30, borderRadius: `${tokens.rPill}px`,
-          bgcolor: '#fff', color: tokens.blueText, fontSize: 13, fontWeight: 700,
-          display: 'grid', placeItems: 'center',
-        }}>Aç</Box>
-      </ButtonBase>
-    );
-  }
-
-  return (
-    <Box sx={{
-      borderRadius: `${tokens.rCard}px`, overflow: 'hidden',
-      background: `linear-gradient(155deg, ${tokens.blue}, ${tokens.bluePress})`,
-      color: '#fff', p: `18px ${tokens.padCard}`, boxShadow: tokens.shadowFab,
-    }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <PremiumPill />
-        <Typography sx={{ fontSize: 12, opacity: .85 }}>mahabat</Typography>
-      </Box>
-      <Typography sx={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', mt: '10px' }}>
-        Ähli testler, kartlar we Akylly mugallym
-      </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '7px', mt: '12px' }}>
-        {PROOF_LINES.map((l) => (
-          <Box key={l.text} sx={{ display: 'flex', alignItems: 'center', gap: '9px', fontSize: 13.5 }}>
-            <Box aria-hidden sx={{ display: 'flex', opacity: .9 }}>{l.icon}</Box>
-            <Typography sx={{ fontSize: 13.5, opacity: .95 }}>{l.text}</Typography>
-          </Box>
-        ))}
-      </Box>
-      <Button
-        fullWidth disableElevation onClick={onUpgrade}
-        sx={{
-          mt: '16px', bgcolor: '#fff', color: tokens.blueText,
-          '&:hover': { bgcolor: tokens.blueTint }, '&:active': { bgcolor: tokens.blueTint },
-        }}
-      >
-        Aýda {ENTRY.monthly} TMT-den — synap gör
-      </Button>
-    </Box>
-  );
-}
-
-/* Ads and teasers only exist for the free tier; premium users see the content
-   itself. Wrapping the check here keeps `!premium &&` out of every screen. */
-export function AdSlot({ onUpgrade, variant }: { onUpgrade: () => void; variant?: 'full' | 'slim' }) {
-  const { premium } = usePrefs();
-  if (premium) return null;
-  return <AdCard onUpgrade={onUpgrade} variant={variant} />;
 }
 
 /* ---------------- the "this is paid" sheet ----------------

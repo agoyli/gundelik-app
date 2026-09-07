@@ -13,6 +13,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { PhoneFrame } from './components/PhoneFrame';
 import { PointsFx } from './components/PointsFx';
 import { SwipeLockProvider, useSwipeLocked } from './components/SwipeLock';
+import { setShellTab } from './state/shell';
 import { TabBar } from './components/Ui';
 import { GundelikScreen } from './screens/GundelikScreen';
 import { AnalitikaScreen, GollanmalarScreen, ProfilScreen } from './screens/OtherScreens';
@@ -23,6 +24,9 @@ import type { TabId } from './types';
 
 function Shell() {
   const [tab, setTab] = useState<TabId>('gundelik');
+  /* the shell tells the rest of the app which tab is showing, so a sheet
+     opened in one of them cannot outlive a swipe to another */
+  useEffect(() => { setShellTab(tab); }, [tab]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toast = useCallback((msg: string) => setToastMsg(msg), []);
 
