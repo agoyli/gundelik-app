@@ -128,13 +128,13 @@ export function AiChatScreen({ onBack, onUpgrade }: {
             </Typography>
             <Typography sx={{ fontSize: 14, color: tokens.ink2, mt: '6px', lineHeight: 1.5 }}>
               Islendik sapak boýunça sorag ber — jogaby bermän, ädimme-ädim alyp barýar.
-              Ähli söhbetleriň ýatda saklanýar.
+              Ähli çatlaryň ýatda saklanýar.
             </Typography>
           </Box>
           <Box sx={{ pt: '14px' }}>
             <TeaserCard
               title="Akylly mugallym ýapyk"
-              note={`Çäksiz soraglar, sapak boýunça düşündirişler we söhbet taryhy — ${plan?.name} bilen açylýar.`}
+              note={`Çäksiz soraglar, sapak boýunça düşündirişler we çat taryhy — ${plan?.name} bilen açylýar.`}
               feature="ai"
               onUpgrade={onUpgrade}
             />
@@ -156,7 +156,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
         title="Akylly mugallym"
         onBack={onBack}
         action={(
-          <HeaderIconButton label="Söhbetleriň taryhy" onClick={() => setHistory(true)}>
+          <HeaderIconButton label="Çat taryhy" onClick={() => setHistory(true)}>
             <HistoryIcon size={21} />
           </HeaderIconButton>
         )}
@@ -170,7 +170,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
         <Bubble m={{
           role: 'ai',
           at: chat?.at ?? now(),
-          text: 'Salam! 👋 Islendik ders boýunça sorag berip bilersiň. Ýokardaky taryh düwmesinden öňki söhbetleriňe dolanyp bolýar.',
+          text: 'Salam! 👋 Islendik ders boýunça sorag berip bilersiň. Ýokardaky taryh düwmesinden öňki çatlaryňa dolanyp bolýar.',
         }} />
 
         {msgs.length === 0 && !thinking && (
@@ -235,7 +235,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
       {/* History — and the one place a new conversation is started, because
           "back to an old one" and "start a new one" are the same decision. */}
       <SheetDrawer open={history} onClose={() => setHistory(false)}>
-        <Typography variant="h2">Söhbetleriň taryhy</Typography>
+        <Typography variant="h2">Çat taryhy</Typography>
 
         <Box sx={{ pt: '14px' }}>
           <ButtonBase
@@ -248,14 +248,14 @@ export function AiChatScreen({ onBack, onUpgrade }: {
               '&:active': { bgcolor: tokens.blueSoft },
             }}
           >
-            <SparkleIcon size={19} />Täze söhbet
+            <SparkleIcon size={19} />Täze çat
           </ButtonBase>
         </Box>
 
         {chats.length === 0 ? (
           <EmptyState
             icon={<HistoryIcon size={26} />}
-            title="Söhbet ýok"
+            title="Çat ýok"
             note="Ilkinji soragyňdan soň bu ýerde görüner."
           />
         ) : (
@@ -284,7 +284,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
                         fontSize: 15, fontWeight: 600,
                         color: c.title ? tokens.ink : tokens.ink3,
                       }}>
-                        {c.title ?? 'Täze söhbet'}
+                        {c.title ?? 'Täze çat'}
                       </Typography>
                       <Typography sx={{ fontSize: 12.5, color: tokens.inkMuted, mt: '2px' }}>
                         {fmtWhenShort(c.at)} · {c.msgs.filter((m) => m.role === 'user').length} sorag
@@ -297,7 +297,7 @@ export function AiChatScreen({ onBack, onUpgrade }: {
                       /* never leave the page pointed at nothing */
                       if (c.id === chat?.id) setId(currentAiChatId());
                     }}
-                    aria-label={`${c.title ?? 'Täze söhbet'} — poz`}
+                    aria-label={`${c.title ?? 'Täze çat'} — poz`}
                     sx={{
                       width: 44, height: 44, mr: '4px', flex: 'none', borderRadius: '50%',
                       color: tokens.inkMuted, display: 'grid', placeItems: 'center',

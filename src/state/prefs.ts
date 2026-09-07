@@ -171,7 +171,7 @@ export const FREE_NAME = 'Adaty';
 
 /** What the free plan actually includes — the counterpart of a tier's `blurb`,
     so the plan widget can describe all three plans the same way. */
-export const FREE_BLURB = 'Gündelik, bildirişler we söhbet — mahabat bilen';
+export const FREE_BLURB = 'Gündelik, bildirişler we çat — mahabat bilen';
 export const tierName = (id: TierId) => tierOf(id)?.name ?? FREE_NAME;
 
 /** A year at the monthly rate — what the yearly price is discounted *from*. */
@@ -200,9 +200,9 @@ export type FeatureId =
   | 'notes' | 'analytics' | 'roadmap' | 'cards' | 'games' | 'ai';
 
 export const FEATURES: { id: FeatureId; label: string; tier: TierId }[] = [
-  { id: 'diary', label: 'Gündelik, bahalar, rasporýaniýe', tier: 'free' },
+  { id: 'diary', label: 'Gündelik, bahalar, ders rejeleri', tier: 'free' },
   { id: 'notices', label: 'Mekdep bildirişleri', tier: 'free' },
-  { id: 'chat', label: 'Mugallymlar bilen söhbet', tier: 'free' },
+  { id: 'chat', label: 'Mugallymlar bilen çat', tier: 'free' },
   { id: 'sms', label: 'Wakalar barada SMS', tier: 'gorelde' },
   { id: 'badges', label: 'Ýyldyzlaryň doly seljermesi', tier: 'gorelde' },
   { id: 'tests', label: 'Test bankasy — ähli testler', tier: 'gorelde' },

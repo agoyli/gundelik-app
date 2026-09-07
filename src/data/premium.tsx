@@ -100,7 +100,7 @@ export const PREMIUM_ADS: PremiumAd[] = [
       { title: 'Gije-gündiz elýeterli', note: 'Sagat üçde çykan sowal ertire çenli garaşmaly däl.' },
       { title: 'Ädimme-ädim düşündiriş', note: 'Taýýar jogap däl — meseläniň nähili çözülýändigi.' },
       { title: 'Dersiň dilinde', note: 'Türkmen dilinde, programmanyň öz temalaryna görä.' },
-      { title: 'Söhbetler saklanýar', note: 'Öň soralan sowala islendik wagt dolanyp bolýar.' },
+      { title: 'Çatlar saklanýar', note: 'Öň soralan sowala islendik wagt dolanyp bolýar.' },
     ],
   },
   {

@@ -11,7 +11,7 @@ import { tokens } from '../theme';
  *     bell ring for things the reader has already seen. This stream is only
  *     what the mekdep müdirligi / okuw bölümi publishes to everyone.
  *
- *   Söhbetler — real conversations: teachers, the class, the parents' group,
+ *   Çat — real conversations: teachers, the class, the parents' group,
  *     support. Messages can carry a file.
  *
  *   Makalalar — editorial content. In production these come from the admin
@@ -53,15 +53,15 @@ export type Notif = {
 export const NOTIFS: Notif[] = [
   {
     id: 'n1', kind: 'duýduryş',
-    title: 'Rasporýaniýe üýtgedi',
-    body: 'Anna güni 3-nji sapak Fizika bilen çalşyryldy. Täze rasporýaniýe gündelikde görünýär we şu günden başlap güýje girýär.\n\nSebäbi: Himiýa mugallymy H. Amanowa okuw maslahatyna gidýär. Onuň sapaklary indiki hepdäniň duşenbe gününden öňki tertipde dowam eder.\n\nÇalşylan sapaklar boýunça öý işi öňki tabşyryga görä galýar. Sorag ýüze çyksa, synp ýolbaşçysyna ýüz tutuň.',
+    title: 'Ders rejeleri üýtgedi',
+    body: 'Anna güni 3-nji sapak Fizika bilen çalşyryldy. Täze ders rejeleri gündelikde görünýär we şu günden başlap güýje girýär.\n\nSebäbi: Himiýa mugallymy H. Amanowa okuw maslahatyna gidýär. Onuň sapaklary indiki hepdäniň duşenbe gününden öňki tertipde dowam eder.\n\nÇalşylan sapaklar boýunça öý işi öňki tabşyryga görä galýar. Sorag ýüze çyksa, synp ýolbaşçysyna ýüz tutuň.',
     from: 'Okuw bölümi', at: '2026-02-12T08:10', unread: true,
-    files: [{ name: 'Rasporýaniýe-13.02.pdf', size: '180 KB', kind: 'pdf' }],
+    files: [{ name: 'Ders rejeleri-13.02.pdf', size: '180 KB', kind: 'pdf' }],
   },
   {
     id: 'n2', kind: 'çäre',
     title: 'Ene-atalar ýygnagy — 19.02.2026',
-    body: 'Sagat 18:00-da 8 «B» synpynyň ene-atalar ýygnagy geçiriler. Ýer: 2-nji gat, 24-nji otag.\n\nGün tertibi: III çärýegiň netijeleri, jemleýji işleriň möhletleri, tomusky okuw meýilnamasy we synp gaznasy barada hasabat.\n\nÝygnaga gatnaşyp bilmeýän bolsaňyz, synp ýolbaşçysyna öňünden habar beriň — ýygnagyň gysgaça teswiri söhbetde paýlaşylar.',
+    body: 'Sagat 18:00-da 8 «B» synpynyň ene-atalar ýygnagy geçiriler. Ýer: 2-nji gat, 24-nji otag.\n\nGün tertibi: III çärýegiň netijeleri, jemleýji işleriň möhletleri, tomusky okuw meýilnamasy we synp gaznasy barada hasabat.\n\nÝygnaga gatnaşyp bilmeýän bolsaňyz, synp ýolbaşçysyna öňünden habar beriň — ýygnagyň gysgaça teswiri çatda paýlaşylar.',
     from: 'Mekdep müdirligi', at: '2026-02-12T07:40', unread: true,
     files: [
       { name: 'Ýygnagyň-meýilnamasy.pdf', size: '240 KB', kind: 'pdf' },
@@ -220,7 +220,7 @@ export const ARTICLES: Article[] = [
     body: [
       'Çärýegiň soňky iki hepdesi — bahany düzetmek üçin iň amatly wagt. Mugallymlar bu döwürde goşmaça jogap bermäge we işleri gaýtadan tabşyrmaga köplenç mümkinçilik berýär.',
       'Ilki bilen «Analitika» bölüminden haýsy dersde ortaça bahaň pesdigine seret. Bir ýa-da iki dersi saýlap, ünsi şolara ber — ähli dersi birbada çekmek işlemeýär.',
-      'Soňra mugallym bilen habarlaş: haýsy iş üçin baha alyp boljakdygyny anykla. «Söhbetler» bölüminde her mugallym bilen göni ýazyşyp bolýar.',
+      'Soňra mugallym bilen habarlaş: haýsy iş üçin baha alyp boljakdygyny anykla. «Çat» bölüminde her mugallym bilen göni ýazyşyp bolýar.',
       'Iň soňunda test we öwrediji kartlar bilen temany berkit. Statistika görkezişi ýaly, hepdede üç gezek 15 minutlyk gaýtalama bir sagatlyk bir gezekleýin taýýarlykdan netijeli.',
     ],
     takeaways: [

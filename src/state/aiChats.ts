@@ -15,7 +15,7 @@ import { TODAY } from '../lib/date';
  * is opened, and a `useState` thread would be lost each time.
  *
  * The title is derived from the first thing the student asked rather than
- * typed by them. Nobody names a conversation, and "Täze söhbet · 3" is not a
+ * typed by them. Nobody names a conversation, and "Täze çat · 3" is not a
  * history — the question *is* the label.
  */
 

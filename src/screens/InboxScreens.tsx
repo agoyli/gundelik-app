@@ -25,7 +25,7 @@ import { tokens } from '../theme';
  * Habarlar — the three streams that arrive from outside the student.
  *
  * Bildiriş is announcements from the school office and nothing else, so the
- * page never repeats a grade or a badge the diary has already shown. Söhbet is
+ * page never repeats a grade or a badge the diary has already shown. Çat is
  * real conversation — teachers, the class, the parents' group — and Makala is
  * whatever the admin CMS has published.
  */
@@ -546,7 +546,7 @@ export function InboxScreen({ onBack, toast, onUpgrade, onAdvertise }: {
           onChange={setTab}
           options={[
             { id: 'notifs', label: unread ? `Bildiriş · ${unread}` : 'Bildiriş' },
-            { id: 'chats', label: chatUnread ? `Söhbet · ${chatUnread}` : 'Söhbet' },
+            { id: 'chats', label: chatUnread ? `Çat · ${chatUnread}` : 'Çat' },
             { id: 'articles', label: 'Makala' },
           ]}
         />

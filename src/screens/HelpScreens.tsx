@@ -204,7 +204,7 @@ const WIDGETS: Record<WidgetId, ReactNode> = {
           width: 22, height: 22, borderRadius: `${tokens.rCell}px`, bgcolor: tokens.redTint,
           color: tokens.redText, display: 'grid', placeItems: 'center',
         }}><DocIcon size={13} /></Box>
-        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Rasporýaniýe.pdf</Typography>
+        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Ders rejeleri.pdf</Typography>
         <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>180 KB</Typography>
       </Box>
       <Box sx={{
@@ -379,10 +379,10 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         title: 'Mugallym bilen ýazyşmak',
         len: '2 min',
         blocks: [
-          { p: 'Habarlar bölüminde her mugallym bilen aýratyn söhbet, şeýle hem synpyň umumy topary bar.' },
-          { w: 'söhbet', caption: 'Söhbet sapaga bagly açylanda, haýsy gün we haýsy ders barada gürrüň gidýändigi öz-özünden düşnükli bolýar.' },
+          { p: 'Habarlar bölüminde her mugallym bilen aýratyn çat, şeýle hem synpyň umumy topary bar.' },
+          { w: 'söhbet', caption: 'Çat sapaga bagly açylanda, haýsy gün we haýsy ders barada gürrüň gidýändigi öz-özünden düşnükli bolýar.' },
           { w: 'faýl', caption: 'Ugradylan faýl ady we göwrümi bilen görünýär — ýüklemezden öň nämedigi belli.' },
-          { note: 'Mugallymyň okan wagty söhbetde bellenýär, şonuň üçin gaýtalap ýazmak hökman däl.' },
+          { note: 'Mugallymyň okan wagty çatda bellenýär, şonuň üçin gaýtalap ýazmak hökman däl.' },
         ],
       },
       {
@@ -429,7 +429,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
       },
       {
         q: 'Baha ýalňyş goýlan bolsa näme etmeli?',
-        a: 'Bahany diňe ony goýan mugallym üýtgedip bilýär. Sapagy açyň, «Mugallyma ýaz» düwmesi arkaly ýazyň — söhbet şol sapaga bagly bolýar, şonuň üçin haýsy gün we haýsy ders barada gürrüň gidýändigi öz-özünden düşnükli.',
+        a: 'Bahany diňe ony goýan mugallym üýtgedip bilýär. Sapagy açyň, «Mugallyma ýaz» düwmesi arkaly ýazyň — çat şol sapaga bagly bolýar, şonuň üçin haýsy gün we haýsy ders barada gürrüň gidýändigi öz-özünden düşnükli.',
       },
       {
         q: 'Iki çagam bar — bir hasapdan görüp bilerinmi?',
@@ -497,7 +497,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         blocks: [
           { p: 'Akylly mugallym sapak boýunça düşündirýär, mysal berýär we ýalňyşy tapmaga kömek edýär.' },
           { w: 'söhbet', caption: 'Näçe anyk sorasaň, şonça peýdaly jogap: «matematika düşünmedim» däl-de, «diskriminant näme üçin gerek?».' },
-          { note: 'Söhbetleriň taryhy saklanýar — ýokarky sagatly nyşan öň soranlaryňy açýar. Sapak sahypasyndan soralan soraglar hem şol ýerde jemlenýär.' },
+          { note: 'Çat taryhy saklanýar — ýokarky sagatly nyşan öň soranlaryňy açýar. Sapak sahypasyndan soralan soraglar hem şol ýerde jemlenýär.' },
         ],
       },
       {
@@ -538,7 +538,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
       },
       {
         q: 'Akylly mugallym öý işimi meniň ýerime edýärmi?',
-        a: 'Ol jogaby däl-de, ýoly görkezýär: düşündirýär, mysal berýär, ýalňyşyňy tapmaga kömek edýär. Söhbetleriň taryhy saklanýar, şonuň üçin öň soran zadyňy soň hem tapyp bolýar.',
+        a: 'Ol jogaby däl-de, ýoly görkezýär: düşündirýär, mysal berýär, ýalňyşyňy tapmaga kömek edýär. Çat taryhy saklanýar, şonuň üçin öň soran zadyňy soň hem tapyp bolýar.',
       },
     ],
   },
@@ -584,7 +584,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         ],
       },
       {
-        title: 'Tema we rasporýaniýe',
+        title: 'Tema we ders rejeleri',
         len: '3 min',
         blocks: [
           { p: 'Her sapagyň temasy gündelikde tekst bolup görünýär — ol ene-ata we okuwça näme geçilendigini aýdýar.' },
@@ -600,10 +600,10 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         title: 'Synp bilen habarlaşmak',
         len: '3 min',
         blocks: [
-          { p: 'Her synpyň umumy topary we her ene-ata bilen şahsy söhbeti bar.' },
+          { p: 'Her synpyň umumy topary we her ene-ata bilen şahsy çaty bar.' },
           { w: 'söhbet', caption: 'Toparda birnäçe habar biri-biriniň yzyndan gelse, at diňe bir gezek ýazylýar.' },
           { w: 'faýl', caption: 'Faýl ady we göwrümi bilen ugradylýar, şonuň üçin ony açmazdan öň nämedigi belli.' },
-          { note: 'Tutuş synpa degişli habar — söhbet däl-de, bildiriş: ony okuw bölümi arkaly çap etmek has dogry.' },
+          { note: 'Tutuş synpa degişli habar — çat däl-de, bildiriş: ony okuw bölümi arkaly çap etmek has dogry.' },
         ],
       },
       {
@@ -612,7 +612,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         blocks: [
           { p: 'Ene-ata her güne aýratyn gol çekýär. Žurnalda haýsy günleriň gol çekilmändigi görünýär.' },
           { w: 'günler', caption: 'Nokatly gün — gol çekilen; nokatsyz gün — heniz okalmadyk.' },
-          { note: 'Ýatlatma ugratmak söhbetden geçýär: bu awtomatiki jerime däl-de, adaty habar.' },
+          { note: 'Ýatlatma ugratmak çatdan geçýär: bu awtomatiki jerime däl-de, adaty habar.' },
         ],
       },
       {
@@ -641,7 +641,7 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
       },
       {
         q: 'Ene-atanyň habaryna näçe wagtda jogap bermeli?',
-        a: 'Programma möhlet goýmaýar. Söhbetde okalan wagty görkezilýär, şonuň üçin garaşylýan habarlar öz-özünden görünýär.',
+        a: 'Programma möhlet goýmaýar. Çatda okalan wagty görkezilýär, şonuň üçin garaşylýan habarlar öz-özünden görünýär.',
       },
     ],
   },
@@ -667,8 +667,8 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         title: 'Bildiriş çap etmek',
         len: '3 min',
         blocks: [
-          { p: 'Bildiriş — mekdebiň resmi habary. Ol söhbet däl: oňa jogap ýazylmaýar, ol diňe okalýar.' },
-          { w: 'faýl', caption: 'Rasporýaniýe, meýilnama ýa-da nusga faýl goşulanda, ol bildirişiň içinde ady bilen görünýär.' },
+          { p: 'Bildiriş — mekdebiň resmi habary. Ol çat däl: oňa jogap ýazylmaýar, ol diňe okalýar.' },
+          { w: 'faýl', caption: 'Ders rejeleri, meýilnama ýa-da nusga faýl goşulanda, ol bildirişiň içinde ady bilen görünýär.' },
           { steps: [
             'Mekdep → Bildirişler → «Täze».',
             'Görnüşi saýlaň: mekdep, okuw, çäre ýa-da duýduryş.',
@@ -692,10 +692,10 @@ const ROLES: { id: RoleId; label: string; who: string; docs: Doc[]; faq: Qa[] }[
         ],
       },
       {
-        title: 'Synplar we rasporýaniýe',
+        title: 'Synplar we ders rejeleri',
         len: '4 min',
         blocks: [
-          { p: 'Rasporýaniýe bir gezek girizilýär we tutuş mekdep şondan okaýar. Üýtgeşme girizilende ol gündelikde şol bada görünýär.' },
+          { p: 'Ders rejeleri bir gezek girizilýär we tutuş mekdep şondan okaýar. Üýtgeşme girizilende ol gündelikde şol bada görünýär.' },
           { steps: [
             'Mekdep → Synplar → synpy saýlaň.',
             'Hepdelik sapak tertibini dolduryň ýa-da faýldan ýükläň.',
@@ -1113,7 +1113,7 @@ const RELEASES: {
     at: '2026-02-10',
     title: 'Akylly mugallym, kömek merkezi we sadalaşdyrylan gündelik',
     items: [
-      { kind: 'täze', text: 'Akylly mugallym aýratyn söhbet boldy — soralan zatlaryň taryhy saklanýar' },
+      { kind: 'täze', text: 'Akylly mugallym aýratyn çat boldy — soralan zatlaryň taryhy saklanýar' },
       { kind: 'täze', text: 'Bildirişlerde goşulan faýllar ady we göwrümi bilen görünýär' },
       { kind: 'täze', text: 'Kömek merkezi: gollanmalar indi ene-ata, okuwçy, mugallym we müdir üçin aýry' },
       { kind: 'gowulandy', text: 'Gollanmalar gysga makala boldy — düşündiriş bilen bilelikde şol düwmäniň özi görkezilýär' },

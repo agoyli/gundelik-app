@@ -70,7 +70,7 @@ export function ChildSheet({ open, onClose, onInbox }: {
         <Box sx={{ mt: '12px' }}>
           <SurfaceRow
             icon={<IconBadge bg={tokens.orangeTint} color={tokens.orangeText} size={44}><BellIcon size={20} /></IconBadge>}
-            label="Habarlar we söhbetler"
+            label="Habarlar we çatlar"
             labelSx={{ fontSize: 15, fontWeight: 500 }}
             end={(
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

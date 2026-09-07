@@ -184,7 +184,7 @@ export const STATES: {
     id: 'maintenance', name: 'Tehniki işler', when: 'Serwer täzelenende',
     art: 'maintenance', tint: tokens.tealTint, ink: tokens.tealText,
     title: 'Tehniki işler dowam edýär',
-    note: 'Gysga wagtda gutarýar. Şu wagt diňe gündelik we rasporýaniýe elýeterli.',
+    note: 'Gysga wagtda gutarýar. Şu wagt diňe gündelik we ders rejeleri elýeterli.',
     action: 'Ýagdaýy barla',
   },
   {
@@ -232,7 +232,7 @@ export const ONBOARDING: { id: string; art: ArtId; tint: string; ink: string; ti
   {
     id: 'free', art: 'locked', tint: tokens.orangeTint, ink: tokens.orangeText,
     title: 'Gündelik hemişe mugt',
-    note: 'Bahalar, rasporýaniýe we mugallymlar bilen söhbet — töleg soralmaýar. Günde bir test we bir toplum hem mugt.',
+    note: 'Bahalar, ders rejeleri we mugallymlar bilen çat — töleg soralmaýar. Günde bir test we bir toplum hem mugt.',
   },
 ];
 
@@ -253,7 +253,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         <ButtonBase
           onClick={onDone}
           sx={{ height: 40, px: '14px', borderRadius: `${tokens.rPill}px`, fontSize: 14, color: tokens.ink3 }}
-        >Ätle</ButtonBase>
+        >Görmän geçmek</ButtonBase>
       </Box>
 
       {/* the app's one snapping track — same scrolling, same dots as the

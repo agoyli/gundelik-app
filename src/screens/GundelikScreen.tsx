@@ -299,7 +299,7 @@ export function GundelikScreen({ toast }: { toast: (msg: string) => void }) {
             <Box sx={{ color: tokens.inkDisabled, display: 'flex' }}><CalendarIcon size={28} /></Box>
             <Typography sx={{ fontSize: 16, fontWeight: 700 }}>Bu gün sapak ýok</Typography>
             <Typography variant="caption" sx={{ lineHeight: 1.45 }}>
-              Dynç güni ýa-da rasporýaniýe entek girizilmedi.<br />Başga senäni saýlap görüň.
+              Dynç güni ýa-da ders rejeleri entek girizilmedi.<br />Başga senäni saýlap görüň.
             </Typography>
           </Box>
         )}
