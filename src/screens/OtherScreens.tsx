@@ -11,7 +11,7 @@ import {
   SheetDrawer, StatTile, SubjectRow, SurfaceRow, TagPill, VariantSheet,
 } from '../components/Ui';
 import type { Variant } from '../components/Ui';
-import { PlanWidget, TeaserCard } from '../components/Paywall';
+import { LockedPreview, PlanWidget, TeaserCard } from '../components/Paywall';
 import { OLYMPIADS, PRIZE_CONTESTS, RATING } from '../data/guides';
 import { bankTotal, playCount, testSubjects } from '../data/library';
 import { pathTotal, subjectBySlug } from '../data/curriculum';
@@ -215,27 +215,23 @@ const SUBJECT_WEEK: [string, number][] = [
 /*
  * What the free tier sees instead of the reports.
  *
- * Not a wall, and no longer a blur either. A blurred chart says "there is
- * something here" and nothing else — the reader cannot tell whether it is
- * worth 400 TMT, and a smear of colour is the same smear whatever the numbers
- * behind it are.
+ * The card, the title and the shape of the figure — and the figure itself
+ * behind `LockedPreview`'s blur. The reports *are* the paid feature, so on the
+ * free tier they are closed: what stays open is the diary the numbers are
+ * computed from, which the reader owns and can read in full a tab away.
  *
- * So the free tier gets **part of the real report**: this week's figure, the
- * top two subjects, the current average — the *latest* value, which is the one
- * they can already work out from the diary anyway. What the plan buys is the
- * rest and the history: the other five subjects, the term's trend, the
- * comparison over time. The lock line then names exactly what is missing, as a
- * count, so the gap is specific and checkable rather than mysterious.
- *
- * The rule this follows everywhere in the app: **how much there is, is free;
- * what it says over time, is paid.**
+ * It is still not a wall. The page keeps the same three cards in the same
+ * three places it has on a paying account, so nothing moves under a reader who
+ * subscribes; each card says what it would tell them, and carries one row that
+ * names the plan which opens it. A locked thing you can see the shape of is an
+ * argument; a missing page is a dead end.
  */
-function PartialReport({ title, note, shown, hidden, onUpgrade }: {
+function LockedReport({ title, note, preview, opens, onUpgrade }: {
   title: string; note: string;
-  /** the real, unblurred part — the newest figure or the first rows */
-  shown: React.ReactNode;
-  /** what stays behind the plan, counted rather than described */
-  hidden: string;
+  /** the real card, blurred — you see the shape of what you are missing */
+  preview: React.ReactNode;
+  /** what the plan opens here, said plainly */
+  opens: string;
   onUpgrade: () => void;
 }) {
   const plan = tierFor('analytics');
@@ -246,13 +242,13 @@ function PartialReport({ title, note, shown, hidden, onUpgrade }: {
         <Typography sx={{ fontSize: 12.5, color: tokens.ink3, mt: '2px', lineHeight: 1.4 }}>{note}</Typography>
       </Box>
 
-      {shown}
+      <Box sx={{ px: tokens.padCard, pt: '10px' }}>
+        <LockedPreview height={112}>{preview}</LockedPreview>
+      </Box>
 
-      {/* The lock, stated as an amount. It sits under real data rather than
-          over it, so nothing the reader can already see is being taken away. */}
       <ButtonBase
         onClick={onUpgrade}
-        aria-label={`${title}: ${hidden}, ${plan?.name} bilen açylýar`}
+        aria-label={`${title}: ${opens}, ${plan?.name} bilen açylýar`}
         sx={{
           display: 'flex', alignItems: 'center', gap: '11px', width: '100%',
           textAlign: 'left', justifyContent: 'flex-start',
@@ -264,7 +260,7 @@ function PartialReport({ title, note, shown, hidden, onUpgrade }: {
           <LockIcon size={16} />
         </IconBadge>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{hidden}</Typography>
+          <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{opens}</Typography>
           <Typography sx={{ fontSize: 12, color: tokens.inkMuted }}>{plan?.name} bilen açylýar</Typography>
         </Box>
         <RowChevron />
@@ -352,17 +348,17 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
             <DrillButton onClick={() => setSheet('yetisik')}>Dersler boýunça ýetişigi</DrillButton>
           </StatCard>
         ) : (
-          <PartialReport
+          <LockedReport
             title="Synpda hepdelik ýetişigi"
-            note="Şu hepdäniň orny — açyk. Öňki hepdeler we dersler boýunça bölünişik ýapyk."
+            note="Synpdaky orun, hepde-hepde — bahalardan hasaplanýar."
             onUpgrade={upgrade}
-            shown={(
+            preview={(
               <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
                 <HeroStat>{placeLabel(WEEKS[WEEKS.length - 1].place)}</HeroStat>
                 <DeltaLine>{weekMove(WEEKS.length - 1)}</DeltaLine>
               </Box>
             )}
-            hidden={`${WEEKS.length - 1} hepdelik taryh · ${SUBJECT_WEEK.length} dersiň bölünişigi`}
+            opens={`Şu hepdäniň orny · ${WEEKS.length - 1} hepdelik taryh · ${SUBJECT_WEEK.length} dersiň bölünişigi`}
           />
         )}
 
@@ -382,17 +378,17 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
             <DrillButton onClick={() => setSheet('baha')}>Ders boýunça bahasy</DrillButton>
           </StatCard>
         ) : (
-          <PartialReport
+          <LockedReport
             title="Çärýegiň ortaça bahasy"
-            note="Şu çärýegiň ortaçasy — açyk. Öňki çärýekler bilen deňeşdirme ýapyk."
+            note="Çärýegiň ortaçasy we öňki çärýekler bilen deňeşdirmesi."
             onUpgrade={upgrade}
-            shown={(
+            preview={(
               <Box sx={{ p: '14px 15px 16px', textAlign: 'center' }}>
                 <HeroStat>Baha: {QUARTER_HISTORY[QUARTER_HISTORY.length - 1].avg.toFixed(1)}</HeroStat>
                 <DeltaLine>{qtrMove(QUARTER_HISTORY.length - 1)}</DeltaLine>
               </Box>
             )}
-            hidden={`${QUARTER_HISTORY.length - 1} çärýegiň taryhy · ders-ders bölünişi`}
+            opens={`Şu çärýegiň ortaçasy · ${QUARTER_HISTORY.length - 1} çärýegiň taryhy · ders-ders bölünişi`}
           />
         )}
 
@@ -416,12 +412,12 @@ export function AnalitikaScreen({ toast }: { toast: (m: string) => void }) {
             </Box>
           </StatCard>
         ) : (
-          <PartialReport
+          <LockedReport
             title="Sapaklaryň görnüşleri boýunça"
-            note="Bölünişik açyk. Hepde-hepde üýtgeýşi ýapyk."
+            note="Hepdäň nämeden düzülendigi — sapak görnüşleriniň paýy."
             onUpgrade={upgrade}
-            shown={<Box sx={{ display: 'grid', placeItems: 'center', pt: '6px', pb: '10px' }}><KindBubbles /></Box>}
-            hidden="Hepdelik dinamika we sagat hasaby"
+            preview={<Box sx={{ display: 'grid', placeItems: 'center', pt: '6px', pb: '10px' }}><KindBubbles /></Box>}
+            opens="Görnüşleriň paýy · hepdelik dinamika we sagat hasaby"
           />
         )}
       </Box>
