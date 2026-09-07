@@ -85,14 +85,22 @@ const PLAY_PREVIEW = 4;
 
 /* What a subject holds in the chosen grade — or in all of them — beside the
    lesson count the progress bar already states. One shape for every row: a
-   subject with nothing written says so, rather than printing "0 test · 0 kart". */
-const bankLine = (slug: string, grade?: number) => {
+   subject with nothing written says so, rather than printing "0 test · 0 kart".
+
+   `lessons` is the length of the subject's *path* in that grade, which the row
+   is already counting against on the right. It is passed in because the two
+   numbers come from different places and the row used to be able to say
+   "Material taýýarlanýar" beside a progress bar reading 0/38 — a page cannot
+   claim there is nothing here and count thirty-eight of them in the same row.
+   With a path but no bank, what is actually missing is the tests and cards. */
+const bankLine = (slug: string, grade: number | undefined, lessons: number) => {
   const b = subjectBank(slug, grade);
   const parts = [];
   if (b.lessons) parts.push(`${b.lessons} sapak taýýar`);
   if (b.tests) parts.push(`${b.tests} test`);
   if (b.cards) parts.push(`${b.cards} kart`);
-  return parts.length ? parts.join(' · ') : 'Material taýýarlanýar';
+  if (parts.length) return parts.join(' · ');
+  return lessons > 0 ? 'Test we kart taýýarlanýar' : 'Material taýýarlanýar';
 };
 
 /*
@@ -279,7 +287,7 @@ export function SapaklarScreen({ onBack, toast, onOpenSubject, onOpenPlay, onUpg
               tint={s.tint}
               accent={s.accent}
               label={s.label}
-              sub={bankLine(s.id, grade)}
+              sub={bankLine(s.id, grade, s.total)}
               /* `total` is every stop on this subject's path in this grade —
                  reading, interactive and checkpoint alike — so the row and the
                  page behind it count the same thing */
